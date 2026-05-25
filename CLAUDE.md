@@ -146,9 +146,9 @@ Em `.claude/hooks/` (Fase 4). Bloqueiam ações inseguras:
 
 ## 9. Slash commands (Fase 4)
 
-Em `.claude/commands/`. Lista:
+Em `.claude/commands/`. 8 commands:
 
-- `/commit` — guidedflow de commit conventional
+- `/commit` — guided flow de commit conventional
 - `/session-end` — fecha session log
 - `/docs-lint` — verifica broken links e orphans em docs/
 - `/prime` — re-lê manual completo (Blueprint + ADRs ativos)
