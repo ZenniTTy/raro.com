@@ -25,13 +25,13 @@ Pesca, esportes, trilhas, aventuras, trabalho de campo, registro pessoal — qua
 
 ## Modelo comercial
 
-- Assinatura recorrente, **15 dias grátis (free trial)**:
+- Assinatura recorrente, **30 dias grátis (free trial)**:
   - **Mensal:** R$ 9,90/mês
   - **Anual:** R$ 89,90/ano (equivale a R$ 7,49/mês — badge "MELHOR OFERTA")
 - Sem anúncios, sem marca d'água em vídeos.
 - Gate: salvar vídeo na galeria do sistema requer assinatura ativa. O resto do app funciona sem assinatura.
 
-> **NOTA:** o free trial real configurado é de **30 dias**, conforme decisão registrada no [Blueprint Seção 1](Blueprint.md) (divergência #2 entre briefing e protótipo). O copy do app reflete 30 dias.
+> **Sobre o número 30 dias:** o protótipo mostra "15 dias" em alguns lugares. A decisão executiva do cliente foi de 30 dias — ver [Blueprint Seção 1 divergência #2](Blueprint.md) e [ADR 0010](decisions/0010-dual-subscription-plans.md). O número canônico em código está em `SubscriptionConfig.freeTrialDays = 30`.
 
 ## Partes envolvidas
 
