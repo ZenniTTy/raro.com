@@ -1,0 +1,1777 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>RARO · Protótipo Navegacional</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#000;
+    --bg-elev:#0a0a0a;
+    --bg-card:#141414;
+    --ink:#fff;
+    --ink-dim:#a3a3a3;
+    --ink-faint:#525252;
+    --border:#1f1f1f;
+    --border-bright:#2e2e2e;
+    --raro-gradient:linear-gradient(90deg,#ff2d55 0%,#ff6b35 16%,#ffcc00 33%,#34c759 50%,#00c7be 66%,#007aff 83%,#af52de 100%);
+    --raro-radial:radial-gradient(circle,#ffcc00 0%,#ff6b35 25%,#ff2d55 50%,#af52de 75%,#007aff 100%);
+    --raro-red:#ff2d55;
+    --raro-red-radial:radial-gradient(circle,#ff5470 0%,#ff2d55 60%,#c8002a 100%);
+  }
+  html,body{background:#000;}
+  body{
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    margin:0;
+    display:flex;align-items:center;justify-content:center;
+    background:
+      radial-gradient(60% 50% at 50% 30%, rgba(255,45,85,.06), transparent 60%),
+      radial-gradient(50% 40% at 80% 70%, rgba(0,122,255,.05), transparent 70%),
+      radial-gradient(40% 40% at 20% 80%, rgba(175,82,222,.05), transparent 70%),
+      #000;
+    overflow:hidden;
+  }
+  /* viewport scaler — fits phone to any screen */
+  .stage{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  .stage-inner{
+    transform-origin:center center;
+    transition:transform .2s ease-out;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .35 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/></svg>");
+    opacity:.04;mix-blend-mode:overlay;
+  }
+  .font-display{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;}
+  .font-mono{font-family:'JetBrains Mono',monospace;}
+  .grad-text{background:var(--raro-gradient);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .grad-bg{background:var(--raro-gradient);}
+  .grad-radial{background:var(--raro-radial);}
+  .grad-line{height:1.5px;background:var(--raro-gradient);}
+  .grad-line-thin{height:1px;background:var(--raro-gradient);opacity:.85;}
+
+  /* phone frame */
+  .phone-wrap{
+    position:relative;width:413px;height:872px;
+    display:flex;align-items:center;justify-content:center;
+    filter:drop-shadow(0 60px 80px rgba(0,0,0,.7));
+  }
+  .phone-wrap::before{
+    content:"";position:absolute;inset:-40px;border-radius:80px;
+    background:conic-gradient(from 90deg,#ff2d55,#ffcc00,#34c759,#00c7be,#007aff,#af52de,#ff2d55);
+    filter:blur(60px);opacity:.18;z-index:-1;
+  }
+  .phone-frame{
+    position:relative;width:413px;height:872px;
+    background:linear-gradient(145deg,#3a3a3c,#1c1c1e 40%,#0a0a0a);
+    border-radius:60px;padding:10px;
+    box-shadow:
+      inset 0 0 0 1.5px #4a4a4c,
+      inset 0 0 0 3px #0a0a0a,
+      inset 0 0 0 4.5px #2c2c2e,
+      0 30px 60px rgba(0,0,0,.5);
+  }
+  .phone-screen{
+    position:relative;width:393px;height:852px;
+    background:#000;border-radius:50px;overflow:hidden;
+  }
+  .dynamic-island{
+    position:absolute;top:11px;left:50%;transform:translateX(-50%);
+    width:124px;height:37px;background:#000;border-radius:20px;z-index:50;
+    box-shadow:inset 0 0 0 1px #0a0a0a;
+  }
+  .status-bar{
+    position:absolute;top:0;left:0;right:0;height:54px;z-index:40;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 32px 0;font-family:'Inter';font-weight:600;font-size:15px;color:#fff;
+    pointer-events:none;
+  }
+  .status-bar .right{display:flex;align-items:center;gap:6px;}
+  .home-indicator{
+    position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+    width:134px;height:5px;background:#fff;border-radius:3px;z-index:55;opacity:.95;
+  }
+
+  /* screens */
+  .app-content{position:absolute;inset:0;}
+  .screen{
+    position:absolute;inset:0;background:#000;
+    opacity:0;pointer-events:none;transform:translateY(8px);
+    transition:opacity .25s ease-out, transform .25s ease-out;
+    overflow:hidden;
+  }
+  .screen.active{opacity:1;pointer-events:auto;transform:translateY(0);}
+
+  /* dev button — lives outside phone, top-right of canvas */
+  .dev-btn{
+    position:fixed;top:20px;right:24px;z-index:200;
+    background:rgba(20,20,20,.85);backdrop-filter:blur(10px);
+    border:1px solid var(--border-bright);
+    color:#fff;font-family:'JetBrains Mono';font-size:11px;
+    padding:8px 12px;border-radius:10px;letter-spacing:.08em;
+    cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+  }
+  .dev-btn:hover{border-color:#fff;}
+  .dev-btn .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--raro-red);box-shadow:0 0 8px rgba(255,45,85,.6);}
+
+  /* shared atoms */
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border-bright);border-radius:999px;font-size:12px;color:var(--ink-dim);background:rgba(10,10,10,.6);}
+  .pill.active{background:#fff;color:#000;border-color:#fff;}
+  .chip{padding:8px 14px;border:1px solid var(--border-bright);border-radius:10px;font-size:13px;color:var(--ink-dim);background:var(--bg-card);cursor:pointer;}
+  .chip.active{color:#fff;border-color:#fff;background:#1a1a1a;}
+  .card{background:var(--bg-elev);border:1px solid var(--border);border-radius:16px;padding:16px;}
+  .section-label{font-family:'JetBrains Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;}
+  .btn-touch{transition:transform .12s ease;}
+  .btn-touch:active{transform:scale(.97);}
+
+  /* record button */
+  .record-btn{
+    width:72px;height:72px;border-radius:50%;
+    background:#ff2d55;
+    position:relative;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 2px #000, 0 0 0 4px rgba(255,255,255,.2), 0 0 30px rgba(255,45,85,.4);
+    transition:all .25s cubic-bezier(.4,0,.2,1);
+  }
+  .record-btn .inner{
+    width:60px;height:60px;border-radius:50%;
+    background:#ff2d55;
+    transition:all .25s cubic-bezier(.4,0,.2,1);
+  }
+  .record-btn.recording{
+    background:#000;box-shadow:0 0 0 3px #fff, 0 0 30px rgba(255,45,85,.5);
+  }
+  .record-btn.recording .inner{
+    width:28px;height:28px;border-radius:6px;background:#ff2d55;
+    animation:recPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes recPulse{
+    0%,100%{opacity:1;}
+    50%{opacity:.55;}
+  }
+  .rec-dot{width:10px;height:10px;border-radius:50%;background:#ff2d55;animation:recPulse 1.2s ease-in-out infinite;}
+
+  /* voice listening glow */
+  .voice-listening{
+    box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 30px rgba(255,107,53,.6),0 0 60px rgba(0,122,255,.4);
+    animation:voiceGlow 2s ease-in-out infinite;
+  }
+  @keyframes voiceGlow{
+    0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 20px rgba(255,45,85,.5),0 0 40px rgba(0,122,255,.4);}
+    50%{box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 35px rgba(255,204,0,.6),0 0 70px rgba(175,82,222,.5);}
+  }
+
+  /* grid rule of thirds */
+  .rule-thirds{position:absolute;inset:0;pointer-events:none;}
+  .rule-thirds::before, .rule-thirds::after{
+    content:"";position:absolute;background:rgba(255,255,255,.08);
+  }
+  .rule-thirds::before{left:0;right:0;top:33.33%;height:1px;box-shadow:0 calc(393px * .333) 0 rgba(255,255,255,.08);}
+  .rule-thirds::after{top:0;bottom:0;left:33.33%;width:1px;box-shadow:calc(100% / 3) 0 0 rgba(255,255,255,.08);}
+
+  /* focus ring */
+  .focus-ring{
+    position:absolute;width:64px;height:64px;border:1.5px solid #fff;
+    transform:translate(-50%,-50%) scale(1.4);opacity:0;pointer-events:none;
+    transition:transform .3s ease-out, opacity .3s ease-out;
+  }
+  .focus-ring.show{transform:translate(-50%,-50%) scale(1);opacity:1;animation:focusFade 1.2s ease-out forwards;}
+  @keyframes focusFade{
+    0%{transform:translate(-50%,-50%) scale(1.4);opacity:0;}
+    25%{transform:translate(-50%,-50%) scale(1);opacity:1;}
+    100%{transform:translate(-50%,-50%) scale(1);opacity:0;}
+  }
+
+  /* buffer indicator */
+  .buffer-bar{
+    height:2px;background:rgba(255,255,255,.08);overflow:hidden;border-radius:2px;
+  }
+  .buffer-bar .fill{
+    height:100%;background:var(--raro-gradient);
+    animation:bufferFill 15s linear infinite;
+  }
+  @keyframes bufferFill{
+    0%{width:0%;}
+    100%{width:100%;}
+  }
+
+  /* waveform */
+  .wave-bar{
+    width:4px;background:var(--raro-gradient);border-radius:2px;
+    animation:wave 1.2s ease-in-out infinite;
+  }
+  @keyframes wave{
+    0%,100%{height:8px;}
+    50%{height:var(--h,40px);}
+  }
+
+  /* dots loader */
+  .dot-loader{display:inline-flex;gap:6px;}
+  .dot-loader span{
+    width:6px;height:6px;border-radius:50%;background:#333;
+    animation:dotLoad 1.4s ease-in-out infinite;
+  }
+  .dot-loader span:nth-child(1){animation-delay:0s;}
+  .dot-loader span:nth-child(2){animation-delay:.2s;}
+  .dot-loader span:nth-child(3){animation-delay:.4s;}
+  @keyframes dotLoad{
+    0%,80%,100%{background:#333;transform:scale(1);}
+    40%{background:#ff6b35;transform:scale(1.3);box-shadow:0 0 12px rgba(255,107,53,.6);}
+  }
+  .dot-loader span:nth-child(2){animation-name:dotLoad2;}
+  @keyframes dotLoad2{
+    0%,80%,100%{background:#333;transform:scale(1);}
+    40%{background:#34c759;transform:scale(1.3);box-shadow:0 0 12px rgba(52,199,89,.6);}
+  }
+  .dot-loader span:nth-child(3){animation-name:dotLoad3;}
+  @keyframes dotLoad3{
+    0%,80%,100%{background:#333;transform:scale(1);}
+    40%{background:#007aff;transform:scale(1.3);box-shadow:0 0 12px rgba(0,122,255,.6);}
+  }
+
+  /* gradient border (animated) */
+  .grad-border{
+    position:relative;border-radius:18px;padding:1.5px;
+    background:var(--raro-gradient);background-size:200% 100%;
+    animation:gradShift 5s linear infinite;
+  }
+  @keyframes gradShift{
+    0%{background-position:0% 0%;}
+    100%{background-position:200% 0%;}
+  }
+  .grad-border > .inner{
+    background:var(--bg-elev);border-radius:16.5px;
+  }
+
+  /* toggle */
+  .toggle{
+    width:42px;height:24px;border-radius:999px;background:#1f1f1f;
+    position:relative;cursor:pointer;transition:background .2s;
+    flex-shrink:0;
+  }
+  .toggle::after{
+    content:"";position:absolute;top:2px;left:2px;
+    width:20px;height:20px;border-radius:50%;background:#737373;
+    transition:all .2s;
+  }
+  .toggle.on{background:#0a0a0a;}
+  .toggle.on::after{left:20px;background:var(--raro-red-radial);box-shadow:0 0 10px rgba(255,45,85,.45);}
+
+  /* slider */
+  .slider{
+    appearance:none;-webkit-appearance:none;width:100%;height:3px;background:#1f1f1f;
+    border-radius:2px;outline:none;
+  }
+  .slider::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--raro-red-radial);cursor:pointer;box-shadow:0 0 0 2px #000;
+  }
+  .slider::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;border:0;
+    background:#ff6b35;cursor:pointer;box-shadow:0 0 0 2px #000;
+  }
+
+  /* scrollbar hide */
+  .no-scrollbar::-webkit-scrollbar{display:none;}
+  .no-scrollbar{scrollbar-width:none;}
+
+  /* sheet */
+  .sheet{
+    position:absolute;left:0;right:0;bottom:0;background:var(--bg-elev);
+    border-top-left-radius:24px;border-top-right-radius:24px;
+    border-top:1px solid var(--border-bright);
+    transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+    z-index:30;padding:8px 20px 28px;
+  }
+  .sheet.show{transform:translateY(0);}
+  .sheet-handle{width:36px;height:4px;background:#3a3a3a;border-radius:2px;margin:8px auto 16px;}
+  .backdrop{
+    position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);
+    opacity:0;pointer-events:none;transition:opacity .25s;z-index:25;
+  }
+  .backdrop.show{opacity:1;pointer-events:auto;}
+
+  /* viewport grain */
+  .viewport-grain{
+    background:
+      radial-gradient(ellipse at 30% 40%, rgba(40,40,40,.6), transparent 60%),
+      radial-gradient(ellipse at 70% 70%, rgba(20,20,20,.8), transparent 70%),
+      linear-gradient(180deg,#0f0f0f,#050505);
+    position:relative;
+  }
+  .viewport-grain::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence baseFrequency='.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .25 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    opacity:.4;mix-blend-mode:overlay;
+  }
+
+  /* dev label */
+  .meta-tag{
+    position:fixed;left:24px;bottom:20px;z-index:5;color:#525252;
+    font-family:'JetBrains Mono';font-size:11px;letter-spacing:.1em;
+    pointer-events:none;
+  }
+  .meta-tag .label{color:#a3a3a3;}
+  @media (max-height:760px){ .meta-tag{display:none;} }
+
+  /* logo breathe */
+  @keyframes logoBreathe{
+    0%,100%{filter:drop-shadow(0 0 18px rgba(255,107,53,.2)) drop-shadow(0 0 48px rgba(0,122,255,.15));}
+    50%{filter:drop-shadow(0 0 32px rgba(255,204,0,.35)) drop-shadow(0 0 70px rgba(175,82,222,.25));}
+  }
+
+  /* tooltip */
+  .tip{
+    position:relative;display:inline-flex;align-items:center;justify-content:center;
+    color:var(--ink-faint);cursor:help;outline:none;
+  }
+  .tip:hover, .tip:focus{color:#fff;}
+  .tip::after{
+    content:attr(data-tip);
+    position:absolute;left:50%;top:calc(100% + 8px);
+    transform:translateX(-50%) translateY(-4px);
+    width:220px;padding:9px 11px;
+    background:#000;border:1px solid var(--border-bright);border-radius:10px;
+    font-family:'Inter';font-size:11.5px;line-height:1.45;color:var(--ink-dim);
+    letter-spacing:0;text-align:left;
+    box-shadow:0 12px 30px rgba(0,0,0,.6);
+    opacity:0;pointer-events:none;transition:opacity .15s ease, transform .15s ease;
+    z-index:50;white-space:normal;
+  }
+  .tip::before{
+    content:"";position:absolute;left:50%;top:calc(100% + 3px);
+    transform:translateX(-50%) rotate(45deg);
+    width:8px;height:8px;background:#000;
+    border-top:1px solid var(--border-bright);border-left:1px solid var(--border-bright);
+    opacity:0;transition:opacity .15s ease;z-index:51;
+  }
+  .tip:hover::after, .tip:focus::after{opacity:1;transform:translateX(-50%) translateY(0);}
+  .tip:hover::before, .tip:focus::before{opacity:1;}
+
+  /* subscription popup (in-camera) */
+  .sub-popup{
+    position:absolute;left:14px;right:14px;top:50%;
+    transform:translateY(-50%) scale(.96);opacity:0;pointer-events:none;
+    z-index:32;transition:transform .25s cubic-bezier(.4,0,.2,1), opacity .2s;
+    border-radius:22px;padding:1.5px;
+    background:linear-gradient(135deg,rgba(255,45,85,.5),rgba(255,204,0,.3) 30%,rgba(0,199,190,.4) 60%,rgba(175,82,222,.5));
+  }
+  .sub-popup.show{transform:translateY(-50%) scale(1);opacity:1;pointer-events:auto;}
+  .sub-popup-inner{
+    background:rgba(10,10,10,.92);backdrop-filter:blur(20px);
+    border-radius:20.5px;padding:20px 20px 18px;
+  }
+
+  /* checkout method tile */
+  .pay-tile{
+    display:flex;align-items:center;gap:14px;
+    padding:16px;border-radius:16px;
+    background:var(--bg-elev);border:1px solid var(--border-bright);
+    cursor:pointer;transition:all .18s;
+  }
+  .pay-tile:hover{border-color:#fff;background:#1a1a1a;}
+  .pay-tile.selected{border-color:#fff;background:#1a1a1a;box-shadow:0 0 0 1px #fff;}
+  .pay-tile .ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#000;border:1px solid var(--border);flex-shrink:0;}
+
+  /* paywall border anim */
+  .plan-card{
+    position:relative;border-radius:18px;padding:1.5px;
+    background:conic-gradient(from var(--a,0deg),#ff2d55,#ff6b35,#ffcc00,#34c759,#00c7be,#007aff,#af52de,#ff2d55);
+    animation:spinHue 6s linear infinite;
+  }
+  @keyframes spinHue{
+    to{--a:360deg;}
+  }
+  @property --a{syntax:"<angle>";inherits:false;initial-value:0deg;}
+
+  /* scrubber */
+  .scrubber{height:3px;background:#1f1f1f;border-radius:2px;position:relative;overflow:hidden;}
+  .scrubber .pos{position:absolute;top:0;bottom:0;left:0;width:32%;background:var(--raro-gradient);border-radius:2px;}
+  .scrubber .knob{position:absolute;top:50%;left:32%;width:12px;height:12px;border-radius:50%;background:#fff;transform:translate(-50%,-50%);}
+
+  /* xiaomi step */
+  .step-num{
+    width:24px;height:24px;border-radius:50%;border:1px solid var(--border-bright);
+    display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono';font-size:11px;
+    color:#fff;flex-shrink:0;
+  }
+
+  /* check (rainbow) */
+  .check-rainbow{
+    width:18px;height:18px;border-radius:50%;background:var(--raro-red-radial);
+    display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+    box-shadow:0 0 12px rgba(255,45,85,.35);
+  }
+  .check-rainbow svg{width:10px;height:10px;color:#fff;}
+
+  /* thumb tile */
+  .thumb{
+    position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;
+    background:#0a0a0a;border:1px solid var(--border);
+  }
+  .thumb .grad{
+    position:absolute;inset:0;opacity:.55;mix-blend-mode:screen;
+  }
+  .thumb .dur{
+    position:absolute;right:6px;bottom:6px;font-family:'JetBrains Mono';font-size:10px;
+    color:#fff;background:rgba(0,0,0,.6);padding:2px 5px;border-radius:4px;
+  }
+  .thumb .play{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.9;
+  }
+
+  /* hub-tile */
+  .hub-tile{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+    overflow:hidden;cursor:pointer;transition:all .2s;
+  }
+  .hub-tile:hover{border-color:#3a3a3a;transform:translateY(-2px);}
+  .hub-tile .preview{
+    aspect-ratio:9/16;background:#000;position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .hub-tile .label{
+    padding:8px 10px;font-size:10px;color:var(--ink-dim);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .hub-tile .num{font-family:'JetBrains Mono';color:var(--ink-faint);font-size:9px;}
+</style>
+</head>
+<body>
+
+<div class="meta-tag">
+  <div><span class="label">PROJECT</span> RARO · Protótipo Navegacional</div>
+  <div><span class="label">SPEC</span> iPhone 15 Pro · 393×852 · 13 telas</div>
+</div>
+
+<!-- DEV button lives outside the phone, in the canvas corner -->
+<button class="dev-btn" onclick="go('hub')"><span class="dot"></span>DEV HUB</button>
+
+<div class="stage"><div class="stage-inner" id="stageInner">
+<div class="phone-wrap">
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="dynamic-island"></div>
+
+      <!-- Status bar -->
+      <div class="status-bar" id="statusBar">
+        <div>9:41</div>
+        <div class="right">
+          <!-- signal -->
+          <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><rect x="0" y="7" width="3" height="4" rx=".5" fill="#fff"/><rect x="5" y="5" width="3" height="6" rx=".5" fill="#fff"/><rect x="10" y="3" width="3" height="8" rx=".5" fill="#fff"/><rect x="15" y="0" width="3" height="11" rx=".5" fill="#fff"/></svg>
+          <!-- wifi -->
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 11.5l1.5-1.5a2 2 0 0 0-3 0L8 11.5zM4.5 8a5 5 0 0 1 7 0l1-1a6.4 6.4 0 0 0-9 0l1 1zM1.5 5a9 9 0 0 1 13 0l1-1a10.4 10.4 0 0 0-15 0l1 1z" fill="#fff"/></svg>
+          <!-- battery -->
+          <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".5" y=".5" width="22" height="11" rx="2.5" stroke="#fff" stroke-opacity=".5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="#fff"/><rect x="23.5" y="4" width="1.5" height="4" rx=".5" fill="#fff" fill-opacity=".5"/></svg>
+        </div>
+      </div>
+
+      <div class="app-content" id="appContent">
+        <!-- screens injected -->
+      </div>
+
+      <!-- Subscription popup (on camera) -->
+      <div class="backdrop" id="subBackdrop" onclick="closeSubPopup()"></div>
+      <div class="sub-popup" id="subPopup">
+        <div class="sub-popup-inner">
+          <div class="flex items-center justify-between mb-3">
+            <div class="section-label grad-text">ASSINATURA</div>
+            <button onclick="closeSubPopup()" class="w-7 h-7 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,.06);color:var(--ink-dim);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+            </button>
+          </div>
+          <div class="font-display text-[26px] leading-[1.05] mb-3">Assinatura<br/>necessária</div>
+          <p class="text-[13.5px] leading-relaxed mb-2" style="color:var(--ink-dim)">
+            Você pode usar o app normalmente, mas para <span class="text-white">salvar vídeos</span> é preciso ativar a assinatura.
+          </p>
+          <p class="text-[13.5px] leading-relaxed mb-5" style="color:var(--ink-dim)">
+            A assinatura inclui <span class="text-white">15 dias grátis</span>. Você pode cancelar antes de completar os 15 dias e não será cobrado de nada.
+          </p>
+          <button onclick="closeSubPopup();go('paywall');" class="btn-touch w-full py-3.5 rounded-2xl text-[15px] font-bold" style="background:var(--raro-gradient);color:#000;">
+            Assinar agora
+          </button>
+          <button onclick="closeSubPopup()" class="btn-touch w-full mt-2 py-3 rounded-2xl text-[13px]" style="color:var(--ink-dim);">Talvez depois</button>
+        </div>
+      </div>
+
+      <!-- Bluetooth modal -->
+      <div class="backdrop" id="btBackdrop" onclick="closeBT()"></div>
+      <div class="sheet" id="btSheet" style="height:360px;">
+        <div class="sheet-handle"></div>
+        <div class="px-2 pt-1">
+          <div class="flex justify-center mb-5">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background:var(--raro-red-radial);box-shadow:0 0 30px rgba(255,45,85,.4);">
+              <div class="w-14 h-14 rounded-full bg-black flex items-center justify-center">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12-6 6V0l6 6L6 18"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="text-center font-display text-2xl mb-1">Controle conectado</div>
+          <div class="text-center text-sm mb-2" style="color:var(--ink-dim)">AirPods Pro · Pareado</div>
+          <div class="card mt-5 text-sm" style="color:var(--ink-dim)">
+            <div class="flex items-start gap-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <div>Pressione o botão de volume do seu dispositivo Bluetooth para iniciar e parar a gravação.</div>
+            </div>
+          </div>
+          <button onclick="closeBT()" class="btn-touch mt-5 w-full py-3.5 rounded-xl text-black font-semibold" style="background:#fff;">OK, entendi</button>
+        </div>
+      </div>
+
+      <!-- Xiaomi modal -->
+      <div class="backdrop" id="xmBackdrop" onclick="closeXiaomi()"></div>
+      <div class="sheet" id="xmSheet" style="height:600px;">
+        <div class="sheet-handle"></div>
+        <div class="px-2 pt-1 overflow-y-auto no-scrollbar" style="max-height:540px;">
+          <div class="section-label grad-text mb-1.5">Configuração MIUI</div>
+          <div class="font-display text-[22px] leading-tight mb-1.5">Otimização de bateria</div>
+          <div class="text-sm mb-5" style="color:var(--ink-dim)">Dispositivos Xiaomi podem fechar o RARO em segundo plano. Adicione o app às exceções para gravar sem perdas.</div>
+          <div class="space-y-2.5">
+            <div class="card flex gap-3 items-start"><span class="step-num">1</span><div><div class="text-sm font-medium mb-0.5">Abra Configurações</div><div class="text-xs" style="color:var(--ink-dim)">Vá até Bateria & Performance</div></div></div>
+            <div class="card flex gap-3 items-start"><span class="step-num">2</span><div><div class="text-sm font-medium mb-0.5">Toque em "Economia de bateria do app"</div><div class="text-xs" style="color:var(--ink-dim)">Encontre RARO na lista</div></div></div>
+            <div class="card flex gap-3 items-start"><span class="step-num">3</span><div><div class="text-sm font-medium mb-0.5">Selecione "Sem restrições"</div><div class="text-xs" style="color:var(--ink-dim)">Permite gravação contínua em background</div></div></div>
+            <div class="card flex gap-3 items-start"><span class="step-num">4</span><div><div class="text-sm font-medium mb-0.5">Bloqueie nas recentes</div><div class="text-xs" style="color:var(--ink-dim)">Ícone de cadeado no card do app</div></div></div>
+          </div>
+          <div class="flex gap-2 mt-6">
+            <button onclick="closeXiaomi()" class="btn-touch flex-1 py-3 rounded-xl border text-sm" style="border-color:var(--border-bright);color:var(--ink-dim);">Mais tarde</button>
+            <button onclick="closeXiaomi()" class="btn-touch flex-1 py-3 rounded-xl text-black text-sm font-semibold" style="background:#fff;">OK, vou configurar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+</div>
+</div></div>
+
+<!-- Logo RARO template (used in multiple places) -->
+<template id="raroLogo">
+  <svg viewBox="0 0 220 80" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <linearGradient id="raroLine" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="#ff2d55"/>
+        <stop offset=".16" stop-color="#ff6b35"/>
+        <stop offset=".33" stop-color="#ffcc00"/>
+        <stop offset=".5" stop-color="#34c759"/>
+        <stop offset=".66" stop-color="#00c7be"/>
+        <stop offset=".83" stop-color="#007aff"/>
+        <stop offset="1" stop-color="#af52de"/>
+      </linearGradient>
+      <radialGradient id="raroDot" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#ffcc00"/>
+        <stop offset=".25" stop-color="#ff6b35"/>
+        <stop offset=".5" stop-color="#ff2d55"/>
+        <stop offset=".75" stop-color="#af52de"/>
+        <stop offset="1" stop-color="#007aff"/>
+      </radialGradient>
+      <filter id="raroGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <!-- big R angular -->
+    <path d="M14 6 L14 56 L24 56 L24 38 L34 38 L46 56 L58 56 L44 36 C52 33 56 27 56 21 C56 12 49 6 38 6 Z M24 16 L38 16 C43 16 46 18 46 22 C46 26 43 28 38 28 L24 28 Z" fill="#fff"/>
+    <!-- luminous dot -->
+    <circle cx="72" cy="32" r="7.5" fill="url(#raroDot)" filter="url(#raroGlow)">
+      <animate attributeName="opacity" values="1;.55;1" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <!-- wordmark RARO -->
+    <text x="90" y="40" font-family="Space Grotesk" font-weight="700" font-size="30" letter-spacing="2" fill="#fff">RARO</text>
+    <!-- rainbow underline -->
+    <rect x="14" y="66" width="192" height="2" fill="url(#raroLine)" rx="1"/>
+  </svg>
+</template>
+
+<script>
+/* ============================ STATE ============================ */
+const appState = {
+  screen: 'splash',
+  recording: false,
+  lockMode: false,
+  buffer: '15',
+  bufferEnabled: true,        // Raro Replay sempre ativo — botão na câmera apenas alterna duração
+  voice: true,
+  controlMode: 'voice',       // 'voice' (ON) | 'volume' (OFF, controla pelos botões físicos)
+  resolution: '1080p',
+  fps: '60',
+  lens: '1x',
+  language: 'pt',             // 'pt' | 'es' | 'en'
+  plan: 'monthly',            // 'monthly' | 'yearly'
+  onbStep: 0,
+  perms: { camera:true, mic:true },
+  subscribed: false,
+  payMethod: null,
+  popupShown: false,
+};
+
+function $(s, root=document){ return root.querySelector(s); }
+function $$(s, root=document){ return [...root.querySelectorAll(s)]; }
+
+/* ============================ NAV ============================ */
+const screensRegistry = {};
+function registerScreens(){
+  // build all screen DOM nodes
+  const c = $('#appContent');
+  c.innerHTML = '';
+  const all = [
+    ['splash',     screenSplash()],
+    ['onb1',       screenOnb1()],
+    ['onb2',       screenOnb2()],
+    ['perms',      screenPerms()],
+    ['camera',     screenCamera()],
+    ['settings',   screenSettings()],
+    ['gallery',    screenGallery()],
+    ['preview',    screenPreview()],
+    ['paywall',    screenPaywall()],
+    ['checkout',   screenCheckout()],
+    ['hub',        screenHub()],
+    ['wordmark',   screenWordmark()],
+  ];
+  for(const [id, html] of all){
+    const d = document.createElement('div');
+    d.className = 'screen';
+    d.id = 'screen-'+id;
+    d.innerHTML = html;
+    c.appendChild(d);
+    screensRegistry[id] = d;
+  }
+}
+
+function go(id, opts={}){
+  appState.screen = id;
+  for(const k in screensRegistry){
+    screensRegistry[k].classList.toggle('active', k===id);
+  }
+  // adjust chrome
+  const showStatusBar = !['lock'].includes(id);
+  $('#statusBar').style.display = showStatusBar ? 'flex':'none';
+  // re-render dynamic states
+  if(id==='camera') renderCameraHud();
+  if(id==='settings') renderSettings();
+  if(id==='hub') renderHub();
+  // Auto-popup: when landing on camera without active subscription, show the subscription gate
+  if(id==='camera' && !appState.subscribed){
+    setTimeout(()=>{ if(appState.screen==='camera') openSubPopup(); }, 450);
+  } else {
+    // leaving camera → ensure popup is closed
+    if(id!=='camera') closeSubPopup();
+  }
+}
+
+/* ============================ ICONS ============================ */
+const I = {
+  close:   `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg>`,
+  gear:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,
+  mic:     `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M19 11a7 7 0 0 1-14 0M12 18v4M8 22h8"/></svg>`,
+  folder:  `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`,
+  camera:  `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+  image:   `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 16l-5-5L5 21"/></svg>`,
+  back:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>`,
+  share:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 9l5-5 5 5M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>`,
+  trash:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>`,
+  info:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-5M12 8h.01"/></svg>`,
+  play:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`,
+  pause:   `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`,
+  bt:      `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12-6 6V0l6 6L6 18"/></svg>`,
+  globe:   `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a14 14 0 0 1 0 20M12 2a14 14 0 0 0 0 20"/></svg>`,
+  check:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>`,
+  fish:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c4-7 12-7 16 0-4 7-12 7-16 0z"/><path d="M18 12l4-3v6z"/><circle cx="6" cy="11" r=".7" fill="currentColor"/></svg>`,
+  mountain:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20l7-12 5 8 2-3 6 7z"/></svg>`,
+  bike:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="4"/><circle cx="18" cy="17" r="4"/><path d="M6 17l3-8h4l3 8M14 9l-2-4h-3"/></svg>`,
+  surf:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c2-1 3 1 5 0s3-1 5 0 3 1 5 0 3-1 3-1"/><path d="M14 4c2 2 4 4 4 7s-3 5-7 6"/></svg>`,
+  lock:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`,
+  zap:     `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>`,
+  replay:  `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>`,
+};
+
+/* ============================ SCREEN: SPLASH ============================ */
+function screenSplash(){
+  return `
+    <div class="absolute inset-0 flex flex-col items-center justify-center px-10">
+      <div class="w-[220px] h-[220px] mb-8" onclick="go('onb1')" oncontextmenu="event.preventDefault();go('wordmark')" id="splashLogo">
+        ${raroLogoSVG(220,220)}
+      </div>
+      <div class="dot-loader"><span></span><span></span><span></span></div>
+      <div class="absolute bottom-10 left-0 right-0 text-center font-mono text-[10px]" style="color:var(--ink-faint);letter-spacing:.2em;">CAPTURE · UNSCRIPTED</div>
+    </div>
+  `;
+}
+
+/* ============================ SCREEN: ONBOARDING 1 · Grave sem tocar ============================ */
+function screenOnb1(){
+  return `
+    <div class="absolute inset-0 flex flex-col">
+      <div class="pt-[70px] px-6 flex justify-between items-center">
+        <div class="font-mono text-[11px]" style="color:var(--ink-faint);letter-spacing:.18em;">RARO</div>
+        <button onclick="go('perms')" class="text-sm" style="color:var(--ink-dim)">Pular</button>
+      </div>
+      <div class="flex-1 flex flex-col items-center justify-center px-10">
+        <div class="w-28 h-28 rounded-full mb-9 relative flex items-center justify-center" style="background:radial-gradient(circle,rgba(255,107,53,.2),transparent 70%)">
+          <div class="absolute inset-0 rounded-full border border-white/10"></div>
+          <div class="absolute -inset-3 rounded-full border border-white/5"></div>
+          <div class="absolute -inset-7 rounded-full border border-white/5"></div>
+          <div class="text-white">${I.mic.replace('width="24" height="24"','width="38" height="38"')}</div>
+        </div>
+        <h2 class="font-display text-[30px] leading-[1.1] text-center mb-3">Grave sem tocar</h2>
+        <p class="text-center text-[14px] leading-relaxed px-2 mb-3" style="color:var(--ink-dim)">
+          Diga <span class="font-mono text-white">"Raro"</span> para iniciar ou encerrar sua gravação.
+        </p>
+        <p class="text-center text-[13px] font-mono" style="color:var(--ink-faint);letter-spacing:.05em;">— O RARO escuta.</p>
+      </div>
+      <div class="px-6 pb-12">
+        <div class="flex justify-center gap-2 mb-7">
+          <div class="w-6 h-1.5 rounded-full grad-bg"></div>
+          <div class="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+        </div>
+        <button onclick="go('onb2')" class="btn-touch w-full py-4 rounded-2xl text-[15px] font-semibold border" style="border-color:var(--border-bright);color:var(--ink);background:var(--bg-elev);">Avançar</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================ SCREEN: ONBOARDING 2 · Nunca perca o momento ============================ */
+function screenOnb2(){
+  return `
+    <div class="absolute inset-0 flex flex-col">
+      <div class="pt-[70px] px-6 flex justify-between items-center">
+        <div class="font-mono text-[11px]" style="color:var(--ink-faint);letter-spacing:.18em;">RARO</div>
+        <button onclick="go('perms')" class="text-sm" style="color:var(--ink-dim)">Pular</button>
+      </div>
+      <div class="flex-1 flex flex-col items-center justify-center px-10">
+        <div class="w-full max-w-[260px] mb-8">
+          <div class="font-mono text-[10px] mb-2 flex justify-between" style="color:var(--ink-faint);letter-spacing:.15em;">
+            <span>BUFFER · 15s</span><span>AGORA</span>
+          </div>
+          <div class="relative h-14 rounded-lg overflow-hidden border" style="border-color:var(--border-bright);background:#0a0a0a;">
+            <div class="absolute left-0 top-0 bottom-0" style="width:65%;background:linear-gradient(90deg,transparent,rgba(255,107,53,.15),rgba(52,199,89,.2));"></div>
+            <div class="absolute top-0 bottom-0 grad-bg" style="left:65%;right:0;opacity:.85;"></div>
+            <div class="absolute inset-0 flex items-center px-2 gap-[2px]">
+              ${Array.from({length:40}).map((_,i)=>`<div style="width:3px;height:${10+Math.abs(Math.sin(i*.7))*22}px;background:rgba(255,255,255,${i<26?.15:.7});border-radius:1px;"></div>`).join('')}
+            </div>
+            <div class="absolute top-1 bottom-1 w-[2px] bg-white" style="left:65%;"></div>
+          </div>
+          <div class="font-mono text-[9px] mt-1.5 text-right" style="color:var(--ink-dim)">Os 15s anteriores ficam salvos</div>
+        </div>
+        <h2 class="font-display text-[28px] leading-[1.1] text-center mb-3">Nunca perca o momento</h2>
+        <p class="text-center text-[13.5px] leading-relaxed px-1" style="color:var(--ink-dim)">
+          O <span class="text-white font-mono">Raro Replay</span> salva automaticamente os últimos
+          <span class="text-white">15 ou 30 segundos</span>. Aconteceu algo importante?
+          Basta apertar o botão <span class="text-white font-mono">REC</span> ou dizer:
+          <span class="text-white">"Raro, começar a gravar."</span>
+        </p>
+      </div>
+      <div class="px-6 pb-12">
+        <div class="flex justify-center gap-2 mb-7">
+          <div class="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+          <div class="w-6 h-1.5 rounded-full grad-bg"></div>
+        </div>
+        <button onclick="go('perms')" class="btn-touch w-full py-4 rounded-2xl text-[15px] font-semibold" style="background:var(--raro-gradient);color:#000;">Avançar</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================ SCREEN: PERMS ============================ */
+function screenPerms(){
+  const items = [
+    {k:'camera',ic:I.camera,t:'Câmera',d:'Necessário para gravar vídeo em 4K com lentes 0.5x e 1x.'},
+    {k:'mic',ic:I.mic,t:'Microfone',d:'Para áudio do vídeo e para escutar o comando “Raro”.'},
+  ];
+  return `
+    <div class="absolute inset-0 flex flex-col">
+      <div class="pt-[70px] px-6">
+        <div class="section-label grad-text mb-2">PASSO 1 DE 1</div>
+        <h1 class="font-display text-[28px] leading-tight mb-2">Permissões essenciais</h1>
+        <p class="text-[13.5px] leading-relaxed" style="color:var(--ink-dim)">O RARO precisa de acesso para funcionar plenamente. Você pode revogar a qualquer momento.</p>
+      </div>
+      <div class="flex-1 px-5 mt-7 space-y-2.5">
+        ${items.map(it=>`
+          <div class="card flex items-center gap-4">
+            <div class="w-11 h-11 rounded-xl border flex items-center justify-center" style="border-color:var(--border-bright);background:#000;">${it.ic}</div>
+            <div class="flex-1">
+              <div class="text-[15px] font-medium mb-0.5">${it.t}</div>
+              <div class="text-[12px] leading-snug" style="color:var(--ink-dim)">${it.d}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="px-5 pb-12">
+        <button id="permsContinue" onclick="go('camera')" class="btn-touch w-full py-4 rounded-2xl text-[15px] font-semibold" style="background:var(--raro-gradient);color:#000;">Continuar</button>
+      </div>
+    </div>
+  `;
+}
+function grantPerm(k){
+  appState.perms[k] = !appState.perms[k];
+  const el = $('#perm-check-'+k);
+  if(!el) return;
+  if(appState.perms[k]){
+    el.innerHTML = `<div class="check-rainbow w-7 h-7"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>`;
+  } else {
+    el.innerHTML = `<div class="w-7 h-7 rounded-full border flex items-center justify-center" style="border-color:var(--border-bright);"></div>`;
+  }
+}
+
+/* ============================ SCREEN: CAMERA ============================ */
+function screenCamera(){
+  return `
+    <div class="absolute inset-0 flex flex-col">
+      <!-- top bar -->
+      <div class="pt-[60px] px-5 pb-3 flex items-center justify-between relative z-20">
+        <button onclick="go('perms')" class="btn-touch w-9 h-9 rounded-full border flex items-center justify-center" style="border-color:var(--border-bright);background:rgba(10,10,10,.6);">${I.close}</button>
+        <div class="text-center">
+          <div class="font-display font-bold text-[15px] tracking-[.2em]">RARO</div>
+        </div>
+        <div class="w-9 h-9"></div>
+      </div>
+      <!-- viewport -->
+      <div class="flex-1 mx-3 rounded-2xl overflow-hidden relative viewport-grain" onclick="tapFocus(event)" id="viewport">
+        <div class="rule-thirds"></div>
+        <!-- focus ring -->
+        <div class="focus-ring" id="focusRing"></div>
+        <!-- top-right Raro Replay widget -->
+        <div class="absolute top-3 right-3 flex flex-col gap-2 items-end z-10">
+          <button onclick="toggleBuffer()" id="bufferPill" class="pill" style="padding:5px 10px;font-family:'JetBrains Mono';font-size:10px;letter-spacing:.08em;">
+            <span class="w-1.5 h-1.5 rounded-full bg-white/30" id="bufferDot"></span>
+            <span>Raro Replay <span id="bufferSec">15s</span></span>
+          </button>
+        </div>
+        <!-- top-left REC indicator -->
+        <div class="absolute top-3 left-3 z-10 hidden" id="recIndicator">
+          <div class="flex items-center gap-2 px-2.5 py-1 rounded-md" style="background:rgba(0,0,0,.6);backdrop-filter:blur(8px);">
+            <div class="rec-dot"></div>
+            <span class="font-mono text-[12px]" id="recTimer">00:00:00</span>
+          </div>
+        </div>
+        <!-- buffer bar (top of viewport) -->
+        <div class="absolute top-12 left-3 right-3 hidden" id="bufferBar">
+          <div class="buffer-bar"><div class="fill"></div></div>
+        </div>
+        <!-- center hint -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" id="centerHint">
+          <div class="text-white/60 mb-3">${I.camera.replace('width="24" height="24"','width="42" height="42"').replace('stroke-width="1.6"','stroke-width="1.2"')}</div>
+          <div class="font-mono text-[10px]" style="color:rgba(255,255,255,.35);letter-spacing:.2em;">DIGA “RARO” PARA GRAVAR</div>
+        </div>
+        <!-- bottom HUD inside viewport -->
+        <div class="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+          <button onclick="go('settings')" class="font-mono text-[11px] text-white/90" style="text-shadow:0 1px 4px rgba(0,0,0,.8);">
+            <span id="hudRes">1080p</span> · <span id="hudFps">60FPS</span> · <span id="hudLens">1x</span>
+          </button>
+          <div class="flex gap-1.5">
+            <button onclick="setLens('0.5x')" id="lens05" class="pill">0.5×</button>
+            <button onclick="setLens('1x')"  id="lens1"  class="pill active">1×</button>
+          </div>
+        </div>
+      </div>
+      <!-- bottom controls -->
+      <div class="px-6 pt-6 pb-7 relative">
+        <div class="flex items-center justify-between">
+          <button onclick="go('gallery')" class="btn-touch w-14 h-14 rounded-full flex items-center justify-center border" style="border-color:var(--border-bright);background:var(--bg-elev);">
+            ${I.folder}
+          </button>
+          <div onclick="toggleRecord()" class="record-btn btn-touch" id="recordBtn">
+            <div class="inner"></div>
+          </div>
+          <button onclick="go('settings')" class="btn-touch w-14 h-14 rounded-full flex items-center justify-center border" style="border-color:var(--border-bright);background:var(--bg-elev);">
+            ${I.gear}
+          </button>
+        </div>
+        <div class="absolute left-0 right-0 bottom-0 grad-line"></div>
+      </div>
+    </div>
+  `;
+}
+function renderCameraHud(){
+  const root = $('#screen-camera'); if(!root) return;
+  root.querySelector('#hudRes').textContent = appState.resolution;
+  root.querySelector('#hudFps').textContent = appState.fps + 'FPS';
+  root.querySelector('#hudLens').textContent = appState.lens;
+  // lens active
+  root.querySelector('#lens05').classList.toggle('active', appState.lens==='0.5x');
+  root.querySelector('#lens1').classList.toggle('active', appState.lens==='1x');
+  // buffer pill state
+  const bp = root.querySelector('#bufferPill');
+  const bd = root.querySelector('#bufferDot');
+  bp.classList.toggle('active', appState.bufferEnabled);
+  if(appState.bufferEnabled){
+    bd.style.background = 'var(--raro-red)';
+    bd.style.boxShadow = '0 0 8px rgba(255,45,85,.6)';
+    bd.style.animation = 'recPulse 1.4s ease-in-out infinite';
+  } else {
+    bd.style.background = 'rgba(255,255,255,.3)';
+    bd.style.boxShadow = 'none';
+    bd.style.animation = 'none';
+  }
+  root.querySelector('#bufferSec').textContent = appState.buffer + 's';
+  root.querySelector('#bufferBar').classList.toggle('hidden', !appState.bufferEnabled);
+  // recording UI
+  root.querySelector('#recordBtn').classList.toggle('recording', appState.recording);
+  root.querySelector('#recIndicator').classList.toggle('hidden', !appState.recording);
+  root.querySelector('#centerHint').classList.toggle('hidden', appState.recording);
+}
+let recTimerInt = null, recSeconds = 0;
+function toggleRecord(){
+  appState.recording = !appState.recording;
+  renderCameraHud();
+  if(appState.recording){
+    recSeconds = 0;
+    updateTimer();
+    recTimerInt = setInterval(()=>{ recSeconds++; updateTimer(); }, 1000);
+  } else {
+    clearInterval(recTimerInt);
+  }
+}
+function updateTimer(){
+  const h = String(Math.floor(recSeconds/3600)).padStart(2,'0');
+  const m = String(Math.floor((recSeconds%3600)/60)).padStart(2,'0');
+  const s = String(recSeconds%60).padStart(2,'0');
+  const t = $('#recTimer'); if(t) t.textContent = `${h}:${m}:${s}`;
+}
+function toggleBuffer(){
+  // Raro Replay está sempre ativo — clicar alterna apenas a duração do buffer
+  appState.buffer = appState.buffer === '15' ? '30' : '15';
+  appState.bufferEnabled = true;
+  renderCameraHud();
+}
+function setLens(l){
+  appState.lens = l;
+  // animate
+  const vp = $('#viewport');
+  if(vp){ vp.style.filter = 'blur(4px)'; vp.style.transform='scale(1.02)'; vp.style.transition='all .2s';
+    setTimeout(()=>{ vp.style.filter=''; vp.style.transform=''; }, 220);
+  }
+  renderCameraHud();
+}
+function tapFocus(e){
+  if(e.target.closest('button')) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  const ring = $('#focusRing');
+  ring.style.left = (e.clientX - r.left) + 'px';
+  ring.style.top  = (e.clientY - r.top) + 'px';
+  ring.classList.remove('show');
+  void ring.offsetWidth;
+  ring.classList.add('show');
+}
+
+/* ============================ SCREEN: LOCK ============================ */
+function screenLock(){
+  return `
+    <div class="absolute inset-0 bg-black flex flex-col items-center justify-center cursor-pointer" ondblclick="exitLock()" id="lockScreen">
+      <div class="rec-dot" style="width:14px;height:14px;"></div>
+      <div class="font-mono text-white/70 mt-5 text-[13px]" id="lockTimer">00:00:00</div>
+      <div class="absolute bottom-10 left-0 right-0 text-center text-[11px]" style="color:rgba(255,255,255,.25);letter-spacing:.05em;">
+        Toque duas vezes para sair do modo lock
+      </div>
+    </div>
+  `;
+}
+function enterLock(){
+  appState.lockMode = true;
+  go('lock');
+  // mirror timer
+  $('#lockTimer').textContent = $('#recTimer')?.textContent || '00:00:00';
+  appState._lockInt = setInterval(()=>{
+    const t = $('#recTimer'); if(t) $('#lockTimer').textContent = t.textContent;
+  }, 500);
+}
+function exitLock(){
+  appState.lockMode = false;
+  clearInterval(appState._lockInt);
+  go('camera');
+}
+
+/* ============================ SCREEN: SETTINGS ============================ */
+function screenSettings(){
+  return `
+    <div class="absolute inset-0 flex flex-col">
+      <div class="pt-[60px] px-5 pb-3 flex items-center gap-3 relative z-20" style="background:rgba(0,0,0,.6);backdrop-filter:blur(10px);">
+        <button onclick="go('camera')" class="btn-touch w-9 h-9 rounded-full border flex items-center justify-center" style="border-color:var(--border-bright);">${I.back}</button>
+        <div class="font-display text-[18px] font-semibold flex-1">Configurações</div>
+      </div>
+      <div class="grad-line-thin"></div>
+      <div class="flex-1 overflow-y-auto no-scrollbar px-4 py-4 pb-24" id="settingsBody">
+        <!-- sections injected -->
+      </div>
+    </div>
+  `;
+}
+function renderSettings(){
+  const body = $('#settingsBody'); if(!body) return;
+  body.innerHTML = `
+    ${section('Qualidade de Gravação', `
+      <div class="space-y-3.5">
+        <div>
+          <div class="text-[11px] mb-2" style="color:var(--ink-dim)">Resolução</div>
+          <div class="grid grid-cols-2 gap-1.5">
+            ${[
+              {v:'720p',  l:'720p HD'},
+              {v:'1080p', l:'1080p Full HD'},
+              {v:'4K',    l:'4K Ultra HD'},
+              {v:'4K60',  l:'4K 60fps'},
+            ].map(r=>`<button onclick="appState.resolution='${r.v}';renderSettings();" class="chip btn-touch ${appState.resolution===r.v?'active':''}">${r.l}</button>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div class="text-[11px] mb-2" style="color:var(--ink-dim)">FPS</div>
+          <div class="flex gap-1.5">
+            <button onclick="appState.fps='30';renderSettings();" class="chip btn-touch flex-1 ${appState.fps==='30'?'active':''}">30 FPS <span class="opacity-50 text-[10px]">Standard</span></button>
+            <button onclick="appState.fps='60';renderSettings();" class="chip btn-touch flex-1 ${appState.fps==='60'?'active':''}">60 FPS <span class="opacity-50 text-[10px]">Smooth</span></button>
+          </div>
+        </div>
+        <div class="flex items-center justify-between gap-3 pt-1">
+          <div>
+            <div class="text-[14px]">Estabilização nativa</div>
+            <div class="text-[11px]" style="color:var(--ink-dim)">Reduz tremor com sensor</div>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:rgba(52,199,89,.1);border:1px solid rgba(52,199,89,.35);">
+            <span class="w-1.5 h-1.5 rounded-full" style="background:#34c759;box-shadow:0 0 8px rgba(52,199,89,.7);"></span>
+            <span class="font-mono text-[10px]" style="color:#34c759;letter-spacing:.12em;">SEMPRE ATIVADA</span>
+          </div>
+        </div>
+      </div>
+    `)}
+
+    <div class="grad-border mt-3.5">
+      <div class="inner p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="section-label grad-text">Raro Replay · Buffer rotativo</div>
+        </div>
+        <div class="text-[12px] mb-3 leading-relaxed" style="color:var(--ink-dim)">
+          Records 15 or 30 seconds before the 'RARO' voice command or the button on the home screen.
+        </div>
+        <div>
+          <div class="text-[11px] mb-2" style="color:var(--ink-dim)">Duração do buffer</div>
+          <div class="flex gap-1.5">
+            ${['15','30'].map(b=>`<button onclick="appState.buffer='${b}';appState.bufferEnabled=true;renderSettings();" class="chip btn-touch flex-1 ${appState.buffer===b?'active':''}">${b}s</button>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${section('Controle de Gravação', `
+      <div class="text-[12.5px] leading-relaxed mb-3.5" style="color:var(--ink-dim)">
+        Escolha o modo que você deseja gravar. No modo <span class="text-white">ON</span> a gravação é controlada pela voz.
+        No modo <span class="text-white">OFF</span>, a gravação é controlada pelos botões laterais de volume do aparelho —
+        <span class="font-mono text-white">+</span> inicia, <span class="font-mono text-white">−</span> finaliza.
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="appState.controlMode='volume';renderSettings();" class="btn-touch rounded-xl border p-3.5 text-left transition-all" style="${appState.controlMode==='volume'?'border-color:#fff;background:#1a1a1a;box-shadow:inset 0 0 0 1px #fff;':'border-color:var(--border-bright);background:var(--bg-card);'}">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-mono text-[10px]" style="color:${appState.controlMode==='volume'?'#fff':'var(--ink-faint)'};letter-spacing:.18em;">OFF</span>
+            ${appState.controlMode==='volume' ? '<div class="check-rainbow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>' : ''}
+          </div>
+          <div class="text-[14px] font-semibold mb-0.5">Volume</div>
+          <div class="font-mono text-[11px]" style="color:var(--ink-dim);">+ ou −</div>
+        </button>
+        <button onclick="appState.controlMode='voice';renderSettings();" class="btn-touch rounded-xl border p-3.5 text-left transition-all" style="${appState.controlMode==='voice'?'border-color:#fff;background:#1a1a1a;box-shadow:inset 0 0 0 1px #fff;':'border-color:var(--border-bright);background:var(--bg-card);'}">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-mono text-[10px]" style="color:${appState.controlMode==='voice'?'#fff':'var(--ink-faint)'};letter-spacing:.18em;">ON</span>
+            ${appState.controlMode==='voice' ? '<div class="check-rainbow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>' : ''}
+          </div>
+          <div class="text-[14px] font-semibold mb-0.5">Voz ativa</div>
+          <div class="font-mono text-[11px]" style="color:var(--ink-dim);">Diga "Raro"</div>
+        </button>
+      </div>
+    `)}
+
+    ${section('Idioma', `
+      <div class="grid grid-cols-3 gap-1.5">
+        ${[
+          {v:'pt', flag:'<svg width="36" height="26" viewBox="0 0 36 26"><rect width="36" height="26" rx="4" fill="#009c3b"/><polygon points="18,4 32,13 18,22 4,13" fill="#ffdf00"/><circle cx="18" cy="13" r="5" fill="#002776"/><path d="M13 13 Q18 10 23 13" stroke="#fff" stroke-width="0.6" fill="none"/></svg>', label:'PT'},
+          {v:'es', flag:'<svg width="36" height="26" viewBox="0 0 36 26"><rect width="36" height="26" rx="4" fill="#aa151b"/><rect y="6.5" width="36" height="13" fill="#f1bf00"/><rect x="6" y="10" width="3.5" height="6" fill="#aa151b"/></svg>', label:'ES'},
+          {v:'en', flag:'<svg width="36" height="26" viewBox="0 0 36 26"><defs><clipPath id="usclip"><rect width="36" height="26" rx="4"/></clipPath></defs><g clip-path="url(#usclip)"><rect width="36" height="26" fill="#fff"/><g fill="#b22234"><rect y="0" width="36" height="2"/><rect y="4" width="36" height="2"/><rect y="8" width="36" height="2"/><rect y="12" width="36" height="2"/><rect y="16" width="36" height="2"/><rect y="20" width="36" height="2"/><rect y="24" width="36" height="2"/></g><rect width="15" height="14" fill="#3c3b6e"/></g></svg>', label:'EN'},
+        ].map(L=>`
+          <button onclick="appState.language='${L.v}';renderSettings();" class="btn-touch rounded-xl border p-3 flex flex-col items-center gap-1.5" style="${appState.language===L.v?'border-color:#fff;background:#1a1a1a;box-shadow:inset 0 0 0 1px #fff;':'border-color:var(--border-bright);background:var(--bg-card);'}">
+            ${L.flag}
+            <span class="font-mono text-[11px]" style="color:${appState.language===L.v?'#fff':'var(--ink-dim)'};letter-spacing:.15em;">${L.label}</span>
+          </button>
+        `).join('')}
+      </div>
+    `)}
+
+    <div class="mt-3.5">
+      <button onclick="go('paywall')" class="btn-touch w-full py-3.5 rounded-2xl text-[14px] font-semibold flex items-center justify-center gap-2" style="background:var(--raro-gradient);color:#000;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5zm0 2h14v2H5z"/></svg>
+        Ver Planos
+      </button>
+    </div>
+
+    ${section('Sobre', `
+      <div class="flex items-center justify-between py-2">
+        <span class="text-[13px]" style="color:var(--ink-dim)">Versão</span>
+        <span class="font-mono text-[12px]">1.0.0 · build 23</span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-t" style="border-color:var(--border)">
+        <span class="text-[13px]">Termos de Uso</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <div class="flex items-center justify-between py-2 border-t" style="border-color:var(--border)">
+        <span class="text-[13px]">Política de Privacidade</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#737373" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+    `)}
+
+    <div class="text-center font-mono text-[10px] mt-6" style="color:var(--ink-faint);letter-spacing:.2em;">RARO · CAPTURE UNSCRIPTED</div>
+  `;
+
+  // bind toggles
+  $$('.toggle[data-key]', body).forEach(t=>{
+    t.onclick = ()=>{
+      const k = t.dataset.key;
+      appState[k] = !appState[k];
+      renderSettings();
+      if(k==='translation') {} 
+    };
+  });
+}
+function section(title, inner){
+  return `
+    <div class="mt-3.5">
+      <div class="section-label grad-text mb-2 px-1">${title}</div>
+      <div class="card">${inner}</div>
+    </div>
+  `;
+}
+function toggleRow(title, desc, key, val, noBg){
+  return `
+    <div class="flex items-center justify-between gap-3 ${noBg?'':'mb-0'}">
+      <div>
+        <div class="text-[14px]">${title}</div>
+        <div class="text-[11px]" style="color:var(--ink-dim)">${desc}</div>
+      </div>
+      ${toggleEl(key, val)}
+    </div>
+  `;
+}
+function toggleEl(key, val){
+  return `<div class="toggle ${val?'on':''}" data-key="${key}"></div>`;
+}
+
+/* ============================ SCREEN: GALLERY ============================ */
+function screenGallery(){
+  const items = [
+    {d:'02:14',h:340},{d:'00:48',h:160},{d:'05:32',h:80},
+    {d:'00:15',h:280},{d:'12:08',h:200},{d:'01:33',h:60},
+    {d:'00:24',h:120},{d:'03:51',h:240},{d:'00:09',h:300},
+    {d:'07:22',h:30},{d:'00:30',h:180},{d:'02:46',h:100},
+  ];
+  return `
+    <div class="absolute inset-0 flex flex-col">
+      <div class="pt-[60px] px-5 pb-3 flex items-center gap-3 relative z-20">
+        <button onclick="go('camera')" class="btn-touch w-9 h-9 rounded-full border flex items-center justify-center" style="border-color:var(--border-bright);">${I.back}</button>
+        <div class="font-display text-[18px] font-semibold flex-1">Galeria</div>
+        <div class="font-mono text-[10px]" style="color:var(--ink-dim);letter-spacing:.1em;">${items.length} vídeos</div>
+      </div>
+      <div class="px-5 mb-3 flex gap-1.5">
+        <button class="pill active">Todos</button>
+        <button class="pill">Hoje</button>
+        <button class="pill">Esta semana</button>
+        <button class="pill">Raro Replay</button>
+      </div>
+      <div class="grad-line-thin mx-5"></div>
+      <div class="flex-1 overflow-y-auto no-scrollbar px-3 pt-3 pb-10">
+        <div class="grid grid-cols-3 gap-1.5">
+          ${items.map((it,i)=>`
+            <div class="thumb btn-touch" onclick="go('preview')">
+              <div class="grad" style="background:hsl(${it.h},70%,40%);"></div>
+              <div class="absolute inset-0" style="background:linear-gradient(135deg,rgba(0,0,0,.4) 0%,rgba(0,0,0,0) 50%,rgba(0,0,0,.6) 100%);"></div>
+              <div class="play"><svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,.95)"><path d="M8 5v14l11-7z"/></svg></div>
+              <div class="dur">${it.d}</div>
+              ${i%4===0?`<div class="absolute top-1.5 left-1.5 grad-bg rounded-sm" style="width:6px;height:6px;"></div>`:''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================ SCREEN: PREVIEW ============================ */
+function screenPreview(){
+  return `
+    <div class="absolute inset-0 flex flex-col">
+      <div class="pt-[60px] px-5 pb-3 flex items-center gap-3 relative z-20">
+        <button onclick="go('gallery')" class="btn-touch w-9 h-9 rounded-full border flex items-center justify-center" style="border-color:var(--border-bright);">${I.back}</button>
+        <div class="font-display text-[15px] font-semibold flex-1">Vídeo · 15/05 09:41</div>
+        <button onclick="alert('Mock: Share sheet')" class="btn-touch w-9 h-9 rounded-full border flex items-center justify-center" style="border-color:var(--border-bright);">${I.share}</button>
+      </div>
+      <div class="mx-3 rounded-2xl overflow-hidden relative aspect-[9/14] viewport-grain">
+        <div class="absolute inset-0" style="background:linear-gradient(135deg,hsl(280,60%,35%),hsl(200,70%,30%) 60%, hsl(160,55%,25%));opacity:.7;mix-blend-mode:screen;"></div>
+        <div class="absolute inset-0" style="background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.8));"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <button class="w-16 h-16 rounded-full flex items-center justify-center" style="background:rgba(0,0,0,.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25);">
+            ${I.play}
+          </button>
+        </div>
+        <div class="absolute bottom-3 left-3 right-3 space-y-2">
+          <div class="scrubber"><div class="pos"></div><div class="knob"></div></div>
+          <div class="flex justify-between font-mono text-[11px] text-white/90">
+            <span>00:48</span><span>02:30</span>
+          </div>
+        </div>
+        <div class="absolute top-3 left-3 font-mono text-[10px] px-2 py-1 rounded" style="background:rgba(0,0,0,.55);letter-spacing:.1em;">
+          1080p · 60FPS · 0.5×
+        </div>
+      </div>
+
+      <div class="px-4 mt-5">
+        <div class="card">
+          <div class="text-[11px] font-mono mb-2" style="color:var(--ink-faint);letter-spacing:.15em;">INFO</div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div><div class="font-mono text-[15px]">256 MB</div><div class="text-[10px]" style="color:var(--ink-dim)">TAMANHO</div></div>
+            <div><div class="font-mono text-[15px]">02:30</div><div class="text-[10px]" style="color:var(--ink-dim)">DURAÇÃO</div></div>
+            <div><div class="font-mono text-[15px]">H.265</div><div class="text-[10px]" style="color:var(--ink-dim)">CODEC</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="absolute bottom-7 left-4 right-4 flex gap-2">
+        <button onclick="alert('Mock: Share sheet')" class="btn-touch flex-1 py-3 rounded-xl border flex items-center justify-center gap-2 text-[13px]" style="border-color:var(--border-bright);background:var(--bg-elev);">${I.share} Compartilhar</button>
+        <button class="btn-touch w-12 py-3 rounded-xl border flex items-center justify-center" style="border-color:var(--border-bright);background:var(--bg-elev);color:#ff2d55;">${I.trash}</button>
+        <button class="btn-touch w-12 py-3 rounded-xl border flex items-center justify-center" style="border-color:var(--border-bright);background:var(--bg-elev);">${I.info}</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================ SCREEN: PAYWALL ============================ */
+function screenPaywall(){
+  const features = [
+    'Gravação em 4K 60fps',
+    'Buffer estendido (até 60s)',
+    'Sem anúncios',
+  ];
+  const featureList = features.map(f => `
+    <div class="flex items-center gap-2 text-[11.5px] leading-snug">
+      <div class="w-3.5 h-3.5 rounded-full flex-shrink-0 flex items-center justify-center" style="background:var(--raro-red-radial);box-shadow:0 0 8px rgba(255,45,85,.4);">
+        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+      </div>
+      <span style="color:var(--ink);">${f}</span>
+    </div>
+  `).join('');
+
+  const monthlySelected = appState.plan === 'monthly';
+  const yearlySelected  = appState.plan === 'yearly';
+
+  return `
+    <div class="absolute inset-0 flex flex-col" style="position:relative;">
+      <!-- subtle RARO watermark + ambient glow -->
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none" style="opacity:.05;">
+        <div class="font-display font-bold text-[180px] tracking-[.02em] leading-none" style="transform:translateY(-80px);">RARO</div>
+      </div>
+      <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(70% 50% at 50% 30%,rgba(255,107,53,.08),transparent 60%),radial-gradient(60% 40% at 80% 80%,rgba(0,122,255,.06),transparent 70%);"></div>
+
+      <div class="pt-[60px] px-5 pb-2 flex items-center justify-between relative z-10">
+        <div class="font-display font-bold text-[15px] tracking-[.2em]">RARO</div>
+        <button onclick="go('camera')" class="btn-touch w-9 h-9 rounded-full border flex items-center justify-center" style="border-color:var(--border-bright);background:rgba(10,10,10,.6);">${I.close}</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto no-scrollbar px-5 pb-44 relative z-10">
+        <h1 class="font-display font-bold text-[30px] leading-[1.05] mb-2">Escolha seu plano</h1>
+        <p class="text-[12.5px] leading-relaxed mb-5" style="color:var(--ink-dim)">
+          Desbloqueie o potencial total do RARO CAM. <span class="text-white">15 dias grátis</span>, cancele quando quiser.
+        </p>
+
+        <!-- TWO PLAN CARDS -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <!-- MONTHLY -->
+          <button onclick="selectPlan('monthly')" class="text-left btn-touch relative rounded-2xl p-0.5 transition-all" style="${monthlySelected
+              ? 'background:linear-gradient(135deg,#ffcc00,#ff9500,#ff2d55);'
+              : 'background:var(--border-bright);'}">
+            <div class="rounded-[14px] p-3.5 h-full flex flex-col" style="background:#0a0a0a;">
+              <div class="flex justify-center mb-2">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L8 8h2v3H5v4h5v3H8l4 4 4-4h-2v-3h5v-4h-5V8h2z" fill="${monthlySelected ? '#ffcc00' : '#525252'}" opacity=".95"/>
+                  <path d="M12 2L8 8h2v3H5v4h5v3H8l4 4 4-4h-2v-3h5v-4h-5V8h2z" fill="none" stroke="${monthlySelected ? '#ff9500' : '#737373'}" stroke-width=".6"/>
+                </svg>
+              </div>
+              <div class="text-center font-display font-bold text-[15px] leading-tight">RARO CAM</div>
+              <div class="text-center font-display text-[13px] leading-tight mb-3" style="color:var(--ink-dim);">Premium</div>
+
+              <div class="text-center mb-1.5">
+                <div class="font-mono text-[10px]" style="color:var(--ink-faint);letter-spacing:.1em;">Unlock full potential</div>
+              </div>
+              <div class="text-center mb-3">
+                <div class="font-display font-bold text-[22px] leading-none">R\$ 9,90</div>
+                <div class="font-mono text-[10px]" style="color:var(--ink-dim);">/mês</div>
+              </div>
+
+              <div class="rounded-lg p-2 mb-3 text-center" style="${monthlySelected ? 'background:rgba(255,204,0,.08);border:1px solid rgba(255,204,0,.3);' : 'background:rgba(255,255,255,.03);border:1px solid var(--border);'}">
+                <div class="font-mono text-[9px]" style="color:${monthlySelected ? '#ffcc00' : 'var(--ink-dim)'};letter-spacing:.1em;">15 DIAS GRÁTIS</div>
+                <div class="text-[9px] mt-0.5" style="color:var(--ink-dim);">Cancele quando quiser</div>
+              </div>
+
+              <div class="space-y-1.5 mb-3 flex-1">${featureList}</div>
+
+              ${monthlySelected ? `
+                <div class="flex items-center justify-center gap-1.5 py-1.5 rounded-lg" style="background:rgba(255,204,0,.08);">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                  <span class="font-mono text-[10px]" style="color:#ffcc00;letter-spacing:.1em;">SELECIONADO</span>
+                </div>
+              ` : ''}
+            </div>
+          </button>
+
+          <!-- YEARLY -->
+          <button onclick="selectPlan('yearly')" class="text-left btn-touch relative rounded-2xl p-0.5 transition-all" style="${yearlySelected
+              ? 'background:linear-gradient(135deg,#ffcc00,#ff9500,#ff2d55);'
+              : 'background:var(--border-bright);'}">
+            <!-- best-offer badge -->
+            <div class="absolute -top-2 right-2 z-10 px-2 py-0.5 rounded-md font-mono text-[9px] font-bold" style="background:#ff2d55;color:#fff;letter-spacing:.08em;box-shadow:0 4px 12px rgba(255,45,85,.4);">
+              MELHOR OFERTA
+            </div>
+            <div class="rounded-[14px] p-3.5 h-full flex flex-col" style="background:#0a0a0a;">
+              <div class="flex justify-center mb-2">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L8 8h2v3H5v4h5v3H8l4 4 4-4h-2v-3h5v-4h-5V8h2z" fill="${yearlySelected ? '#ffcc00' : '#525252'}" opacity=".95"/>
+                  <path d="M12 2L8 8h2v3H5v4h5v3H8l4 4 4-4h-2v-3h5v-4h-5V8h2z" fill="none" stroke="${yearlySelected ? '#ff9500' : '#737373'}" stroke-width=".6"/>
+                </svg>
+              </div>
+              <div class="text-center font-display font-bold text-[15px] leading-tight">RARO CAM</div>
+              <div class="text-center font-display text-[13px] leading-tight mb-3" style="color:var(--ink-dim);">Premium</div>
+
+              <div class="text-center mb-1.5">
+                <div class="font-mono text-[10px]" style="color:var(--ink-faint);letter-spacing:.1em;">Desbloqueie todo o potencial</div>
+              </div>
+              <div class="text-center mb-3">
+                <div class="font-display font-bold text-[22px] leading-none">R\$ 89,90</div>
+                <div class="font-mono text-[10px]" style="color:var(--ink-dim);">/ano</div>
+                <div class="font-mono text-[10px] mt-0.5 grad-text font-bold">R\$ 7,49 / mês</div>
+              </div>
+
+              <div class="rounded-lg p-2 mb-3 text-center" style="${yearlySelected ? 'background:rgba(255,204,0,.08);border:1px solid rgba(255,204,0,.3);' : 'background:rgba(255,255,255,.03);border:1px solid var(--border);'}">
+                <div class="font-mono text-[9px]" style="color:${yearlySelected ? '#ffcc00' : 'var(--ink-dim)'};letter-spacing:.1em;">15 DIAS GRÁTIS</div>
+                <div class="text-[9px] mt-0.5" style="color:var(--ink-dim);">Cancele quando quiser</div>
+              </div>
+
+              <div class="space-y-1.5 mb-3 flex-1">${featureList}</div>
+
+              ${yearlySelected ? `
+                <div class="flex items-center justify-center gap-1.5 py-1.5 rounded-lg" style="background:rgba(255,204,0,.08);">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                  <span class="font-mono text-[10px]" style="color:#ffcc00;letter-spacing:.1em;">SELECIONADO</span>
+                </div>
+              ` : ''}
+            </div>
+          </button>
+        </div>
+
+        <div class="flex justify-center gap-5 mt-6 text-[12px]" style="color:var(--ink-dim)">
+          <button class="underline-offset-2 hover:underline">Termos de Uso</button>
+          <span style="color:var(--ink-faint);">·</span>
+          <button class="underline-offset-2 hover:underline">Política de Privacidade</button>
+        </div>
+      </div>
+
+      <div class="absolute bottom-0 left-0 right-0 px-5 pb-6 pt-4 z-10" style="background:linear-gradient(180deg,transparent,#000 35%);">
+        <button onclick="go('checkout')" class="btn-touch w-full py-3.5 rounded-2xl text-[15px] font-bold" style="background:var(--raro-gradient);color:#000;">Assinar agora</button>
+        <button onclick="alert('Mock: restaurar compras')" class="btn-touch w-full mt-2 py-3 rounded-2xl text-[13px] font-medium border" style="border-color:var(--border-bright);background:var(--bg-elev);color:var(--ink);">Restaurar compras</button>
+        <button onclick="go('camera')" class="btn-touch w-full mt-1 py-2.5 text-[13px]" style="color:var(--ink-dim);">Voltar</button>
+        <div class="text-center mt-1.5 text-[10px] leading-snug" style="color:var(--ink-faint);">
+          Assinatura ${appState.plan==='yearly'?'anual':'mensal'} com renovação automática.<br/>Cancele a qualquer momento nas configurações da App Store.
+        </div>
+      </div>
+    </div>
+  `;
+}
+function selectPlan(p){
+  appState.plan = p;
+  // re-render paywall in place
+  const root = document.getElementById('screen-paywall');
+  if(root){ root.innerHTML = screenPaywall(); }
+}
+
+/* ============================ SCREEN: CHECKOUT ============================ */
+function screenCheckout(){
+  return `
+    <div class="absolute inset-0 flex flex-col">
+      <div class="pt-[60px] px-5 pb-3 flex items-center gap-3 relative z-20">
+        <button onclick="go('paywall')" class="btn-touch w-9 h-9 rounded-full border flex items-center justify-center" style="border-color:var(--border-bright);">${I.back}</button>
+        <div class="font-display text-[16px] font-semibold flex-1">Finalizar assinatura</div>
+      </div>
+      <div class="grad-line-thin mx-5"></div>
+
+      <div class="flex-1 overflow-y-auto no-scrollbar px-5 pt-5 pb-32">
+        <!-- order summary -->
+        <div class="card mb-6">
+          <div class="section-label grad-text mb-3">RESUMO DO PEDIDO</div>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 flex-shrink-0">
+              <img src="assets/raro-logo.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block;"/>
+            </div>
+            <div class="flex-1">
+              <div class="text-[14px] font-medium">RARO Premium</div>
+              <div class="text-[11px]" style="color:var(--ink-dim)">Assinatura mensal</div>
+            </div>
+            <div class="text-right">
+              <div class="font-mono text-[10px]" style="color:var(--ink-dim);letter-spacing:.1em;">A PARTIR DE</div>
+              <div class="font-mono text-[13px]">15/05</div>
+            </div>
+          </div>
+          <div class="grad-line-thin mb-3"></div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[12.5px]" style="color:var(--ink-dim)">Período de teste (15 dias)</span>
+            <span class="font-mono text-[12.5px]">R$ 0,00</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[12.5px]" style="color:var(--ink-dim)">Cobrança a partir de 30/05</span>
+            <span class="font-mono text-[12.5px]">R$ 9,90/mês</span>
+          </div>
+        </div>
+
+        <div class="section-label grad-text mb-2.5 px-1">Método de pagamento</div>
+        <div class="space-y-2.5">
+          <div class="pay-tile" onclick="selectPay('apple')" id="pay-apple">
+            <div class="ico">
+              <!-- Apple mark -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M16.5 12.5c0-2.6 2.1-3.8 2.2-3.9-1.2-1.7-3-2-3.7-2-1.6-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.2 2.5-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8 1.5 0 2 .8 3.3.8 1.4 0 2.2-1.2 3.1-2.5.7-.9 1.2-1.8 1.6-2.9-2.1-.8-3-3-3-3.9zM14.3 4.7c.7-.8 1.2-2 1-3.2-1 .1-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3.1 1.1.1 2.2-.6 2.9-1.4z"/></svg>
+            </div>
+            <div class="flex-1">
+              <div class="text-[14.5px] font-medium">Apple Pay</div>
+              <div class="text-[11px]" style="color:var(--ink-dim)">App Store · Toque para autorizar com Face ID</div>
+            </div>
+            <div class="w-5 h-5 rounded-full border" style="border-color:var(--border-bright);" id="pay-apple-radio"></div>
+          </div>
+          <div class="pay-tile" onclick="selectPay('google')" id="pay-google">
+            <div class="ico">
+              <!-- Google Play mark (geometric triangle, original styling) -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <defs>
+                  <linearGradient id="gpRed" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5470"/><stop offset="1" stop-color="#ff2d55"/></linearGradient>
+                  <linearGradient id="gpYel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff9500"/></linearGradient>
+                  <linearGradient id="gpGrn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#34c759"/><stop offset="1" stop-color="#00c7be"/></linearGradient>
+                  <linearGradient id="gpBlu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#007aff"/><stop offset="1" stop-color="#af52de"/></linearGradient>
+                </defs>
+                <path d="M3.5 2.5L13 12 3.5 21.5c-.3-.2-.5-.6-.5-1V3.5c0-.4.2-.8.5-1z" fill="url(#gpBlu)"/>
+                <path d="M3.5 2.5L13 12l3-3L4.7 2.4c-.4-.2-.9-.1-1.2.1z" fill="url(#gpGrn)"/>
+                <path d="M3.5 21.5L13 12l3 3-11.3 6.6c-.4.2-.9.1-1.2-.1z" fill="url(#gpRed)"/>
+                <path d="M16 9l4.5 2.5c.7.4.7 1.6 0 2L16 15l-3-3 3-3z" fill="url(#gpYel)"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <div class="text-[14.5px] font-medium">Google Play</div>
+              <div class="text-[11px]" style="color:var(--ink-dim)">Play Store · Cobrança na sua conta Google</div>
+            </div>
+            <div class="w-5 h-5 rounded-full border" style="border-color:var(--border-bright);" id="pay-google-radio"></div>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-2.5 mt-5 text-[11.5px] leading-relaxed" style="color:var(--ink-faint)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div>Pagamento processado pela App Store ou Google Play. O RARO não armazena dados do seu cartão.</div>
+        </div>
+      </div>
+
+      <div class="absolute bottom-0 left-0 right-0 px-5 pb-7 pt-4" style="background:linear-gradient(180deg,transparent,#000 30%);">
+        <button onclick="confirmPay()" id="confirmPayBtn" class="btn-touch w-full py-4 rounded-2xl text-[15px] font-bold opacity-50 pointer-events-none" style="background:var(--raro-gradient);color:#000;">Confirmar assinatura</button>
+        <div class="text-center mt-2 font-mono text-[10px]" style="color:var(--ink-faint);letter-spacing:.12em;" id="payHint">SELECIONE UM MÉTODO ACIMA</div>
+      </div>
+    </div>
+  `;
+}
+function selectPay(m){
+  appState.payMethod = m;
+  ['apple','google'].forEach(k=>{
+    const tile = $('#pay-'+k);
+    const radio = $('#pay-'+k+'-radio');
+    if(!tile) return;
+    if(k===m){
+      tile.classList.add('selected');
+      radio.style.background = 'var(--raro-red-radial)';
+      radio.style.borderColor = '#fff';
+      radio.innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:#fff;margin:5px;"></div>';
+    } else {
+      tile.classList.remove('selected');
+      radio.style.background = '';
+      radio.style.borderColor = 'var(--border-bright)';
+      radio.innerHTML = '';
+    }
+  });
+  const btn = $('#confirmPayBtn');
+  btn.classList.remove('opacity-50','pointer-events-none');
+  const hint = $('#payHint');
+  hint.innerHTML = m==='apple'
+    ? 'AUTORIZE COM FACE ID · APP STORE'
+    : 'AUTORIZE NA SUA CONTA GOOGLE · PLAY STORE';
+}
+function confirmPay(){
+  appState.subscribed = true;
+  go('camera');
+  setTimeout(()=>{
+    // a tiny toast
+    const t = document.createElement('div');
+    t.textContent = '✓  Assinatura ativa — 15 dias grátis';
+    t.style.cssText = `position:absolute;top:108px;left:50%;transform:translateX(-50%);z-index:60;
+      padding:10px 18px;border-radius:12px;background:rgba(10,10,10,.95);backdrop-filter:blur(10px);
+      border:1px solid #2e2e2e;font-size:12.5px;color:#fff;font-family:'Inter';
+      box-shadow:0 8px 30px rgba(0,0,0,.6);`;
+    $('#screen-camera').appendChild(t);
+    setTimeout(()=>{ t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 2200);
+  }, 300);
+}
+
+/* ============================ SCREEN: TRANSLATION OVERLAY ============================ */
+function screenTranslation(){
+  // re-uses camera bg
+  return `
+    <div class="absolute inset-0 flex flex-col">
+      <div class="pt-[60px] px-5 pb-3 flex items-center justify-between relative z-20">
+        <button onclick="go('camera')" class="btn-touch w-9 h-9 rounded-full border flex items-center justify-center" style="border-color:var(--border-bright);">${I.back}</button>
+        <div class="font-display font-bold text-[15px] tracking-[.2em]">RARO</div>
+        <div class="w-9 h-9"></div>
+      </div>
+      <div class="flex-1 mx-3 rounded-2xl overflow-hidden relative viewport-grain">
+        <div class="rule-thirds"></div>
+        <div class="absolute top-3 right-3 flex items-center gap-1.5">
+          <span class="pill" style="background:var(--raro-gradient);color:#000;border-color:transparent;font-family:'JetBrains Mono';font-weight:600;">PT → EN</span>
+          <button onclick="go('camera')" class="pill" style="background:rgba(0,0,0,.5);">OFF</button>
+        </div>
+        <div class="absolute top-3 left-3 flex items-center gap-2 px-2.5 py-1 rounded-md" style="background:rgba(0,0,0,.6);">
+          <div class="rec-dot"></div><span class="font-mono text-[12px]">00:01:14</span>
+        </div>
+        <!-- caption bar -->
+        <div class="absolute left-0 right-0 bottom-0 px-4 pb-6 pt-12" style="background:linear-gradient(180deg,transparent,rgba(0,0,0,.85));">
+          <div class="font-mono text-[10px] mb-1.5" style="color:rgba(255,255,255,.5);letter-spacing:.15em;">LEGENDA · TEMPO REAL</div>
+          <div class="text-[16px] leading-snug text-white mb-1">Today we're going fishing in the river,</div>
+          <div class="text-[14px] leading-snug" style="color:rgba(255,255,255,.55)">"Hoje vamos pescar no rio, o tempo está perfeito"</div>
+        </div>
+      </div>
+      <div class="px-6 pt-6 pb-7 flex items-center justify-between">
+        <div class="w-14 h-14"></div>
+        <div onclick="toggleRecord()" class="record-btn recording btn-touch"><div class="inner"></div></div>
+        <div class="w-14 h-14"></div>
+      </div>
+    </div>
+  `;
+}
+function showTranslation(){
+  go('translation');
+}
+
+/* ============================ SCREEN: HUB DEV ============================ */
+function screenHub(){
+  const tiles = [
+    {id:'splash',n:'01',label:'Splash'},
+    {id:'onb1',n:'02',label:'Grave sem tocar'},
+    {id:'onb2',n:'03',label:'Nunca perca'},
+    {id:'perms',n:'04',label:'Permissões'},
+    {id:'camera',n:'05',label:'Câmera'},
+    {id:'_sub',n:'06',label:'Popup Assinatura'},
+    {id:'settings',n:'07',label:'Configurações'},
+    {id:'gallery',n:'08',label:'Galeria'},
+    {id:'preview',n:'09',label:'Preview'},
+    {id:'paywall',n:'10',label:'Paywall'},
+    {id:'checkout',n:'11',label:'Checkout'},
+    {id:'_xm',n:'12',label:'Xiaomi MIUI'},
+    {id:'hub',n:'13',label:'Hub Dev'},
+    {id:'wordmark',n:'14',label:'Wordmark'},
+  ];
+  return `
+    <div class="absolute inset-0 flex flex-col">
+      <div class="pt-[60px] px-5 pb-3 flex items-center gap-3 relative z-20">
+        <button onclick="go('camera')" class="btn-touch w-9 h-9 rounded-full border flex items-center justify-center" style="border-color:var(--border-bright);">${I.back}</button>
+        <div class="flex-1">
+          <div class="font-mono text-[10px] grad-text" style="letter-spacing:.18em;">DEV PANEL · NÃO ESTÁ NO APP</div>
+          <div class="font-display text-[18px] font-semibold leading-tight">Hub de Navegação</div>
+        </div>
+      </div>
+      <div class="px-5 mb-3">
+        <div class="card text-[11px] font-mono leading-relaxed" style="color:var(--ink-dim)">
+          <div class="flex justify-between"><span>TELA</span><span class="text-white" id="hubScreenName">—</span></div>
+          <div class="flex justify-between"><span>GRAVANDO</span><span class="text-white" id="hubRec">—</span></div>
+          <div class="flex justify-between"><span>BUFFER</span><span class="text-white" id="hubBuf">—</span></div>
+          <div class="flex justify-between"><span>LENTE</span><span class="text-white" id="hubLens">—</span></div>
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto no-scrollbar px-4 pb-10">
+        <div class="grid grid-cols-3 gap-2">
+          ${tiles.map(t=>`
+            <div class="hub-tile" onclick="hubGo('${t.id}')">
+              <div class="preview">
+                ${hubMini(t.id)}
+              </div>
+              <div class="label">
+                <span class="num">${t.n}</span>
+                <span>${t.label}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function hubMini(id){
+  // crude preview hints
+  const map = {
+    splash:`<div class="text-[22px] font-display font-bold tracking-wider">R<span class="grad-text">●</span></div>`,
+    onb1:`<div class="flex flex-col items-center gap-1.5"><div class="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center text-white text-[8px]">🎙</div><div class="text-[7px] font-mono grad-text">RARO</div></div>`,
+    onb2:`<div class="flex flex-col items-center gap-1"><div class="w-12 h-2 rounded grad-bg"></div><div class="text-[7px] font-mono" style="color:var(--ink-dim);letter-spacing:.08em;">15s·30s</div></div>`,
+    perms:`<div class="space-y-1.5 w-10/12"><div class="h-3 rounded bg-white/10"></div><div class="h-3 rounded bg-white/10"></div><div class="h-3 rounded grad-bg opacity-30"></div></div>`,
+    camera:`<div class="w-full h-full viewport-grain relative"><div class="rec-dot absolute top-2 right-2" style="width:5px;height:5px;"></div><div class="w-5 h-5 rounded-full absolute bottom-2 left-1/2 -translate-x-1/2 grad-radial"></div></div>`,
+    lock:`<div class="w-full h-full bg-black flex items-center justify-center"><div class="rec-dot" style="width:6px;height:6px;"></div></div>`,
+    settings:`<div class="w-10/12 space-y-1.5"><div class="h-1.5 w-1/2 rounded grad-bg"></div><div class="h-2 rounded bg-white/10"></div><div class="h-2 rounded bg-white/10"></div><div class="h-2 rounded bg-white/5"></div></div>`,
+    gallery:`<div class="grid grid-cols-3 gap-0.5 w-10/12"><div class="aspect-square rounded-sm" style="background:hsl(340,60%,35%)"></div><div class="aspect-square rounded-sm" style="background:hsl(200,60%,30%)"></div><div class="aspect-square rounded-sm" style="background:hsl(120,40%,25%)"></div><div class="aspect-square rounded-sm" style="background:hsl(45,60%,30%)"></div><div class="aspect-square rounded-sm" style="background:hsl(280,50%,30%)"></div><div class="aspect-square rounded-sm" style="background:hsl(20,60%,30%)"></div></div>`,
+    preview:`<div class="w-10/12 aspect-video rounded relative" style="background:linear-gradient(135deg,#3a1a4a,#1a3a4a);"><div class="absolute inset-0 flex items-center justify-center"><div class="w-4 h-4 rounded-full bg-white/60"></div></div></div>`,
+    paywall:`<div class="flex flex-col items-center gap-1.5"><div class="text-[10px] font-display">RARO</div><div class="w-12 h-4 rounded grad-bg"></div></div>`,
+    checkout:`<div class="flex flex-col items-center gap-1.5"><div class="text-[9px] font-mono grad-text">CHECKOUT</div><div class="flex gap-1"><div class="w-4 h-4 rounded bg-white/10"></div><div class="w-4 h-4 rounded bg-white/10"></div></div></div>`,
+    _sub:`<div class="flex flex-col items-center gap-1"><div class="text-[10px] font-display grad-text">ASSINE</div><div class="w-12 h-2 rounded grad-bg"></div></div>`,
+    _bt:`<div class="text-white">${I.bt}</div>`,
+    _xm:`<div class="w-9 h-9 rounded-lg border border-white/20 flex items-center justify-center text-[10px] font-mono">MIUI</div>`,
+    hub:`<div class="grid grid-cols-3 gap-0.5 w-10/12"><div class="aspect-square rounded bg-white/10"></div><div class="aspect-square rounded bg-white/10"></div><div class="aspect-square rounded grad-bg opacity-40"></div><div class="aspect-square rounded bg-white/10"></div><div class="aspect-square rounded bg-white/10"></div><div class="aspect-square rounded bg-white/10"></div></div>`,
+    wordmark:`<div class="font-display font-bold tracking-widest text-white text-[14px]">RARO</div>`,
+  };
+  return map[id] || '';
+}
+function hubGo(id){
+  if(id==='_sub'){ go('camera'); setTimeout(openSubPopup,250); return; }
+  if(id==='_xm'){ go('settings'); setTimeout(showXiaomi,200); return; }
+  go(id);
+}
+function renderHub(){
+  const screenNames = {splash:'Splash',onb1:'Grave sem tocar',onb2:'Nunca perca o momento',perms:'Permissões',camera:'Câmera',settings:'Configurações',gallery:'Galeria',preview:'Preview',paywall:'Paywall',checkout:'Checkout',hub:'Hub',wordmark:'Wordmark'};
+  $('#hubScreenName').textContent = screenNames[appState.screen] || appState.screen;
+  $('#hubRec').textContent = appState.recording ? 'SIM' : 'NÃO';
+  $('#hubBuf').textContent = appState.bufferEnabled ? appState.buffer+'s' : 'OFF';
+  $('#hubLens').textContent = appState.lens;
+}
+
+/* ============================ SCREEN: WORDMARK ============================ */
+function screenWordmark(){
+  return `
+    <div class="absolute inset-0 flex flex-col items-center justify-center">
+      <div class="font-display font-bold text-white text-[88px] tracking-[.04em] leading-none mb-3">RARO</div>
+      <div class="w-44 h-[2px] grad-bg rounded mb-7" style="background:var(--raro-gradient);"></div>
+      <div class="font-mono text-[11px]" style="color:var(--ink-dim);letter-spacing:.18em;">PROTÓTIPO NAVEGACIONAL · v1.0</div>
+      <button onclick="go('hub')" class="absolute bottom-12 left-1/2 -translate-x-1/2 text-[12px]" style="color:var(--ink-faint);">tap para voltar</button>
+    </div>
+  `;
+}
+
+/* ============================ OVERLAYS (BT, Xiaomi) ============================ */
+function openSubPopup(){
+  if(appState.screen!=='camera') return;
+  $('#subBackdrop').classList.add('show');
+  $('#subPopup').classList.add('show');
+}
+function closeSubPopup(){
+  $('#subBackdrop').classList.remove('show');
+  $('#subPopup').classList.remove('show');
+}
+function openBT(){ $('#btBackdrop').classList.add('show'); $('#btSheet').classList.add('show'); }
+function closeBT(){ $('#btBackdrop').classList.remove('show'); $('#btSheet').classList.remove('show'); }
+function showXiaomi(){ $('#xmBackdrop').classList.add('show'); $('#xmSheet').classList.add('show'); }
+function closeXiaomi(){ $('#xmBackdrop').classList.remove('show'); $('#xmSheet').classList.remove('show'); }
+
+/* ============================ HELPERS ============================ */
+function raroLogoSVG(w,h){
+  // Uses the official client logo (square app-icon lockup with R mark, wordmark, and rainbow underline).
+  // We render it as a square at the smaller of w/h so it never distorts. The icon's own dark bg merges into the page.
+  const size = Math.min(w, h ? h * 1.25 : w);
+  return `
+    <div style="width:${w}px;height:${h||w}px;display:flex;align-items:center;justify-content:center;">
+      <img src="assets/raro-logo.png" alt="RARO"
+        style="width:${size}px;height:${size}px;object-fit:contain;display:block;
+               filter:drop-shadow(0 0 24px rgba(255,107,53,.25)) drop-shadow(0 0 60px rgba(0,122,255,.18));
+               animation:logoBreathe 3.4s ease-in-out infinite;" />
+    </div>
+  `;
+}
+
+/* ============================ BOOT ============================ */
+registerScreens();
+
+/* ---- Embed routing for the presentation deck (hash params) ----
+   Usage: #embed=1&screen=camera&sub=1&rec=1&bt=1&xm=1
+   embed=1   → hide chrome, transparent canvas background, no auto-redirect from splash
+   screen=X  → go to that screen directly
+   sub=1     → mark as subscribed (suppresses popup on camera)
+   popup=1   → force subscription popup open on camera
+   rec=1     → start in recording state (timer running)
+   bt=1      → open Bluetooth overlay (on camera)
+   xm=1      → open Xiaomi MIUI overlay (on settings)
+   pay=X     → preselect payment method on checkout (apple|google)
+*/
+const _hash = location.hash.slice(1);
+const _params = new URLSearchParams(_hash);
+const _embed = _params.get('embed') === '1';
+if(_embed){
+  // strip canvas chrome
+  document.querySelector('.dev-btn')?.remove();
+  document.querySelector('.meta-tag')?.remove();
+  // strip the prototype's own phone bezel — the deck supplies its own framing
+  const style = document.createElement('style');
+  style.textContent = `
+    html,body{background:transparent !important;}
+    body::before{display:none !important;}
+    .stage,.stage-inner{position:static !important;display:block !important;transform:none !important;}
+    .phone-wrap{width:393px !important;height:852px !important;filter:none !important;margin:0 auto;}
+    .phone-wrap::before{display:none !important;}
+    .phone-frame{
+      width:393px !important;height:852px !important;
+      background:transparent !important;padding:0 !important;
+      box-shadow:none !important;border-radius:0 !important;
+    }
+    .phone-screen{border-radius:0 !important;}
+    .dynamic-island{display:none !important;}
+    .home-indicator{display:none !important;}
+  `;
+  document.head.appendChild(style);
+}
+
+if(_params.get('sub')==='1') appState.subscribed = true;
+
+const _target = _params.get('screen') || 'splash';
+go(_target);
+
+// auto advance from splash → onboarding — only if not embedded with a fixed target
+if(!_embed && _target==='splash'){
+  setTimeout(()=>{ if(appState.screen==='splash') go('onb1'); }, 1800);
+}
+
+// post-load state hooks
+setTimeout(()=>{
+  if(_params.get('rec')==='1'){
+    if(!appState.recording){
+      appState.recording = true;
+      recSeconds = parseInt(_params.get('t')||'23',10);
+      updateTimer();
+      recTimerInt = setInterval(()=>{ recSeconds++; updateTimer(); }, 1000);
+      renderCameraHud();
+    }
+  }
+  if(_params.get('popup')==='1' && _target==='camera'){
+    // override default suppression: force open
+    appState.subscribed = false;
+    openSubPopup();
+  }
+  if(_params.get('bt')==='1') openBT();
+  if(_params.get('xm')==='1') showXiaomi();
+  if(_params.get('pay')) selectPay(_params.get('pay'));
+}, 250);
+
+/* ============================ STAGE SCALING ============================ */
+function fitStage(){
+  const inner = document.getElementById('stageInner');
+  if(!inner) return;
+  // phone is 413 x 872 with ~40px halo on each side (drop-shadow). Pad a bit.
+  const W = 413, H = 872, pad = 32;
+  const sx = (window.innerWidth - pad*2) / W;
+  const sy = (window.innerHeight - pad*2) / H;
+  const s = Math.min(1, sx, sy);
+  inner.style.transform = `scale(${s})`;
+}
+fitStage();
+window.addEventListener('resize', fitStage);
+</script>
+</body>
+</html>
