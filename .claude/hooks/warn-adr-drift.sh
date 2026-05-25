@@ -31,8 +31,16 @@ esac
 
 if [ "$sensitive" -eq 1 ]; then
   current_branch="$(git -C "$root" rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"
-  new_adrs="$(git -C "$root" diff --name-only main..HEAD 2>/dev/null | grep -E 'docs/decisions/00[0-9]+-' | grep -v '0000-template\|0001-stack\|0002-camera\|0003-replay\|0004-client\|0005-state\|0006-commit\|0007-lock\|0008-scope\|0009-wake\|0010-dual\|0011-volume\|0012-xiaomi' || true)"
-  if [ -z "$new_adrs" ] && [ "$current_branch" != "main" ]; then
+  if [ "$current_branch" = "main" ]; then
+    exit 0
+  fi
+  # Conta ADRs ADICIONADOS (status A) neste branch vs main, em docs/decisions/.
+  # git diff --name-status formato: "A\tpath" para adicionados.
+  new_adrs_count="$(git -C "$root" diff --name-status main..HEAD 2>/dev/null \
+    | awk '$1=="A" && $2 ~ /^docs\/decisions\/00[0-9]+-/' \
+    | wc -l \
+    | tr -d ' ')"
+  if [ "${new_adrs_count:-0}" -eq 0 ]; then
     echo "⚠️  warn-adr-drift: editando arquivo sensível ($rel) sem ADR novo no branch $current_branch." >&2
     echo "    Considere abrir docs/decisions/00NN-<motivo>.md antes da mudança." >&2
   fi
