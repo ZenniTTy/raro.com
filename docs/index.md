@@ -32,7 +32,19 @@
 
 ## Decisions (ADRs)
 
-- decisions/ — ADRs 0001+ (criados na Fase 3 µ-sprint 3.3)
+- [decisions/0000-template.md](decisions/0000-template.md) — template ADR
+- [decisions/0001-stack-decisions.md](decisions/0001-stack-decisions.md) — stack tecnológica inicial fixada
+- [decisions/0002-camera-native-bridge.md](decisions/0002-camera-native-bridge.md) — native bridge custom para câmera
+- [decisions/0003-replay-buffer-native.md](decisions/0003-replay-buffer-native.md) — Replay Buffer 100% nativo
+- [decisions/0004-client-only-architecture.md](decisions/0004-client-only-architecture.md) — arquitetura client-only
+- [decisions/0005-state-management-riverpod3.md](decisions/0005-state-management-riverpod3.md) — Riverpod 3 com codegen
+- [decisions/0006-commit-conventions.md](decisions/0006-commit-conventions.md) — Conventional Commits + lefthook + commitlint
+- [decisions/0007-lock-mode-vs-battery-profile.md](decisions/0007-lock-mode-vs-battery-profile.md) — Lock mode em vez de perfis por fabricante
+- [decisions/0008-scope-exclusions.md](decisions/0008-scope-exclusions.md) — itens fora de escopo v1.0
+- [decisions/0009-wake-word-raro.md](decisions/0009-wake-word-raro.md) — wake word é "Raro"
+- [decisions/0010-dual-subscription-plans.md](decisions/0010-dual-subscription-plans.md) — modelo dual mensal + anual
+- [decisions/0011-volume-control-not-bluetooth.md](decisions/0011-volume-control-not-bluetooth.md) — controle por botões de volume
+- [decisions/0012-xiaomi-onboarding-hybrid.md](decisions/0012-xiaomi-onboarding-hybrid.md) — onboarding Xiaomi híbrido
 
 ## Sessions (log append-only)
 
