@@ -21,13 +21,16 @@ need flutter
 need dart
 need git
 need node
+need python3
 
 BUN_VER=$(bun --version)
 FLT_VER=$(flutter --version 2>/dev/null | head -1)
 NODE_VER=$(node --version)
-echo "    bun:    $BUN_VER"
+PY_VER=$(python3 --version)
+echo "    bun:     $BUN_VER"
 echo "    flutter: $FLT_VER"
-echo "    node:   $NODE_VER"
+echo "    node:    $NODE_VER"
+echo "    python3: $PY_VER (usado pelos hooks em .claude/hooks/)"
 
 # ─── Bun workspace install ────────────────────────────
 echo ""

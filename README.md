@@ -19,7 +19,7 @@ bun run test                      # turbo test
 cd apps/mobile && flutter run     # rodar o app no simulador/emulador
 ```
 
-Pré-requisitos: Bun ≥ 1.3.13, Flutter ≥ 3.41 (canal stable), Node ≥ 20.9, Docker, Git.
+Pré-requisitos: Bun ≥ 1.3.13, Flutter ≥ 3.41 (canal stable), Node ≥ 20.9, Python ≥ 3.9 (usado pelos hooks em `.claude/hooks/`), Docker, Git.
 
 ## Estrutura
 
