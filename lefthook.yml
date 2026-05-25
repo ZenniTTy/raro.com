@@ -9,9 +9,7 @@ pre-commit:
       exclude:
         - "**/*.g.dart"
         - "**/*.freezed.dart"
-      run: |
-        cd "$(dirname "{staged_files}" | head -1)" 2>/dev/null
-        dart format --set-exit-if-changed {staged_files}
+      run: dart format --set-exit-if-changed {staged_files}
 
     - name: biome-format
       glob: "*.{json,md,jsonc}"
