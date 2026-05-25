@@ -29,9 +29,37 @@
 - Tradução em tempo real fora de escopo v1.0
 - Onboarding Xiaomi híbrido (auto MIUI + manual em Settings)
 
-### Pendente para próximas entries
+### Adicionado (continuação)
 
-- ADRs 0001–0012 (Fase 3 µ-sprint 3.3)
-- Sessions log (Fase 3 µ-sprint 3.4)
-- Harness completo (Fase 4)
-- Templates spec/plan (Fase 5)
+- 13 ADRs em `docs/decisions/` (0000 template + 0001-0012)
+- 1 session log: `docs/sessions/0001-bootstrap.md` + 0001-INDEX
+- Harness completo em `.claude/`:
+  - 7 subagents com `tools:` allowlist (implementer, validator,
+    adr-guardian, researcher, flutter-test-author, flutter-perf-auditor,
+    design-fidelity-checker)
+  - 8 slash commands (commit, session-end, docs-lint, prime, new-spec,
+    new-plan, verify-slice, ingest-source)
+  - 7 hooks (block-env, block-secrets, format-dart, run-riverpod-codegen,
+    warn-adr-drift, reinject-roadmap registrados em settings.json +
+    verify-task como utilitário invocável manualmente)
+  - `settings.json` com 30 entries em allow + 9 em deny + 6 hook entries
+    em 3 eventos (PreToolUse, PostToolUse, SessionStart)
+- Templates TLC Spec-Driven: `docs/superpowers/specs/0000-template.md`
+  e `docs/superpowers/plans/0000-template.md`
+- `CLAUDE.md` Seção 6 com workflow auto-sizing (quick/medium/large) +
+  sinais que escalam fatia + primeira spec sugerida
+
+### Corrigido (sprints retroativos)
+
+- Sprint 2.7-fixes: 5 fixes pós-Fase 3 (trial 30d direto, hook
+  dart-format sem cd quebrado, warning 14 packages explicado em ADR,
+  smoke test com guards reais, README.md)
+- Sprint 4.7-fixes: 5 fixes pós-Fase 4 (`$schema` URL inexistente
+  removido, Stop event teatral removido, analyze-changed-dart
+  redundante removido, warn-adr-drift sem blacklist hardcoded,
+  setup.sh valida python3)
+
+### Bootstrap status
+
+**v0.1.0 bootstrap completo em 30 commits.** Próximo passo: criar
+primeira spec via `/new-spec camera-native-bridge` (Roadmap prioridade 1).
