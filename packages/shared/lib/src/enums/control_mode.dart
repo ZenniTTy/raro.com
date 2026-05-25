@@ -1,0 +1,4 @@
+enum ControlMode {
+  voice,
+  volume,
+}

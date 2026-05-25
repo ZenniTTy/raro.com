@@ -796,6 +796,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "10.1.1"
+  raro_shared:
+    dependency: "direct main"
+    description:
+      path: "../../packages/shared"
+      relative: true
+    source: path
+    version: "0.1.0"
   record_use:
     dependency: transitive
     description:

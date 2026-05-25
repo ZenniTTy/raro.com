@@ -43,6 +43,10 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
+  # Shared workspace package (constants, enums, event names)
+  raro_shared:
+    path: ../../packages/shared
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
