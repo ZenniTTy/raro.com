@@ -48,7 +48,9 @@
 
 ## Sessions (log append-only)
 
-- sessions/ — session logs (criados na Fase 3 µ-sprint 3.4)
+- [sessions/0000-template.md](sessions/0000-template.md) — template de session log
+- [sessions/0001-INDEX.md](sessions/0001-INDEX.md) — índice de sessions (mais recente no topo)
+- [sessions/0001-bootstrap.md](sessions/0001-bootstrap.md) — bootstrap do projeto (Fases 1–3)
 
 ## Specs e plans (Fase 5 Spec-Driven)
 
