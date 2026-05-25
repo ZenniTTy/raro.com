@@ -129,18 +129,17 @@ Configurados em `.claude/agents/` (a serem criados na Fase 4). Lista canônica:
 
 ## 8. Hooks (Fase 4)
 
-Em `.claude/hooks/` (Fase 4). Bloqueiam ações inseguras:
+Em `.claude/hooks/`. 6 hooks registrados em eventos + 1 utilitário invocável manualmente:
 
 | Hook | Evento | Comportamento |
 |---|---|---|
-| `block-env.sh` | PreToolUse Write/Edit | Bloqueia escrita em `.env`, `key.properties`, `keystore.jks` |
-| `block-secrets.sh` | PreToolUse Bash | Bloqueia comandos que ecoam credenciais |
-| `format-dart.sh` | PostToolUse Edit/Write em `*.dart` | Roda `dart format` automaticamente |
-| `run-riverpod-codegen.sh` | PostToolUse em arquivos com `@riverpod` | Dispara `build_runner` com debounce 90s |
-| `analyze-changed-dart.sh` | PostToolUse | Roda `flutter analyze` em diff |
-| `warn-adr-drift.sh` | PreToolUse | Avisa se mudança toca stack sem ADR aberto |
-| `reinject-roadmap.sh` | SessionStart | Re-injeta TODO.md + Blueprint status |
-| `verify-task.sh` | PreToolUse (commit) | Garante turbo lint + test passam |
+| `block-env.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia escrita em `.env`, `key.properties`, `keystore.jks`, `GoogleService-Info.plist`, `google-services.json` |
+| `block-secrets.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia content com api_key, private_key, BEGIN PEM, etc. |
+| `warn-adr-drift.sh` | PreToolUse Write/Edit/MultiEdit | Avisa (não bloqueia) se mudança toca pubspec/Blueprint/native_bridges sem ADR novo no branch |
+| `format-dart.sh` | PostToolUse Write/Edit/MultiEdit | Roda `dart format` em `*.dart` editado (ignora `*.g.dart`, `*.freezed.dart`) |
+| `run-riverpod-codegen.sh` | PostToolUse Write/Edit/MultiEdit | Detecta `@riverpod` e sinaliza necessidade de codegen (não roda inline) |
+| `reinject-roadmap.sh` | SessionStart | Ecoa locked invariants + estado de sessions/0001-INDEX.md |
+| `verify-task.sh` | (utilitário, sem evento) | Invocável manualmente via `/verify-slice`. Roda `bun run lint && bun run test`. NÃO em Stop event porque seria executado a cada turno do agente. |
 
 ---
 

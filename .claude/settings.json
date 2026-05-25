@@ -60,7 +60,6 @@
         "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           { "type": "command", "command": ".claude/hooks/format-dart.sh" },
-          { "type": "command", "command": ".claude/hooks/analyze-changed-dart.sh" },
           { "type": "command", "command": ".claude/hooks/run-riverpod-codegen.sh" }
         ]
       }
