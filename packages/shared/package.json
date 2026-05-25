@@ -1,0 +1,12 @@
+{
+  "name": "@raro/shared",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "dart analyze .",
+    "typecheck": "dart analyze .",
+    "analyze": "dart analyze .",
+    "test": "dart test",
+    "pub:get": "dart pub get"
+  }
+}
