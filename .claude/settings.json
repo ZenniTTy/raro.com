@@ -3,32 +3,79 @@
   "permissions": {
     "allow": [
       "Bash(bun run *)",
+      "Bash(bun --filter *)",
+      "Bash(bun install*)",
+      "Bash(bunx *)",
       "Bash(flutter analyze *)",
       "Bash(flutter test *)",
       "Bash(flutter pub get *)",
+      "Bash(flutter pub outdated*)",
       "Bash(dart analyze *)",
       "Bash(dart test *)",
       "Bash(dart format *)",
+      "Bash(dart run *)",
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",
       "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git rev-parse*)",
+      "Bash(git branch*)",
+      "Bash(git ls-files*)",
       "Bash(ls *)",
       "Bash(cat *)",
       "Bash(grep *)",
       "Bash(rg *)",
       "Bash(find *)",
-      "Bash(curl *pub.dev*)"
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(curl *pub.dev*)",
+      "Bash(python3 *)",
+      "Bash(./setup.sh*)"
     ],
     "deny": [
       "Bash(git push --force*)",
       "Bash(git push -f*)",
       "Bash(git reset --hard*)",
       "Bash(git commit --no-verify*)",
+      "Bash(* --no-verify*)",
+      "Bash(* --no-gpg-sign*)",
       "Bash(rm -rf /*)",
-      "Bash(* --no-gpg-sign*)"
+      "Bash(rm -rf ~*)",
+      "Bash(rm -rf .git*)"
     ]
   },
-  "hooks": {},
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/block-env.sh" },
+          { "type": "command", "command": ".claude/hooks/block-secrets.sh" },
+          { "type": "command", "command": ".claude/hooks/warn-adr-drift.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/format-dart.sh" },
+          { "type": "command", "command": ".claude/hooks/analyze-changed-dart.sh" },
+          { "type": "command", "command": ".claude/hooks/run-riverpod-codegen.sh" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [{ "type": "command", "command": ".claude/hooks/reinject-roadmap.sh" }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{ "type": "command", "command": ".claude/hooks/verify-task.sh" }]
+      }
+    ]
+  },
   "enabledMcpjsonServers": []
 }

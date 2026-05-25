@@ -20,7 +20,7 @@ Crie scaffold de plan para a feature `$1`. Requer que a spec correspondente exis
 # Plan — <feature-slug>
 
 ## Spec
-[docs/superpowers/specs/<YYYY-MM-DD>-<slug>-design.md](../specs/...)
+`docs/superpowers/specs/<YYYY-MM-DD>-<slug>-design.md`
 
 ## 7 execution rules (sempre aplicar)
 1. Surgical changes — só toque no que o plan pede

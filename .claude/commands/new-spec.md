@@ -23,9 +23,9 @@ Crie um scaffold de spec para a feature `$1`.
 Draft
 
 ## Reading order
-1. [briefing](../../briefing/original-briefing.md)
-2. [Blueprint](../../Blueprint.md)
-3. [protótipo HTML](../../briefing/prototype/Prototipo-RARO.html) (seção relevante)
+1. `docs/briefing/original-briefing.md`
+2. `docs/Blueprint.md`
+3. `docs/briefing/prototype/Prototipo-RARO.html` (seção relevante)
 4. ADRs relacionados: <listar>
 
 ## Problem
