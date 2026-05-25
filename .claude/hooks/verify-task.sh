@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # verify-task.sh — antes de declarar tarefa pronta, roda lint+test
-# Disparado em: Stop (quando agent decide encerrar turno) OU manualmente
-# Lê stdin (json com stop_hook_active flag) mas não depende dele.
+# Disparado MANUALMENTE via /verify-slice (NÃO está registrado em Stop event
+# porque rodar a cada turno do agente desperdiça 5-10s mesmo quando nenhum
+# código mudou). Mantido como utilitário invocável.
+# Lê stdin opcional (json com stop_hook_active flag).
 # Roda bun run lint && bun run test. Exit 0 se passar, 1 se falhar.
 set -euo pipefail
 

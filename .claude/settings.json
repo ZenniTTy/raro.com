@@ -69,11 +69,6 @@
       {
         "hooks": [{ "type": "command", "command": ".claude/hooks/reinject-roadmap.sh" }]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [{ "type": "command", "command": ".claude/hooks/verify-task.sh" }]
-      }
     ]
   },
   "enabledMcpjsonServers": []
