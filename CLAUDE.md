@@ -93,21 +93,41 @@ Quando precisar de doc de lib externa, a ordem é:
 
 ---
 
-## 6. Workflow de feature (Fase 5 Spec-Driven)
+## 6. Workflow de feature (TLC Spec-Driven 4 fases)
 
-Auto-sizing pela complexidade:
+4 fases adaptativas: **Specify** → **Design** → **Tasks** → **Execute**. Auto-sizing decide quantas fases rodar.
+
+### Auto-sizing
 
 | Tamanho | Quando | Workflow |
 |---|---|---|
-| **Quick** (≤3 arquivos, sem mudança arquitetural) | Bugfix, ajuste de copy, tweak visual | Implementa direto, commit conv, referencia ADR/Blueprint se aplicável |
-| **Medium** (1 feature, multi-file, sem novo bridge) | Tela completa, lógica de UI, feature de produto | `/new-spec` → brainstorm → implement → verify-slice |
-| **Large** (novo bridge, novo ADR, multi-feature) | Native bridge, mudança de stack, integração externa | `/new-spec` → brainstorm → `/new-plan` → execute → verify-slice → ADR |
+| **Quick** (≤3 arquivos, sem mudança arquitetural) | Bugfix, copy tweak, ajuste visual | Specify direto na conversa → Execute → `/commit`. Pula Design e Tasks. |
+| **Medium** (1 feature, multi-file, sem novo bridge) | Tela completa, lógica de UI | `/new-spec <slug>` → `superpowers:brainstorming` → implement com `implementer` → `/verify-slice` |
+| **Large** (novo bridge, novo ADR, multi-feature) | Native bridge, mudança de stack | `/new-spec` → `brainstorming` → `/new-plan` → `superpowers:writing-plans` → `implementer` → `validator` → `design-fidelity-checker` (se UI) → ADR commit → `/verify-slice` |
 
-Arquivos:
-- Spec: `docs/superpowers/specs/<YYYY-MM-DD>-<feature>-design.md`
-- Plan: `docs/superpowers/plans/<YYYY-MM-DD>-<feature>.md`
+### Arquivos canônicos
 
-Templates em `docs/superpowers/specs/0000-template.md` e `docs/superpowers/plans/0000-template.md` (criados na Fase 5).
+- Templates: [`docs/superpowers/specs/0000-template.md`](docs/superpowers/specs/0000-template.md) + [`docs/superpowers/plans/0000-template.md`](docs/superpowers/plans/0000-template.md)
+- Specs criadas: `docs/superpowers/specs/<YYYY-MM-DD>-<slug>-design.md`
+- Plans criados: `docs/superpowers/plans/<YYYY-MM-DD>-<slug>.md`
+
+### Sinais que escalam a fatia
+
+Mesmo começando como Quick, escala para Medium/Large se:
+
+- Tocar Method Channel (native bridge)
+- Tocar `pubspec.yaml`, `package.json`, `turbo.json` ou qualquer config root
+- Tocar `Blueprint.md` em decisão técnica
+- Adicionar dep nova
+- Mudar wake word, free trial, SKUs (não negociáveis sem ADR)
+- Mudar 3+ telas
+- Tocar > 5 arquivos
+
+Se algum sinal disparar mid-flight, **pare**, abra spec/plan e retome.
+
+### Primeira spec sugerida
+
+`feat/camera-native-bridge` (Roadmap prioridade 1). Valida pipeline native bridge crítico cedo, conforme [Blueprint Seção 11](docs/Blueprint.md).
 
 ---
 

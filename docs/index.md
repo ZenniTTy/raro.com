@@ -52,7 +52,9 @@
 - [sessions/0001-INDEX.md](sessions/0001-INDEX.md) — índice de sessions (mais recente no topo)
 - [sessions/0001-bootstrap.md](sessions/0001-bootstrap.md) — bootstrap do projeto (Fases 1–3)
 
-## Specs e plans (Fase 5 Spec-Driven)
+## Specs e plans (TLC Spec-Driven)
 
-- superpowers/specs/ — specs por feature (escritos a partir da primeira feature)
-- superpowers/plans/ — plans por feature
+- [superpowers/specs/0000-template.md](superpowers/specs/0000-template.md) — template canônico de spec
+- [superpowers/plans/0000-template.md](superpowers/plans/0000-template.md) — template canônico de plan com 7 execution rules + Phase 0 pre-flight + atomic tasks
+- `superpowers/specs/<YYYY-MM-DD>-<slug>-design.md` — specs por feature (criadas via `/new-spec`)
+- `superpowers/plans/<YYYY-MM-DD>-<slug>.md` — plans por feature (criados via `/new-plan`)
