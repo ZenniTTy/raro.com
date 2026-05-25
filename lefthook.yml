@@ -1,0 +1,48 @@
+# lefthook config — Fase 2 µ-sprint 2.5
+# Docs: https://lefthook.dev/configuration/
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: dart-format
+      glob: "**/*.dart"
+      exclude:
+        - "**/*.g.dart"
+        - "**/*.freezed.dart"
+      run: |
+        cd "$(dirname "{staged_files}" | head -1)" 2>/dev/null
+        dart format --set-exit-if-changed {staged_files}
+
+    - name: biome-format
+      glob: "*.{json,md,jsonc}"
+      exclude:
+        - "**/ios/Runner/Assets.xcassets/**"
+        - "**/pubspec.lock"
+        - "**/bun.lock"
+      run: bunx biome format --write --no-errors-on-unmatched {staged_files} && git add {staged_files}
+
+    - name: block-secrets
+      glob: "*"
+      exclude:
+        - "lefthook.yml"
+        - "commitlint.config.cjs"
+        - ".github/**"
+        - "docs/**"
+      run: |
+        PATTERN='(api[_-]?key|secret[_-]?key|access[_-]?token|private[_-]?key)[[:space:]]*[:=][[:space:]]*["\x27][A-Za-z0-9_\-/+]{16,}["\x27]|BEGIN[[:space:]](RSA|EC|OPENSSH|PGP)[[:space:]]PRIVATE[[:space:]]KEY'
+        if grep -lEH "$PATTERN" {staged_files} 2>/dev/null; then
+          echo "❌ Possible secret detected in staged files. Aborting commit."
+          exit 1
+        fi
+
+pre-push:
+  jobs:
+    - name: mobile-analyze
+      run: bun run lint
+    - name: mobile-test
+      run: bun run test
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: bunx commitlint --edit {1}
