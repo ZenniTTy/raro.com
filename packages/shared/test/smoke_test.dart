@@ -37,4 +37,32 @@ void main() {
       expect(SubscriptionConfig.entitlement, 'premium');
     });
   });
+
+  group('Family 5 — Domain enums', () {
+    test('Lens has ultraWide and wide', () {
+      expect(Lens.values, [Lens.ultraWide, Lens.wide]);
+      expect(Lens.ultraWide.label, '0.5x');
+      expect(Lens.wide.label, '1x');
+    });
+
+    test('Fps has 30 and 60', () {
+      expect(Fps.values.map((f) => f.value), [30, 60]);
+    });
+
+    test('Resolution has 4 levels', () {
+      expect(Resolution.values.length, 4);
+    });
+
+    test('BufferDuration has 15s and 30s', () {
+      expect(BufferDuration.values.map((b) => b.value), [15, 30]);
+    });
+
+    test('ControlMode has voice and volume', () {
+      expect(ControlMode.values, [ControlMode.voice, ControlMode.volume]);
+    });
+
+    test('AppLanguage has pt-BR, en, es', () {
+      expect(AppLanguage.values.map((l) => l.tag), ['pt-BR', 'en', 'es']);
+    });
+  });
 }
