@@ -59,6 +59,15 @@
 - `superpowers/specs/<YYYY-MM-DD>-<slug>-design.md` — specs por feature (criadas via `/new-spec`)
 - `superpowers/plans/<YYYY-MM-DD>-<slug>.md` — plans por feature (criados via `/new-plan`)
 
+## Roadmap detalhado por bloco
+
+- [04-ROADMAP-SPECS/README.md](04-ROADMAP-SPECS/README.md) — índice dos 5 arquivos, 20 specs, 100 µ-sprints
+- [04-ROADMAP-SPECS/spec-001-api-contract-shared.md](04-ROADMAP-SPECS/spec-001-api-contract-shared.md) — spec bloqueante (api contract)
+- [04-ROADMAP-SPECS/block-infra.md](04-ROADMAP-SPECS/block-infra.md) — firebase, revenuecat, theme, fontes (specs 002-005)
+- [04-ROADMAP-SPECS/block-bridges.md](04-ROADMAP-SPECS/block-bridges.md) — camera, replay, voice (specs 007-009)
+- [04-ROADMAP-SPECS/block-features.md](04-ROADMAP-SPECS/block-features.md) — volume, paywall, checkout, gallery, preview, lock (specs 010-016)
+- [04-ROADMAP-SPECS/block-polish.md](04-ROADMAP-SPECS/block-polish.md) — splash, i18n, permissions, onboarding, xiaomi, settings (specs 006, 012, 017-020)
+
 ## Harness Claude Code (`.claude/`)
 
 Não fica em `docs/`, mas é parte da documentação operacional. Referência:
