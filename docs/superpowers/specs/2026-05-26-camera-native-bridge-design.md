@@ -40,7 +40,7 @@ Esta spec entrega a **fundação técnica do P05**: viewport ao vivo + alternân
 | # | Question | Answer |
 |---|----------|--------|
 | 1 | Esta spec entrega gravação real (start/stop salvando MP4)? | **Não.** Preview + lens + focus + format apenas. Gravação espera `feat/replay-buffer-native-bridge` para o pre-roll. |
-| 2 | iOS — como alternar entre 0.5× e 1×? | **Estratégia híbrida.** `VirtualCameraStrategy` (smooth zoom via `builtInTripleCamera`/`builtInDualWideCamera` + `videoZoomFactor`) quando disponível; `SwapInputStrategy` (begin/commitConfiguration + remove/addInput) como fallback. Selector em runtime. |
+| 2 | iOS — como alternar entre 0.5× e 1×? | **`VirtualCameraStrategy` apenas.** `builtInTripleCamera`/`builtInDualWideCamera` + `videoZoomFactor` (smooth zoom). YAGNI: iPhones com 0.5× hardware **sempre** expõem virtual camera (iPhone 11 base+, 12 base+, 13 mini+, etc.). iPhones sem virtual camera (SE) também não têm 0.5×, então o chip nem aparece. Fallback `SwapInputStrategy` só entra via ADR-update se device test revelar caso não previsto. |
 | 3 | Android — qual versão do CameraX? | **1.6.1** (latest stable, novo motor CameraPipe — alinhado com Blueprint Seção 2). Risco de regression em OEMs aceito; device test obrigatório em Xiaomi/Samsung antes de declarar Done. |
 | 4 | Android PlatformView mode? | **Hybrid composition** — RARO tem HUD Flutter sobre o preview (top bar, chips, focus ring, futuros botões). Custo GPU ~5-10% aceito para MVP. |
 | 5 | iOS — controle de resolução/FPS? | **`activeFormat` manual** + `activeVideoMinFrameDuration`/`MaxFrameDuration`. `sessionPreset` insuficiente para garantir 4K@60. |
@@ -53,6 +53,7 @@ Esta spec entrega a **fundação técnica do P05**: viewport ao vivo + alternân
 | 12 | Sub-package Kotlin do Pigeon? | **`com.rarocamera.raro_mobile.generated.camera`** (ADR-0013 anti-redeclaration de `FlutterError`). |
 | 13 | Rule-of-thirds e grain no viewport? | **Sim**, fiéis ao protótipo (`.viewport-grain` + linhas guides). Implementados em Flutter (`CustomPainter`), não em native — desacoplado do bridge. |
 | 14 | Background/foreground? | Bridge resume sessão automaticamente em `applicationDidBecomeActive` / Lifecycle `ON_RESUME`. Goal observável #9. |
+| 15 | Telemetria? | Eventos canônicos de `AnalyticsEvents` em `packages/shared`. **Existentes** já cobrem `lensSwitched`, `resolutionChanged`, `fpsChanged`. **Adicionar nesta spec** (extensão do contract): `cameraStarted`, `cameraStopped`, `cameraFocusTapped`, `cameraPermissionDenied`, `cameraError`. Camada Flutter intercepta `CameraFlutterApi` callbacks e chama `FirebaseAnalytics.logEvent`. Bridge nativa **não** depende de Firebase direto. |
 
 ## Observable goals (testáveis em device real)
 
@@ -70,6 +71,8 @@ Esta spec entrega a **fundação técnica do P05**: viewport ao vivo + alternân
 - [ ] **G12** — `bun --filter @raro/mobile run analyze` zero issues + `bun --filter @raro/mobile run test` zero regressões + suite `test/contract/` verde após cada commit.
 - [ ] **G13** — `bridge_channels_parity_test.dart` valida que namespace canônico `BridgeChannels.camera == 'com.rarocamera/camera'` é o usado em runtime (ADR-0013).
 - [ ] **G14** — Goldens `lens_chip_row_golden_test.dart` (alchemist) cobrem estados idle/selected/disabled.
+- [ ] **G15** — Eventos analytics emitidos via mock `FirebaseAnalytics`: `cameraStarted` (lifecycle), `lensSwitched` (já existe), `cameraFocusTapped`, `resolutionChanged` (já existe), `fpsChanged` (já existe), `cameraPermissionDenied`, `cameraError`. Asserção de payload (lens type, error code) via mocktail.
+- [ ] **G16** — `analytics_events_used_test.dart` (contract suite) continua verde após extensão — chamadas em `lib/features/camera/` referenciam constantes de `AnalyticsEvents`, zero literais inline.
 
 ## UI / protótipo (fidelidade ao P05)
 
@@ -128,7 +131,8 @@ Esta spec entrega a **fundação técnica do P05**: viewport ao vivo + alternân
 | CameraX 1.6.1 novo motor CameraPipe → regression em OEM (Xiaomi/Samsung) | Device test obrigatório antes de declarar Done. Fallback documentado em ADR-0015: rebaixar para 1.5.x via ADR-update se bloqueado. |
 | PlatformView hybrid composition Android overhead GPU 5-10% | Aceito p/ MVP. `flutter-perf-auditor` audita ao final da implementação. Documentado em ADR-0015. |
 | AVCaptureSession leak (histórico Flutter#176xxx em camera plugins) | Dispose explícito + KVO invalidate + assert no `deinit`. Goal #7 mede via Instruments. |
-| iOS smooth zoom em virtual camera dropa framerate momentâneo (reports em dev forums) | Strategy híbrida + device test iPhone 12. Fallback: forçar `SwapInputStrategy` via ADR-update se inaceitável em produção. |
+| iOS smooth zoom em virtual camera dropa framerate momentâneo (reports em dev forums) | Device test iPhone 12 antes de Done. Fallback documentado: introduzir `SwapInputStrategy` via ADR-update se inaceitável em produção. |
+| Analytics events com payload divergente entre Dart e nativo | Eventos disparados apenas pela camada Flutter via `CameraFlutterApi` callbacks — bridge nativa não chama Firebase direto. Source of truth = `AnalyticsEvents` em `packages/shared`. |
 | Ultra-wide indisponível em alguns Android OEMs apesar de hardware presente | Memória `raro-pattern-android-camerax-ultra-wide-unreliable` — discovery é source of truth, UI esconde chip 0.5× se ausente em capabilities. Sem fallback automático. |
 | Pigeon 26.3.4 ainda bloqueado por theme_tailor/riverpod_lint analyzer ^9.0.0 | Mantém pigeon **^26.3.2** (Caso B do ADR-0014). Não escala esta spec. Re-tentativa em spec futura quando deps atualizarem. |
 | iPhone 11/SE rejeitando ultra-wide em runtime apesar de hardware presente | Goal #2 cobre. Discovery via `AVCaptureDevice.DiscoverySession` é source of truth — UI confia no resultado. |
@@ -147,7 +151,7 @@ Esta spec entrega a **fundação técnica do P05**: viewport ao vivo + alternân
 - **Status:** Accepted
 - **Decisão:**
   1. Bridge **Pigeon-first** (todas as ops `@async`, enums tipados, FlutterApi callbacks).
-  2. **iOS strategy híbrida**: `VirtualCameraStrategy` (`builtInTripleCamera` → `builtInDualWideCamera` + `videoZoomFactor`) quando disponível; `SwapInputStrategy` (begin/commitConfiguration + remove/addInput) como fallback. Selector em runtime via `AVCaptureDevice.DiscoverySession`.
+  2. **iOS strategy única**: `VirtualCameraStrategy` (`builtInTripleCamera` → `builtInDualWideCamera` + `videoZoomFactor`). YAGNI confirmado pela matriz de hardware: iPhones com 0.5× sempre expõem virtual camera. `SwapInputStrategy` documentada como fallback acionável via ADR-update se device test futuro revelar exceção.
   3. **CameraX 1.6.1** pinado em `apps/mobile/android/app/build.gradle` — latest stable em 2026-05-26, novo motor CameraPipe. Aceito o risco; device test obrigatório em Xiaomi/Samsung pré-RC.
   4. **PlatformView Android = hybrid composition** — `setHybridComposition(true)` em `MainActivity.configureFlutterEngine`. Custo GPU 5-10% documentado e aceito.
   5. **iOS format control via `activeFormat`** + `activeVideoMin/MaxFrameDuration` (não `sessionPreset`) — controle granular obrigatório para Settings (1080p@30 vs 4K@60).
@@ -155,7 +159,7 @@ Esta spec entrega a **fundação técnica do P05**: viewport ao vivo + alternân
   7. **Sem gravação** nesta spec — boundary explícito com replay_buffer.
 - **Consequências:**
   - Bridge testável isoladamente sem replay_buffer
-  - 2 strategies iOS introduzem complexidade — mitigada por interface `CameraLensStrategy` e teste unitário por strategy
+  - Strategy única iOS simplifica código e teste; `SwapInputStrategy` documentada como rollback acionável
   - CameraPipe risco aceito
 - **Alternativas consideradas:**
   - Plugin oficial `camera` — rejeitado (briefing Seção 6.2)
