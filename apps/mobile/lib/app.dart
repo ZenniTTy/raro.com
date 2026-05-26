@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 
 class RaroApp extends StatelessWidget {
@@ -20,13 +21,14 @@ class _BootstrapPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFF000000),
+    final colors = Theme.of(context).extension<RaroColors>()!;
+    return Scaffold(
+      backgroundColor: colors.bgDeep,
       body: Center(
         child: Text(
           'RARO',
           style: TextStyle(
-            color: Color(0xFFFFFFFF),
+            color: colors.ink,
             fontSize: 48,
             letterSpacing: 4,
             fontWeight: FontWeight.w700,
