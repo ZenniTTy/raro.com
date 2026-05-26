@@ -47,9 +47,39 @@ Copia `docs/briefing/prototype/assets/raro-logo.png` para `apps/mobile/assets/im
 
 ### Atomic micro-sprints
 
-#### 12.1 — `flutter_localizations` setup
+#### 12.1 — `flutter_localizations` setup com synthetic-package=false
 
-`apps/mobile/lib/l10n/app_pt.arb`, `app_en.arb`, `app_es.arb` (vazios com 1 key sentinel `helloWorld`). `apps/mobile/l10n.yaml` configurando geração. **Commit:** `feat(i18n): flutter_localizations setup com 3 arb files vazios — spec-012 µ-sprint 12.1`
+**Stack validada WebSearch flutter.dev 2026-05-25 (ver memory `raro-pattern-flutter-i18n-synthetic-package-false`):**
+
+`apps/mobile/lib/l10n/app_pt.arb`, `app_en.arb`, `app_es.arb` (vazios com 1 key sentinel `helloWorld`).
+
+`apps/mobile/l10n.yaml`:
+
+```yaml
+arb-dir: lib/l10n
+template-arb-file: app_pt.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+output-dir: lib/l10n
+synthetic-package: false   # CRÍTICO 2026 — gera no source tree, navegável no git
+nullable-getter: false
+required-resource-attributes: true
+```
+
+ARB com ICU plural/placeholder syntax obrigatório desde o início:
+
+```json
+{
+  "@@locale": "pt",
+  "trialDays": "{count, plural, =1{1 dia grátis} other{{count} dias grátis}}",
+  "@trialDays": {
+    "description": "Trial duration no paywall",
+    "placeholders": {"count": {"type": "int", "example": "30"}}
+  }
+}
+```
+
+**Commit:** `feat(i18n): flutter_localizations setup synthetic-package=false + icu plural — spec-012 µ-sprint 12.1`
 
 #### 12.2 — Wire em `MaterialApp.router`
 
@@ -82,9 +112,32 @@ Test que valida fallback. Doc `docs/setup/i18n-guide.md` mostrando como adiciona
 
 ### Atomic micro-sprints
 
-#### 17.1 — `PermissionsService` wrapper `permission_handler`
+#### 17.1 — `PermissionsService` wrapper com Android 13+ support
 
-`apps/mobile/lib/core/permissions/permissions_service.dart`. Métodos: `request(AppPermission)`, `status(AppPermission)`. Usa `permission_handler ^12.0.1`. **Commit:** `feat(permissions): service wrapper permission_handler — spec-017 µ-sprint 17.1`
+**Stack validada WebSearch 2026-05-25 (ver memory `raro-pattern-android-13-media-permissions`):**
+
+`apps/mobile/lib/core/permissions/permissions_service.dart`. Métodos: `request(AppPermission)`, `status(AppPermission)`. Usa `permission_handler ^12.0.1`.
+
+**Android 13+ (API 33+) descontinuou `READ_EXTERNAL_STORAGE`** — usar `Permission.videos`/`photos`/`audio`. Mapeamento condicional por `sdkInt`:
+
+```dart
+Future<PermissionState> requestVideoLibrary() async {
+  if (Platform.isAndroid) {
+    final sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+    if (sdkInt >= 33) {
+      return _mapStatus(await Permission.videos.request());
+    }
+    return _mapStatus(await Permission.storage.request());
+  }
+  return _mapStatus(await Permission.photos.request());
+}
+```
+
+**AndroidManifest.xml** com permissions condicionais + `maxSdkVersion=32` para storage legado.
+
+**Decisão pendente — abrir ADR 0021:** Option A (sandbox app, zero permission friction, vídeos não vão pra galeria do sistema) vs Option B (MediaStore com `READ_MEDIA_VIDEO` + justificativa no Play Console — Google Play Photo and Video Permissions Policy Oct 2024). Briefing Seção 5.2 menciona "galeria do sistema" — confirmar com cliente.
+
+**Commit:** `feat(permissions): service wrapper com mapeamento android 13+ media — spec-017 µ-sprint 17.1`
 
 #### 17.2 — Tela P04
 
@@ -140,9 +193,33 @@ Visual de buffer com waveform + copy "Raro Replay salva os últimos 15 ou 30s". 
 
 ### Atomic micro-sprints
 
-#### 19.1 — Detecção MIUI via `device_info_plus`
+#### 19.1 — Detecção MIUI/HyperOS via `device_info_plus`
 
-`MiuiDetector` em `apps/mobile/lib/core/permissions/miui_detector.dart`. Heurística: `manufacturer == 'Xiaomi'` OR `manufacturer == 'Redmi'` OR `ro.miui.ui.version.name` property exists. **Commit:** `feat(xiaomi): miui detector via device_info_plus — spec-019 µ-sprint 19.1`
+**Stack validada WebSearch 2026-05-25 (ver memory `raro-pattern-xiaomi-miui-hyperos-detection`):**
+
+`MiuiDetector` em `apps/mobile/lib/core/permissions/miui_detector.dart`.
+
+**Contexto:** Xiaomi migrou de MIUI para HyperOS (HyperOS 4+, final 2024). Mas:
+- Comportamento agressivo de background kill **persiste** em HyperOS
+- Properties antigas (`ro.miui.ui.version.name`) mantidas por compat
+- Heurística `manufacturer == 'xiaomi'|'redmi'|'poco'` cobre 99% do uso real
+
+Pattern simplificado (vs plano original — não precisa Method Channel para ler property):
+
+```dart
+class MiuiDetector {
+  Future<bool> isMiuiOrHyperOs() async {
+    if (!Platform.isAndroid) return false;
+    final info = await DeviceInfoPlugin().androidInfo;
+    final m = info.manufacturer.toLowerCase();
+    return m == 'xiaomi' || m == 'redmi' || m == 'poco';
+  }
+}
+```
+
+Riverpod provider `isMiuiDeviceProvider`. Settings → Sobre mostra item "Configuração MIUI/HyperOS" condicional ao provider.
+
+**Commit:** `feat(xiaomi): miui/hyperos detector via manufacturer — spec-019 µ-sprint 19.1`
 
 #### 19.2 — Modal M02 com 4 cards numerados
 
