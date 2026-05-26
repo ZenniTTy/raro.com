@@ -137,4 +137,77 @@ void main() {
       expect(AppModal.values.length, 3);
     });
   });
+
+  group('Family 9 — StorageKeys', () {
+    test('all keys follow raro.<domain>.<key>', () {
+      const keys = [
+        StorageKeys.onboardingCompleted,
+        StorageKeys.selectedLanguage,
+        StorageKeys.preferredResolution,
+        StorageKeys.preferredFps,
+        StorageKeys.preferredBufferDuration,
+        StorageKeys.preferredControlMode,
+        StorageKeys.xiaomiGuideShown,
+        StorageKeys.firstLaunchAt,
+        StorageKeys.lastLanguageDetected,
+      ];
+      for (final k in keys) {
+        expect(k, matches(RegExp(r'^raro\.[a-z_]+\.[a-z_]+$')));
+      }
+    });
+  });
+
+  group('Family 3 — BridgeChannels', () {
+    test('all channels start with com.rarocamera/', () {
+      const channels = [
+        BridgeChannels.camera,
+        BridgeChannels.replayBuffer,
+        BridgeChannels.voice,
+        BridgeChannels.volume,
+      ];
+      for (final c in channels) {
+        expect(c, startsWith('com.rarocamera/'));
+      }
+    });
+  });
+
+  group('Family 10 — PermissionsContract', () {
+    test('iOS keys present', () {
+      expect(
+        PermissionsContract.ios.containsKey('NSCameraUsageDescription'),
+        isTrue,
+      );
+      expect(
+        PermissionsContract.ios.containsKey('NSMicrophoneUsageDescription'),
+        isTrue,
+      );
+      expect(
+        PermissionsContract.ios.containsKey(
+          'NSSpeechRecognitionUsageDescription',
+        ),
+        isTrue,
+      );
+    });
+
+    test('Android permissions present', () {
+      expect(
+        PermissionsContract.android,
+        contains('android.permission.CAMERA'),
+      );
+      expect(
+        PermissionsContract.android,
+        contains('android.permission.RECORD_AUDIO'),
+      );
+    });
+  });
+
+  group('Family 2/12 — ForbiddenTerms', () {
+    test('contains forbidden variants', () {
+      expect(ForbiddenTerms.all.length, greaterThanOrEqualTo(3));
+      expect(
+        ForbiddenTerms.all.any((t) => t.toLowerCase().contains('camera')),
+        isTrue,
+      );
+    });
+  });
 }

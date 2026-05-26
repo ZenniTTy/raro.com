@@ -1,5 +1,7 @@
 export 'src/analytics/analytics_events.dart';
 export 'src/analytics/analytics_payloads.dart';
+export 'src/bridges/bridge_channels.dart';
+export 'src/contract/forbidden_terms.dart';
 export 'src/enums/app_language.dart';
 export 'src/enums/buffer_duration.dart';
 export 'src/enums/control_mode.dart';
@@ -7,6 +9,8 @@ export 'src/enums/fps.dart';
 export 'src/enums/lens.dart';
 export 'src/enums/resolution.dart';
 export 'src/identity/app_identity.dart';
+export 'src/permissions/permissions_contract.dart';
 export 'src/screens/app_screen.dart';
+export 'src/storage/storage_keys.dart';
 export 'src/subscription/subscription.dart';
 export 'src/voice/voice_config.dart';
