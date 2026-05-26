@@ -73,3 +73,6 @@ coverage/
 
 # ───────────────────────── Sessions / Claude ──────────
 .claude/cache/
+
+# ───────────────────────── Turborepo cache ────────────
+.turbo/

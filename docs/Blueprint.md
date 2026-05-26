@@ -63,7 +63,7 @@ A Seção 3.2 do briefing define o protótipo como fonte de verdade inegociável
 | `com.rarocamera/voice` | Inicialização do reconhecimento, detecção wake word `"Raro"`, callbacks |
 | `com.rarocamera/volume` | Captura de eventos de botões físicos de volume `+`/`−` (modo "Volume OFF") |
 
-> **Atualização 2026-05-26 (ADR-0013):** Os 4 channels acima são gerados via **Pigeon ^26.3.4** a partir de schemas Dart únicos em `apps/mobile/pigeons/{camera,replay_buffer,voice,volume}_api.dart`. Strings de namespace nunca são digitadas em Swift ou Kotlin; codegen sincroniza Dart + iOS + Android. Ver ADR-0013 e spec `api-contract-shared`.
+> **Atualização 2026-05-26 (ADR-0013):** Os 4 channels acima são gerados via **Pigeon ^26.3.2** a partir de schemas Dart únicos em `apps/mobile/pigeons/{camera,replay_buffer,voice,volume}_api.dart`. Strings de namespace nunca são digitadas em Swift ou Kotlin; codegen sincroniza Dart + iOS + Android. Ver ADR-0013 e spec `api-contract-shared`.
 
 ### 2.3 Reconhecimento de voz (wake word `"Raro"`)
 
@@ -151,7 +151,7 @@ raro/
 | Git hooks | **lefthook** | latest |
 | Commit linting | `@commitlint/cli` + `@commitlint/config-conventional` | `^19.x` |
 | JSON/MD formatter | **Biome** | `^1.x` |
-| Native bridges codegen | `pigeon` | `^26.3.4` |
+| Native bridges codegen | `pigeon` | `^26.3.2` |
 | Theme tokens codegen | `theme_tailor` + `theme_tailor_annotation` | `^3.1.3` |
 | XML parse (parity tests) | `xml` | `^6.5.0` |
 | Dart formatter | `dart format` (SDK) | — |
