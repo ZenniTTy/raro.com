@@ -20,8 +20,8 @@ Pesca, esportes, trilhas, aventuras, trabalho de campo, registro pessoal — qua
 
 ## Posicionamento
 
-- **Inspiração:** app Ok Camera (Felipe Augusto de Melo, App Store v1.3). RARO replica o conceito funcional com base técnica moderna e identidade visual própria.
-- **Diferenciação técnica:** implementação robusta de Replay Buffer em código nativo (corrigindo instabilidades observadas no Ok Camera), Flutter cross-platform (vs nativo single-platform), i18n nativa (pt-BR · en · es).
+- **Origem do conceito:** baseado em app de referência citado no briefing (ver `docs/briefing/original-briefing.md`). RARO replica o conceito funcional com base técnica moderna e identidade visual própria.
+- **Diferenciação técnica:** implementação robusta de Replay Buffer em código nativo (corrigindo instabilidades do app de referência), Flutter cross-platform (vs nativo single-platform), i18n nativa (pt-BR · en · es).
 
 ## Modelo comercial
 
