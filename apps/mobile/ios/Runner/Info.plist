@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Raro Mobile</string>
+	<string>Raro Camera</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>A Raro Camera precisa da câmera para gravar vídeos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>A Raro Camera precisa do microfone para capturar áudio.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>A Raro Camera usa reconhecimento de voz no dispositivo para detectar "Raro".</string>
 </dict>
 </plist>
