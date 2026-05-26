@@ -25,6 +25,16 @@
 5. [packages/shared/lib/raro_shared.dart](../../packages/shared/lib/raro_shared.dart) — exports atuais
 6. ADRs relacionados: 0001 (stack), 0005 (Riverpod 3), 0009 (wake word), 0010 (dual plans), 0011 (volume control)
 
+### Memories obrigatórias (criadas em ~/.claude/projects/.../memory/ pela auditoria 2026-05-25)
+
+Antes de implementar, ler:
+
+- `raro-pattern-revenuecat-error-handling` — `SubscriptionError` sealed deve cobrir 8+ `PurchasesErrorCode` cases
+- `raro-pattern-flutter-video-player-disposal` — pattern de dispose esperado pelos consumidores de `VideoLibraryService`
+- `raro-pattern-ios-wake-word-no-native-api` — `VoiceError` sealed deve cobrir `onDeviceUnavailable`, `rateLimitExceeded`, `sessionExpired`
+- `raro-pattern-android-camerax-ultra-wide-unreliable` — `LensDescriptor.available` é estado válido `false`, não erro
+- `raro-pattern-android-13-media-permissions` — `PermissionState` deve incluir caso `permanentlyDenied` (settings app)
+
 ## Problem
 
 Hoje `packages/shared/` tem 9 arquivos cobrindo identidade, voice config, subscription, 6 enums básicos e analytics events. Falta:

@@ -147,14 +147,52 @@ Cada micro-sprint dentro de uma spec deve passar **antes** de avançar:
 - Lock mode reduz consumo de bateria ≥ 50% vs tela acesa (medido)
 - App testado em ≥ 1 device Xiaomi/MIUI real
 - i18n completa nos 3 idiomas (pt-BR / en / es)
-- Free trial 30 dias confirmado funcional via RevenueCat
+- Free trial 30 dias confirmado funcional via RevenueCat (com pré-requisitos de loja configurados — ver memory `raro-pattern-revenuecat-trial-app-store-connect`)
 - Salvar vídeo exige entitlement `premium` ativo
 - Builds release `.ipa` + `.aab` com signing
 - App aprovado e publicado em App Store + Google Play
-- ADRs criados para todas as decisões arquiteturais novas
+- ADRs criados para todas as decisões arquiteturais novas (0013-0021)
 - CHANGELOG atualizado a cada spec mergeada
 
 Ver também [Blueprint Seção 11](Blueprint.md) e [docs/09-DOD.md](09-DOD.md).
+
+## ADRs previstos durante o roadmap
+
+| # | Tema | Quando | Memory relacionada |
+|---|---|---|---|
+| 0013 | API Contract sealed classes + SemVer do shared | spec-001 µ-sprint 1.7 | — |
+| 0014 | Firebase bootstrap strategy + 3 error handlers | spec-002 µ-sprint 2.4 | `raro-pattern-crashlytics-3-handlers` |
+| 0015 | RevenueCat strategy + StoreKit 2 + trial setup | spec-003 µ-sprint 3.4 | `raro-pattern-revenuecat-trial-app-store-connect`, `raro-pattern-revenuecat-error-handling` |
+| 0016 | Contrato JSON `com.rarocamera/camera` Method Channel | spec-007 µ-sprint 7.1 | `raro-pattern-ios-avcapture-multicam-not-needed`, `raro-pattern-android-camerax-ultra-wide-unreliable` |
+| 0017 | Contrato JSON `com.rarocamera/replay_buffer` | spec-008 µ-sprint 8.1 | `raro-pattern-ios-cvpixelbufferpool`, `raro-pattern-android-mediacodec-buffer-management` |
+| 0018 | Contrato JSON `com.rarocamera/voice` + Privacy Manifest iOS | spec-009 µ-sprint 9.1 | `raro-pattern-ios-wake-word-no-native-api` |
+| 0019 | Contrato JSON `com.rarocamera/volume` + App Store review notes | spec-010 µ-sprint 10.1 | `raro-pattern-ios-volume-button-kvo-app-store-review` |
+| 0020 | Tema sem ColorScheme.fromSeed | spec-004 µ-sprint 4.2 | `raro-pattern-theme-no-color-scheme-from-seed` |
+| **0021** | **Storage strategy: sandbox app vs MediaStore** | **spec-017 µ-sprint 17.1** (bloqueante para spec-015/016) | `raro-pattern-android-13-media-permissions` |
+
+Total: 9 ADRs novos previstos (0013–0021), adicionados aos 12 existentes (0001–0012) = **21 ADRs no fim do v1.0**.
+
+## Memories que devem ser lidas antes de implementar cada spec
+
+Quando spec for executada via `/new-spec`, agente deve ler memories relevantes do diretório `~/.claude/projects/<projeto>/memory/`. Mapeamento por spec:
+
+| Spec | Memories obrigatórias |
+|---|---|
+| 001 api-contract | todas — define types consumidos por todas |
+| 002 firebase-init | `raro-pattern-crashlytics-3-handlers` |
+| 003 revenuecat-init | `raro-pattern-revenuecat-error-handling`, `raro-pattern-revenuecat-trial-app-store-connect` |
+| 004 theme-design-tokens | `raro-pattern-theme-no-color-scheme-from-seed` |
+| 005 native-fonts | `raro-lib-google-fonts-vs-bundled` |
+| 007 camera-native-bridge | `raro-pattern-ios-avcapture-multicam-not-needed`, `raro-pattern-android-camerax-ultra-wide-unreliable` |
+| 008 replay-buffer | `raro-pattern-ios-cvpixelbufferpool`, `raro-pattern-android-mediacodec-buffer-management` |
+| 009 voice-wake-word | `raro-pattern-ios-wake-word-no-native-api` |
+| 010 volume-control | `raro-pattern-ios-volume-button-kvo-app-store-review` |
+| 012 i18n-scaffold | `raro-pattern-flutter-i18n-synthetic-package-false` |
+| 013 paywall | `raro-pattern-revenuecat-trial-app-store-connect`, `raro-pattern-revenuecat-error-handling` |
+| 015 gallery | `raro-pattern-flutter-video-player-disposal` |
+| 016 preview | `raro-pattern-flutter-video-player-disposal` |
+| 017 permissions | `raro-pattern-android-13-media-permissions` |
+| 019 xiaomi-onboarding | `raro-pattern-xiaomi-miui-hyperos-detection` |
 
 ## Como executar uma spec
 
