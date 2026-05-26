@@ -29,7 +29,21 @@ Modo "Volume OFF" em Settings → P06 habilita captura de botões físicos: `Vol
 
 #### 10.3 — iOS: `VolumeButtonObserver.swift`
 
-`AVAudioSession.outputVolume` KVO. Restore strategy. **Commit:** `feat(bridge): ios volume button observer — spec-010 µ-sprint 10.3`
+**Stack validada WebSearch + Apple Developer Forums 2026-05-25:**
+
+3 cuidados obrigatórios (ver memory `raro-pattern-ios-volume-button-kvo-app-store-review`):
+
+1. `AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)` — NÃO `.playback` (ducka outros apps como Spotify)
+2. **Restaurar `initialVolume` após capturar evento** — senão volume real do device aumenta a cada "Volume +" interpretado como REC start
+3. `observer.invalidate()` no `deinit` — KVO via `NSKeyValueObservation` exige limpeza explícita
+
+Detecção fones BT (para disparar M03):
+- Check `AVAudioSession.currentRoute.outputs.first?.portType == .bluetoothA2DP || .bluetoothLE`
+- Se primeira ocorrência, disparar M03 com flag persistida em `shared_preferences` (mostrar só 1x por device)
+
+App Store review note (em `docs/setup/app-store-submission-notes.md`): "uses volume buttons as hands-free record control for camera app". Apple aceita esse uso para captura de mídia.
+
+**Commit:** `feat(bridge): ios volume button observer com ambient + restore + bt detect — spec-010 µ-sprint 10.3`
 
 #### 10.4 — Android: `VolumeButtonObserver.kt`
 
@@ -121,6 +135,24 @@ Test manual: gravar 10min em P05 vs P05a (lock) em iPhone real, medir % bateria.
 ### Problem
 
 P09 com 2 cards lado a lado (mensal R$ 9,90 / anual R$ 89,90 com badge "MELHOR OFERTA"), free trial 30 dias, restaurar compras, CTA Assinar. M01 popup dispara em P05 quando user sem subscription tenta entrar.
+
+### Pré-condições críticas (do RevenueCat dashboard, ANTES de implementar)
+
+Validado via WebSearch RevenueCat docs 2026-05-25 (ver memory `raro-pattern-revenuecat-trial-app-store-connect`):
+
+- [ ] **App Store Connect:** ambos SKUs com "Introductory Offer" = "Free 1 month" (Apple não permite "30 days" literal — "1 month" é o equivalente)
+- [ ] **Google Play Console:** ambos SKUs com "Free trial offer" = 30 dias (literal)
+- [ ] **RevenueCat dashboard:** In-App Purchase Key uploaded (para usar StoreKit 2 — Apple deprecou StoreKit 1 no WWDC 2024). Sem essa key, SDK cai para StoreKit 1 legado.
+- [ ] **RevenueCat:** offerings com 2 packages (monthly + yearly), produto IDs sincronizados das lojas
+
+Sem essas pré-condições, paywall mostra "30 dias grátis" mas trial não acontece — bug catastrófico. Validator deve confirmar com cliente antes do gate.
+
+### Discrepância Apple vs Google no copy
+
+- Apple "1 month" ≠ 30 dias exatos (ex: 15-fev → 15-mar = 28 dias)
+- Google 30 dias = literal
+- **Decisão para v1.0:** copy "30 dias grátis" universal (conforme protótipo). Disclaimer pequeno no paywall: "Período de teste varia entre lojas: 1 mês (App Store) ou 30 dias (Google Play)".
+- Datas reais no checkout (P10) vêm de `CustomerInfo.entitlements['premium'].expirationDate` retornado por `Purchases.purchasePackage` — não calcular manualmente.
 
 ### Atomic micro-sprints
 
@@ -232,9 +264,19 @@ Grid 3-cols com thumbs de vídeos gravados. Filtros: Todos / Hoje / Esta semana 
 
 `apps/mobile/lib/core/gallery/photo_library_service.dart`. Permissão `PHPhotoLibrary` (iOS) e `READ_MEDIA_VIDEO` (Android API 33+). **Commit:** `feat(gallery): photo library service ios+android — spec-015 µ-sprint 15.2`
 
-#### 15.3 — UI P07 grid 3-cols
+#### 15.3 — UI P07 grid 3-cols com thumbnails estáticas
 
-`gallery_screen.dart` + `widgets/video_thumb.dart`. Pills filtro (Todos/Hoje/Esta semana/Raro Replay). Thumb com duration label + dot indicator. **Commit:** `feat(gallery): tela p07 grid 3-cols com filtros — spec-015 µ-sprint 15.3`
+`gallery_screen.dart` + `widgets/video_thumb.dart`. Pills filtro (Todos/Hoje/Esta semana/Raro Replay). Thumb com duration label + dot indicator.
+
+**CRÍTICO — NÃO usar `VideoPlayerController` para thumbs.** Galeria pode ter 100+ vídeos; instanciar N controllers causa OOM (issue #139347 do flutter/flutter, ver memory `raro-pattern-flutter-video-player-disposal`).
+
+Pattern correto:
+- Plugin `video_thumbnail ^0.5.x` (researcher confirma versão atual via pub.dev) extrai first frame como `Uint8List`
+- Cache em `path_provider.getTemporaryDirectory()/thumbs/<videoId>.jpg`
+- `Image.file(cachedThumb)` no grid — leve, rápido, sem leak
+- VideoPlayerController só na P08 quando tap no thumb
+
+**Commit:** `feat(gallery): tela p07 grid 3-cols com thumbnails estáticas cacheadas — spec-015 µ-sprint 15.3`
 
 #### 15.4 — Filtros funcionais
 
@@ -271,9 +313,45 @@ P08 com player do vídeo + scrubber + info (256MB / 02:30 / H.265) + bottom acti
 
 ### Atomic micro-sprints
 
-#### 16.1 — `video_player` integration
+#### 16.1 — `video_player` integration com dispose seguro
 
-`video_player` plugin (researcher confirma versão atual no pub.dev). **Commit:** `feat(preview): video_player integration — spec-016 µ-sprint 16.1`
+**Stack validada WebSearch GitHub flutter issues 2026-05-25:**
+
+`video_player ^2.11.1` (pub.dev current) tem histórico de memory leak documentado (issues #26383, #62280, #139347, #146550 — todas fechadas mas exigem pattern correto). Ver memory `raro-pattern-flutter-video-player-disposal`.
+
+Pattern obrigatório:
+
+```dart
+class _PreviewScreenState extends ConsumerState<PreviewScreen> {
+  late VideoPlayerController _controller;
+  bool _isDisposed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.file(File(widget.videoPath))
+      ..initialize().then((_) {
+        if (!_isDisposed && mounted) { // CRÍTICO: race condition guard
+          setState(() {});
+          _controller.play();
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _controller.dispose();
+    super.dispose();
+  }
+}
+```
+
+**Verification:**
+- Widget test simula navegação rápida (push + pop em <500ms) → sem crash, sem leak
+- Manual test: abrir/fechar P08 50 vezes em loop → heap estável (Flutter DevTools)
+
+**Commit:** `feat(preview): video_player com dispose seguro e race condition guard — spec-016 µ-sprint 16.1`
 
 #### 16.2 — UI P08 com scrubber + info card
 
