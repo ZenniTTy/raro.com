@@ -1,7 +1,7 @@
 # 0001 — Stack tecnológica inicial
 
 - **Data:** 2026-05-25
-- **Status:** Accepted
+- **Status:** Accepted (parcialmente superseded por ADR-0014 em 2026-05-26 — Flutter version constraint atualizada de `>=3.41.0` para `>=3.44.0`, Dart de `^3.11.0` para `^3.12.0`, iOS deployment target de 14+ para 15+, CocoaPods → SPM. As outras decisões deste ADR permanecem válidas.)
 - **Decisores:** Eduardo Rodrigues (Elovision), Vitor Lopes (cliente)
 - **Contexto:** Bootstrap Fase 1, Blueprint Seção 2
 

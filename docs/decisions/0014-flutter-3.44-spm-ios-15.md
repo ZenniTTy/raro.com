@@ -21,7 +21,7 @@ Migração tríplice integrada em uma única decisão (sempre vão juntas):
 
 1. **Flutter 3.41.9 → 3.44.x** (latest stable). Dart 3.11 → 3.12. Constraint pubspec: `flutter: ">=3.44.0"`, `sdk: ">=3.12.0 <4.0.0"`.
 2. **CocoaPods → Swift Package Manager**. Habilitado via `flutter config --enable-swift-package-manager`. SPM gerencia Firebase + RevenueCat (que suportam nativamente). `permission_handler_apple`, `share_plus`, `device_info_plus` ainda dependem de CocoaPods híbrido (Flutter auto-gera Podfile mínimo só para esses — aceito como tech-debt resiliente). Removidos `Podfile`/`Podfile.lock` originais; Podfile auto-gerado fica gitignored.
-3. **iOS deployment target 13.0 → 15.0**. Apple SPM requirement. Atualizado em `project.pbxproj` (3 ocorrências) e `Flutter/AppFrameworkInfo.plist`.
+3. **iOS deployment target 13.0 → 15.0**. Apple SPM requirement. Atualizado em `apps/mobile/ios/Runner.xcodeproj/project.pbxproj` (3 ocorrências de `IPHONEOS_DEPLOYMENT_TARGET = 15.0`). **`apps/mobile/ios/Flutter/AppFrameworkInfo.plist` NÃO foi modificado** — Flutter 3.44 removeu intencionalmente a key `MinimumOSVersion` do template (issue [flutter/flutter#176313](https://github.com/flutter/flutter/issues/176313)). Agora é injetada dinamicamente em build time conforme `-miphoneos-version-min` do binário compilado. Adicionar manualmente quebraria App Store upload (issue [flutter/flutter#185039](https://github.com/flutter/flutter/issues/185039)). Fonte da verdade do deployment target = `project.pbxproj`.
 
 ## Consequências
 

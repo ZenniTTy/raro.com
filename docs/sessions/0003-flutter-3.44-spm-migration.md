@@ -22,12 +22,31 @@ Brainstorming + plan + execução seguiram fluxo TLC Spec-Driven com user review
 - Task 7 (pigeon attempt): tentou `pigeon ^26.3.4`, falhou com `version solve` por causa de `theme_tailor 3.1.3` + `riverpod_lint 3.1.3` pinarem `analyzer ^9.0.0`. Revertido para `^26.3.2`. Task 14 (ADR-013 update) skipada.
 - Scope `mobile` rejeitado pelo commitlint scope-enum. Usado `bridge` (cobre nativo iOS/Android) para commits relacionados.
 - Task 9: APK build PASS em ~10min.
-- Task 10: iOS build progrediu via SPM com sucesso (`Adding Swift Package Manager integration... 227s` + `Running pod install... 5.4s` + `Xcode build done. 40s`). Build final falhou por **ambiente local**: Xcode 26.5 sem iOS 26.5 platform instalado. Usuário baixou via Xcode > Settings > Components. **Migração SPM em si funcionou** — gate técnico fechado, gate de execução aguarda SDK do ambiente.
+- Task 10: iOS build progrediu via SPM com sucesso (`Adding Swift Package Manager integration... 227s` + `Running pod install... 5.4s` + `Xcode build done. 40s`). Build final falhou por **ambiente local**: Xcode 26.5 sem iOS 26.5 platform instalado. Usuário baixou via Xcode > Settings > Components. Após download, retake do `flutter build ios --no-codesign --debug` PASSOU em 1173s + pod install 8.6s com `✓ Built build/ios/iphoneos/Runner.app`. **Gate crítico fechado**.
 - Podfile auto-gerado pelo Flutter para `permission_handler_apple` — gitignored em `apps/mobile/.gitignore`.
+- Task 17 (validator final): identificou que Observable Goal #8 (`MinimumOSVersion` em `AppFrameworkInfo.plist`) não estava satisfeito porque Flutter 3.44 removeu intencionalmente a key do template (issue #176313 + #185039). Decisão correta: atualizar spec marcando goal como `[N/A]`, não adicionar key manualmente (quebraria App Store upload). Fix em commit `2aeeb4a`.
 
 ## Commits
 
-(gerado por `git log --oneline develop..HEAD` — preencher após Task 16)
+Range `38a9ffd..d91ccaa` (17 commits incluindo merge), ordem cronológica de criação:
+
+1. `b357d4b` docs(spec): fill flutter-3.44-spm-migration design — upgrade sdk + spm + ios 15
+2. `c45078e` docs(spec): fill flutter-3.44-spm-migration plan with 17 atomic tasks + rollback
+3. `c8c3a43` build(deps): upgrade flutter 3.41 to 3.44 + remove podfile (pre-migration baseline)
+4. `7f08709` feat(bridge): bump ios deployment target 13.0 to 15.0 for spm
+5. `951a2e6` build(shared): bump dart sdk constraint to 3.12.0
+6. `7502d32` build(shared): refresh pubspec.lock after sdk bump
+7. `73f3ae9` build(deps): bump mobile to flutter 3.44 + dart 3.12 (pigeon stays at 26.3.2)
+8. `f8efeeb` chore(bridge): gitignore podfile residuals for non-spm plugins
+9. `75934d6` fix(bridge): correct podfile gitignore paths relative to mobile package
+10. `0af71a1` docs(docs): adr-014 flutter 3.44 + spm + ios 15
+11. `6e9aa9b` docs(blueprint): bump flutter 3.44 + dart 3.12 + ios 15 in sections 2.1, 7, 9
+12. `c52a340` docs(docs): update claude.md ios 15+ flutter 3.44 dart 3.12
+13. `ee24525` docs(docs): record flutter-3.44-spm-migration session 0003 + changelog 0.3.0
+14. `5a40413` build(bridge): commit xcode + spm + gradle artifacts from flutter 3.44 upgrade
+15. `0407051` docs(spec): close flutter-3.44-spm-migration status done + tick observable goals
+16. `2aeeb4a` docs(spec): correct minimumosversion goal — flutter 3.44 injects dynamically (issue #176313)
+17. `d91ccaa` chore(spec): merge flutter-3.44-spm-migration into develop (16 commits, ios build pass)
 
 ## Verification
 
