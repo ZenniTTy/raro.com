@@ -38,8 +38,8 @@ A Seção 3.2 do briefing define o protótipo como fonte de verdade inegociável
 
 | Categoria | Tecnologia | Versão fixada | Context7 ID |
 |---|---|---|---|
-| Framework | **Flutter** | `>=3.41.0 <4.0.0` (canal stable) | `/websites/flutter_dev` |
-| Linguagem | **Dart** | `^3.11.0` | (incluso no Flutter SDK) |
+| Framework | **Flutter** | `>=3.44.0 <4.0.0` (canal stable, ADR-0014) | `/websites/flutter_dev` |
+| Linguagem | **Dart** | `^3.12.0` | (incluso no Flutter SDK) |
 | State management | **Riverpod 3** com codegen | `flutter_riverpod: ^3.3.1` + `riverpod_annotation: ^4.0.2` + `riverpod_generator: ^4.0.3` | `/rrousselgit/riverpod` |
 | Routing | **go_router** | `^17.2.3` | `/websites/pub_dev_packages_go_router` |
 | Build runner (codegen) | `build_runner` | `^2.15.0` | — |
@@ -493,7 +493,7 @@ Linha decorativa associada (`grad-line`): height 1.5px, fundo `--raro-gradient`.
 
 | Plataforma | Mínimo |
 |---|---|
-| iOS | **14.0+** (iPhone 6s em diante) |
+| iOS | **15.0+** (iPhone 6s/7/8/SE 1ª geração NÃO suportados — ADR-0014, requisito SPM moderno) |
 | Android | **API 24+** (Android 7.0+) |
 | Xiaomi/MIUI | MIUI 12+ ou HyperOS (com configuração manual via M02) |
 
@@ -544,6 +544,7 @@ Bundle ID / Application ID: `com.rarocamera`.
 | 0011 | Controle por volume buttons como substituto de controle BT customizado | Divergência #4 |
 | 0012 | Onboarding Xiaomi híbrido (automático em MIUI + manual em Settings) | Divergência #6 |
 | 0013 | Pigeon + Theme Tailor + gates anti-drift | spec api-contract-shared |
+| 0014 | Flutter 3.44 + SPM + iOS 15 | spec flutter-3.44-spm-migration |
 
 ---
 
