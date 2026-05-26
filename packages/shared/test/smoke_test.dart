@@ -65,4 +65,47 @@ void main() {
       expect(AppLanguage.values.map((l) => l.tag), ['pt-BR', 'en', 'es']);
     });
   });
+
+  group('Family 6 — Analytics event names', () {
+    test('event names follow snake_case pattern', () {
+      const names = [
+        AnalyticsEvents.appOpen,
+        AnalyticsEvents.recordingStarted,
+        AnalyticsEvents.planSelected,
+        AnalyticsEvents.subscriptionActivated,
+      ];
+      for (final n in names) {
+        expect(n, matches(RegExp(r'^[a-z][a-z0-9_]+$')));
+      }
+    });
+  });
+
+  group('Family 7 — Analytics payloads', () {
+    test('RecordingStartedPayload.toMap returns expected keys/values', () {
+      const p = RecordingStartedPayload(
+        lens: Lens.wide,
+        resolution: Resolution.fullHd1080,
+        fps: Fps.fps60,
+        trigger: ControlMode.voice,
+        bufferDuration: BufferDuration.seconds15,
+      );
+      expect(p.toMap(), {
+        'lens': '1x',
+        'resolution': '1080p',
+        'fps': 60,
+        'trigger': 'voice',
+        'buffer_duration': 15,
+      });
+    });
+
+    test('PlanSelectedPayload.toMap returns sku key', () {
+      const p = PlanSelectedPayload(sku: SubscriptionSkus.monthly);
+      expect(p.toMap(), {'sku': 'raro_premium_monthly_BRL_9_90'});
+    });
+
+    test('LensSwitchedPayload.toMap returns from/to', () {
+      const p = LensSwitchedPayload(from: Lens.ultraWide, to: Lens.wide);
+      expect(p.toMap(), {'from': '0.5x', 'to': '1x'});
+    });
+  });
 }
