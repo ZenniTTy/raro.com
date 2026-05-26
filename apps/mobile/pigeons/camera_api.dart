@@ -7,9 +7,9 @@ import 'package:pigeon/pigeon.dart';
     swiftOut: 'ios/Runner/Native/Generated/CameraApi.g.swift',
     swiftOptions: SwiftOptions(),
     kotlinOut:
-        'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/CameraApi.g.kt',
+        'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/camera/CameraApi.g.kt',
     kotlinOptions: KotlinOptions(
-      package: 'com.rarocamera.raro_mobile.generated',
+      package: 'com.rarocamera.raro_mobile.generated.camera',
     ),
     dartPackageName: 'raro_mobile',
   ),

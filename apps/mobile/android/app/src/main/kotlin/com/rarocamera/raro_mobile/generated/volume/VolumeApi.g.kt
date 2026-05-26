@@ -2,7 +2,7 @@
 // See also: https://pub.dev/packages/pigeon
 @file:Suppress("UNCHECKED_CAST", "ArrayInDataClass")
 
-package com.rarocamera.raro_mobile.generated
+package com.rarocamera.raro_mobile.generated.volume
 
 import android.util.Log
 import io.flutter.plugin.common.BasicMessageChannel
@@ -13,7 +13,7 @@ import io.flutter.plugin.common.StandardMethodCodec
 import io.flutter.plugin.common.StandardMessageCodec
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
-private object CameraApiPigeonUtils {
+private object VolumeApiPigeonUtils {
 
   fun createConnectionError(channelName: String): FlutterError {
     return FlutterError("channel-error",  "Unable to establish connection on channel: '$channelName'.", "")  }
@@ -50,7 +50,7 @@ class FlutterError (
   override val message: String? = null,
   val details: Any? = null
 ) : Throwable()
-private open class CameraApiPigeonCodec : StandardMessageCodec() {
+private open class VolumeApiPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return     super.readValueOfType(type, buffer)
   }
@@ -60,27 +60,27 @@ private open class CameraApiPigeonCodec : StandardMessageCodec() {
 }
 
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
-interface CameraHostApi {
-  fun cameraPing()
+interface VolumeHostApi {
+  fun volumePing()
 
   companion object {
-    /** The codec used by CameraHostApi. */
+    /** The codec used by VolumeHostApi. */
     val codec: MessageCodec<Any?> by lazy {
-      CameraApiPigeonCodec()
+      VolumeApiPigeonCodec()
     }
-    /** Sets up an instance of `CameraHostApi` to handle messages through the `binaryMessenger`. */
+    /** Sets up an instance of `VolumeHostApi` to handle messages through the `binaryMessenger`. */
     @JvmOverloads
-    fun setUp(binaryMessenger: BinaryMessenger, api: CameraHostApi?, messageChannelSuffix: String = "") {
+    fun setUp(binaryMessenger: BinaryMessenger, api: VolumeHostApi?, messageChannelSuffix: String = "") {
       val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.CameraHostApi.cameraPing$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.VolumeHostApi.volumePing$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
-              api.cameraPing()
+              api.volumePing()
               listOf(null)
             } catch (exception: Throwable) {
-              CameraApiPigeonUtils.wrapError(exception)
+              VolumeApiPigeonUtils.wrapError(exception)
             }
             reply.reply(wrapped)
           }
@@ -92,17 +92,17 @@ interface CameraHostApi {
   }
 }
 /** Generated class from Pigeon that represents Flutter messages that can be called from Kotlin. */
-class CameraFlutterApi(private val binaryMessenger: BinaryMessenger, private val messageChannelSuffix: String = "") {
+class VolumeFlutterApi(private val binaryMessenger: BinaryMessenger, private val messageChannelSuffix: String = "") {
   companion object {
-    /** The codec used by CameraFlutterApi. */
+    /** The codec used by VolumeFlutterApi. */
     val codec: MessageCodec<Any?> by lazy {
-      CameraApiPigeonCodec()
+      VolumeApiPigeonCodec()
     }
   }
-  fun cameraReady(callback: (Result<Unit>) -> Unit)
+  fun volumeReady(callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    val channelName = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.cameraReady$separatedMessageChannelSuffix"
+    val channelName = "dev.flutter.pigeon.raro_mobile.VolumeFlutterApi.volumeReady$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(null) {
       if (it is List<*>) {
@@ -112,7 +112,7 @@ class CameraFlutterApi(private val binaryMessenger: BinaryMessenger, private val
           callback(Result.success(Unit))
         }
       } else {
-        callback(Result.failure(CameraApiPigeonUtils.createConnectionError(channelName)))
+        callback(Result.failure(VolumeApiPigeonUtils.createConnectionError(channelName)))
       } 
     }
   }

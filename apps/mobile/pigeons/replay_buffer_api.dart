@@ -7,9 +7,9 @@ import 'package:pigeon/pigeon.dart';
     swiftOut: 'ios/Runner/Native/Generated/ReplayBufferApi.g.swift',
     swiftOptions: SwiftOptions(),
     kotlinOut:
-        'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/ReplayBufferApi.g.kt',
+        'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/replay_buffer/ReplayBufferApi.g.kt',
     kotlinOptions: KotlinOptions(
-      package: 'com.rarocamera.raro_mobile.generated',
+      package: 'com.rarocamera.raro_mobile.generated.replay_buffer',
     ),
     dartPackageName: 'raro_mobile',
   ),

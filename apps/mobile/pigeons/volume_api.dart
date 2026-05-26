@@ -7,9 +7,9 @@ import 'package:pigeon/pigeon.dart';
     swiftOut: 'ios/Runner/Native/Generated/VolumeApi.g.swift',
     swiftOptions: SwiftOptions(),
     kotlinOut:
-        'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/VolumeApi.g.kt',
+        'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/volume/VolumeApi.g.kt',
     kotlinOptions: KotlinOptions(
-      package: 'com.rarocamera.raro_mobile.generated',
+      package: 'com.rarocamera.raro_mobile.generated.volume',
     ),
     dartPackageName: 'raro_mobile',
   ),
