@@ -1,44 +1,187 @@
 # 04-ROADMAP — RARO
 
-> Ordem sugerida das specs da Fase 5 (Spec-Driven). Não é commitment de prazo. Ordem orientada por risco técnico.
+> Roadmap de specs pós-bootstrap. Ordem orientada por **dependência técnica + risco** + **API contract first**. Cada spec referencia agents, hooks, gates e sizing do harness. Não é commitment de prazo.
 
-## Prioridade alta — validar arquitetura crítica cedo
+## Princípios deste roadmap
 
-| # | Spec | Por quê | Risco |
-|---|---|---|---|
-| 1 | `feat/camera-native-bridge` | Pipeline native bridge completo: discovery de lentes, captura básica, alternância 0.5×/1× | 🔴 alto |
-| 2 | `feat/replay-buffer` | Buffer circular em RAM. Recurso mais arriscado tecnicamente, sem plugin Flutter resolvendo | 🔴 alto |
-| 3 | `feat/voice-wake-word` | Detecção on-device do `"Raro"`. Bridge crítico para hands-free | 🔴 alto |
+1. **API Contract First** — toda type/enum/constant compartilhada vive em `packages/shared/` (single source of truth). Features importam; nunca duplicam. Spec `spec-001` define o contrato canônico antes de qualquer feature de produto começar.
+2. **Sizing pré-classificado** — cada spec já vem rotulada como Quick / Medium / Large (ver [CLAUDE.md Seção 6](../CLAUDE.md)).
+3. **Dependências explícitas** — toda spec lista pré-requisitos (ADR, outra spec, infra). Sem ambiguidade.
+4. **Gates contextuais** — cada spec lista quais checks do `.claude/slice-checklist.md` se aplicam e quais subagents devem ser invocados.
+5. **Validável em pipeline** — toda micro-sprint dentro de uma spec termina com gate executável (`flutter test`, `flutter analyze`, contract test, design-fidelity).
 
-## Prioridade média — features de produto
+## DAG de execução
 
-| # | Spec | Notas |
-|---|---|---|
-| 4 | `feat/volume-control` | Captura de botões físicos via native bridge + modal "Controle conectado" |
-| 5 | `feat/subscription-paywall` | RevenueCat, 2 SKUs (mensal + anual), free trial 30 dias, paywall UI |
-| 6 | `feat/checkout` | Tela de finalização com Apple Pay / Google Play |
-| 7 | `feat/gallery` | Listagem, filtros (Todos / Hoje / Esta semana / Raro Replay), thumbs |
-| 8 | `feat/preview` | Player com scrubber, info, share |
-| 9 | `feat/lock-mode` | Tela escurecida com double-tap pra sair |
+```
+                    ┌─────────────────────────────────────────────┐
+                    │  spec-001-api-contract-shared (Medium)       │
+                    │  expande packages/shared com types canônicos │
+                    └─────────────────────────────────────────────┘
+                                       │
+            ┌──────────────┬───────────┴───────────┬──────────────────┐
+            ▼              ▼                       ▼                  ▼
+    spec-002-firebase   spec-003-revenuecat   spec-004-theme    spec-005-fonts
+    -init (Medium)      -init (Medium)        -tokens (Quick)   (Quick)
+            │              │                       │                  │
+            │              │                       └─────┬────────────┘
+            │              │                             ▼
+            │              │                       spec-006-splash (Quick)
+            │              │                             │
+            │              │                             ▼
+            └──────────────┴──────► spec-007-camera-native-bridge (Large) 🔴
+                                                │
+                                                ▼
+                                    spec-008-replay-buffer (Large) 🔴
+                                                │
+                                                ▼
+                                    spec-009-voice-wake-word (Large) 🔴
+                                                │
+                          ┌─────────────────────┼─────────────────────┐
+                          ▼                     ▼                     ▼
+                spec-010-volume         spec-011-lock-mode    spec-012-i18n
+                -control (Medium)       (Medium)              -scaffold (Quick)
+                                                                      │
+                          ┌───────────────────────────────────────────┘
+                          ▼
+                spec-013-subscription-paywall (Large)
+                          │
+                          ▼
+                spec-014-checkout (Medium)
+                          │
+                          ▼
+                spec-015-gallery (Medium) ─► spec-016-preview (Medium)
+                          │
+                          ▼
+                spec-017-permissions (Quick)
+                          │
+                          ▼
+                spec-018-onboarding (Medium)
+                          │
+                          ▼
+                spec-019-xiaomi-onboarding (Quick)
+                          │
+                          ▼
+                spec-020-settings (Medium) [agrega todas as configs]
+```
 
-## Prioridade baixa — acabamento
+## Critério de sizing aplicado
 
-| # | Spec |
+| Sizing | Quando |
 |---|---|
-| 10 | `feat/i18n` (pt-BR, en, es) |
-| 11 | `feat/xiaomi-onboarding` (modal MIUI híbrida) |
-| 12 | `feat/settings` (tela completa com todas configurações) |
-| 13 | `feat/onboarding` (P02 + P03 + permissões P04) |
-| 14 | `feat/splash` (animação de boot) |
+| **Quick** (≤3 arquivos, sem mudança arquitetural) | Asset adição, copy/string em `.arb`, screen UI simples sem state complexo, splash, fontes, scaffold i18n |
+| **Medium** (1 feature, multi-file, sem novo bridge) | Tela completa com state Riverpod, integração com SDK existente, modal com permissão, settings, gallery, preview |
+| **Large** (novo bridge, novo ADR, multi-feature) | Native bridge (camera, replay, voice), paywall com 2 SKUs + checkout, integração de SDK novo no boot, expansão do API contract |
 
-## Trilha lateral — infra
+## Tabela completa de specs
 
-- `chore/firebase-init` — `firebase_core` + `firebase_analytics` + `firebase_crashlytics` configurados em ambas plataformas
-- `chore/revenuecat-init` — `purchases_flutter` configurado com API key, entitlement `premium`, offerings sync
-- `chore/theme-design-tokens` — extrair tokens do protótipo (cores, gradients, tipografia, espaçamentos) para `lib/core/theme/`
-- `chore/native-fonts` — adicionar TTFs de Space Grotesk, Inter, JetBrains Mono em `assets/fonts/`
-- `chore/i18n-scaffold` — `flutter_localizations` + `intl` + arb files vazios
+| # | Spec | Sizing | Dependências | Telas/Componentes | Hooks/Agents críticos |
+|---|---|---|---|---|---|
+| 001 | api-contract-shared | Medium | Bootstrap | — (puro shared) | implementer + flutter-test-author + adr-guardian |
+| 002 | firebase-init | Medium | 001 | — (config nativa) | implementer + adr-guardian (ADR de config); block-env protege configs |
+| 003 | revenuecat-init | Medium | 001 | — (config nativa) | implementer + researcher (validar SDK 10.1.1); block-env |
+| 004 | theme-design-tokens | Quick | 001 | tokens compartilhados | implementer + design-fidelity-checker |
+| 005 | native-fonts | Quick | 004 | assets/fonts/ | implementer |
+| 006 | splash (P01) | Quick | 004 + 005 | P01 | implementer + design-fidelity-checker (P01) + flutter-test-author |
+| 007 | camera-native-bridge | Large 🔴 | 001 | P05 (core) | implementer + flutter-test-author + adr-guardian (ADR 0002 + contract) + design-fidelity-checker (P05) |
+| 008 | replay-buffer | Large 🔴 | 007 | P05 (HUD) | implementer + flutter-test-author + adr-guardian (ADR 0003 + contract) + flutter-perf-auditor (RAM) |
+| 009 | voice-wake-word | Large 🔴 | 007 | P05 (mic + hint) | implementer + adr-guardian (privacy manifest + contract); design-fidelity-checker se HUD muda |
+| 010 | volume-control | Medium | 007 | P05 + M03 | implementer + adr-guardian (ADR 0011 + contract); design-fidelity-checker (M03 modal) |
+| 011 | lock-mode | Medium | 007 | P05a | implementer + design-fidelity-checker (P05a) + flutter-perf-auditor (consumo bateria) |
+| 012 | i18n-scaffold | Quick | 001 | l10n/ | implementer; design-fidelity-checker valida copy contra protótipo |
+| 013 | subscription-paywall | Large | 001 + 003 + 012 | P09 + M01 popup | implementer + design-fidelity-checker (P09 + M01) + researcher (validar SKUs no RevenueCat dashboard) |
+| 014 | checkout | Medium | 013 | P10 | implementer + design-fidelity-checker (P10) |
+| 015 | gallery | Medium | 007 + 008 | P07 | implementer + design-fidelity-checker (P07) + flutter-perf-auditor (grid 3-cols) |
+| 016 | preview | Medium | 015 | P08 | implementer + design-fidelity-checker (P08) |
+| 017 | permissions | Quick | 001 | P04 | implementer + design-fidelity-checker (P04) |
+| 018 | onboarding | Medium | 017 + 012 | P02 + P03 | implementer + design-fidelity-checker (P02 + P03) |
+| 019 | xiaomi-onboarding | Quick | 018 + 012 | M02 | implementer + design-fidelity-checker (M02) + researcher (detect MIUI heurística) |
+| 020 | settings | Medium | 010 + 011 + 012 + 013 | P06 | implementer + design-fidelity-checker (P06) |
 
-## Definition of Done geral (release v1.0)
+> **P11 (Termos de Uso) e P12 (Política de Privacidade)** não estão no roadmap porque dependem de conteúdo legal fornecido pelo cliente, não de implementação. Quando o cliente entregar os textos, criar `spec-021-legal-pages` (Quick) referenciada a partir de `settings` (P06 → Sobre).
 
-Ver [Blueprint Seção 10](Blueprint.md).
+## Caminho crítico
+
+3 paths bloqueiam ⅔ do app:
+
+1. **Path do API Contract:** 001 → tudo. Sem `packages/shared/` expandido, todas as features duplicariam tipos.
+2. **Path do native bridge:** 001 → 007 → 008 → 009. Sem câmera funcionando, nem replay buffer nem voice fazem sentido.
+3. **Path do paywall:** 001 → 003 → 013 → 014. Sem RevenueCat configurado, paywall não funciona; sem paywall, gate de salvar vídeo não funciona.
+
+Paths 2 e 3 podem ser paralelizados após 001 + 003.
+
+## Gates contextuais aplicados por spec
+
+Cada micro-sprint dentro de uma spec deve passar **antes** de avançar:
+
+### Gates universais (toda spec)
+
+- `bun run lint` zero issues
+- `bun run typecheck` zero issues
+- `bun run test` tudo verde
+- Commit Conventional Commits 1.0.0 com scope do scope-enum
+- Sem menção a `OkCamera` em código novo
+- Sem `.env`/`keystore.jks`/`google-services.json` no diff
+
+### Gates condicionais (do `.claude/slice-checklist.md`)
+
+| Spec toca... | Gate disparado |
+|---|---|
+| Tela do protótipo (qualquer P0X/M0X) | `design-fidelity-checker` invocado com screen ID + tokens contra `Prototipo-RARO.html` |
+| Method Channel novo | Contract test em iOS + Android + `<bridge>_contract.md` publicado |
+| `pubspec.yaml` ou `package.json` | `warn-adr-drift` dispara; ADR novo obrigatório |
+| `@riverpod` annotation | `run-riverpod-codegen` hook sinaliza; codegen rodado antes do commit |
+| String UI nova | Inserida em `.arb` (pt-BR + en + es); `flutter gen-l10n` rodado |
+| Evento analytics novo | Nome em `packages/shared/lib/src/events/analytics_events.dart`; sem PII |
+| Native Swift/Kotlin | Compilação iOS + Android passa; SwiftLint/ktlint zero issues |
+| Tela com baseline golden | `flutter test --update-goldens` + diff visual revisado |
+| Mudança em navegação (`lib/app.dart`/router) | Integration test em device físico |
+
+## Definition of Done por release
+
+### v1.0.0 (release inicial)
+
+- Todas as 20 specs concluídas e mergeadas
+- 100% das 13 telas + 3 modais navegáveis
+- Wake word `"Raro"` com taxa de detecção > 90% em ambiente silencioso (testado)
+- Replay Buffer estável em iOS + Android (sem perda de frames, sem crashes em 4K)
+- Lock mode reduz consumo de bateria ≥ 50% vs tela acesa (medido)
+- App testado em ≥ 1 device Xiaomi/MIUI real
+- i18n completa nos 3 idiomas (pt-BR / en / es)
+- Free trial 30 dias confirmado funcional via RevenueCat
+- Salvar vídeo exige entitlement `premium` ativo
+- Builds release `.ipa` + `.aab` com signing
+- App aprovado e publicado em App Store + Google Play
+- ADRs criados para todas as decisões arquiteturais novas
+- CHANGELOG atualizado a cada spec mergeada
+
+Ver também [Blueprint Seção 11](Blueprint.md) e [docs/09-DOD.md](09-DOD.md).
+
+## Como executar uma spec
+
+Fluxo padrão (TLC Spec-Driven, [CLAUDE.md Seção 6](../CLAUDE.md)):
+
+1. `/new-spec <slug>` — scaffold em `docs/superpowers/specs/`
+2. `superpowers:brainstorming` — preencher conteúdo da spec
+3. Avaliar sizing — confirmar Quick/Medium/Large
+4. Se Medium ou Large: `/new-plan <slug>` + `superpowers:writing-plans`
+5. `implementer` agent executa atomic tasks
+6. `flutter-test-author` agent escreve testes red-first onde aplicável
+7. Hooks PreToolUse/PostToolUse rodam automaticamente
+8. `validator` agent confirma cumprimento da spec
+9. `design-fidelity-checker` se tocou tela do protótipo
+10. `adr-guardian` se mudou stack ou contrato
+11. `/verify-slice` para gates universais + contextuais
+12. `/commit` segue conventional + scope-enum
+13. `/session-end` registra trabalho em `docs/sessions/`
+
+## Próxima ação concreta
+
+`/new-spec api-contract-shared` — primeira spec, expansão de `packages/shared/` com types canônicos. Spec detalhada em `docs/04-ROADMAP-SPECS/spec-001-api-contract-shared.md` (criada no µ-sprint RM-2).
+
+## Detalhamento por bloco
+
+- [RM-2: API Contract](04-ROADMAP-SPECS/spec-001-api-contract-shared.md) — spec única bloqueante
+- [RM-3: Infra chores (002-005)](04-ROADMAP-SPECS/block-infra.md) — firebase, revenuecat, theme, fonts
+- [RM-4: Native bridges (007-009)](04-ROADMAP-SPECS/block-bridges.md) — camera, replay, voice
+- [RM-5: Features de produto (010, 013-016)](04-ROADMAP-SPECS/block-features.md) — volume, paywall, checkout, gallery, preview, lock
+- [RM-6: Acabamento (006, 011, 012, 017-020)](04-ROADMAP-SPECS/block-polish.md) — splash, lock, i18n, permissions, onboarding, xiaomi, settings
