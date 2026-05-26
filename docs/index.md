@@ -50,7 +50,7 @@
 
 - [sessions/0000-template.md](sessions/0000-template.md) — template de session log
 - [sessions/0001-INDEX.md](sessions/0001-INDEX.md) — índice de sessions (mais recente no topo)
-- [sessions/0001-bootstrap.md](sessions/0001-bootstrap.md) — bootstrap do projeto (Fases 1–3)
+- [sessions/0001-bootstrap.md](sessions/0001-bootstrap.md) — bootstrap do projeto (Fases 1–5 + 3 sprints de fixes)
 
 ## Specs e plans (TLC Spec-Driven)
 
@@ -58,3 +58,16 @@
 - [superpowers/plans/0000-template.md](superpowers/plans/0000-template.md) — template canônico de plan com 7 execution rules + Phase 0 pre-flight + atomic tasks
 - `superpowers/specs/<YYYY-MM-DD>-<slug>-design.md` — specs por feature (criadas via `/new-spec`)
 - `superpowers/plans/<YYYY-MM-DD>-<slug>.md` — plans por feature (criados via `/new-plan`)
+
+## Harness Claude Code (`.claude/`)
+
+Não fica em `docs/`, mas é parte da documentação operacional. Referência:
+
+- [../.claude/README.md](../.claude/README.md) — visão geral do harness
+- [../.claude/settings.json](../.claude/settings.json) — permissions + hooks registrados
+- [../.claude/slice-checklist.md](../.claude/slice-checklist.md) — gates contextuais antes de PR/merge
+- `../.claude/agents/` — 7 subagents (implementer, validator, adr-guardian, researcher, flutter-test-author, flutter-perf-auditor, design-fidelity-checker)
+- `../.claude/commands/` — 8 slash commands (`/commit`, `/session-end`, `/docs-lint`, `/prime`, `/new-spec`, `/new-plan`, `/verify-slice`, `/ingest-source`)
+- `../.claude/hooks/` — 7 shell scripts (6 registrados em settings.json + `verify-task.sh` como utilitário manual)
+
+Detalhes em [CLAUDE.md](../CLAUDE.md) Seções 7, 8, 9.
