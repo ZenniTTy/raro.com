@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# CocoaPods residuals (Flutter 3.44 auto-gera para plugins não-SPM como permission_handler_apple — ADR-014)
+ios/Podfile
+ios/Podfile.lock

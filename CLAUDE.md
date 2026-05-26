@@ -20,10 +20,10 @@ Detalhe complementar: este projeto também segue as **15 práticas Karpathy** pa
 | Item | Estado |
 |---|---|
 | Blueprint | [docs/Blueprint.md](docs/Blueprint.md) Approved em 2026-05-25 |
-| Fase atual do bootstrap | Spec-Driven (Fase 5) — 1ª spec entregue (`api-contract-shared`, session 0002, ADR-0013) |
+| Fase atual do bootstrap | Spec-Driven (Fase 5) — 2 specs entregues (`api-contract-shared`/ADR-0013, `flutter-3.44-spm-migration`/ADR-0014) |
 | Branch principal | `main` (devs em `develop` ou feature branches) |
 | Bundle ID | `com.rarocamera` |
-| Plataformas alvo | iOS 14+ / Android API 24+ |
+| Plataformas alvo | iOS 15+ / Android API 24+ |
 | Wake word | `"Raro"` (NÃO `"OkCamera"`) |
 | Free trial | 30 dias |
 | Planos | Mensal R$ 9,90 + Anual R$ 89,90 |
@@ -34,7 +34,7 @@ Detalhe complementar: este projeto também segue as **15 práticas Karpathy** pa
 
 Ver [docs/Blueprint.md Seção 2](docs/Blueprint.md) para a tabela completa. Resumo:
 
-- **Flutter** `>=3.41.0 <4.0.0` · **Dart** `^3.11.0`
+- **Flutter** `>=3.44.0 <4.0.0` · **Dart** `^3.12.0`
 - **Riverpod 3** com codegen (`@riverpod` annotation, `part '*.g.dart'`) — `flutter_riverpod ^3.3.1`
 - **go_router** `^17.2.3`
 - **purchases_flutter** `^10.1.1` (RevenueCat)

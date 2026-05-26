@@ -2,6 +2,33 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-05-26] — 0.3.0 (flutter-3.44-spm-migration)
+
+### Mudado
+- Flutter `3.41.9` → `3.44.0` + Dart `3.11.x` → `3.12.0` (latest stable channel, ADR-0014)
+- iOS deployment target `13.0` → `15.0` (perde iPhone 6s/7/8/SE 1ª geração — autorizado pelo usuário em 2026-05-26 como trade-off pela migração SPM)
+- iOS dependency manager: **CocoaPods → Swift Package Manager** (Apple-native, default em Flutter 3.44, sem regressão Android)
+- `apps/mobile/pubspec.yaml`: constraint `flutter: ">=3.44.0"`, `sdk: ">=3.12.0 <4.0.0"`
+- `packages/shared/pubspec.yaml`: constraint `sdk: ">=3.12.0 <4.0.0"`
+
+### Removido
+- `apps/mobile/ios/Podfile`, `apps/mobile/ios/Podfile.lock` originais (CocoaPods)
+- Tentativa de voltar `pigeon` para `^26.3.4` foi revertida: `theme_tailor 3.1.3` E `riverpod_lint 3.1.3` ainda pinam `analyzer ^9.0.0`. Mantido em `^26.3.2`.
+
+### Decidido
+- ADR-014: migração tríplice Flutter 3.44 + SPM + iOS 15 (ver `docs/decisions/0014-flutter-3.44-spm-ios-15.md`)
+
+### Notas
+- Plugins ainda sem SPM nativo em 2026-05-26 (`permission_handler_apple` PR #1440 não merged): Flutter 3.44 auto-gera Podfile mínimo apenas para esses. CocoaPods continua necessário (via `brew install cocoapods`, sem sudo) enquanto esses plugins não migram. `Podfile`/`Podfile.lock` gitignorados em `apps/mobile/.gitignore`.
+- Material/Cupertino frozen no Flutter 3.44 (issue #184093). Imports `package:flutter/material.dart` continuam funcionando via shim. Migração para `material_ui`/`cupertino_ui` quando esses packages forem publicados (spec futura).
+
+### Verificado
+- `flutter build apk --debug` PASS (sem regressão Android — `Built build/app/outputs/flutter-apk/app-debug.apk`)
+- `flutter build ios --no-codesign --debug` progrediu via SPM (`Adding Swift Package Manager integration... 227s` + `Running pod install... 5.4s` + `Xcode build done. 40s`) — gate de compile Swift validado. Build final aguarda `iOS 26.5 platform` ser baixado via Xcode > Settings > Components (issue de ambiente local, não da migração)
+- 6 contract gates da spec anterior continuam verdes (14 testes em `apps/mobile/test/contract/`)
+- `dart test` shared 28 verdes
+- `flutter analyze` mobile zero issues (warning sobre permission_handler_apple sem SPM aceitável e esperado)
+
 ## [2026-05-26] — 0.2.0 (api-contract-shared)
 
 ### Adicionado
