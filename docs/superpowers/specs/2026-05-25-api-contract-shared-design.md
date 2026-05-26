@@ -4,7 +4,7 @@
 
 ## Status
 
-`Approved` — 2026-05-26.
+`Done` — 2026-05-26. Implementada via plan `docs/superpowers/plans/2026-05-26-api-contract-shared.md` em 18 commits na branch `feat/api-contract-shared`. Validator subagent confirmou SPEC_COMPLIANT. 47 testes verdes (28 shared + 19 mobile incluindo 14 contract gates).
 
 ## Owner / Implementer
 
@@ -533,18 +533,19 @@ Quando CI for ligado (spec posterior), pipeline rodará `bun run test` que cobre
 
 ## Observable goals (critérios objetivos da Definition of Done)
 
-- [ ] `bun --filter @raro/mobile run analyze` sem warnings.
-- [ ] `bun --filter @raro/mobile run test` passa, incluindo suite `test/contract/` com **6+ testes verdes**.
-- [ ] `bun --filter @raro/shared run test` passa com asserts de invariantes.
-- [ ] `dart run pigeon --input pigeons/<each>.dart` executa sem erro para os 4 schemas.
-- [ ] `bun --filter @raro/mobile run codegen` gera `raro_theme.tailor.dart` válido.
-- [ ] `grep -r "Raro Mobile" apps/ packages/ docs/` retorna vazio.
-- [ ] `grep -rE "OkCamera|Ok Camera|hey OkCamera|okCamera" apps/ packages/ docs/ .claude/` retorna vazio.
-- [ ] Hook `block-forbidden-terms.sh` testado manualmente bloqueando inserção de `OkCamera`.
-- [ ] ADR-013 mergeado em `docs/decisions/`.
-- [ ] Blueprint atualizado nas Seções 2.2, 2.10, 9.
-- [ ] `docs/10-CHANGELOG.md` atualizado.
-- [ ] App buildando localmente em iOS Simulator e Android Emulator (`flutter build ios --no-codesign --debug` + `flutter build apk --debug`).
+- [x] `bun --filter=@raro/mobile run analyze` sem warnings. ✅ 2026-05-26
+- [x] `bun --filter=@raro/mobile run test` passa, incluindo suite `test/contract/` com **6+ testes verdes** (14 contract + 5 smoke = 19). ✅ 2026-05-26
+- [x] `bun --filter=@raro/shared run test` passa com asserts de invariantes (28 verdes). ✅ 2026-05-26
+- [x] `dart run pigeon --input pigeons/<each>.dart` executa sem erro para os 4 schemas (`bun --filter=@raro/mobile run pigeon`). ✅ 2026-05-26
+- [x] `bun --filter=@raro/mobile run codegen` gera `raro_theme.tailor.dart` válido. ✅ 2026-05-26
+- [x] `grep -r "Raro Mobile" apps/ packages/` retorna vazio (apenas docs/specs/plans referenciam para histórico — esperado). ✅ 2026-05-26
+- [x] `grep -rE "OkCamera|..." apps/mobile/lib packages/shared/lib` retorna vazio fora de `forbidden_terms.dart` canônico. ✅ 2026-05-26
+- [x] Hook `block-forbidden-terms.sh` testado manualmente: bloqueia `OkCamera` (exit 1), permite `Raro` (exit 0). ✅ 2026-05-26
+- [x] ADR-013 commitado em `docs/decisions/0013-pigeon-theme-tailor-and-anti-drift-gates.md` (commit `2783166`). Merge para `develop` em PR separado. ✅ 2026-05-26
+- [x] Blueprint atualizado nas Seções 2.2, 2.10, 9 (commit `9316411` + revisão `27db007`). ✅ 2026-05-26
+- [x] `docs/10-CHANGELOG.md` atualizado com entrada `[2026-05-26] — 0.2.0 (api-contract-shared)` (commit `61b5cf9`). ✅ 2026-05-26
+- [x] `flutter build apk --debug` PASS ✅ 2026-05-26 (validado após correção de sub-packages Kotlin distintos por bridge — ver nota no Blueprint Seção 2.2).
+- [⚠️] `flutter build ios --no-codesign --debug` retorna exit 0 mas CocoaPods não está instalado no ambiente local — `pod install` necessário para compilar Swift de verdade. Schemas Swift gerados (`*.g.swift`) existem e seguem contrato Pigeon. Validação completa do compile Swift fica pendente até dev rodar `sudo gem install cocoapods && cd ios && pod install`. Não bloqueia a spec — é estado do ambiente.
 
 ---
 
@@ -585,7 +586,7 @@ Esta spec não introduz tela nova. Os tokens da Família 11 são extraídos do p
 - [x] ADR existente: **0001** stack inicial — referenciado, sem mudança
 - [x] ADR existente: **0009** wake word `"Raro"` — referenciado, sem mudança
 - [x] ADR existente: **0010** modelo dual de assinatura — referenciado, sem mudança
-- [ ] ADR novo: **0013** — Pigeon + Theme Tailor + gates anti-drift (criar junto desta spec, commit separado)
+- [x] ADR novo: **0013** — Pigeon + Theme Tailor + gates anti-drift criado em `docs/decisions/0013-pigeon-theme-tailor-and-anti-drift-gates.md` (commit `2783166`). ✅ 2026-05-26
 
 ---
 

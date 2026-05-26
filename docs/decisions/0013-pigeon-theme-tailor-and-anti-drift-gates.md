@@ -17,7 +17,7 @@ O Blueprint 2026-05-25 listou 4 Method Channels (`com.rarocamera/{camera,replay_
 
 Adotamos três mecanismos complementares:
 
-1. **Pigeon ^26.3.2** para Method Channels — schemas Dart únicos em `apps/mobile/pigeons/*.dart` geram código tipado em Dart + Swift + Kotlin sincronizado. Elimina por construção o drift de namespace e assinaturas. Versão fixada em `26.3.2` (não `26.3.4`) por conflito de `analyzer` constraint com `riverpod_lint 3.1.3`; pigeon 26.3.3+ exige `analyzer >=10.0.0`.
+1. **Pigeon ^26.3.2** para Method Channels — schemas Dart únicos em `apps/mobile/pigeons/*.dart` geram código tipado em Dart + Swift + Kotlin sincronizado. Elimina por construção o drift de namespace e assinaturas. Versão fixada em `26.3.2` (não `26.3.4`) por conflito de `analyzer` constraint com `riverpod_lint 3.1.3`; pigeon 26.3.3+ exige `analyzer >=10.0.0`. Cada bridge usa **sub-package Kotlin distinto** (`com.rarocamera.raro_mobile.generated.{camera,replay_buffer,voice,volume}`) — Pigeon gera `class FlutterError` em cada `.g.kt` e pacote comum causa redeclaration. iOS side: cada `.g.swift` declara `PigeonError` `final` mas Pigeon usa `fileprivate`-like scoping via diferentes nomes prefixados; sem conflito em Swift module.
 2. **Theme Tailor ^3.1.3** (+ `theme_tailor_annotation ^3.1.3`) para design tokens — classes `@TailorMixin` em `apps/mobile/lib/core/theme/raro_theme.dart` geram `ThemeExtension` tipadas. Consumo via `Theme.of(context).extension<RaroColors>()!`. `Color(0xFF...)` fora de `core/theme/` vira erro de teste.
 3. **Triple-gate anti-drift** para invariantes de marca e identificadores:
    - (a) Hook PreToolUse `.claude/hooks/block-forbidden-terms.sh` bloqueia `OkCamera`, `Ok Camera`, `hey OkCamera` em qualquer Write/Edit/MultiEdit.

@@ -20,7 +20,7 @@ Detalhe complementar: este projeto também segue as **15 práticas Karpathy** pa
 | Item | Estado |
 |---|---|
 | Blueprint | [docs/Blueprint.md](docs/Blueprint.md) Approved em 2026-05-25 |
-| Fase atual do bootstrap | Foundation (Fase 3) em andamento |
+| Fase atual do bootstrap | Spec-Driven (Fase 5) — 1ª spec entregue (`api-contract-shared`, session 0002, ADR-0013) |
 | Branch principal | `main` (devs em `develop` ou feature branches) |
 | Bundle ID | `com.rarocamera` |
 | Plataformas alvo | iOS 14+ / Android API 24+ |

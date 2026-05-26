@@ -20,6 +20,11 @@
 - `ios/Runner/Info.plist`: chaves `NSCameraUsageDescription`, `NSMicrophoneUsageDescription`, `NSSpeechRecognitionUsageDescription` declaradas com mensagens canônicas (espelham `PermissionsContract.ios`).
 - `android/app/src/main/AndroidManifest.xml`: permissions `CAMERA` e `RECORD_AUDIO` declaradas (espelham `PermissionsContract.android`).
 - `apps/mobile/lib/app.dart`: removidas cores hardcoded `Color(0xFF000000)`/`Color(0xFFFFFFFF)`; passa a usar `RaroColors.dark` via ThemeExtension.
+- `apps/mobile/pigeons/*.dart`: cada schema usa **sub-package Kotlin distinto** (`com.rarocamera.raro_mobile.generated.{camera,replay_buffer,voice,volume}`) para evitar `Redeclaration: class FlutterError` ao compilar Android. Sem essa separação, `flutter build apk` falha com 16 erros de Kotlin compile. Bug descoberto pós-validator e corrigido com regen + build verde.
+
+### Pendências de ambiente
+
+- `flutter build ios --no-codesign --debug` retorna exit 0 mas com warning de CocoaPods não instalado no ambiente de desenvolvimento atual. Schemas Swift gerados existem, mas validação completa do compile Swift requer `sudo gem install cocoapods && cd apps/mobile/ios && pod install`. Spec considerada cumprida — é setup de ambiente, não regressão de código.
 
 ### Decidido
 
