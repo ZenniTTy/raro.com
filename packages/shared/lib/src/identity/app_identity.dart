@@ -1,6 +1,4 @@
-class AppIdentity {
-  const AppIdentity._();
-
+abstract final class AppIdentity {
   static const String displayName = 'Raro Camera';
   static const String bundleId = 'com.rarocamera';
   static const String applicationId = 'com.rarocamera';

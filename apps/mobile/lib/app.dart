@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 
 class RaroApp extends StatelessWidget {
   const RaroApp({super.key});
@@ -8,11 +10,7 @@ class RaroApp extends StatelessWidget {
     return MaterialApp(
       title: 'Raro Camera',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF000000),
-        useMaterial3: true,
-      ),
+      theme: buildRaroDarkTheme(),
       home: const _BootstrapPlaceholder(),
     );
   }
@@ -23,13 +21,14 @@ class _BootstrapPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFF000000),
+    final colors = Theme.of(context).extension<RaroColors>()!;
+    return Scaffold(
+      backgroundColor: colors.bgDeep,
       body: Center(
         child: Text(
           'RARO',
           style: TextStyle(
-            color: Color(0xFFFFFFFF),
+            color: colors.ink,
             fontSize: 48,
             letterSpacing: 4,
             fontWeight: FontWeight.w700,

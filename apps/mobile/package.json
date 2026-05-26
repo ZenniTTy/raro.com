@@ -7,10 +7,12 @@
     "typecheck": "flutter analyze .",
     "analyze": "flutter analyze .",
     "test": "flutter test",
+    "test:contract": "flutter test test/contract/",
     "build:ios": "flutter build ipa --release",
     "build:android": "flutter build appbundle --release",
     "pub:get": "flutter pub get",
     "codegen": "dart run build_runner build --delete-conflicting-outputs",
-    "codegen:watch": "dart run build_runner watch --delete-conflicting-outputs"
+    "codegen:watch": "dart run build_runner watch --delete-conflicting-outputs",
+    "pigeon": "dart run pigeon --input pigeons/camera_api.dart && dart run pigeon --input pigeons/replay_buffer_api.dart && dart run pigeon --input pigeons/voice_api.dart && dart run pigeon --input pigeons/volume_api.dart"
   }
 }

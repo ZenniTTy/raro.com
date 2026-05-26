@@ -1,6 +1,4 @@
-class AnalyticsEvents {
-  const AnalyticsEvents._();
-
+abstract final class AnalyticsEvents {
   static const String appOpen = 'app_open';
   static const String onboardingStarted = 'onboarding_started';
   static const String onboardingCompleted = 'onboarding_completed';

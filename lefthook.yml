@@ -39,6 +39,8 @@ pre-push:
       run: bun run lint
     - name: mobile-test
       run: bun run test
+    - name: contract-tests
+      run: bun --filter=@raro/mobile run test:contract
 
 commit-msg:
   jobs:

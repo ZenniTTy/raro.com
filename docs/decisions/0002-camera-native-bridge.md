@@ -1,7 +1,7 @@
 # 0002 — Native bridge custom para câmera (em vez do plugin `camera` oficial)
 
 - **Data:** 2026-05-25
-- **Status:** Accepted
+- **Status:** Accepted (parcialmente superseded por ADR-0013 em 2026-05-26 — a descrição original do contrato dos Method Channels como strings JSON manuais foi substituída por schemas Pigeon gerados em `apps/mobile/pigeons/*.dart`; a decisão de fazer bridge nativo custom em vez do plugin oficial permanece válida)
 - **Decisores:** Eduardo Rodrigues, Vitor Lopes
 - **Contexto:** Briefing Seção 6.2, Blueprint Seção 2.2
 

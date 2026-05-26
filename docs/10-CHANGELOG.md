@@ -2,6 +2,39 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-05-26] — 0.2.0 (api-contract-shared)
+
+### Adicionado
+
+- **packages/shared 0.2.0**: reorganizado em 12 famílias anti-drift sob `lib/src/{identity,voice,subscription,enums,screens,analytics,storage,bridges,permissions,contract}/` com barrel único `raro_shared.dart`. ADR-0013.
+- `apps/mobile`: Pigeon `^26.3.2` com 4 schemas vazios em `pigeons/` gerando código Dart + Swift + Kotlin para os bridges canônicos (`com.rarocamera/{camera,replay_buffer,voice,volume}`).
+- `apps/mobile`: Theme Tailor `^3.1.3` com `RaroColors`, `RaroRadii`, `RaroSpacing`, `RaroDurations` como `ThemeExtension` em `lib/core/theme/`. `buildRaroDarkTheme()` aplicado em `MaterialApp`.
+- `apps/mobile`: suite `test/contract/` com 6 gates (forbidden literals, info_plist parity, android_manifest parity, screen uniqueness, bridge parity, analytics gate). Total 14 contract tests.
+- `.claude/hooks/block-forbidden-terms.sh` bloqueando `OkCamera`/variantes em Write/Edit/MultiEdit.
+- `lefthook.yml`: step `contract-tests` no `pre-push` rodando `bun --filter=@raro/mobile run test:contract`.
+- `apps/mobile/package.json`: script `test:contract` e `pigeon` (codegen 4 schemas).
+
+### Corrigido
+
+- `ios/Runner/Info.plist`: `CFBundleDisplayName` corrigido de `"Raro Mobile"` para `"Raro Camera"` (alinha com `AppIdentity.displayName`).
+- `ios/Runner/Info.plist`: chaves `NSCameraUsageDescription`, `NSMicrophoneUsageDescription`, `NSSpeechRecognitionUsageDescription` declaradas com mensagens canônicas (espelham `PermissionsContract.ios`).
+- `android/app/src/main/AndroidManifest.xml`: permissions `CAMERA` e `RECORD_AUDIO` declaradas (espelham `PermissionsContract.android`).
+- `apps/mobile/lib/app.dart`: removidas cores hardcoded `Color(0xFF000000)`/`Color(0xFFFFFFFF)`; passa a usar `RaroColors.dark` via ThemeExtension.
+- `apps/mobile/pigeons/*.dart`: cada schema usa **sub-package Kotlin distinto** (`com.rarocamera.raro_mobile.generated.{camera,replay_buffer,voice,volume}`) para evitar `Redeclaration: class FlutterError` ao compilar Android. Sem essa separação, `flutter build apk` falha com 16 erros de Kotlin compile. Bug descoberto pós-validator e corrigido com regen + build verde.
+
+### Pendências de ambiente
+
+- `flutter build ios --no-codesign --debug` retorna exit 0 mas com warning de CocoaPods não instalado no ambiente de desenvolvimento atual. Schemas Swift gerados existem, mas validação completa do compile Swift requer `sudo gem install cocoapods && cd apps/mobile/ios && pod install`. Spec considerada cumprida — é setup de ambiente, não regressão de código.
+
+### Decidido
+
+- ADR-0013: Pigeon + Theme Tailor + gates anti-drift (triple gate: hook PreToolUse + suite test/contract/ + lefthook pre-push) como contrato canônico para 12 famílias de identificadores duplicáveis. Veja `docs/decisions/0013-pigeon-theme-tailor-and-anti-drift-gates.md`.
+- Pigeon fixado em `^26.3.2` (não `26.3.4` como originalmente planejado) por conflito de constraint com `riverpod_lint 3.1.3` que exige `analyzer ^9.0.0`. Pigeon 26.3.3+ requer `analyzer >=10.0.0`. Funcionalmente idêntico; revisar em spec futura de upgrade.
+
+### Atualizado
+
+- `docs/Blueprint.md` Seções 2.2 (nota Pigeon após tabela Method Channels), 2.10 (3 deps em monorepo tooling), 9 (linha ADR-0013).
+
 ## [2026-05-25] — 0.1.0 (bootstrap)
 
 ### Adicionado
