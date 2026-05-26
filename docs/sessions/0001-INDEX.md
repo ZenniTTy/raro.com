@@ -4,11 +4,12 @@
 
 | # | Data | Título | Branch | Commits |
 |---|---|---|---|---|
+| [0002](0002-api-contract-shared.md) | 2026-05-26 | api-contract-shared (rm-2 spec bloqueante, 12 famílias) | `feat/api-contract-shared` | `2783166` … `f30bb1b` (16 commits) |
 | [0001](0001-bootstrap.md) | 2026-05-25 | Bootstrap do projeto (Fases 1–5 + 3 sprints de fixes) | `develop` | `c40e55d` … `1c43be0` (33 commits) |
 
 ## Próxima sessão sugerida
 
-- **0002** — Primeira feature: `feat/camera-native-bridge` (Roadmap prioridade 1). Workflow:
+- **0003** — Primeira feature: `feat/camera-native-bridge` (Roadmap prioridade 1). Workflow:
   1. `/new-spec camera-native-bridge`
   2. `superpowers:brainstorming` para preencher
   3. Avaliar sizing (provavelmente **Large** — novo native bridge + ADR de contrato)
