@@ -14,12 +14,85 @@ import 'package:pigeon/pigeon.dart';
     dartPackageName: 'raro_mobile',
   ),
 )
+enum LensType { ultraWide, wide }
+
+enum Resolution { hd720, fhd1080, uhd4k }
+
+enum Fps { fps30, fps60 }
+
+enum CameraErrorCode {
+  permissionDenied,
+  deviceUnavailable,
+  lensUnavailable,
+  formatUnsupported,
+  sessionFailed,
+  alreadyRunning,
+  notRunning,
+}
+
+class CameraCapabilities {
+  CameraCapabilities({
+    required this.availableLenses,
+    required this.supportedResolutions,
+    required this.supportedFps,
+  });
+
+  final List<LensType> availableLenses;
+  final List<Resolution> supportedResolutions;
+  final List<Fps> supportedFps;
+}
+
+class CameraConfig {
+  CameraConfig({
+    required this.lens,
+    required this.resolution,
+    required this.fps,
+  });
+
+  final LensType lens;
+  final Resolution resolution;
+  final Fps fps;
+}
+
+class FocusPoint {
+  FocusPoint({required this.x, required this.y});
+
+  final double x;
+  final double y;
+}
+
 @HostApi()
 abstract class CameraHostApi {
-  void cameraPing();
+  @async
+  CameraCapabilities discoverCapabilities();
+
+  @async
+  void startSession(int textureId, CameraConfig config);
+
+  @async
+  void stopSession();
+
+  @async
+  void switchLens(LensType lens);
+
+  @async
+  void setFormat(Resolution resolution, Fps fps);
+
+  @async
+  void focusAt(FocusPoint point);
+
+  @async
+  bool requestPermission();
+
+  @async
+  bool hasPermission();
 }
 
 @FlutterApi()
 abstract class CameraFlutterApi {
-  void cameraReady();
+  void onSessionStarted(CameraConfig activeConfig);
+  void onSessionStopped();
+  void onLensSwitched(LensType lens);
+  void onFocusChanged(FocusPoint point, bool locked);
+  void onError(CameraErrorCode code, String? message);
 }
