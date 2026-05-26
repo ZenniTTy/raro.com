@@ -19,6 +19,12 @@
 
 Plugin oficial `camera` não suporta alternância física entre lentes 0.5× e 1× (issues `flutter#91247` e `flutter#173406`). Implementação **100% nativa** via Method Channel `com.rarocamera/camera`. Esta spec entrega o **mínimo viável** da câmera: discovery de lentes, captura sem buffer (replay vem em spec-008), HUD básico.
 
+### Decisões técnicas validadas (Context7 + WebSearch 2026-05-25)
+
+- **iOS:** usar `AVCaptureSession` simples (NÃO `AVCaptureMultiCamSession`). Alternância 0.5×/1× é via `removeInput`/`addInput` dentro de `beginConfiguration/commitConfiguration`. Multi-cam é overkill para v1.0 — abrir ADR se virar requisito futuro (PiP, simultâneo).
+- **Android:** ultra-wide discovery via `LENS_INFO_AVAILABLE_FOCAL_LENGTHS` **funciona em ~70% dos devices** — Pixel, Samsung high-end, e alguns chineses recentes. Para os outros 30% (especialmente Xiaomi MIUI com Camera2 API restrict mode), discovery retorna `available: false` para ultra-wide e **UI deve esconder botão 0.5× graceful**. Telemetria via Firebase captura cobertura real em produção.
+- Threshold heurístico para identificar ultra-wide: `focal length < 3.0mm`.
+
 ### Contract JSON (Method Channel)
 
 Vai virar `apps/mobile/lib/core/native_bridges/camera_contract.md` + `camera_method_channel.dart`. Métodos:
@@ -75,9 +81,12 @@ Eventos (EventChannel):
 - `apps/mobile/ios/Runner/AppDelegate.swift` — registra handler no plugin registry
 - `apps/mobile/ios/RunnerTests/CameraManagerTests.swift` — XCTest cobrindo discovery de lentes
 
-**Stack iOS:**
-- `AVCaptureDevice.DiscoverySession` com `builtInUltraWideCamera` + `builtInWideAngleCamera`
-- `AVCaptureSession` + `AVAssetWriter` para pipeline
+**Stack iOS (validado WebSearch + Apple Developer 2026-05-25):**
+- `AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInUltraWideCamera, .builtInWideAngleCamera], mediaType: .video, position: .back)`
+- `AVCaptureSession` (NÃO `AVCaptureMultiCamSession` — overkill para alternância simples, ver memory `raro-pattern-ios-avcapture-multicam-not-needed`)
+- Alternância: `removeInput`/`addInput` dentro de `beginConfiguration`/`commitConfiguration`
+- **Pré-aquecimento:** instanciar `AVCaptureDeviceInput` para ambas lentes no init do manager para minimizar latência da troca
+- `AVAssetWriter` para pipeline (não `AVCaptureMovieFileOutput` — esse limita controle de buffer)
 - Privacy: `NSCameraUsageDescription` em `Info.plist`
 
 **Verification:**
@@ -97,9 +106,14 @@ Eventos (EventChannel):
 - `apps/mobile/android/app/src/main/AndroidManifest.xml` — permission CAMERA
 - `apps/mobile/android/app/src/test/kotlin/com/rarocamera/CameraManagerTest.kt`
 
-**Stack Android:**
-- `CameraSelector.Builder().addCameraFilter()` filtrando `LENS_INFO_AVAILABLE_FOCAL_LENGTHS`
-- `MediaCodec` + `MediaMuxer` para encoding
+**Stack Android (validado WebSearch + Android Developers 2026-05-25):**
+- `CameraSelector.Builder().addCameraFilter()` filtrando por `CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS`
+- Heurística: `focal length < 3.0mm = ultra-wide`
+- **Graceful fallback:** se discovery retorna apenas 1 lens (sem ultra-wide), `discoverLenses()` retorna `[LensDescriptor(wide, available=true), LensDescriptor(ultraWide, available=false)]`
+- HUD Flutter side esconde botão `0.5×` quando `Lens.ultraWide.available == false`
+- Telemetria: evento `camera.lens.discovered` com `manufacturer + model + focalLengths` (Firebase Analytics)
+- `MediaCodec` + `MediaMuxer` para encoding — buffer management via `dequeueInputBuffer`/`releaseOutputBuffer` (já é pool-based, ver memory `raro-pattern-android-mediacodec-buffer-management`)
+- Considerar `Camera2Interop` se discovery via CameraX padrão falhar em algum OEM (último recurso, abrir ADR)
 
 **Verification:**
 - `./gradlew test` passa
@@ -208,11 +222,30 @@ Eventos:
 
 #### 8.3 — iOS: `ReplayBufferManager.swift`
 
-`CMSampleBuffer` array circular + `AVAssetWriter` para concat. Pool reutilizável de buffers para minimizar alloc. XCTest cobrindo overflow do buffer. **Commit:** `feat(bridge): ios replay buffer com cmsamplebuffer pool — spec-008 µ-sprint 8.3`
+**Stack validada WebSearch 2026-05-25 (Apple Developer + WWDC sessions):**
+
+- **`CVPixelBufferPool`** para reciclar `IOSurface` (NÃO `CVPixelBufferCreate` direto em hot path — fonte de churn)
+- Pool tamanho mínimo: `N segundos × FPS` (15s × 60fps = 900 buffers reciclados)
+- `AVAssetWriter` para concat com `AVAssetWriterInput.expectsMediaDataInRealTime = true`
+- `CMSampleBuffer` array (deque) referenciando os buffers do pool
+- XCTest cobrindo overflow do buffer + memory leak (rodar 10min, validar heap estável)
+- Ver memory `raro-pattern-ios-cvpixelbufferpool` para código exemplo
+
+**Commit:** `feat(bridge): ios replay buffer com cvpixelbufferpool e avassetwriter — spec-008 µ-sprint 8.3`
 
 #### 8.4 — Android: `ReplayBufferManager.kt`
 
-`MediaCodec` com H.264, `ByteBuffer` circular + `MediaMuxer` para concat. **Commit:** `feat(bridge): android replay buffer com mediacodec pool — spec-008 µ-sprint 8.4`
+**Stack validada WebSearch 2026-05-25 (Android Developers + bigflake.com):**
+
+- `MediaCodec` encoder H.264/HEVC com `dequeueInputBuffer`/`releaseOutputBuffer` (pool nativo do codec)
+- **Deque circular guarda BYTES encoded** (após codec output), não buffers nativos — `ByteArray` cópia
+- Cada entrada do deque: `EncodedFrame(bytes: ByteArray, ptsUs: Long)`
+- TTL no deque: remove frames com `(currentPts - frame.ptsUs) > maxSeconds * 1_000_000L`
+- `MediaMuxer` apenas no save (multiplexes deque + stream contínuo)
+- Anti-pattern proibido: `ArrayBlockingQueue<ByteBuffer>` ou `ByteBuffer.allocateDirect` em hot path (validator deve grep e rejeitar)
+- Ver memory `raro-pattern-android-mediacodec-buffer-management` para código exemplo
+
+**Commit:** `feat(bridge): android replay buffer com mediacodec deque encoded — spec-008 µ-sprint 8.4`
 
 #### 8.5 — HUD updates na P05
 
@@ -248,7 +281,17 @@ Integration test que grava 30s/4K em device real, observa heap via Flutter DevTo
 
 ### Problem
 
-Detecção on-device do wake word `"Raro"` para iniciar/encerrar gravação hands-free. iOS: `SFSpeechRecognizer`. Android: `SpeechRecognizer` com `EXTRA_PREFER_OFFLINE`. iOS tem limite de 1 minuto por sessão → restart automático. **Privacidade: áudio nunca sai do device.**
+Detecção on-device do wake word `"Raro"` para iniciar/encerrar gravação hands-free. iOS: `SFSpeechRecognizer` com transcript matching (Apple não tem API dedicada de wake word). Android: `SpeechRecognizer` com `EXTRA_PREFER_OFFLINE`. **Privacidade: áudio nunca sai do device.**
+
+### Limitações duras validadas WebSearch + Apple Forums (2026-05-25)
+
+- **iOS — Apple não fornece API nativa de wake word.** Nem `SFSpeechRecognizer` (iOS 10+) nem o novo `SpeechAnalyzer` (iOS 26+) suportam wake word custom. Workaround: **transcript matching com restart loop**.
+- **iOS — rate limit duro: 1.000 requests/device/hora.** Restart de sessão a cada 1 min = 60/h por usuário, OK em uso normal mas vulnerável a tight loop em error path → exige backoff exponencial.
+- **iOS — limite de 1 minuto por sessão.** Restart automático obrigatório.
+- **iOS — modelo on-device pode não estar baixado** logo após instalação. Verificar `recognizer.supportsOnDeviceRecognition` antes de assumir.
+- **Avaliação futura (não v1.0):** se DoD do Blueprint Seção 11 (taxa detecção > 90%) não for atingida, abrir ADR para migrar para `Picovoice Porcupine` (paga, $/MAU) ou `WhisperKit` (gratuita, ~150MB de modelo). Atualmente v1.0 aceita workaround com SFSpeechRecognizer.
+
+Ver memory `raro-pattern-ios-wake-word-no-native-api` para detalhe completo de cada opção.
 
 ### Contract JSON
 
@@ -275,7 +318,19 @@ Eventos:
 
 #### 9.3 — iOS: `VoiceWakeWordDetector.swift`
 
-`SFSpeechRecognizer` configurado on-device. Timer para detectar fim de sessão e reiniciar automaticamente. Buffer de samples sliding window. **Commit:** `feat(bridge): ios voice wake word com sfspeechrecognizer on-device — spec-009 µ-sprint 9.3`
+**Stack validada WebSearch + Apple Forums (2026-05-25):**
+
+- `SFSpeechRecognizer(locale: Locale(identifier: "pt_BR"))` com `recognitionRequest.requiresOnDeviceRecognition = true`
+- **Pré-flight:** verificar `recognizer.supportsOnDeviceRecognition == true` no init. Se `false`, callback `onError(VoiceError.onDeviceUnavailable)` e desativar wake word (HUD muda para "Toque REC para gravar")
+- Sessão de reconhecimento contínua com `SFSpeechAudioBufferRecognitionRequest`
+- **Callback de partial results**: compara cada novo segmento de transcript com lowercase `"raro"` — match → dispara `onWakeDetected`
+- **Restart loop:**
+  - Timer 50s (margem antes do limite de 1 min) → finaliza sessão atual e abre nova
+  - Em caso de error rate limit (`SFSpeechErrorCode.serviceNotAvailable` aprox), backoff exponencial: 2s → 4s → 8s → 16s → max 60s
+  - Métrica Firebase: `voice.session.start`, `voice.session.restart`, `voice.session.error.code`, `voice.wake.detected`
+- Privacy Manifest iOS: declarar `NSSpeechRecognitionUsageDescription` + `NSMicrophoneUsageDescription` no `Info.plist`
+
+**Commit:** `feat(bridge): ios voice wake word com sfspeechrecognizer + restart loop e backoff — spec-009 µ-sprint 9.3`
 
 #### 9.4 — Android: `VoiceWakeWordDetector.kt`
 
