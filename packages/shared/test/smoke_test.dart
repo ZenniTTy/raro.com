@@ -108,4 +108,33 @@ void main() {
       expect(p.toMap(), {'from': '0.5x', 'to': '1x'});
     });
   });
+
+  group('Family 8 — AppScreen + AppModal', () {
+    test('AppScreen paths are unique', () {
+      final paths = AppScreen.values.map((s) => s.path).toList();
+      expect(paths.toSet().length, paths.length, reason: 'duplicate path');
+    });
+
+    test('AppScreen analyticsNames are unique', () {
+      final names = AppScreen.values.map((s) => s.analyticsName).toList();
+      expect(
+        names.toSet().length,
+        names.length,
+        reason: 'duplicate analyticsName',
+      );
+    });
+
+    test('AppModal analyticsNames are unique', () {
+      final names = AppModal.values.map((m) => m.analyticsName).toList();
+      expect(names.toSet().length, names.length);
+    });
+
+    test('AppScreen has 13 entries (Blueprint Seção 5)', () {
+      expect(AppScreen.values.length, 13);
+    });
+
+    test('AppModal has 3 entries', () {
+      expect(AppModal.values.length, 3);
+    });
+  });
 }

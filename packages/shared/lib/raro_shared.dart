@@ -7,5 +7,6 @@ export 'src/enums/fps.dart';
 export 'src/enums/lens.dart';
 export 'src/enums/resolution.dart';
 export 'src/identity/app_identity.dart';
+export 'src/screens/app_screen.dart';
 export 'src/subscription/subscription.dart';
 export 'src/voice/voice_config.dart';
