@@ -26,7 +26,21 @@ Gates ativos:
 - Conventional Commits via commitlint (subject lowercase, scope obrigatório)
 - lefthook pre-commit: dart-format, biome-format, block-secrets
 - lefthook pre-push: bun run lint && bun run test
-- .claude/hooks/: block-env, block-secrets, format-dart, reinject-roadmap
+- .claude/hooks/ registrados em settings.json (6 hooks em 3 eventos):
+  PreToolUse: block-env, block-secrets, warn-adr-drift
+  PostToolUse: format-dart, run-riverpod-codegen
+  SessionStart: reinject-roadmap
+- .claude/hooks/verify-task.sh: utilitário invocável manualmente
+  via /verify-slice (não em Stop event para evitar overhead por turno)
+
+Subagents disponíveis (.claude/agents/):
+- implementer, flutter-test-author, researcher (write-capable)
+- validator, adr-guardian, flutter-perf-auditor,
+  design-fidelity-checker (read-only)
+
+Slash commands (.claude/commands/):
+- /commit, /session-end, /docs-lint, /prime,
+- /new-spec, /new-plan, /verify-slice, /ingest-source
 
 Status do projeto:
 EOF
