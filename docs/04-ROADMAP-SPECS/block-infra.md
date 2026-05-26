@@ -51,15 +51,22 @@ Bootstrap declarou `firebase_core ^4.9.0`, `firebase_analytics ^12.4.1`, `fireba
 - `apps/mobile/lib/core/firebase/firebase_bootstrap.dart` — usa `firebase_core`
 - `apps/mobile/lib/core/firebase/firebase_analytics_service.dart` — consome `AnalyticsEvents`
 - `apps/mobile/lib/core/firebase/firebase_crashlytics_service.dart`
-- `apps/mobile/lib/main.dart` — chama `Firebase.initializeApp()` antes do `runApp`
+- `apps/mobile/lib/main.dart` — chama `Firebase.initializeApp()` antes do `runApp` + **3 handlers obrigatórios** (não 1):
+  - `FlutterError.onError` → erros síncronos do framework
+  - `PlatformDispatcher.instance.onError` → erros assíncronos não tratados
+  - `Isolate.current.addErrorListener(...)` → erros em isolates (replay buffer pode usar)
 - `apps/mobile/test/core/firebase/firebase_services_test.dart` — usa mocktail
 
 **Verification:**
 - `flutter analyze apps/mobile` zero
 - `flutter test apps/mobile` verde (mocks de Firebase)
 - App roda no simulator sem crash mesmo sem configs reais (graceful no-op em dev)
+- Teste manual: throw uncaught exception em Future → aparece no Crashlytics console
+- Teste manual: throw em isolate → aparece também (sem isolate listener, some)
 
-**Commit:** `feat(analytics): firebase init + analytics + crashlytics services — spec-002 µ-sprint 2.3`
+**Commit:** `feat(analytics): firebase init + analytics + crashlytics com 3 error handlers — spec-002 µ-sprint 2.3`
+
+> **Aprendizado validado via Context7 docs/firebase/flutterfire (2026-05-25):** sem os 3 handlers (especialmente `PlatformDispatcher.instance.onError` e `Isolate.current.addErrorListener`), erros async e em isolates somem. **Não usar `runZonedGuarded`** — abordagem legada substituída por `PlatformDispatcher.instance.onError` desde Flutter 3.3+.
 
 #### 2.4 — ADR + CHANGELOG
 
@@ -131,7 +138,26 @@ Bootstrap declarou `firebase_core ^4.9.0`, `firebase_analytics ^12.4.1`, `fireba
 **Files:**
 - `apps/mobile/lib/core/subscription/revenuecat_subscription_service.dart`
 - `apps/mobile/lib/core/subscription/subscription_provider.dart` — Riverpod `@riverpod` provider
+- `apps/mobile/lib/core/subscription/purchases_error_mapper.dart` — converte `PlatformException` → `SubscriptionError` sealed (de `packages/shared`) usando `PurchasesErrorHelper.getErrorCode`
 - `apps/mobile/test/core/subscription/revenuecat_service_test.dart` com mocktail
+- `apps/mobile/test/core/subscription/purchases_error_mapper_test.dart` — cobre 8+ casos de `PurchasesErrorCode`
+
+**Padrão de erro obrigatório (validado via Context7 pub.dev purchases_flutter 2026-05-25):**
+
+```dart
+try {
+  await Purchases.purchasePackage(package);
+} on PlatformException catch (e) {
+  final code = PurchasesErrorHelper.getErrorCode(e);
+  switch (code) {
+    case PurchasesErrorCode.purchaseCancelledError: // user cancelou — UI silenciosa
+    case PurchasesErrorCode.networkError:           // retry com backoff
+    case PurchasesErrorCode.paymentPendingError:    // family sharing aguarda aprovação
+    case PurchasesErrorCode.purchaseNotAllowedError:// parental controls bloqueou
+    // ... mapeia para SubscriptionError sealed de shared
+  }
+}
+```
 
 **Verification:**
 - `flutter analyze` zero
@@ -139,8 +165,9 @@ Bootstrap declarou `firebase_core ^4.9.0`, `firebase_analytics ^12.4.1`, `fireba
 - `flutter pub get` resolve `purchases_flutter` corretamente
 - Codegen via `bun --filter @raro/mobile run codegen` gera `.g.dart`
 - `run-riverpod-codegen` hook sinaliza após `@riverpod` editado
+- Mapper cobre ≥8 `PurchasesErrorCode` (cancelled, network, paymentPending, notAllowed, productAlreadyPurchased, storeProblem, configuration, unknown)
 
-**Commit:** `feat(subscription): revenuecat service + riverpod provider — spec-003 µ-sprint 3.3`
+**Commit:** `feat(subscription): revenuecat service + riverpod provider + purchases error mapper — spec-003 µ-sprint 3.3`
 
 #### 3.4 — ADR + CHANGELOG
 
@@ -219,12 +246,34 @@ final Map<RaroGradient, Gradient> raroGradients = {
 - `apps/mobile/lib/app.dart` — usar `RaroTheme.dark()` em vez de `ThemeData(brightness: dark)` inline
 - `apps/mobile/test/core/theme/theme_test.dart`
 
+**Hard rule — NÃO usar `ColorScheme.fromSeed` neste tema.**
+
+Validado via Context7 docs Flutter (2026-05-25): `material_color_utilities` muda algoritmos entre versões do Flutter (`v0.11.1` → `v0.13.0` mudou `onPrimaryContainer`, `onSecondaryContainer`, etc.). Como o protótipo Claude Design dita cores literais (Blueprint Seção 4.1 — 9 cores hex específicas + 3 gradientes), derivar via seed é fonte garantida de drift visual a cada bump do Flutter.
+
+Definir `ColorScheme` manual com cores literais do protótipo:
+
+```dart
+const _darkScheme = ColorScheme(
+  brightness: Brightness.dark,
+  primary: Color(0xFFff2d55),       // raroRed
+  onPrimary: Color(0xFFFFFFFF),
+  secondary: Color(0xFFff6b35),     // raroOrange (gradient stop)
+  onSecondary: Color(0xFF000000),
+  surface: Color(0xFF0a0a0a),       // bg-elev
+  onSurface: Color(0xFFFFFFFF),     // ink
+  error: Color(0xFFff2d55),
+  onError: Color(0xFFFFFFFF),
+);
+```
+
 **Verification:**
 - `flutter analyze` zero
 - `flutter test` verde (existing smoke test continua passando)
 - App renderiza com bg preto + texto branco como antes
+- Grep no diff confirma zero ocorrências de `ColorScheme.fromSeed`
+- `design-fidelity-checker` valida que cores literais batem com `:root` do protótipo
 
-**Commit:** `refactor(theme): RaroTheme aplica tokens centralizados — spec-004 µ-sprint 4.2`
+**Commit:** `refactor(theme): RaroTheme com colorscheme literal sem fromseed — spec-004 µ-sprint 4.2`
 
 ### Gates
 
@@ -250,21 +299,24 @@ Pubspec declara `assets/fonts/.gitkeep` mas TTFs reais (Space Grotesk, Inter, Je
 
 ### Atomic micro-sprints
 
+> **Decisão técnica registrada (Context7 2026-05-25):** NÃO usar package `google_fonts ^8.1.0` — esse package faz HTTP fetch runtime no primeiro uso (cache local depois). Para app de captura em campo (offline-first), bundlar TTFs locais é correto: latência zero, sem dependência de internet, sem privacy concern (Google CDN tracking). Tamanho marginal (~500KB total para 11 TTFs).
+
 #### 5.1 — Download e licenças
 
 **Entregar:**
-- `apps/mobile/assets/fonts/SpaceGrotesk-{Regular,Medium,SemiBold,Bold}.ttf`
-- `apps/mobile/assets/fonts/Inter-{Regular,Medium,SemiBold,Bold}.ttf`
-- `apps/mobile/assets/fonts/JetBrainsMono-{Regular,Medium,Bold}.ttf`
-- `docs/setup/font-licenses.md` — atribuição (Space Grotesk SIL Open Font, Inter SIL Open Font, JetBrains Mono Apache 2.0)
-- Fontes via Google Fonts ou pubsub oficial — researcher confirma fontes corretas
+- `apps/mobile/assets/fonts/SpaceGrotesk-{Regular,Medium,SemiBold,Bold}.ttf` (SIL Open Font Licence 1.1)
+- `apps/mobile/assets/fonts/Inter-{Regular,Medium,SemiBold,Bold}.ttf` (SIL Open Font Licence 1.1)
+- `apps/mobile/assets/fonts/JetBrainsMono-{Regular,Medium,Bold}.ttf` (Apache License 2.0)
+- `docs/setup/font-licenses.md` — atribuição completa com texto da licença + URL do repositório oficial
+- **Source:** baixar dos repositórios oficiais (Space Grotesk: `floriankarsten/space-grotesk`, Inter: `rsms/inter`, JetBrains Mono: `JetBrains/JetBrainsMono`) ou Google Fonts download — NÃO usar package `google_fonts`
 
 **Verification:**
 - 11 arquivos `.ttf` no diretório
 - Cada um abre em font viewer (não corrompido)
-- Doc de licença existe e atribui corretamente
+- Doc de licença existe e atribui corretamente com URLs
+- `pubspec.yaml` NÃO tem `google_fonts` como dependência
 
-**Commit:** `chore(theme): adiciona fontes space grotesk + inter + jetbrains mono + licenças — spec-005 µ-sprint 5.1`
+**Commit:** `chore(theme): adiciona fontes space grotesk + inter + jetbrains mono bundled + licenças — spec-005 µ-sprint 5.1`
 
 #### 5.2 — Reativa declaração em pubspec
 
