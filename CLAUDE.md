@@ -211,6 +211,8 @@ Antes de declarar feature pronta:
 - ❌ Editar arquivo gerado e esperar persistência. Se precisar patchar gerado, faça-o via Build Phase / hook / pre-commit que reaplica em todo build.
 - ❌ Improvisar workaround antes de WebSearch + docs oficiais. Para qualquer problema de SDK/framework, **primeiro** consultar (a) docs oficial, (b) issue tracker do projeto, (c) Context7 — só então inventar. Ex: bug Flutter SPM iOS 13 tinha solução documentada em `docs.flutter.dev/packages-and-plugins/swift-package-manager/for-app-developers` o tempo todo.
 - ❌ Usar Xcode **Build Phase** para fix de SPM. Build Phases rodam DEPOIS de SPM Package Resolution. Para qualquer hook que precise mexer em SPM antes do build, usar **Scheme Pre-action** (`xcshareddata/xcschemes/<Scheme>.xcscheme` → `<PreActions>`).
+- ❌ Chamar `flutter build`, `pod install`, ou qualquer comando que regenere `project.pbxproj`/`xcworkspace` **dentro** de Xcode Scheme Pre-action. Modifica o workspace durante o build e o Xcode aborta silenciosamente (status falso "succeeded", zero Build Phases executadas). Pre-actions devem ser instantâneas (<1s), read-only ou patches mínimos via `sed`. Roda `flutter build ios --config-only` offline via `bun run pub:get` ou terminal — nunca dentro do build. Ver `raro-pattern-xcode-preaction-modifies-workspace`.
+- ❌ Confiar no status "BUILD SUCCEEDED" do Xcode sem inspecionar `.xcactivitylog`. Pre-actions que abortam build não falham o status do scheme. Use `xclogparser parse --reporter flatJson` em `~/Library/Developer/Xcode/DerivedData/<Proj>-*/Logs/Build/*.xcactivitylog` para verificar que Build Phases (Compile/Link/Sources) efetivamente rodaram, não só Pre-actions.
 
 ---
 
