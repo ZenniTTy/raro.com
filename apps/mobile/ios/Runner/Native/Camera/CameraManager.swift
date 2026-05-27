@@ -1,5 +1,8 @@
 import AVFoundation
 import Foundation
+import os.log
+
+private let cameraLog = OSLog(subsystem: "com.rarocamera", category: "camera")
 
 final class CameraManager {
   private let sessionQueue = DispatchQueue(label: "com.rarocamera.session")
@@ -142,7 +145,9 @@ final class CameraManager {
           try virtual.lockForConfiguration()
           virtual.videoZoomFactor = max(virtual.minAvailableVideoZoomFactor, 0.5)
           virtual.unlockForConfiguration()
-        } catch {}
+        } catch {
+        os_log("zoom hint failed (non-fatal): %{public}@", log: cameraLog, type: .info, error.localizedDescription)
+      }
         return virtual
       }
       if let ultra = discovery.devices.first(where: { device in
@@ -161,7 +166,9 @@ final class CameraManager {
         try virtual.lockForConfiguration()
         virtual.videoZoomFactor = 1.0
         virtual.unlockForConfiguration()
-      } catch {}
+      } catch {
+        os_log("zoom hint failed (non-fatal): %{public}@", log: cameraLog, type: .info, error.localizedDescription)
+      }
       return virtual
     }
     if let wide = discovery.devices.first(where: { device in

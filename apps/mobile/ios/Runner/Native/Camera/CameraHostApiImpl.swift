@@ -119,6 +119,6 @@ final class CameraHostApiImpl: NSObject, CameraHostApi {
   }
 
   private func pigeonError(code: CameraErrorCode, message: String?) -> PigeonError {
-    return PigeonError(code: String(code.rawValue), message: message, details: nil)
+    return PigeonError(code: "\(code)", message: message, details: nil)
   }
 }

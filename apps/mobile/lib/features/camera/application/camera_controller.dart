@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
@@ -6,6 +7,18 @@ import 'package:raro_mobile/features/camera/domain/camera_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'camera_controller.g.dart';
+
+CameraErrorCode mapPigeonErrorCode(String? raw) {
+  if (raw == null) {
+    return CameraErrorCode.sessionFailed;
+  }
+  for (final value in CameraErrorCode.values) {
+    if (value.name == raw) {
+      return value;
+    }
+  }
+  return CameraErrorCode.sessionFailed;
+}
 
 @riverpod
 class CameraController extends _$CameraController {
@@ -29,6 +42,13 @@ class CameraController extends _$CameraController {
     try {
       await _repo.startSession(textureId, settings.toConfig());
       state = AsyncData(CameraState.ready(activeSettings: settings));
+    } on PlatformException catch (e) {
+      state = AsyncData(
+        CameraState.error(
+          code: mapPigeonErrorCode(e.code),
+          message: e.message ?? e.toString(),
+        ),
+      );
     } on Object catch (e) {
       state = AsyncData(
         CameraState.error(
