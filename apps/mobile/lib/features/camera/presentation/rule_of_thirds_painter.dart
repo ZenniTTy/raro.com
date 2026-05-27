@@ -6,8 +6,8 @@ class RuleOfThirdsPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.15)
-      ..strokeWidth = 0.5;
+      ..color = Colors.white.withValues(alpha: 0.08)
+      ..strokeWidth = 1.0;
     final w3 = size.width / 3;
     final h3 = size.height / 3;
     canvas.drawLine(Offset(w3, 0), Offset(w3, size.height), paint);

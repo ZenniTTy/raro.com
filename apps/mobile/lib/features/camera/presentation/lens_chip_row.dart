@@ -27,7 +27,7 @@ class LensChipRow extends StatelessWidget {
             selected: lens == selected,
             onTap: () => onSelected(lens),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
         ],
       ],
     );
@@ -50,24 +50,23 @@ class _LensChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? Colors.white.withValues(alpha: 0.20)
-              : Colors.black.withValues(alpha: 0.35),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected
-                ? Colors.white.withValues(alpha: 0.60)
-                : Colors.white.withValues(alpha: 0.15),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: ShapeDecoration(
+          color: selected ? Colors.white : Colors.black.withValues(alpha: 0.60),
+          shape: StadiumBorder(
+            side: BorderSide(
+              color: selected
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.25),
+            ),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            color: selected ? Colors.black : Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
