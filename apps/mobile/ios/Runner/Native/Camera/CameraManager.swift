@@ -70,10 +70,9 @@ final class CameraManager {
 
     let device = try selectDevice(for: config.lens)
     os_log(
-      "startSession lens=%{public}@ chosenDeviceType=%{public}@ initialZoom=%.2f",
-      log: cameraLog, type: .default,
-      "\(config.lens)", "\(device.deviceType.rawValue)",
-      Double(truncating: NSNumber(value: device.videoZoomFactor))
+      "startSession lens=%{public}@ device=%{public}@",
+      log: cameraLog, type: .info,
+      "\(config.lens)", "\(device.deviceType.rawValue)"
     )
 
     let session = AVCaptureSession()
@@ -117,13 +116,12 @@ final class CameraManager {
 
     let newDevice = try selectDevice(for: lens)
     if newDevice.uniqueID == currentDevice.uniqueID {
-      os_log("switchLens path=same-device-noop lens=%{public}@", log: cameraLog, type: .default, "\(lens)")
       onLensSwitched?(lens)
       return
     }
     os_log(
-      "switchLens path=replace-input lens=%{public}@ from=%{public}@ to=%{public}@",
-      log: cameraLog, type: .default,
+      "switchLens lens=%{public}@ %{public}@->%{public}@",
+      log: cameraLog, type: .info,
       "\(lens)", "\(currentDevice.deviceType.rawValue)", "\(newDevice.deviceType.rawValue)"
     )
     session.beginConfiguration()
@@ -141,21 +139,12 @@ final class CameraManager {
     session.commitConfiguration()
     self.device = newDevice
     self.input = newInput
-    os_log(
-      "switchLens applied lens=%{public}@ activeZoom=%.2f",
-      log: cameraLog, type: .default,
-      "\(lens)", Double(truncating: NSNumber(value: newDevice.videoZoomFactor))
-    )
     onLensSwitched?(lens)
   }
 
   func setFormat(resolution: Resolution, fps: Fps) throws {
     guard let device = device else { throw CameraNativeError.notRunning }
     guard let session = session else { throw CameraNativeError.notRunning }
-    os_log(
-      "setFormat requested resolution=%{public}@ fps=%{public}@",
-      log: cameraLog, type: .default, "\(resolution)", "\(fps)"
-    )
     session.beginConfiguration()
     session.sessionPreset = .inputPriority
     try device.lockForConfiguration()
@@ -164,9 +153,9 @@ final class CameraManager {
     device.unlockForConfiguration()
     session.commitConfiguration()
     os_log(
-      "setFormat applied activeFormat=%dx%d",
-      log: cameraLog, type: .default,
-      Int(dims.width), Int(dims.height)
+      "setFormat %{public}@@%{public}@ -> %dx%d",
+      log: cameraLog, type: .info,
+      "\(resolution)", "\(fps)", Int(dims.width), Int(dims.height)
     )
   }
 
