@@ -1,7 +1,7 @@
 import Flutter
 import Foundation
 
-final class CameraHostApiImpl: NSObject, CameraHostApi {
+final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
   private let manager = CameraManager()
   private let flutterApi: CameraFlutterApi
 
