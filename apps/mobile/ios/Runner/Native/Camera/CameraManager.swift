@@ -63,6 +63,12 @@ final class CameraManager {
     guard hasPermission() else { throw CameraNativeError.permissionDenied }
 
     let device = try selectDevice(for: config.lens)
+    os_log(
+      "startSession lens=%{public}@ chosenDeviceType=%{public}@ initialZoom=%.2f",
+      log: cameraLog, type: .default,
+      "\(config.lens)", "\(device.deviceType.rawValue)",
+      Double(truncating: NSNumber(value: device.videoZoomFactor))
+    )
 
     let session = AVCaptureSession()
     session.beginConfiguration()
@@ -103,6 +109,15 @@ final class CameraManager {
     guard let session = session else { throw CameraNativeError.notRunning }
     guard let currentDevice = self.device else { throw CameraNativeError.notRunning }
 
+    os_log(
+      "switchLens requested lens=%{public}@ currentDeviceType=%{public}@ minZoom=%.2f maxZoom=%.2f currentZoom=%.2f",
+      log: cameraLog, type: .default,
+      "\(lens)", "\(currentDevice.deviceType.rawValue)",
+      Double(truncating: NSNumber(value: currentDevice.minAvailableVideoZoomFactor)),
+      Double(truncating: NSNumber(value: currentDevice.maxAvailableVideoZoomFactor)),
+      Double(truncating: NSNumber(value: currentDevice.videoZoomFactor))
+    )
+
     let isVirtualMultiLens =
       currentDevice.deviceType == .builtInTripleCamera
       || currentDevice.deviceType == .builtInDualWideCamera
@@ -113,6 +128,12 @@ final class CameraManager {
         currentDevice.minAvailableVideoZoomFactor,
         min(targetZoom, currentDevice.maxAvailableVideoZoomFactor)
       )
+      os_log(
+        "switchLens path=zoom-ramp targetZoom=%.2f clamped=%.2f",
+        log: cameraLog, type: .default,
+        Double(truncating: NSNumber(value: targetZoom)),
+        Double(truncating: NSNumber(value: clamped))
+      )
       try currentDevice.lockForConfiguration()
       currentDevice.ramp(toVideoZoomFactor: clamped, withRate: 4.0)
       currentDevice.unlockForConfiguration()
@@ -122,9 +143,15 @@ final class CameraManager {
 
     let newDevice = try selectDevice(for: lens)
     if newDevice.uniqueID == currentDevice.uniqueID {
+      os_log("switchLens path=same-device-noop", log: cameraLog, type: .default)
       onLensSwitched?(lens)
       return
     }
+    os_log(
+      "switchLens path=replace-input newDeviceType=%{public}@",
+      log: cameraLog, type: .default,
+      "\(newDevice.deviceType.rawValue)"
+    )
     session.beginConfiguration()
     if let oldInput = self.input { session.removeInput(oldInput) }
     let newInput = try AVCaptureDeviceInput(device: newDevice)
@@ -138,12 +165,22 @@ final class CameraManager {
   func setFormat(resolution: Resolution, fps: Fps) throws {
     guard let device = device else { throw CameraNativeError.notRunning }
     guard let session = session else { throw CameraNativeError.notRunning }
+    os_log(
+      "setFormat requested resolution=%{public}@ fps=%{public}@",
+      log: cameraLog, type: .default, "\(resolution)", "\(fps)"
+    )
     session.beginConfiguration()
     session.sessionPreset = .inputPriority
     try device.lockForConfiguration()
     try applyFormat(device: device, resolution: resolution, fps: fps)
+    let dims = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
     device.unlockForConfiguration()
     session.commitConfiguration()
+    os_log(
+      "setFormat applied activeFormat=%dx%d",
+      log: cameraLog, type: .default,
+      Int(dims.width), Int(dims.height)
+    )
   }
 
   func focusAt(point: FocusPoint) throws {
