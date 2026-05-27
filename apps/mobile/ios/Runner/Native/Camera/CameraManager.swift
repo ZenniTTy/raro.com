@@ -18,7 +18,17 @@ final class CameraManager {
   }
 
   func requestPermission() async -> Bool {
-    await AVCaptureDevice.requestAccess(for: .video)
+    let status = AVCaptureDevice.authorizationStatus(for: .video)
+    switch status {
+    case .authorized:
+      return true
+    case .notDetermined:
+      return await AVCaptureDevice.requestAccess(for: .video)
+    case .denied, .restricted:
+      return false
+    @unknown default:
+      return false
+    }
   }
 
   func discoverCapabilities() throws -> CameraCapabilities {
@@ -283,5 +293,12 @@ final class CameraManager {
     let duration = CMTime(value: 1, timescale: Int32(targetFps))
     device.activeVideoMinFrameDuration = duration
     device.activeVideoMaxFrameDuration = duration
+    let chosenDims = CMVideoFormatDescriptionGetDimensions(chosen.formatDescription)
+    os_log(
+      "applyFormat chose dims=%dx%d binned=%{public}@ multicam=%{public}@",
+      log: cameraLog, type: .debug,
+      Int(chosenDims.width), Int(chosenDims.height),
+      "\(chosen.isVideoBinned)", "\(chosen.isMultiCamSupported)"
+    )
   }
 }

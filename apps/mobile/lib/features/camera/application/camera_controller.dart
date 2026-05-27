@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
@@ -65,9 +66,25 @@ class CameraController extends _$CameraController {
     state = AsyncData(CameraState.idle(capabilities: caps));
   }
 
-  Future<bool> requestPermission() => _repo.requestPermission();
+  Future<bool> requestPermission() async {
+    final current = await Permission.camera.status;
+    if (current.isGranted) {
+      return true;
+    }
+    if (current.isPermanentlyDenied || current.isRestricted) {
+      return false;
+    }
+    return _repo.requestPermission();
+  }
 
   Future<bool> hasPermission() => _repo.hasPermission();
+
+  Future<bool> isPermissionPermanentlyDenied() async {
+    final status = await Permission.camera.status;
+    return status.isPermanentlyDenied || status.isRestricted;
+  }
+
+  Future<bool> openSettings() => openAppSettings();
 
   Future<void> switchLens(LensType lens) async {
     await _repo.switchLens(lens);

@@ -33,10 +33,40 @@ class _CameraTestHarnessScreenState
   }
 
   Future<void> _requestPermission() async {
-    final granted = await ref
-        .read(cameraControllerProvider.notifier)
-        .requestPermission();
+    final notifier = ref.read(cameraControllerProvider.notifier);
+    final granted = await notifier.requestPermission();
     _logEvent('requestPermission → $granted');
+    if (granted) return;
+    final permanentlyDenied = await notifier.isPermissionPermanentlyDenied();
+    if (!permanentlyDenied || !mounted) return;
+    final shouldOpen = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text(
+          'permission required',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'camera access was denied. open settings to enable it.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('open settings'),
+          ),
+        ],
+      ),
+    );
+    if (shouldOpen == true) {
+      await notifier.openSettings();
+      _logEvent('openSettings → invoked');
+    }
   }
 
   Future<void> _start() async {
