@@ -75,6 +75,21 @@ Range `6104289..e013d6f` (25 commits), ordem cronológica:
 4. **ADR-0015 addendum** — PlatformView único, threading refinado, error semantic, TDD pin behavior
 5. **CLAUDE.md §11 addendum** — 3 anti-patterns novos (enum rawValue em Pigeon, expect isA<T> sem campo, swallow catch sem log)
 6. **Memória persistente `feedback_tdd_pin_behavior_not_type`** — TDD pin de comportamento, não de tipo
+7. **Xcode Build Phase `Fix SPM iOS Target`** — patch automático Flutter SPM 13→15 entre Flutter Run Script e Sources (UUID `CA00000000000000000000C1` no pbxproj). Script idempotente `scripts/fix-spm-ios-target.sh`.
+8. **CLAUDE.md §11 addendum 2** — 2 anti-patterns novos sobre arquivos gerados (não assumir respeito a config externa, não editar e esperar persistência)
+9. **Memória persistente `raro-pattern-flutter-spm-ios-13-hardcoded`** — root cause (Flutter `darwin.dart:71` hardcoda iOS 13) + solução (Xcode Build Phase) + como remover quando issue #176313 fechar.
+
+## Debug-session 2026-05-27 (device validation pre-flight)
+
+Antes de Task 19 começar de fato, build iOS quebrou 3x com erro Firebase 15.0 vs target 13.0. Foram 3 ciclos perdidos:
+
+1. **Ciclo 1** — assumido que Pods estavam errados, adicionado `IPHONEOS_DEPLOYMENT_TARGET = '15.0'` no `post_install` do Podfile. Resultado: pods OK, mas erro mudou de origem.
+2. **Ciclo 2** — assumido que Xcode SPM cache estava ruim, editado `Package.swift` manualmente 13→15. Resultado: build PASS, mas próximo `flutter pub get` reverteu.
+3. **Ciclo 3** — criado script `fix-spm-ios-target.sh` + wired em `bun run pub:get`. Resultado: funciona via CLI, mas build pelo Play do Xcode (sem passar pelo bun script) reverte.
+
+Após o 3º ciclo, parei e investiguei a fonte. Encontrei `darwin.dart:71` com `Version(13, 0, null)` hardcoded. Documentado e fix definitivo via Xcode Build Phase aplicado.
+
+**Lição registrada em memória persistente**: antes de assumir que arquivo "Generated. Do not edit." obedece configuração externa, **ler o code que gera**. 5 minutos de leitura de source economizariam 3 ciclos de tentativa.
 
 ## Pendente
 

@@ -69,3 +69,66 @@ Aprendizados aplicados após auditoria das Tasks 1-10:
 3. **Erros tipados nunca devem perder semântica via `rawValue.description`.** O pattern correto ao emitir `PigeonError` é usar `"\(code)"` (nome simbólico) ou rotear via `CameraFlutterApi.onError(code:message:)` (callback tipado). Anti-pattern proibido por hook `block-pigeon-error-rawvalue.sh` registrado em `.claude/settings.json`.
 
 4. **Tests pinning behavior, não apenas tipo.** TDD requer que cada branch da implementação tenha pelo menos 1 teste que **falha** se aquela branch for removida. `expect(x, isA<T>())` sem assertions de campo é insuficiente para spec coverage. Aplicado retroativamente nos testes do CameraController.
+
+## Addendum 2026-05-27 (Flutter 3.44 SPM iOS 13 hardcoded fix)
+
+Durante validação device no iPhone 12 do usuário, build Xcode quebrou repetidamente com 3 erros:
+
+```
+The package product 'firebase-crashlytics' requires minimum platform version 15.0 ... but this target supports 13.0
+The package product 'firebase-core' requires minimum platform version 15.0 ...
+The package product 'firebase-analytics' requires minimum platform version 15.0 ...
+```
+
+**Root cause confirmada via leitura do source do Flutter Tool** em `/usr/local/share/flutter/packages/flutter_tools/lib/src/darwin/darwin.dart:71`:
+
+```dart
+Version deploymentTarget() {
+  return switch (this) {
+    ios => Version(13, 0, null),   // ← hardcoded
+    macos => Version(10, 15, null),
+  };
+}
+```
+
+O Flutter regera `apps/mobile/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Package.swift` com `.iOS("13.0")` em **toda execução** de `flutter pub get`, `flutter run`, `flutter build ios` ou build via Xcode (que invoca `xcode_backend.sh build` internamente). `IPHONEOS_DEPLOYMENT_TARGET = 15.0` no `project.pbxproj` é ignorado por esse caminho.
+
+Issue Flutter aberta: [flutter/flutter#176313](https://github.com/flutter/flutter/issues/176313), [#185039](https://github.com/flutter/flutter/issues/185039). Sem fix upstream em 2026-05.
+
+### Decisão: Xcode Run Script Build Phase
+
+Adicionada Build Phase customizada em `apps/mobile/ios/Runner.xcodeproj/project.pbxproj` (UUID `CA00000000000000000000C1`):
+
+```
+buildPhases = (
+  [CP] Check Pods Manifest.lock,
+  Run Script,                    ← Flutter regenera Package.swift com iOS 13
+  Fix SPM iOS Target,            ← NOVO: patcha pra iOS 15 antes do link
+  Sources,
+  Frameworks,                    ← linka Firebase — agora OK
+  ...
+);
+```
+
+Script: `apps/mobile/scripts/fix-spm-ios-target.sh` (idempotente — detecta se já 15.0, senão `sed` substitui).
+
+**Por que não outras opções:**
+- ❌ Editar Package.swift manualmente — Flutter regera, reverte em todo build
+- ❌ Patch SDK Flutter (`darwin.dart`) — quebra a cada upgrade, afeta outros projetos
+- ❌ Rodar script manualmente antes de `flutter run` — frágil; build pelo Play button do Xcode ignora
+- ✅ Build Phase no Xcode roda automaticamente em todo build (CLI + IDE), invisível depois de configurado
+
+### Quando remover
+
+Quando issue #176313 fechar e Flutter passar a respeitar `IPHONEOS_DEPLOYMENT_TARGET` do pbxproj ao gerar SPM. Validar:
+
+```bash
+rm -f apps/mobile/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Package.swift
+cd apps/mobile && flutter pub get
+grep 'iOS(' apps/mobile/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Package.swift
+# Se .iOS("15.0") ou maior → remover Build Phase + script
+```
+
+### Memória persistente
+
+`raro-pattern-flutter-spm-ios-13-hardcoded` registrada para que sessões futuras saibam disso de cara.

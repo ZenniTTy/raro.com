@@ -207,6 +207,8 @@ Antes de declarar feature pronta:
 - ❌ Codificar enum tipado em `String(<enum>.rawValue)` ao cruzar Pigeon (perde semântica). Use `"\(code)"` (nome simbólico) ou route via `FlutterApi` callback tipado.
 - ❌ `expect(state, isA<T>())` sem assertions de campo. TDD requer pin de comportamento: cada branch da implementação deve ter ≥1 teste que falha se a branch for removida.
 - ❌ Swallow de erros via `do { try ... } catch {}` sem log (Swift) ou `try { } catch (_) {}` sem log (Dart/Kotlin). Sempre logar via `logger` ou rethrow com contexto.
+- ❌ Assumir que arquivo `Generated. Do not edit.` respeita configuração externa (ex: `IPHONEOS_DEPLOYMENT_TARGET` do `project.pbxproj`). Sempre ler o code que gera antes de tentar fix. Ex: Flutter 3.44 hardcoda iOS 13 em `darwin.dart:71` independente do pbxproj — fix é Xcode Build Phase (ver memória `raro-pattern-flutter-spm-ios-13-hardcoded` + ADR-0015 addendum).
+- ❌ Editar arquivo gerado e esperar persistência. Se precisar patchar gerado, faça-o via Build Phase / hook / pre-commit que reaplica em todo build.
 
 ---
 
