@@ -135,14 +135,11 @@ class _CameraTestHarnessScreenState
       CameraStateInitializing() => const Center(
         child: CircularProgressIndicator(color: Colors.white),
       ),
-      CameraStateReady() => Stack(
-        fit: StackFit.expand,
+      CameraStateReady() => Column(
         children: [
-          const CameraPreviewWidget(),
-          Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
+          const Expanded(child: CameraPreviewWidget(showOverlays: false)),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: LensChipRow(
               availableLenses: const [LensType.ultraWide, LensType.wide],
               selected: _selectedLens,

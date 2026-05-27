@@ -12,7 +12,9 @@ import 'package:raro_shared/raro_shared.dart';
 const String _viewType = BridgeChannels.cameraPreview;
 
 class CameraPreviewWidget extends ConsumerStatefulWidget {
-  const CameraPreviewWidget({super.key});
+  const CameraPreviewWidget({super.key, this.showOverlays = true});
+
+  final bool showOverlays;
 
   @override
   ConsumerState<CameraPreviewWidget> createState() =>
@@ -42,6 +44,7 @@ class _CameraPreviewWidgetState extends ConsumerState<CameraPreviewWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final platformView = _buildPlatformView();
     return LayoutBuilder(
       builder: (context, constraints) {
         return GestureDetector(
@@ -52,20 +55,29 @@ class _CameraPreviewWidgetState extends ConsumerState<CameraPreviewWidget> {
             final ny = (pos.dy / constraints.maxHeight).clamp(0.0, 1.0);
             await ref.read(cameraControllerProvider.notifier).focusAt(nx, ny);
           },
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              _buildPlatformView(),
-              const IgnorePointer(
-                child: CustomPaint(painter: RuleOfThirdsPainter()),
-              ),
-              const IgnorePointer(
-                child: CustomPaint(painter: ViewportGrainPainter()),
-              ),
-              if (_focus != null)
-                FocusRingOverlay(key: ValueKey(_focus), position: _focus!),
-            ],
-          ),
+          child: widget.showOverlays
+              ? Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    platformView,
+                    const Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(painter: RuleOfThirdsPainter()),
+                      ),
+                    ),
+                    const Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(painter: ViewportGrainPainter()),
+                      ),
+                    ),
+                    if (_focus != null)
+                      FocusRingOverlay(
+                        key: ValueKey(_focus),
+                        position: _focus!,
+                      ),
+                  ],
+                )
+              : platformView,
         );
       },
     );
