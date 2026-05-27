@@ -91,6 +91,18 @@ Após o 3º ciclo, parei e investiguei a fonte. Encontrei `darwin.dart:71` com `
 
 **Lição registrada em memória persistente**: antes de assumir que arquivo "Generated. Do not edit." obedece configuração externa, **ler o code que gera**. 5 minutos de leitura de source economizariam 3 ciclos de tentativa.
 
+### Update 2026-05-27 (Build Phase falhou — solução oficial via Scheme Pre-action)
+
+A solução inicial via Xcode **Build Phase** (commit `2fcd7be`) FALHOU em produção. Após rebuild no iPhone 12 do usuário, mesmos 3 erros Firebase 15 vs 13 retornaram.
+
+**Diagnóstico**: Xcode resolve dependências SPM ("Resolve Package Graph") **ANTES** de qualquer Build Phase rodar. Os erros são detectados na resolução, não no build pipeline.
+
+**Pesquisa moderna ([WebSearch + docs.flutter.dev](https://docs.flutter.dev/packages-and-plugins/swift-package-manager/for-app-developers))** revelou solução oficial documentada: **Scheme Pre-actions** rodam ANTES da resolução SPM. Issue Flutter [#162072](https://github.com/flutter/flutter/issues/162072) documenta o bug. A doc oficial recomenda Pre-action no `Runner.xcscheme`.
+
+**Correção aplicada**: adicionada segunda `<ExecutionAction>` no `<PreActions>` do `Runner.xcscheme`, após o "Run Prepare Flutter Framework Script" oficial. Script `fix-spm-ios-target.sh` invocado via `${SRCROOT}/../scripts/`. Build Phase anterior removida.
+
+**Lição adicional (3ª) registrada**: usar WebSearch + docs oficiais ANTES de improvisar workaround. A solução exata estava documentada o tempo todo.
+
 ## Pendente
 
 - **Task 19 — Device tests em iPhone 12 (usuário) + emulador Android Pixel 6**. Validar Goals G1-G10 com cronômetro/Instruments/Memory Profiler. Sem isso, spec fica em `In implementation` (não Done definitivo).

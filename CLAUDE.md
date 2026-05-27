@@ -209,6 +209,8 @@ Antes de declarar feature pronta:
 - ❌ Swallow de erros via `do { try ... } catch {}` sem log (Swift) ou `try { } catch (_) {}` sem log (Dart/Kotlin). Sempre logar via `logger` ou rethrow com contexto.
 - ❌ Assumir que arquivo `Generated. Do not edit.` respeita configuração externa (ex: `IPHONEOS_DEPLOYMENT_TARGET` do `project.pbxproj`). Sempre ler o code que gera antes de tentar fix. Ex: Flutter 3.44 hardcoda iOS 13 em `darwin.dart:71` independente do pbxproj — fix é Xcode Build Phase (ver memória `raro-pattern-flutter-spm-ios-13-hardcoded` + ADR-0015 addendum).
 - ❌ Editar arquivo gerado e esperar persistência. Se precisar patchar gerado, faça-o via Build Phase / hook / pre-commit que reaplica em todo build.
+- ❌ Improvisar workaround antes de WebSearch + docs oficiais. Para qualquer problema de SDK/framework, **primeiro** consultar (a) docs oficial, (b) issue tracker do projeto, (c) Context7 — só então inventar. Ex: bug Flutter SPM iOS 13 tinha solução documentada em `docs.flutter.dev/packages-and-plugins/swift-package-manager/for-app-developers` o tempo todo.
+- ❌ Usar Xcode **Build Phase** para fix de SPM. Build Phases rodam DEPOIS de SPM Package Resolution. Para qualquer hook que precise mexer em SPM antes do build, usar **Scheme Pre-action** (`xcshareddata/xcschemes/<Scheme>.xcscheme` → `<PreActions>`).
 
 ---
 

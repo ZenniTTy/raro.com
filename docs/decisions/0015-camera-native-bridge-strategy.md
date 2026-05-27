@@ -95,28 +95,33 @@ O Flutter regera `apps/mobile/ios/Flutter/ephemeral/Packages/FlutterGeneratedPlu
 
 Issue Flutter aberta: [flutter/flutter#176313](https://github.com/flutter/flutter/issues/176313), [#185039](https://github.com/flutter/flutter/issues/185039). Sem fix upstream em 2026-05.
 
-### Decisão: Xcode Run Script Build Phase
+### Decisão: Scheme Pre-action (workaround oficial Flutter)
 
-Adicionada Build Phase customizada em `apps/mobile/ios/Runner.xcodeproj/project.pbxproj` (UUID `CA00000000000000000000C1`):
+Tentativa inicial via **Build Phase** (`CA00000000000000000000C1`) FALHOU porque Xcode resolve dependências SPM **ANTES** de qualquer Build Phase rodar. Os erros "package product requires minimum platform 15" são gerados na fase **"Resolve Package Graph"** que precede o pipeline de build phases.
 
+**Solução correta (Flutter docs oficial 2026)**: adicionar uma `<ExecutionAction>` como Pre-action no `Runner.xcscheme`. Pre-actions rodam **antes** da resolução de pacotes.
+
+`apps/mobile/ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme` recebe segunda Pre-action após a oficial do Flutter:
+
+```xml
+<PreActions>
+   <ExecutionAction title="Run Prepare Flutter Framework Script">
+      "$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh" prepare
+   </ExecutionAction>
+   <ExecutionAction title="Fix SPM iOS Target (workaround flutter/flutter#162072)">
+      "${SRCROOT}/../scripts/fix-spm-ios-target.sh"
+   </ExecutionAction>
+</PreActions>
 ```
-buildPhases = (
-  [CP] Check Pods Manifest.lock,
-  Run Script,                    ← Flutter regenera Package.swift com iOS 13
-  Fix SPM iOS Target,            ← NOVO: patcha pra iOS 15 antes do link
-  Sources,
-  Frameworks,                    ← linka Firebase — agora OK
-  ...
-);
-```
 
-Script: `apps/mobile/scripts/fix-spm-ios-target.sh` (idempotente — detecta se já 15.0, senão `sed` substitui).
+Script: `apps/mobile/scripts/fix-spm-ios-target.sh` (idempotente).
 
 **Por que não outras opções:**
 - ❌ Editar Package.swift manualmente — Flutter regera, reverte em todo build
 - ❌ Patch SDK Flutter (`darwin.dart`) — quebra a cada upgrade, afeta outros projetos
 - ❌ Rodar script manualmente antes de `flutter run` — frágil; build pelo Play button do Xcode ignora
-- ✅ Build Phase no Xcode roda automaticamente em todo build (CLI + IDE), invisível depois de configurado
+- ❌ **Build Phase** (tentativa inicial) — Build Phases rodam DEPOIS de SPM resolution; erro já aconteceu
+- ✅ **Scheme Pre-action** — roda ANTES da resolução SPM, na ordem correta. Persistido em `xcshareddata` (commitado, compartilhado entre devs)
 
 ### Quando remover
 
