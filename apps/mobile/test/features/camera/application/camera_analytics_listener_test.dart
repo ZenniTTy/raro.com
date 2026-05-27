@@ -76,12 +76,18 @@ void main() {
           ),
         );
 
-    verify(
+    final captured = verify(
       () => analytics.logEvent(
         name: AnalyticsEvents.cameraStarted,
-        parameters: any(named: 'parameters'),
+        parameters: captureAny(named: 'parameters'),
       ),
-    ).called(1);
+    ).captured;
+    expect(captured, hasLength(1));
+    expect(captured.single, {
+      'lens': 'wide',
+      'resolution': 'fhd1080',
+      'fps': 'fps30',
+    });
   });
 
   test('emits cameraError on error state', () async {
@@ -110,11 +116,16 @@ void main() {
           ),
         );
 
-    verify(
+    final captured = verify(
       () => analytics.logEvent(
         name: AnalyticsEvents.cameraError,
-        parameters: any(named: 'parameters'),
+        parameters: captureAny(named: 'parameters'),
       ),
-    ).called(1);
+    ).captured;
+    expect(captured, hasLength(1));
+    expect(captured.single, {
+      'code': 'sessionFailed',
+      'message': 'Exception: fail',
+    });
   });
 }

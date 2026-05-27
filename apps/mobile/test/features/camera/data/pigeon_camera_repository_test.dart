@@ -15,6 +15,9 @@ void main() {
       ),
     );
     registerFallbackValue(FocusPoint(x: 0, y: 0));
+    registerFallbackValue(LensType.wide);
+    registerFallbackValue(Resolution.fhd1080);
+    registerFallbackValue(Fps.fps30);
   });
 
   test('discoverCapabilities delegates to host api', () async {
@@ -43,7 +46,12 @@ void main() {
         fps: Fps.fps30,
       ),
     );
-    verify(() => api.startSession(42, any())).called(1);
+    final captured = verify(() => api.startSession(42, captureAny())).captured;
+    expect(captured, hasLength(1));
+    final config = captured.single as CameraConfig;
+    expect(config.lens, LensType.wide);
+    expect(config.resolution, Resolution.fhd1080);
+    expect(config.fps, Fps.fps30);
   });
 
   test('focusAt forwards normalized point', () async {
@@ -52,5 +60,47 @@ void main() {
     final repo = PigeonCameraRepository(api);
     await repo.focusAt(FocusPoint(x: 0.5, y: 0.5));
     verify(() => api.focusAt(any())).called(1);
+  });
+
+  test('stopSession delegates to host api', () async {
+    final api = _MockHostApi();
+    when(api.stopSession).thenAnswer((_) async {});
+    final repo = PigeonCameraRepository(api);
+    await repo.stopSession();
+    verify(api.stopSession).called(1);
+  });
+
+  test('switchLens forwards lens type', () async {
+    final api = _MockHostApi();
+    when(() => api.switchLens(any())).thenAnswer((_) async {});
+    final repo = PigeonCameraRepository(api);
+    await repo.switchLens(LensType.ultraWide);
+    verify(() => api.switchLens(LensType.ultraWide)).called(1);
+  });
+
+  test('setFormat forwards resolution and fps', () async {
+    final api = _MockHostApi();
+    when(() => api.setFormat(any(), any())).thenAnswer((_) async {});
+    final repo = PigeonCameraRepository(api);
+    await repo.setFormat(Resolution.uhd4k, Fps.fps60);
+    verify(() => api.setFormat(Resolution.uhd4k, Fps.fps60)).called(1);
+  });
+
+  test('requestPermission delegates to host api', () async {
+    final api = _MockHostApi();
+    when(api.requestPermission).thenAnswer((_) async => true);
+    final repo = PigeonCameraRepository(api);
+    final result = await repo.requestPermission();
+    expect(result, isTrue);
+    verify(api.requestPermission).called(1);
+  });
+
+  test('hasPermission delegates to host api', () async {
+    final api = _MockHostApi();
+    when(api.hasPermission).thenAnswer((_) async => false);
+    final repo = PigeonCameraRepository(api);
+    final result = await repo.hasPermission();
+    expect(result, isFalse);
+    verify(api.hasPermission).called(1);
   });
 }
