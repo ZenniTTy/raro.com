@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
+import 'package:raro_mobile/features/camera/presentation/camera_test_harness_screen.dart';
 
 class RaroApp extends StatelessWidget {
   const RaroApp({super.key});
@@ -11,7 +13,9 @@ class RaroApp extends StatelessWidget {
       title: 'Raro Camera',
       debugShowCheckedModeBanner: false,
       theme: buildRaroDarkTheme(),
-      home: const _BootstrapPlaceholder(),
+      home: kDebugMode
+          ? const CameraTestHarnessScreen()
+          : const _BootstrapPlaceholder(),
     );
   }
 }

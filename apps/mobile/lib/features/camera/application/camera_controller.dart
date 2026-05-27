@@ -65,6 +65,10 @@ class CameraController extends _$CameraController {
     state = AsyncData(CameraState.idle(capabilities: caps));
   }
 
+  Future<bool> requestPermission() => _repo.requestPermission();
+
+  Future<bool> hasPermission() => _repo.hasPermission();
+
   Future<void> switchLens(LensType lens) async {
     await _repo.switchLens(lens);
     final current = state.requireValue;
