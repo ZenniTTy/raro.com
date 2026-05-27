@@ -2,6 +2,56 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-05-26] — 0.4.0 (camera-native-bridge)
+
+### Adicionado
+- Bridge nativo de câmera Pigeon-first (iOS AVFoundation + Android CameraX 1.6.1) com preview ao vivo, lens switch 0.5×/1×, tap-to-focus, format control (720p/1080p/4K @ 30/60fps)
+- ADR-0015: estratégia da bridge nativa de câmera (VirtualCameraStrategy única iOS + CameraX 1.6.1 Android + hybrid composition + `activeFormat` manual + threading rules)
+- `AnalyticsEvents`: 5 novas constantes (`cameraStarted`, `cameraStopped`, `cameraFocusTapped`, `cameraPermissionDenied`, `cameraError`)
+- `BridgeChannels.cameraPreview = 'com.rarocamera/camera_preview'` (PlatformView viewType, single source of truth)
+- Feature folder `apps/mobile/lib/features/camera/` (Clean Arch: domain/data/application/presentation + Riverpod 3 codegen)
+- Camera UI widgets: `CameraPreviewWidget` (PlatformView + rule-of-thirds + grain), `LensChipRow` (pill chips 0.5×/1×), `FocusRingOverlay` (1.2s animação fiel ao protótipo)
+- 3 contract tests novos: `ios_pbxproj_parity_test` (Swift files registrados no Xcode), `bridge_channels_parity_test` extension (`camera_preview` ↔ iOS+Android+shared), `camera_state_test` + `pigeon_camera_repository_test` + `camera_controller_test` + `camera_analytics_listener_test` + `lens_chip_row_test` + `lens_chip_row_golden_test`
+- 1 hook anti-drift novo: `.claude/hooks/block-pigeon-error-rawvalue.sh` (bloqueia `String(enum.rawValue)` em PigeonError/FlutterError)
+
+### Mudado
+- `CLAUDE.md` §11: 3 novos anti-patterns proibidos (enum rawValue em Pigeon, `expect isA<T>` sem campo, swallow catch{} sem log)
+- ADR-0014 addendum: confirma Podfile/Podfile.lock gitignored
+- ADR-0015 addendum (pós-auditoria): PlatformView único path, threading refinado, error semantic, TDD pin
+
+### Decidido
+- iOS `VirtualCameraStrategy` única (sem `SwapInputStrategy` v1.0 — YAGNI, iPhones com 0.5× sempre expõem virtual camera)
+- Android CameraX 1.6.1 (latest stable, novo motor CameraPipe — risco de regression em OEMs aceito, device test mandatório)
+- PlatformView com hybrid composition Android (HUD Flutter sobre preview)
+- Telemetria via camada Flutter apenas (bridge nativa não chama Firebase direto)
+
+### Notas
+- **Sem gravação** nesta spec — depende de `feat/replay-buffer-native-bridge` (pre-roll do buffer)
+- `textureId` no Pigeon schema é aceito mas ignorado (PlatformView é o único preview path v1.0; reservado para migração Texture futura)
+- iPad rejeitado via `deviceUnavailable` (Blueprint = iPhone only)
+- Auditoria pós-Task 10 detectou + corrigiu: error code semantic loss (`String(rawValue)` → `"\(code)"`), testes só pin-tipo (10 testes pin-behavior adicionados), iOS `catch{}` sem log (adicionado `os_log`)
+
+### Verificado
+- `flutter build ios --no-codesign --debug` PASS (Runner.app gerado)
+- `flutter build apk --debug` PASS (app-debug.apk gerado)
+- `flutter analyze` mobile: zero issues
+- `dart analyze` shared: zero issues
+- `flutter test` mobile: 62 verdes (smoke + contract + features/camera)
+- `dart test` shared: 33 verdes (smoke + analytics_events)
+- Goldens `lens_chip_row` regenerados pós-fidelity audit (chip active solid white + pill shape)
+
+### Pendente (device tests — Task 19 aguardando iPhone 12 do usuário)
+- G1 start ≤500ms em iPhone 12 + Pixel 6
+- G2 discoverCapabilities = `[ultraWide, wide]` em iPhone 12 / Pixel 6 Pro
+- G3 lens switch <100ms via VirtualCameraStrategy
+- G4 focus ring ≤200ms + fade 1.2s
+- G5 setFormat runtime
+- G6 4K@60 metadata validation
+- G7 memória ±5MB pós-stop (Instruments + Memory Profiler)
+- G8 permission denied UI fallback
+- G9 background→foreground retoma sessão
+- G10 iPad rejected graciosamente
+
 ## [2026-05-26] — 0.3.0 (flutter-3.44-spm-migration)
 
 ### Mudado

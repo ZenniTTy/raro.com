@@ -2,7 +2,7 @@
 
 ## Status
 
-`In implementation`
+`In implementation (Task 19 device tests pending — Tasks 1-18 done)`
 
 ## Owner / Implementer
 
