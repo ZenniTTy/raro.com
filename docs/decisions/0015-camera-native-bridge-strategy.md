@@ -54,3 +54,18 @@ Briefing Seção 6.2 e Blueprint Seção 2.2 exigem implementação 100% nativa 
 - CameraX releases: https://developer.android.com/jetpack/androidx/releases/camera
 - Flutter platform channels: https://docs.flutter.dev/platform-integration/platform-channels
 - Issues: flutter/flutter#91247, flutter/flutter#173406
+
+## Addendum 2026-05-26 (post-audit Tasks 1-10)
+
+Aprendizados aplicados após auditoria das Tasks 1-10:
+
+1. **PlatformView é o único preview path para v1.0.** O parâmetro `textureId` em `CameraHostApi.startSession(int, CameraConfig)` é aceito mas ignorado pelo iOS (e será ignorado pelo Android). Mantido no schema para permitir migração futura para Texture-based preview sem breaking change no contract Pigeon. Documentado aqui em vez de remover do schema porque (a) remover requer re-codegen + atualizar testes existentes, (b) reservar é mais barato que reintroduzir.
+
+2. **Threading refinado.** A regra original dizia "ops pesadas vão pra background queue". Na prática:
+   - `discoverCapabilities()` e `switchLens()` são **leves** (enumera devices + 1 input swap) → aceitos na main thread.
+   - `startSession.startRunning()` e `stopSession.stopRunning()` continuam em `sessionQueue` background (são síncronos pesados em AVFoundation).
+   - Callbacks Flutter sempre via `DispatchQueue.main.async`.
+
+3. **Erros tipados nunca devem perder semântica via `rawValue.description`.** O pattern correto ao emitir `PigeonError` é usar `"\(code)"` (nome simbólico) ou rotear via `CameraFlutterApi.onError(code:message:)` (callback tipado). Anti-pattern proibido por hook `block-pigeon-error-rawvalue.sh` registrado em `.claude/settings.json`.
+
+4. **Tests pinning behavior, não apenas tipo.** TDD requer que cada branch da implementação tenha pelo menos 1 teste que **falha** se aquela branch for removida. `expect(x, isA<T>())` sem assertions de campo é insuficiente para spec coverage. Aplicado retroativamente nos testes do CameraController.

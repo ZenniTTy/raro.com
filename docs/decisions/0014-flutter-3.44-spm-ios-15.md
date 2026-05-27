@@ -64,3 +64,7 @@ Migração tríplice integrada em uma única decisão (sempre vão juntas):
 - RevenueCat purchases-ios-spm: https://github.com/RevenueCat/purchases-ios-spm
 - permission_handler SPM PR #1440: https://github.com/Baseflow/flutter-permission-handler/pull/1440
 - plus_plugins SPM issue #3152: https://github.com/fluttercommunity/plus_plugins/issues/3152
+
+## Addendum 2026-05-26 (post-audit confirmation)
+
+Confirmado em auditoria das Tasks 1-10: `apps/mobile/.gitignore` linhas 48-49 ignoram `ios/Podfile` e `ios/Podfile.lock`. Esses arquivos são regenerados localmente pelo Flutter para `permission_handler_apple` (Podfile híbrido auto-gerado) mas **nunca devem ser commitados**. Hook `block-secrets.sh` não cobre esse caso porque não são secrets; a defesa é o `.gitignore` + revisão de PR.

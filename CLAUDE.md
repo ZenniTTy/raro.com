@@ -204,6 +204,9 @@ Antes de declarar feature pronta:
 - ❌ Strings literais de UI fora de `.arb` (i18n)
 - ❌ Asset path absoluto (sempre `assets/` relativo)
 - ❌ `print()` em produção (usar `logger`)
+- ❌ Codificar enum tipado em `String(<enum>.rawValue)` ao cruzar Pigeon (perde semântica). Use `"\(code)"` (nome simbólico) ou route via `FlutterApi` callback tipado.
+- ❌ `expect(state, isA<T>())` sem assertions de campo. TDD requer pin de comportamento: cada branch da implementação deve ter ≥1 teste que falha se a branch for removida.
+- ❌ Swallow de erros via `do { try ... } catch {}` sem log (Swift) ou `try { } catch (_) {}` sem log (Dart/Kotlin). Sempre logar via `logger` ou rethrow com contexto.
 
 ---
 
