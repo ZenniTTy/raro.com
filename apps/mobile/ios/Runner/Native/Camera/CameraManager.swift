@@ -59,7 +59,13 @@ final class CameraManager {
   }
 
   func startSession(config: CameraConfig) async throws {
-    if session != nil { throw CameraNativeError.alreadyRunning }
+    if let existing = session {
+      os_log("startSession called while session exists — stopping previous", log: cameraLog, type: .default)
+      existing.stopRunning()
+      session = nil
+      device = nil
+      input = nil
+    }
     guard hasPermission() else { throw CameraNativeError.permissionDenied }
 
     let device = try selectDevice(for: config.lens)
@@ -109,53 +115,22 @@ final class CameraManager {
     guard let session = session else { throw CameraNativeError.notRunning }
     guard let currentDevice = self.device else { throw CameraNativeError.notRunning }
 
-    os_log(
-      "switchLens requested lens=%{public}@ currentDeviceType=%{public}@ minZoom=%.2f maxZoom=%.2f currentZoom=%.2f",
-      log: cameraLog, type: .default,
-      "\(lens)", "\(currentDevice.deviceType.rawValue)",
-      Double(truncating: NSNumber(value: currentDevice.minAvailableVideoZoomFactor)),
-      Double(truncating: NSNumber(value: currentDevice.maxAvailableVideoZoomFactor)),
-      Double(truncating: NSNumber(value: currentDevice.videoZoomFactor))
-    )
-
-    let isVirtualMultiLens =
-      currentDevice.deviceType == .builtInTripleCamera
-      || currentDevice.deviceType == .builtInDualWideCamera
-
-    if isVirtualMultiLens {
-      let targetZoom: CGFloat = lens == .ultraWide ? 0.5 : 1.0
-      let clamped = max(
-        currentDevice.minAvailableVideoZoomFactor,
-        min(targetZoom, currentDevice.maxAvailableVideoZoomFactor)
-      )
-      os_log(
-        "switchLens path=zoom-ramp targetZoom=%.2f clamped=%.2f",
-        log: cameraLog, type: .default,
-        Double(truncating: NSNumber(value: targetZoom)),
-        Double(truncating: NSNumber(value: clamped))
-      )
-      try currentDevice.lockForConfiguration()
-      currentDevice.ramp(toVideoZoomFactor: clamped, withRate: 4.0)
-      currentDevice.unlockForConfiguration()
-      onLensSwitched?(lens)
-      return
-    }
-
     let newDevice = try selectDevice(for: lens)
     if newDevice.uniqueID == currentDevice.uniqueID {
-      os_log("switchLens path=same-device-noop", log: cameraLog, type: .default)
+      os_log("switchLens path=same-device-noop lens=%{public}@", log: cameraLog, type: .default, "\(lens)")
       onLensSwitched?(lens)
       return
     }
     os_log(
-      "switchLens path=replace-input newDeviceType=%{public}@",
+      "switchLens path=replace-input lens=%{public}@ from=%{public}@ to=%{public}@",
       log: cameraLog, type: .default,
-      "\(newDevice.deviceType.rawValue)"
+      "\(lens)", "\(currentDevice.deviceType.rawValue)", "\(newDevice.deviceType.rawValue)"
     )
     session.beginConfiguration()
     if let oldInput = self.input { session.removeInput(oldInput) }
     let newInput = try AVCaptureDeviceInput(device: newDevice)
     if session.canAddInput(newInput) { session.addInput(newInput) }
+    session.sessionPreset = .inputPriority
     session.commitConfiguration()
     self.device = newDevice
     self.input = newInput
@@ -195,43 +170,23 @@ final class CameraManager {
   private func selectDevice(for lens: LensType) throws -> AVCaptureDevice {
     let discovery = AVCaptureDevice.DiscoverySession(
       deviceTypes: [
-        .builtInTripleCamera, .builtInDualWideCamera,
         .builtInUltraWideCamera, .builtInWideAngleCamera,
+        .builtInDualWideCamera, .builtInTripleCamera,
       ],
       mediaType: .video,
       position: .back
     )
 
-    if let virtual = discovery.devices.first(where: { device in
-      device.deviceType == .builtInTripleCamera
-        || device.deviceType == .builtInDualWideCamera
-    }) {
-      let targetZoom: CGFloat = lens == .ultraWide ? 0.5 : 1.0
-      do {
-        try virtual.lockForConfiguration()
-        virtual.videoZoomFactor = max(
-          virtual.minAvailableVideoZoomFactor,
-          min(targetZoom, virtual.maxAvailableVideoZoomFactor)
-        )
-        virtual.unlockForConfiguration()
-      } catch {
-        os_log(
-          "zoom hint failed (non-fatal): %{public}@",
-          log: cameraLog, type: .info, error.localizedDescription
-        )
-      }
-      return virtual
-    }
-
     if lens == .ultraWide {
-      if let ultra = discovery.devices.first(where: { device in
-        device.deviceType == .builtInUltraWideCamera
-      }) { return ultra }
+      if let ultra = discovery.devices.first(where: { $0.deviceType == .builtInUltraWideCamera }) {
+        return ultra
+      }
       throw CameraNativeError.lensUnavailable
     }
-    if let wide = discovery.devices.first(where: { device in
-      device.deviceType == .builtInWideAngleCamera
-    }) { return wide }
+
+    if let wide = discovery.devices.first(where: { $0.deviceType == .builtInWideAngleCamera }) {
+      return wide
+    }
     throw CameraNativeError.lensUnavailable
   }
 
