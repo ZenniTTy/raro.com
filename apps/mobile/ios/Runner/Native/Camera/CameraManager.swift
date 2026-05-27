@@ -216,7 +216,7 @@ final class CameraManager {
     }
     let targetFps: Double = fps == .fps60 ? 60 : 30
 
-    let formats = device.formats.filter { format in
+    let exactMatches = device.formats.filter { format in
       let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
       let supportsRes = dims.width == targetWidth && dims.height == targetHeight
       let supportsFps = format.videoSupportedFrameRateRanges.contains { range in
@@ -224,7 +224,33 @@ final class CameraManager {
       }
       return supportsRes && supportsFps
     }
-    guard let chosen = formats.first else { throw CameraNativeError.formatUnsupported }
+
+    let chosen: AVCaptureDevice.Format
+    if let match = exactMatches.first {
+      chosen = match
+    } else {
+      let withFps = device.formats.filter { format in
+        format.videoSupportedFrameRateRanges.contains { range in
+          range.minFrameRate <= targetFps && range.maxFrameRate >= targetFps
+        }
+      }
+      let candidates = withFps.isEmpty ? device.formats : withFps
+      guard
+        let best = candidates.min(by: { a, b in
+          let da = CMVideoFormatDescriptionGetDimensions(a.formatDescription)
+          let db = CMVideoFormatDescriptionGetDimensions(b.formatDescription)
+          return abs(Int(da.width) - Int(targetWidth)) < abs(Int(db.width) - Int(targetWidth))
+        })
+      else { throw CameraNativeError.formatUnsupported }
+      chosen = best
+      let dims = CMVideoFormatDescriptionGetDimensions(best.formatDescription)
+      os_log(
+        "applyFormat fallback target=%dx%d@%.0f chose=%dx%d",
+        log: cameraLog, type: .info,
+        Int(targetWidth), Int(targetHeight), targetFps,
+        Int(dims.width), Int(dims.height)
+      )
+    }
     device.activeFormat = chosen
     let duration = CMTime(value: 1, timescale: Int32(targetFps))
     device.activeVideoMinFrameDuration = duration

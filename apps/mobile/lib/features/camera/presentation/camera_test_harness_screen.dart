@@ -258,7 +258,12 @@ class _CameraTestHarnessScreenState
               Resolution.uhd4k,
             ],
             selected: _resolution,
-            onSelected: (v) => setState(() => _resolution = v),
+            onSelected: (v) {
+              setState(() => _resolution = v);
+              if (isReady) {
+                _setFormat();
+              }
+            },
             nameOf: (v) => v.name,
           ),
           const SizedBox(height: 8),
@@ -266,7 +271,12 @@ class _CameraTestHarnessScreenState
             label: 'fps',
             values: const [Fps.fps30, Fps.fps60],
             selected: _fps,
-            onSelected: (v) => setState(() => _fps = v),
+            onSelected: (v) {
+              setState(() => _fps = v);
+              if (isReady) {
+                _setFormat();
+              }
+            },
             nameOf: (v) => v.name,
           ),
         ],
