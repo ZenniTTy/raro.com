@@ -131,9 +131,21 @@ final class CameraManager {
     let newInput = try AVCaptureDeviceInput(device: newDevice)
     if session.canAddInput(newInput) { session.addInput(newInput) }
     session.sessionPreset = .inputPriority
+    do {
+      try newDevice.lockForConfiguration()
+      newDevice.videoZoomFactor = newDevice.minAvailableVideoZoomFactor
+      newDevice.unlockForConfiguration()
+    } catch {
+      os_log("zoom reset failed (non-fatal): %{public}@", log: cameraLog, type: .info, error.localizedDescription)
+    }
     session.commitConfiguration()
     self.device = newDevice
     self.input = newInput
+    os_log(
+      "switchLens applied lens=%{public}@ activeZoom=%.2f",
+      log: cameraLog, type: .default,
+      "\(lens)", Double(truncating: NSNumber(value: newDevice.videoZoomFactor))
+    )
     onLensSwitched?(lens)
   }
 
