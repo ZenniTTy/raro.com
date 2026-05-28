@@ -26,3 +26,19 @@
   5. `superpowers:subagent-driven-development`
 
 **Opção C** — Investir em Apple Developer Program ($99/ano) para fechar G8/G9 lifecycle real em TestFlight. Adiável (próximas 2-3 specs são bridges nativas, sem urgência de release real).
+
+## Como retomar (prompt sugerido)
+
+Cole no início da próxima sessão:
+
+> Vou retomar `feat/camera-native-bridge`. Rode `/prime` para alinhar contexto, leia `docs/sessions/0005-camera-device-validation.md` (último estado) e o ADR-0015 addendum 2026-05-28 seções A-H. Vou seguir [Opção A | B | C] desta seção. Antes de implementar qualquer código: confirma `git status` limpo, valida hipóteses com logs reais (memória `feedback_device_debug_use_real_logs_not_assumptions`), e aplica anti-patterns de CLAUDE.md §11.
+
+## Recovery rápido (se algo quebrar ao retomar)
+
+| Sintoma | Comando |
+|---|---|
+| Build iOS quebra com "Firebase iOS 15 vs 13" | `bun --filter @raro/mobile run bootstrap:ios` |
+| Câmera para de aparecer em Ajustes iPhone | `bun --filter @raro/mobile run bootstrap:ios` + Xcode Clean Build Folder + reinstall |
+| Build "BUILD SUCCEEDED" mas app não roda | `xclogparser parse --file <log>.xcactivitylog --reporter flatJson` (ver memória `raro-pattern-xcode-preaction-modifies-workspace`) |
+| Xcode "Failed to launch — code signature" em release | Edit Scheme → Run → Build Configuration = **Debug** (free tier não suporta release no device, ver memória `raro-pattern-flutter-debug-vs-release-on-device`) |
+| Tela "iOS 14+ debug mode" ao reabrir app no iPhone | **Não é bug**; é restrição arquitetural Apple+Flutter. Use Control Center / multitasking parcial. |

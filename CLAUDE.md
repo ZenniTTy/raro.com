@@ -230,6 +230,7 @@ Antes de declarar feature pronta:
 | Como rodar codegen? | `bun --filter @raro/mobile run codegen` |
 | O que entrou neste release? | [docs/10-CHANGELOG.md](docs/10-CHANGELOG.md) |
 | Última session de trabalho? | [docs/sessions/0001-INDEX.md](docs/sessions/0001-INDEX.md) |
+| Como retomar trabalho depois de pausa? | [docs/sessions/0001-INDEX.md#como-retomar](docs/sessions/0001-INDEX.md) (próxima sessão sugerida + prompt + recovery) + comando `/prime` |
 
 ---
 
