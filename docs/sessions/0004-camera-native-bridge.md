@@ -110,3 +110,70 @@ A solução inicial via Xcode **Build Phase** (commit `2fcd7be`) FALHOU em produ
 ## Próxima sessão sugerida
 
 - **0005** — `feat/replay-buffer-native-bridge` (Roadmap rm-8). Plataforma agora moderna (Flutter 3.44 + SPM + iOS 15), camera bridge entrega preview pronto, contract anti-drift + hooks policiando enum semantic + pigeon namespace, harness verde. Replay buffer reusa CameraSession (sem reabrir AVCaptureSession), adiciona AVAssetWriter (iOS) + MediaCodec/MediaMuxer (Android), CVPixelBufferPool (iOS) e MediaCodec pool (Android). Pré-roll integra com `feat/camera-recording` futura.
+
+---
+
+## Debug-session 2026-05-27/28 (device validation Task 19 — extensão)
+
+Tentativa de validar Task 19 (Goals G1-G10) em iPhone 12 físico. **Tempo gasto: ~6 horas em ciclos build-test-corrigir.** Resultado de **chutar fix antes de ler logs reais** — lição capital documentada em `feedback_device_debug_use_real_logs_not_assumptions`.
+
+### 11 bugs descobertos + fixes aplicados
+
+| # | Sintoma | Root cause | Fix |
+|---|---|---|---|
+| 1 | Pre-action `[fix-spm-ios-target]` faz Xcode abortar build silenciosamente | Pre-action chamava `flutter build ios --config-only` (regenera workspace mid-build) | Pre-action sed-only (instantânea). Diagnóstico via `xclogparser parse --reporter flatJson` |
+| 2 | Preview câmera preto mesmo com LED iOS verde | `AVCaptureVideoPreviewLayer.frame` zero + Stack/CustomPaint sobre `UiKitView` quebra hybrid composition | `layerClass` override Apple pattern + `showOverlays=false` no harness |
+| 3 | Lens 0.5x ↔ 1x não troca no iPhone 12 | DualWide reporta `minAvailableVideoZoomFactor=1.0` (não 0.5) — `videoZoomFactor=0.5` é clampado silenciosamente | Mapping correto: `virtualDeviceSwitchOverVideoZoomFactors[0]=2.0`; 0.5x→zoom 1.0, 1x→zoom 2.0. **Sem blackout.** Fallback `replace-input` físico para devices sem virtual. |
+| 4 | setFormat sem efeito visual | Faltava `session.sessionPreset = .inputPriority` antes de `activeFormat` | `beginConfiguration` + sessionPreset + applyFormat + `commitConfiguration` |
+| 5 | 720→1080/4K mostra paisagem brief antes de assentar | Auto-focus rebuild durante format switch | `device.isSmoothAutoFocusEnabled = true` (se suportado) |
+| 6 | App crash voltando de Settings.app | iOS suspende AVCaptureSession em background, sem observer não retoma | 3 observers: `wasInterruptedNotification` + `interruptionEndedNotification` + `runtimeErrorNotification`; auto-restart em `.mediaServicesWereReset` |
+| 7 | Dialog "open settings" não aparecia em permission denied | `Permission.camera.status.isPermanentlyDenied` é `false` no iOS (iOS reporta `.denied` direto após negação) | Treat `isDenied` igual `isPermanentlyDenied` no iOS para trigger deeplink |
+| 8 | Tela preta "iOS 14+ debug mode" ao reabrir | Restrição arquitetural Flutter+Apple (debug usa JIT, JIT exige Xcode) | **Não é bug.** Flag `_forceHarness` permite harness em release; deferir G8/G9 lifecycle real para TestFlight |
+| 9 | "Failed to launch — code signature" em release | Apple Development cert (free tier) não basta para release no device físico real | Voltar para debug; documentar requisito Apple Developer Program ($99/ano) |
+| 10 | iOS 13 vs 15 voltou após Debug↔Release scheme switch | Xcode regerou ephemeral SPM ao trocar scheme | Pre-action sed-only reativada no scheme |
+| 11 | **Câmera nunca aparece em Ajustes → App; prompt nativo nunca dispara** | **`permission_handler` exige macros `GCC_PREPROCESSOR_DEFINITIONS PERMISSION_CAMERA=1` no Podfile** — sem isso plugin retorna `denied` silenciosamente sem chamar `AVCaptureDevice.requestAccess` | Macros no `post_install` do Podfile + script `bootstrap-ios-permissions.sh` idempotente reaplicando após `flutter pub get` (Podfile gitignored, ADR-0014) |
+
+### Anti-patterns catalogados nesta sessão
+
+1. Pre-action Xcode invocando `flutter build` dentro do build em curso
+2. Confiar em status "BUILD SUCCEEDED" sem inspecionar `.xcactivitylog`
+3. Inventar fix de zoom-ramp para iPhone 12 sem checar `minAvailableVideoZoomFactor`
+4. Adicionar `permission_handler` no `pubspec.yaml` sem ler README iOS Setup
+5. Inventar fix para bug em device sem instrumentar `os_log` reais primeiro
+6. Tratar tela "iOS 14+ debug mode" como bug em vez de restrição arquitetural
+
+Catalogados em CLAUDE.md §11 addendum 3 + ADR-0015 addendum (seções A-H).
+
+### Gates adicionados nesta extensão
+
+10. **Script `scripts/bootstrap-ios-permissions.sh`** — idempotente, reaplica macros `permission_handler` após `flutter pub get`. Suporta `PERMISSION_CAMERA`, `PERMISSION_MICROPHONE`, `PERMISSION_PHOTOS`, `PERMISSION_SPEECH_RECOGNIZER`.
+11. **`package.json` mobile** — novos targets `bootstrap:ios` (combo fix-spm + bootstrap-permissions) e `pub:get` atualizado.
+12. **CLAUDE.md §11 addendum 3** — 3 anti-patterns adicionais.
+13. **Memórias persistentes (4 novas)**:
+    - `raro-pattern-permission-handler-ios-podfile-macros`
+    - `raro-pattern-ios-avcapture-iphone12-dualwide-zoom-mapping`
+    - `raro-pattern-flutter-debug-vs-release-on-device`
+    - `feedback_device_debug_use_real_logs_not_assumptions`
+14. **ADR-0015 addendum 2026-05-28** — seções A-H consolidando lições device validation.
+
+### Estado do harness na pausa
+
+- ✅ G1 start session (instrumentado, falta cronometragem precisa)
+- ✅ G2 capabilities (`[ultraWide, wide]` iPhone 12)
+- ✅ G3 lens switch 0.5x↔1x **sem blackout** via virtual device zoom
+- ⏳ G4 focus ring (out of scope harness — overlay no lado nativo CALayer pendente)
+- ✅ G5 resolution runtime (logs confirmam 720/1080/4K aplicados)
+- ✅ G6 4K@60fps (logs confirmam `setFormat uhd4k@fps60 → 3840x2160`)
+- ⏳ G7 stop libera memória (precisa Instruments)
+- ✅ G8 permission denied → open settings → volta (funciona em debug via Control Center; release adiado TestFlight)
+- ✅ G9 background/foreground via Control Center (observers AVCaptureSession funcionam)
+- ⏳ G10 iPad rejected (N/A — não testado, lógica `discoverCapabilities` já cobre via empty devices)
+
+### Próxima sessão sugerida (atualizada)
+
+Opções:
+- **(a)** Continuar harness — G4 focus ring nativo via CALayer + Instruments para G1/G7 + Android Pixel emulator G2/G3
+- **(b)** Pular para **0005 — `feat/replay-buffer-native-bridge`** (Roadmap rm-8) reusando CameraSession estável
+- **(c)** Comprar Apple Developer Program para fechar G8/G9 em TestFlight
+
+Recomendação: **(a)** para fechar Task 19 antes de mover para 0005.

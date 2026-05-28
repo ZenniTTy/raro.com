@@ -2,6 +2,49 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-05-28] — 0.4.1 (camera-native-bridge — device validation Task 19)
+
+### Adicionado
+- `apps/mobile/scripts/bootstrap-ios-permissions.sh` — idempotente; reaplica macros `GCC_PREPROCESSOR_DEFINITIONS` do `permission_handler` no `Podfile` após cada `flutter pub get` (Podfile gitignored, ADR-0014). Suporta `PERMISSION_CAMERA`, `PERMISSION_MICROPHONE`, `PERMISSION_PHOTOS`, `PERMISSION_SPEECH_RECOGNIZER`. `pod install` automático ao final
+- `apps/mobile/package.json`: novo target `bootstrap:ios` (fix-spm + bootstrap-permissions combo); `pub:get` agora chama bootstrap-permissions
+- `CameraManager.swift`: 3 notification observers (`wasInterruptedNotification`, `interruptionEndedNotification`, `runtimeErrorNotification`) com auto-restart em `mediaServicesWereReset` para sobreviver background/foreground
+- `CameraManager.applyVirtualLensZoom`: mapping Apple-correto para iPhone DualWide (0.5x → minZoom, 1x → `virtualDeviceSwitchOverVideoZoomFactors[0]`)
+- `CameraController.openSettings()` + `isPermissionPermanentlyDenied()` (delegando para `permission_handler.openAppSettings`)
+- `CameraTestHarnessScreen`: `WidgetsBindingObserver` invoca `refreshAfterSettingsReturn` em `AppLifecycleState.resumed`; dialog "open settings" exibido em permission denied
+- `RaroApp`: flag `_forceHarness` via `bool.fromEnvironment('RARO_HARNESS')` permite harness em release mode (default true)
+- ADR-0015 addendum 2026-05-28 (seções A-H): mapping correto iPhone 12, setFormat exige `.inputPriority`, observers obrigatórios, smoothAutoFocus, permission_handler macros, Sendable warnings, err=-17281 benigno, limitações free tier, logs reais > suposições
+- 4 memórias persistentes novas:
+  - `raro-pattern-permission-handler-ios-podfile-macros`
+  - `raro-pattern-ios-avcapture-iphone12-dualwide-zoom-mapping`
+  - `raro-pattern-flutter-debug-vs-release-on-device`
+  - `feedback_device_debug_use_real_logs_not_assumptions`
+
+### Mudado
+- `CameraManager.swift`: `selectDevice` prefere virtual device (Triple/DualWide) → fallback físico ultraWide/wide
+- `CameraManager.swift`: `setFormat` agora wrapped em `beginConfiguration` + `sessionPreset = .inputPriority` + `commitConfiguration` (corrige sem-efeito antes)
+- `CameraManager.swift`: `startSession` idempotente — para sessão anterior se já existir em vez de throw `alreadyRunning`
+- `CameraManager.swift`: `applyFormat` ativa `isSmoothAutoFocusEnabled` (se suportado) para reduzir flicker em format switch; também aceita match aproximado (resolução mais próxima) quando exato não disponível
+- `CameraManager.swift`: import `@preconcurrency AVFoundation` para suprimir warnings Sendable Swift 6
+- `CameraHostApiImpl.swift`: `@unchecked Sendable` para closures `@Sendable`
+- `CameraPlatformView.swift`: `layerClass` override Apple-recommended (root layer SER o preview, sincronização automática com bounds)
+- `Podfile`: `post_install` define `GCC_PREPROCESSOR_DEFINITIONS` para `permission_handler` (CAMERA, MICROPHONE, PHOTOS, SPEECH_RECOGNIZER)
+- `Runner.xcscheme`: Pre-action `fix-spm-ios-target.sh` (sed-only, sem `flutter build` interno — versão anterior abortava build silenciosamente)
+- `CLAUDE.md §11 addendum 3`: 3 anti-patterns novos (plugin sem README iOS Setup, fix sem logs reais, debug-mode-tela é restrição arquitetural)
+
+### Corrigido
+- **Bug crítico permission_handler**: Câmera nunca aparecia em Ajustes → App porque plugin retornava `denied` silenciosamente sem chamar `AVCaptureDevice.requestAccess` (macros Podfile ausentes — best practice oficial não seguida no scaffold)
+- **Lens switch sem blackout** no iPhone 12: usa virtual device + zoom mapping em vez de replace-input físico
+- **setFormat sem efeito**: sessionPreset `.inputPriority` necessário
+- **App crash voltando de Settings**: observers AVCaptureSession + auto-restart
+- **Permission dialog não aparecia**: tratamento `isDenied` igual `isPermanentlyDenied` no iOS
+- **Pre-action abortando build silenciosamente**: removido `flutter build` interno; sed-only agora
+
+### Notas
+- 6 anti-patterns adicionais catalogados em CLAUDE.md §11 (total agora cobre device debug, plugins iOS, restrições Apple+Flutter)
+- Goals consolidados pós-validação iPhone 12: **G1, G2, G3, G5, G6, G8, G9 ✅** (G8/G9 via Control Center; lifecycle real fechando app → TestFlight Apple Dev Program). G4 (focus ring nativo CALayer), G7 (Instruments memória), G10 (iPad test): pendentes para próxima sessão.
+
+---
+
 ## [2026-05-26] — 0.4.0 (camera-native-bridge)
 
 ### Adicionado

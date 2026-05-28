@@ -137,3 +137,92 @@ grep 'iOS(' apps/mobile/ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwi
 ### Memória persistente
 
 `raro-pattern-flutter-spm-ios-13-hardcoded` registrada para que sessões futuras saibam disso de cara.
+
+---
+
+## Addendum 2026-05-28 — Lições da validação em device físico (iPhone 12)
+
+Após implementação completa das tasks 1-18, a validação em device físico (iPhone 12) na task 19 revelou múltiplos gaps entre o design original da spec e o comportamento real do hardware iOS. Estes addenda documentam as descobertas que devem informar revisões futuras de specs de bridge nativo:
+
+### A. iPhone DualWide Camera: minAvailableVideoZoomFactor reporta 1.0, não 0.5
+
+A spec assumia que `device.minAvailableVideoZoomFactor` retornaria `0.5` em `builtInDualWideCamera` (que contém ultra-wide física dentro). **Não retorna.** O sistema reporta o mínimo da lente atualmente ativa (wide), não o mínimo absoluto do sistema.
+
+**Mapping correto:**
+- `LensType.ultraWide` → `videoZoomFactor = device.minAvailableVideoZoomFactor` (= 1.0 — sistema usa ultra-wide internamente)
+- `LensType.wide` → `videoZoomFactor = device.virtualDeviceSwitchOverVideoZoomFactors.first` (= 2.0 no iPhone 12 — cruza switchover para wide)
+
+Implementação consolidada em `CameraManager.applyVirtualLensZoom`. Sem blackout perceptível (G3 ✅).
+
+Devices sem virtual device (iPhone SE 1ª gen, single-wide): fallback para `replace-input` entre `builtInUltraWideCamera` e `builtInWideAngleCamera`. **Blackout ~100-300ms inerente** — não há workaround sem AVCaptureMultiCamSession (overkill para v1.0).
+
+### B. setFormat requer sessionPreset = .inputPriority
+
+A spec não destacava este requisito Apple. Sem ele, `device.activeFormat` é silenciosamente sobrescrito pelo session preset default.
+
+```swift
+session.beginConfiguration()
+session.sessionPreset = .inputPriority    // ESSENCIAL
+try device.lockForConfiguration()
+device.activeFormat = chosenFormat
+device.unlockForConfiguration()
+session.commitConfiguration()
+```
+
+Documentado em [developer.apple.com/forums/thread/664978](https://developer.apple.com/forums/thread/664978).
+
+### C. Background/foreground requer notification observers
+
+Sem `wasInterruptedNotification`/`interruptionEndedNotification`/`runtimeErrorNotification`, o app crash quando volta de Settings.app ou multitasking porque a session AVCapture fica em estado inválido após pause iOS. Auto-restart em `.mediaServicesWereReset` é obrigatório (cleanup-recovery padrão Apple).
+
+### D. permission_handler Flutter exige macros no Podfile
+
+**Bug invisível mais grave da spec.** O `permission_handler ^12.0.1` declarado no `pubspec.yaml` + `NSCameraUsageDescription` no `Info.plist` + código Dart correto **não são suficientes** se o `Podfile` não definir os macros `GCC_PREPROCESSOR_DEFINITIONS` apropriados:
+
+```ruby
+config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+  '$(inherited)',
+  'PERMISSION_CAMERA=1',
+  'PERMISSION_MICROPHONE=1',
+  'PERMISSION_PHOTOS=1',
+  'PERMISSION_SPEECH_RECOGNIZER=1',
+]
+```
+
+Sem isso, `Permission.camera.request()` retorna `denied` **sintético**, sem chamar `AVCaptureDevice.requestAccess`. Resultado: iOS nunca registra o app como camera-user e Câmera **nunca aparece em Ajustes → App**.
+
+Best practice documentada em [pub.dev/packages/permission_handler#setup-ios](https://pub.dev/packages/permission_handler) — não foi seguida no scaffold inicial (Fase 2). Adicionada na task 19 de validação.
+
+**Frágil:** o Podfile RARO é gitignored (decisão ADR-0014, Flutter 3.44 regenera para plugins não-SPM). Para garantir persistência, foi criado `scripts/bootstrap-ios-permissions.sh` que reaplica os macros após cada `flutter pub get`. Adicionado ao wrapper `bun --filter @raro/mobile run pub:get`.
+
+### E. AVFoundation Sendable warnings (Swift 6)
+
+Build em strict concurrency mode emite warnings sobre `AVCaptureSession` não ser `Sendable`. Workaround oficial (forums.swift.org): `@preconcurrency import AVFoundation` + `@unchecked Sendable` em classes que retêm session em closures `@Sendable`. Aceitável até Apple adicionar Sendable conformance ao AVFoundation.
+
+### F. FigCaptureSourceRemote err=-17281
+
+Ruído iOS 26 benigno confirmado por Apple DTS ([forums.apple.com/thread/810894](https://developer.apple.com/forums/thread/810894)). Aparece em ~todas as chamadas AVCaptureSession config. **Não tratar como erro.**
+
+### G. Limitações de teste em device físico free tier (sem Apple Developer Program)
+
+- ✅ Debug + Cmd+R: testes G1-G7, G10 funcionam
+- ⚠️ Lifecycle G8/G9: testar via Control Center / multitasking parcial (sem fechar app)
+- ❌ Release/TestFlight: requer Apple Developer Program ($99/ano) — `Apple Development` certificate sem Dev Program falha code signing
+
+Validação final dos goals em release adiada para quando comprar Dev Program. Em debug, observers de interruption já validam o comportamento esperado.
+
+### H. Logs reais > suposições
+
+Esta validação consumiu ~4-6 horas devido a múltiplos ciclos de "chute → build → testar → não funciona". Quando finalmente capturamos:
+- `xclogparser` mostrou builds abortando silenciosamente em Pre-actions
+- `os_log` mostrou `minZoom=1.0 clamped=1.0` provando que zoom-ramp não funcionava
+- `grep PERMISSION_ ios/Pods/Pods.xcodeproj/project.pbxproj` mostrou macros ausentes
+
+**Cada uma dessas evidências teria sido capturada em <2min** se instrumentação tivesse vindo ANTES dos chutes. Registrado como feedback `feedback_device_debug_use_real_logs_not_assumptions`.
+
+### Memórias adicionais criadas
+
+- `raro-pattern-ios-avcapture-iphone12-dualwide-zoom-mapping` (Apêndice A-F técnico consolidado)
+- `raro-pattern-permission-handler-ios-podfile-macros` (Apêndice D)
+- `raro-pattern-flutter-debug-vs-release-on-device` (Apêndice G)
+- `feedback_device_debug_use_real_logs_not_assumptions` (Apêndice H)

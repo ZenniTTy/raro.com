@@ -4,7 +4,7 @@
 
 | # | Data | Título | Branch | Commits |
 |---|---|---|---|---|
-| [0004](0004-camera-native-bridge.md) | 2026-05-26 | camera-native-bridge (P05 fundação: preview + lens 0.5×/1× + focus + format, ADR-0015) | `feat/camera-native-bridge` (device test G1-G10 pendente — Task 19 aguarda iPhone 12) | `6104289` … `e013d6f` (25 commits) |
+| [0004](0004-camera-native-bridge.md) | 2026-05-26 / 2026-05-28 | camera-native-bridge (P05 fundação + device validation Task 19: preview + lens 0.5×/1× sem blackout + focus + format + permission flow + observers bg/fg, ADR-0015 com addendum 2026-05-28 seções A-H) | `feat/camera-native-bridge` (validação iPhone 12: G1-G6 ✅, G7/G10 ⏳ Instruments, G4 nativo CALayer, G8/G9 lifecycle real → TestFlight Apple Dev Program) | `6104289` … `62a1c2b` (48 commits) |
 | [0003](0003-flutter-3.44-spm-migration.md) | 2026-05-26 | flutter-3.44-spm-migration (upgrade SDK + SPM + iOS 15, ADR-0014) | `feat/flutter-3.44-spm-migration` → merged em `develop` (`d91ccaa`) | `b357d4b` … `d91ccaa` (17 commits) |
 | [0002](0002-api-contract-shared.md) | 2026-05-26 | api-contract-shared (rm-2 spec bloqueante, 12 famílias) | `feat/api-contract-shared` | `2783166` … `f30bb1b` (16 commits) |
 | [0001](0001-bootstrap.md) | 2026-05-25 | Bootstrap do projeto (Fases 1–5 + 3 sprints de fixes) | `develop` | `c40e55d` … `1c43be0` (33 commits) |
