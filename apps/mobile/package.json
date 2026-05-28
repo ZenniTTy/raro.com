@@ -10,9 +10,10 @@
     "test:contract": "flutter test test/contract/",
     "build:ios": "flutter build ipa --release",
     "build:android": "flutter build appbundle --release",
-    "pub:get": "flutter pub get && ./scripts/fix-spm-ios-target.sh",
+    "pub:get": "flutter pub get && ./scripts/fix-spm-ios-target.sh && ./scripts/bootstrap-ios-permissions.sh",
     "fix:ios-spm": "./scripts/fix-spm-ios-target.sh",
-    "dev:ios": "./scripts/fix-spm-ios-target.sh && flutter run",
+    "bootstrap:ios": "./scripts/fix-spm-ios-target.sh && ./scripts/bootstrap-ios-permissions.sh",
+    "dev:ios": "./scripts/fix-spm-ios-target.sh && ./scripts/bootstrap-ios-permissions.sh && flutter run",
     "codegen": "dart run build_runner build --delete-conflicting-outputs",
     "codegen:watch": "dart run build_runner watch --delete-conflicting-outputs",
     "pigeon": "dart run pigeon --input pigeons/camera_api.dart && dart run pigeon --input pigeons/replay_buffer_api.dart && dart run pigeon --input pigeons/voice_api.dart && dart run pigeon --input pigeons/volume_api.dart"
