@@ -9,9 +9,72 @@ final class CameraManager {
   private(set) var session: AVCaptureSession?
   private var device: AVCaptureDevice?
   private var input: AVCaptureDeviceInput?
+  private var notificationTokens: [NSObjectProtocol] = []
 
   var onLensSwitched: ((LensType) -> Void)?
   var onError: ((CameraNativeError) -> Void)?
+
+  deinit {
+    removeObservers()
+  }
+
+  private func installObservers(for session: AVCaptureSession) {
+    removeObservers()
+    let nc = NotificationCenter.default
+    notificationTokens.append(
+      nc.addObserver(
+        forName: AVCaptureSession.wasInterruptedNotification,
+        object: session,
+        queue: .main
+      ) { [weak self] note in
+        let reason = note.userInfo?[AVCaptureSessionInterruptionReasonKey] as? Int ?? -1
+        os_log("session interrupted reason=%d", log: cameraLog, type: .info, reason)
+        self?.onError?(.sessionFailed("session interrupted"))
+      }
+    )
+    notificationTokens.append(
+      nc.addObserver(
+        forName: AVCaptureSession.interruptionEndedNotification,
+        object: session,
+        queue: .main
+      ) { [weak self] _ in
+        os_log("session interruption ended — resuming", log: cameraLog, type: .info)
+        self?.sessionQueue.async { [weak self] in
+          guard let self = self, let s = self.session, !s.isRunning else { return }
+          s.startRunning()
+        }
+      }
+    )
+    notificationTokens.append(
+      nc.addObserver(
+        forName: AVCaptureSession.runtimeErrorNotification,
+        object: session,
+        queue: .main
+      ) { [weak self] note in
+        let err = note.userInfo?[AVCaptureSessionErrorKey] as? NSError
+        os_log(
+          "session runtime error code=%d %{public}@",
+          log: cameraLog, type: .error,
+          err?.code ?? 0, err?.localizedDescription ?? "unknown"
+        )
+        if err?.code == AVError.mediaServicesWereReset.rawValue {
+          self?.sessionQueue.async { [weak self] in
+            guard let self = self, let s = self.session, !s.isRunning else { return }
+            s.startRunning()
+          }
+        } else {
+          self?.onError?(.sessionFailed(err?.localizedDescription ?? "runtime error"))
+        }
+      }
+    )
+  }
+
+  private func removeObservers() {
+    for token in notificationTokens {
+      NotificationCenter.default.removeObserver(token)
+    }
+    notificationTokens.removeAll()
+  }
 
   func hasPermission() -> Bool {
     AVCaptureDevice.authorizationStatus(for: .video) == .authorized
@@ -71,6 +134,7 @@ final class CameraManager {
   func startSession(config: CameraConfig) async throws {
     if let existing = session {
       os_log("startSession called while session exists — stopping previous", log: cameraLog, type: .default)
+      removeObservers()
       existing.stopRunning()
       session = nil
       device = nil
@@ -105,6 +169,7 @@ final class CameraManager {
     self.session = session
     self.device = device
     self.input = input
+    installObservers(for: session)
 
     let capturedSession = session
     await withCheckedContinuation { continuation in
@@ -116,6 +181,7 @@ final class CameraManager {
   }
 
   func stopSession() {
+    removeObservers()
     sessionQueue.async { [weak self] in
       self?.session?.stopRunning()
       if let inputs = self?.session?.inputs {
@@ -293,6 +359,9 @@ final class CameraManager {
     let duration = CMTime(value: 1, timescale: Int32(targetFps))
     device.activeVideoMinFrameDuration = duration
     device.activeVideoMaxFrameDuration = duration
+    if device.isSmoothAutoFocusSupported {
+      device.isSmoothAutoFocusEnabled = true
+    }
     let chosenDims = CMVideoFormatDescriptionGetDimensions(chosen.formatDescription)
     os_log(
       "applyFormat chose dims=%dx%d binned=%{public}@ multicam=%{public}@",

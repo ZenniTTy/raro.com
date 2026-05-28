@@ -16,11 +16,35 @@ class CameraTestHarnessScreen extends ConsumerStatefulWidget {
 }
 
 class _CameraTestHarnessScreenState
-    extends ConsumerState<CameraTestHarnessScreen> {
+    extends ConsumerState<CameraTestHarnessScreen>
+    with WidgetsBindingObserver {
   Resolution _resolution = Resolution.fhd1080;
   Fps _fps = Fps.fps30;
   LensType _selectedLens = LensType.wide;
   final List<String> _eventLog = <String>[];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _logEvent('lifecycle → resumed');
+      ref
+          .read(cameraControllerProvider.notifier)
+          .refreshAfterSettingsReturn()
+          .ignore();
+    }
+  }
 
   void _logEvent(String message) {
     final timestamp = DateTime.now().toIso8601String().substring(11, 19);

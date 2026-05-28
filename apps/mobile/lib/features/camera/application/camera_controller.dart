@@ -71,17 +71,26 @@ class CameraController extends _$CameraController {
     if (current.isGranted) {
       return true;
     }
-    if (current.isPermanentlyDenied || current.isRestricted) {
-      return false;
+    if (current.isPermanentlyDenied ||
+        current.isRestricted ||
+        current.isDenied) {
+      final after = await Permission.camera.request();
+      return after.isGranted;
     }
-    return _repo.requestPermission();
+    final result = await Permission.camera.request();
+    return result.isGranted;
   }
 
   Future<bool> hasPermission() => _repo.hasPermission();
 
   Future<bool> isPermissionPermanentlyDenied() async {
     final status = await Permission.camera.status;
-    return status.isPermanentlyDenied || status.isRestricted;
+    return status.isPermanentlyDenied || status.isRestricted || status.isDenied;
+  }
+
+  Future<void> refreshAfterSettingsReturn() async {
+    final caps = await _repo.discoverCapabilities();
+    state = AsyncData(CameraState.idle(capabilities: caps));
   }
 
   Future<bool> openSettings() => openAppSettings();
