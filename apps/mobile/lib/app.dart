@@ -4,16 +4,22 @@ import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/camera/presentation/camera_test_harness_screen.dart';
 
+const bool _forceHarness = bool.fromEnvironment(
+  'RARO_HARNESS',
+  defaultValue: true,
+);
+
 class RaroApp extends StatelessWidget {
   const RaroApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    const showHarness = kDebugMode || _forceHarness;
     return MaterialApp(
       title: 'Raro Camera',
       debugShowCheckedModeBanner: false,
       theme: buildRaroDarkTheme(),
-      home: kDebugMode
+      home: showHarness
           ? const CameraTestHarnessScreen()
           : const _BootstrapPlaceholder(),
     );
