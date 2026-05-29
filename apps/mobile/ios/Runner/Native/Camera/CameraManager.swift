@@ -4,6 +4,13 @@ import os.log
 
 private let cameraLog = OSLog(subsystem: "com.rarocamera", category: "camera")
 
+private final class AtomicBool {
+  private let queue = DispatchQueue(label: "com.rarocamera.atomic-bool")
+  private var value = false
+  func get() -> Bool { queue.sync { value } }
+  func set(_ newValue: Bool) { queue.sync { value = newValue } }
+}
+
 final class CameraManager {
   private let sessionQueue = DispatchQueue(label: "com.rarocamera.session")
   private(set) var session: AVCaptureSession?
@@ -12,7 +19,8 @@ final class CameraManager {
   private var notificationTokens: [NSObjectProtocol] = []
   private var focusKVO: NSKeyValueObservation?
   private var focusDebounceWorkItem: DispatchWorkItem?
-  var onFocusResult: ((Bool) -> Void)?
+  private var focusTimeoutWorkItem: DispatchWorkItem?
+  var onFocusResult: ((FocusPoint, Bool) -> Void)?
 
   var onLensSwitched: ((LensType) -> Void)?
   var onError: ((CameraNativeError) -> Void)?
@@ -188,6 +196,9 @@ final class CameraManager {
     focusKVO?.invalidate()
     focusKVO = nil
     focusDebounceWorkItem?.cancel()
+    focusDebounceWorkItem = nil
+    focusTimeoutWorkItem?.cancel()
+    focusTimeoutWorkItem = nil
     sessionQueue.async { [weak self] in
       self?.session?.stopRunning()
       if let inputs = self?.session?.inputs {
@@ -258,34 +269,44 @@ final class CameraManager {
     device.focusPointOfInterest = CGPoint(x: point.x, y: point.y)
     device.focusMode = .autoFocus
     device.unlockForConfiguration()
-    observeFocusAdjustment(on: device)
+    observeFocusAdjustment(on: device, point: point)
   }
 
-  private func observeFocusAdjustment(on device: AVCaptureDevice) {
+  private func observeFocusAdjustment(on device: AVCaptureDevice, point: FocusPoint) {
     focusKVO?.invalidate()
     focusDebounceWorkItem?.cancel()
-    var wasAdjusting = false
+    focusTimeoutWorkItem?.cancel()
+    let adjustingBox = AtomicBool()
     focusKVO = device.observe(\.isAdjustingFocus, options: [.new]) { [weak self] _, change in
       guard let self = self else { return }
-      let adjusting = change.newValue ?? false
-      if adjusting {
-        wasAdjusting = true
-        return
+      DispatchQueue.main.async {
+        let adjusting = change.newValue ?? false
+        if adjusting {
+          adjustingBox.set(true)
+          return
+        }
+        guard adjustingBox.get() else { return }
+        let work = DispatchWorkItem { [weak self] in
+          self?.focusTimeoutWorkItem?.cancel()
+          self?.focusTimeoutWorkItem = nil
+          self?.focusKVO?.invalidate()
+          self?.focusKVO = nil
+          self?.focusDebounceWorkItem = nil
+          self?.onFocusResult?(point, true)
+        }
+        self.focusDebounceWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: work)
       }
-      guard wasAdjusting else { return }
-      let work = DispatchWorkItem { [weak self] in
-        self?.onFocusResult?(true)
-        self?.focusKVO?.invalidate()
-        self?.focusKVO = nil
-      }
-      self.focusDebounceWorkItem = work
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: work)
     }
     let timeout = DispatchWorkItem { [weak self] in
       self?.focusKVO?.invalidate()
       self?.focusKVO = nil
-      self?.onFocusResult?(false)
+      self?.focusDebounceWorkItem?.cancel()
+      self?.focusDebounceWorkItem = nil
+      self?.focusTimeoutWorkItem = nil
+      self?.onFocusResult?(point, false)
     }
+    focusTimeoutWorkItem = timeout
     DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: timeout)
   }
 

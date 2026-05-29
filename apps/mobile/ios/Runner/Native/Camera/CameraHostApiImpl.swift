@@ -4,7 +4,6 @@ import Foundation
 final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
   private let manager = CameraManager()
   private let flutterApi: CameraFlutterApi
-  private var lastFocusPoint: FocusPoint?
   weak var platformViewFactory: CameraPlatformViewFactory?
 
   init(messenger: FlutterBinaryMessenger) {
@@ -20,10 +19,9 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
         self?.flutterApi.onError(code: error.code, message: error.message) { _ in }
       }
     }
-    manager.onFocusResult = { [weak self] success in
+    manager.onFocusResult = { [weak self] point, success in
       DispatchQueue.main.async {
-        guard let lastPoint = self?.lastFocusPoint else { return }
-        self?.flutterApi.onFocusChanged(point: lastPoint, locked: success) { _ in }
+        self?.flutterApi.onFocusChanged(point: point, locked: success) { _ in }
       }
     }
   }
@@ -100,7 +98,6 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
   func focusAt(point: FocusPoint, completion: @escaping (Result<Void, Error>) -> Void) {
     do {
       try manager.focusAt(point: point)
-      lastFocusPoint = point
       DispatchQueue.main.async {
         guard let factory = self.platformViewFactory else {
           completion(.success(()))
