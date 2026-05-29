@@ -23,6 +23,7 @@ import UIKit
     CameraHostApiSetup.setUp(binaryMessenger: messenger, api: hostApi)
 
     let factory = CameraPlatformViewFactory(hostApi: hostApi)
+    hostApi.platformViewFactory = factory
     registrar.register(factory, withId: "com.rarocamera/camera_preview")
   }
 }

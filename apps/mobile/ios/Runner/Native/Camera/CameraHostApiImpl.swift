@@ -4,6 +4,8 @@ import Foundation
 final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
   private let manager = CameraManager()
   private let flutterApi: CameraFlutterApi
+  private var lastFocusPoint: FocusPoint?
+  weak var platformViewFactory: CameraPlatformViewFactory?
 
   init(messenger: FlutterBinaryMessenger) {
     self.flutterApi = CameraFlutterApi(binaryMessenger: messenger)
@@ -16,6 +18,12 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
     manager.onError = { [weak self] error in
       DispatchQueue.main.async {
         self?.flutterApi.onError(code: error.code, message: error.message) { _ in }
+      }
+    }
+    manager.onFocusResult = { [weak self] success in
+      DispatchQueue.main.async {
+        guard let lastPoint = self?.lastFocusPoint else { return }
+        self?.flutterApi.onFocusChanged(point: lastPoint, locked: success) { _ in }
       }
     }
   }
@@ -92,8 +100,17 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
   func focusAt(point: FocusPoint, completion: @escaping (Result<Void, Error>) -> Void) {
     do {
       try manager.focusAt(point: point)
-      flutterApi.onFocusChanged(point: point, locked: true) { _ in }
-      completion(.success(()))
+      lastFocusPoint = point
+      DispatchQueue.main.async {
+        guard let factory = self.platformViewFactory else {
+          completion(.success(()))
+          return
+        }
+        factory.lastPlatformView?.showFocusRing(
+          at: factory.toViewCoordinates(focusPoint: point)
+        )
+        completion(.success(()))
+      }
     } catch let error as CameraNativeError {
       completion(.failure(pigeonError(from: error)))
     } catch {

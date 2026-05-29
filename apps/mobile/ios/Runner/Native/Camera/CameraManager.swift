@@ -10,6 +10,9 @@ final class CameraManager {
   private var device: AVCaptureDevice?
   private var input: AVCaptureDeviceInput?
   private var notificationTokens: [NSObjectProtocol] = []
+  private var focusKVO: NSKeyValueObservation?
+  private var focusDebounceWorkItem: DispatchWorkItem?
+  var onFocusResult: ((Bool) -> Void)?
 
   var onLensSwitched: ((LensType) -> Void)?
   var onError: ((CameraNativeError) -> Void)?
@@ -182,6 +185,9 @@ final class CameraManager {
 
   func stopSession() {
     removeObservers()
+    focusKVO?.invalidate()
+    focusKVO = nil
+    focusDebounceWorkItem?.cancel()
     sessionQueue.async { [weak self] in
       self?.session?.stopRunning()
       if let inputs = self?.session?.inputs {
@@ -252,6 +258,35 @@ final class CameraManager {
     device.focusPointOfInterest = CGPoint(x: point.x, y: point.y)
     device.focusMode = .autoFocus
     device.unlockForConfiguration()
+    observeFocusAdjustment(on: device)
+  }
+
+  private func observeFocusAdjustment(on device: AVCaptureDevice) {
+    focusKVO?.invalidate()
+    focusDebounceWorkItem?.cancel()
+    var wasAdjusting = false
+    focusKVO = device.observe(\.isAdjustingFocus, options: [.new]) { [weak self] _, change in
+      guard let self = self else { return }
+      let adjusting = change.newValue ?? false
+      if adjusting {
+        wasAdjusting = true
+        return
+      }
+      guard wasAdjusting else { return }
+      let work = DispatchWorkItem { [weak self] in
+        self?.onFocusResult?(true)
+        self?.focusKVO?.invalidate()
+        self?.focusKVO = nil
+      }
+      self.focusDebounceWorkItem = work
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: work)
+    }
+    let timeout = DispatchWorkItem { [weak self] in
+      self?.focusKVO?.invalidate()
+      self?.focusKVO = nil
+      self?.onFocusResult?(false)
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: timeout)
   }
 
   private func selectDevice(for lens: LensType) throws -> AVCaptureDevice {

@@ -24,6 +24,8 @@
 		CA00000000000000000000A4 /* CameraPlatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B4 /* CameraPlatformView.swift */; };
 		CA00000000000000000000A5 /* CameraPlatformViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B5 /* CameraPlatformViewFactory.swift */; };
 		CA00000000000000000000A6 /* CameraApi.g.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B6 /* CameraApi.g.swift */; };
+		CA00000000000000000000A7 /* FocusRingConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B7 /* FocusRingConfig.swift */; };
+		CA00000000000000000000A8 /* CameraPlatformViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B8 /* CameraPlatformViewTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,6 +81,8 @@
 		CA00000000000000000000B4 /* CameraPlatformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/CameraPlatformView.swift; sourceTree = "<group>"; };
 		CA00000000000000000000B5 /* CameraPlatformViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/CameraPlatformViewFactory.swift; sourceTree = "<group>"; };
 		CA00000000000000000000B6 /* CameraApi.g.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Generated/CameraApi.g.swift; sourceTree = "<group>"; };
+		CA00000000000000000000B7 /* FocusRingConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/FocusRingConfig.swift; sourceTree = "<group>"; };
+		CA00000000000000000000B8 /* CameraPlatformViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPlatformViewTests.swift; sourceTree = "<group>"; };
 		DEA69524B3E9912E3431748D /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		E0E272C120536D714518903C /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -130,6 +134,7 @@
 			isa = PBXGroup;
 			children = (
 				331C807B294A618700263BE5 /* RunnerTests.swift */,
+				CA00000000000000000000B8 /* CameraPlatformViewTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -185,6 +190,7 @@
 				CA00000000000000000000B4 /* CameraPlatformView.swift */,
 				CA00000000000000000000B5 /* CameraPlatformViewFactory.swift */,
 				CA00000000000000000000B6 /* CameraApi.g.swift */,
+				CA00000000000000000000B7 /* FocusRingConfig.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -400,6 +406,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */,
+				CA00000000000000000000A8 /* CameraPlatformViewTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -416,6 +423,7 @@
 				CA00000000000000000000A4 /* CameraPlatformView.swift in Sources */,
 				CA00000000000000000000A5 /* CameraPlatformViewFactory.swift in Sources */,
 				CA00000000000000000000A6 /* CameraApi.g.swift in Sources */,
+				CA00000000000000000000A7 /* FocusRingConfig.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
