@@ -2,7 +2,7 @@
 
 ## Status
 
-`Draft` (pendente review do owner antes de transicionar para `Approved`)
+`Approved` — aprovada por Eduardo Rodrigues em 2026-05-28. Plan correspondente em [`docs/superpowers/plans/2026-05-28-camera-task-19-closure.md`](../plans/2026-05-28-camera-task-19-closure.md). Transição para `In implementation` ao iniciar Task 1 do plan.
 
 ## Owner / Implementer
 
