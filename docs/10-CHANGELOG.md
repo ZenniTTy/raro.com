@@ -2,6 +2,62 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-05-29] — 0.4.2 (camera-native-bridge — G4 focus ring nativo + tap-to-focus latency collapse)
+
+### Adicionado
+- **G4 — Focus ring nativo iOS via CALayer** desenhado dentro de `CameraPlatformView` (não Flutter overlay), respeitando ADR-0015 (HUD nativo para feedback de captura). Animação fade-in/fade-out 1.2s fiel ao protótipo, registrada via `ring.add(animation, forKey:)` em `CameraManager.showFocusRing`
+- `CameraManager.swift`: `focusLog` (`OSLog(subsystem: "com.rarocamera", category: "focus")`) + `os_log` em pontos do pipeline (tap recebido → conversão de coords → lockForConfiguration → setFocusPointOfInterest → callback KVO → ring shown) para instrumentar latência real no Console do Xcode em iPhone físico
+- `CameraManager.installFocusKVO` instalado UMA vez em `startSession` e invalidado em `stopSession`; property `pendingFocusPoint` coordena qual tap o callback KVO de `isAdjustingFocus` deve resolver (sucesso vs timeout)
+- `CameraManager.focusWasAdjusting` property em main queue serial substitui `AtomicBool` anterior (refactor `cba16ce`: KVO settle + timeout cancellation + closure-capture point corrigidos)
+- **Terminal-first iOS workflow** (`354ddc3`): `apps/mobile/package.json` ganha targets `dev:ios` e `test:ios`; `apps/mobile/scripts/run-ios-native-tests.sh` auto-detecta Simulator disponível (iPhone 17/16/15/14/13 fallback) + encadeia `pub:get` + `fix-spm` antes de rodar XCTest
+- `CLAUDE.md §13` nova seção "Workflow iOS — terminal-first (anti-loop SPM)": build/run/test sempre via terminal, Xcode UI restrito a signing/debug/capabilities
+- 6 anti-patterns novos em `CLAUDE.md §11` documentando descobertas da sessão (infra observability antes do fix, CATransaction.setDisableActions ao redor de add(animation), CATransaction.flush vs removedOnCompletion, UiKitView sem gestureRecognizers, isSmoothAutoFocusEnabled em tap-to-focus, KVO permanente vs per-tap)
+- `docs/decisions/0016-e2e-harness-hybrid.md` (Proposed): stack E2E híbrido `integration_test --machine` + Pigeon `CameraDebugHostApi` + rota `/debug/self-test` + go-ios/pymobiledevice3 + Maestro Simulator, com upgrade incremental para Patrol pós Apple Dev Program ($99/ano em 30d)
+- `docs/superpowers/specs/2026-05-29-e2e-harness-hybrid-design.md` (spec Sessão 2): 6 observable goals + Q-table + out-of-scope explícito (Patrol/XCTClockMetric/MetricKit deferred)
+
+### Mudado
+- `CameraPlatformView.swift` (`d259d8c`): conversão de tap usa `captureDevicePointConverted(fromLayerPoint:)` (sensor coords), substituindo o cálculo manual aspect-ratio que causava drift no DualWide
+- `camera_preview_widget.dart`: `UiKitView`/`AndroidView` com `gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new)}` (elimina ~80ms de baseline — Flutter issue #170735)
+- `CameraManager.focusAtAsync` ofuscado para `sessionQueue.async` (era sync no main queue) — main thread livre para renderizar ring imediatamente após o tap (`beaeade`)
+- `CameraManager.applyFocusConfig`: `isSmoothAutoFocusEnabled = false` dentro do `lockForConfiguration` durante tap (eliminando 150-400ms de ramp cinematic)
+- `CameraManager.installFocusKVO`: debounce do KVO `isAdjustingFocus` reduzido de 100ms → 16ms (1 frame @60fps) — settle perceptual mantido sem custo desnecessário
+- `CameraPlatformView.showFocusRing`: `setNeedsDisplay` após `addSublayer` (substituindo tentativa anterior com `CATransaction.begin/setDisableActions/commit` que falhou `testShowFocusRingAnimationsConfigured` porque `setDisableActions(true)` bloqueia a registration interna que `ring.add(animation, forKey:)` precisa)
+- `camera_preview_widget.dart` (`beaeade`): chamada ao bridge nativo agora `unawaited` (fire-and-forget) — Flutter UI mostra ring otimisticamente em ≤16ms sem aguardar round-trip Pigeon
+
+### Corrigido
+- **Tap-to-focus delay perceptual em iPhone 12 colapsado em 5 root causes** (commit `3b79021` entrega o set completo):
+  1. `isSmoothAutoFocusEnabled=true` adicionando ramp cinematic 150-400ms — agora `false` durante tap
+  2. KVO settle debounce 100ms — agora 16ms (1 frame @60fps)
+  3. `UiKitView` sem `gestureRecognizers` explícito atrasando tap propagation ~80ms (Flutter #170735) — agora reclamado via `EagerGestureRecognizer`
+  4. KVO re-registrado a cada tap — agora permanente em `startSession`, coordenado por `pendingFocusPoint`
+  5. Ring com `CATransaction.flush()` perdendo animation (removida pelo runtime via `removedOnCompletion=true`) — agora `setNeedsDisplay` preserva animation E força layout/render imediato
+- Coordenadas de focus drifavam no DualWide porque a conversão manual usava layer bounds em vez de sensor coords (`d259d8c` troca para `captureDevicePointConverted(fromLayerPoint:)`)
+- KVO timeout cancellation em race com `focusWasAdjusting` (`cba16ce`): closure-capture point ajustado + property substitui `AtomicBool` por main-queue serial
+
+### Decidido
+- **Harness E2E híbrido** (ADR-0016 Proposed) confirmado para Sessão 2: `integration_test --machine` + Pigeon `CameraDebugHostApi` + rota `/debug/self-test` guardada por `kDebugMode` + go-ios/pymobiledevice3 + Maestro Simulator para fluxos não-camera. Maestro iOS não suporta iPhone físico oficial; Patrol exige Apple Developer Program
+- **Upgrade incremental para Patrol em 30d**: usuário confirmou pagamento dos $99 Apple Dev → Volume bridge + permission dialog real automation usarão Patrol após
+- **Validar perceptualmente antes de instrumentar mais**: auditoria adversarial `w3cediota` (22 agents) concluiu que dos 18 itens originalmente propostos para observability, 13 eram OVERENGINEERING/DEFER, 5 HIGH_VALUE, 0 ESSENTIAL. Decisão: shipear os 5 fixes técnicos diretos e medir delay residual no iPhone 12 antes de adicionar MetricKit/XCTClockMetric/Pigeon telemetry
+
+### Verificado
+- `flutter test` mobile: **66/66 PASS** (widget + unit + contract)
+- XCTest native iOS: **5/5 PASS** em iPhone 17 Pro Simulator (`CameraManagerFocus`, `CameraPlatformView`, `RunnerTests`)
+- Contract tests: **30/30 PASS** via `lefthook` pre-push
+- `flutter analyze` mobile: zero issues
+- `lefthook` pre-commit + pre-push: GREEN em todos os 6 commits da sessão (`block-secrets`, `dart-format`, `commitlint`) — zero uso de `--no-verify`
+- Push para `origin/feat/camera-native-bridge` concluído
+
+### Pendente (Sessão 2)
+- Validação perceptual manual no iPhone 12 físico
+- Harness E2E híbrido camada 1 (Pigeon `CameraDebugHostApi` + rota `/debug/self-test` + `camera_tap_to_focus_test.dart`)
+- Status update da spec `2026-05-28-camera-task-19-closure-design.md` para `Done`
+- Addendum no ADR-0015 documentando os 5 root causes colapsados
+
+### Pendente (em 30d, pós Apple Dev Program)
+- Upgrade para Patrol cobrindo Volume bridge + permission dialog real automation
+
+---
+
 ## [2026-05-28] — 0.4.1 (camera-native-bridge — device validation Task 19)
 
 ### Adicionado

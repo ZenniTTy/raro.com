@@ -2,7 +2,34 @@
 
 ## Status
 
-`Approved` — aprovada por Eduardo Rodrigues em 2026-05-28. Plan correspondente em [`docs/superpowers/plans/2026-05-28-camera-task-19-closure.md`](../plans/2026-05-28-camera-task-19-closure.md). Transição para `In implementation` ao iniciar Task 1 do plan.
+`In implementation — partial` (atualizado em 2026-05-29 ao final da Sessão 0006).
+
+**Concluído na Sessão 0006:**
+- **G4 — focus ring nativo iOS via CALayer** (T1, T2, T3 do plan): `FocusRingConfig.swift` + `CameraPlatformView.showFocusRing` + remoção do `FocusRingOverlay` Flutter. **Expandido além do plan original** para colapsar 5 root causes adicionais de tap-to-focus latency no iPhone 12 físico — ver [Session log 0006](../../sessions/0006-camera-task-19-focus-perf.md):
+  1. `isSmoothAutoFocusEnabled = false` durante tap (ramp cinematic 150-400ms)
+  2. KVO settle debounce 100ms → 16ms (1 frame @60fps)
+  3. `UiKitView` com `gestureRecognizers: EagerGestureRecognizer` (Flutter issue #170735, ~80ms baseline)
+  4. KVO `isAdjustingFocus` instalado UMA vez em `startSession` (era re-registrado por tap)
+  5. Ring com `setNeedsDisplay` substituindo `CATransaction.flush()` (que perdia animation via `removedOnCompletion=true`)
+- T5 parcial (instrumentação): `os_log focusLog` em pipeline tap→ring para Console do Xcode
+
+**Pendente — Sessão 2** (validar perceptualmente no iPhone 12 + harness E2E híbrido):
+- Validação perceptual manual no iPhone 12 físico (gate G1 / G7 destravado por integration_test em [ADR-0016](../../decisions/0016-e2e-harness-hybrid.md) + spec [`2026-05-29-e2e-harness-hybrid-design.md`](2026-05-29-e2e-harness-hybrid-design.md))
+- T4 — focus ring Android (CameraX)
+- T5 complete (`integration_test camera_tap_to_focus_test.dart` via Pigeon `CameraDebugHostApi`)
+- T6-T11 — G1/G7 perf gates via integration_test (substitui Xcode Instruments manual)
+- T12-T13 — Samsung Galaxy M54 perf parity sweep + addendum ADR-0015 documentando 5 root causes
+- T14-T16 — design-fidelity-checker contra protótipo + merge `feat/camera-native-bridge` → `develop`
+
+**Anti-patterns descobertos na Sessão 0006** (entraram em [CLAUDE.md §11](../../../CLAUDE.md) + memórias):
+1. Infra observability antes de fix conhecido (anti-pattern invertido)
+2. `CATransaction.setDisableActions(true)` ao redor de `layer.add(animation, forKey:)` (desabilita registration interna)
+3. `CATransaction.flush()` não preserva animation com `removedOnCompletion=true` (use `setNeedsDisplay`)
+4. `UiKitView`/`AndroidView` sem `gestureRecognizers` explícito atrasa tap ~80ms (Flutter #170735)
+5. `AVCaptureDevice.isSmoothAutoFocusEnabled=true` adiciona ramp cinematic 150-400ms
+6. KVO `isAdjustingFocus` re-registrado por tap (deve ser permanente em `startSession`)
+
+Plan original: [`docs/superpowers/plans/2026-05-28-camera-task-19-closure.md`](../plans/2026-05-28-camera-task-19-closure.md). Próxima transição: `Done` ao mergear `feat/camera-native-bridge` → `develop` após validação perceptual.
 
 ## Owner / Implementer
 
