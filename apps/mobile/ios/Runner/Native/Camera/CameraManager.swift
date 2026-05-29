@@ -14,6 +14,7 @@ final class CameraManager {
   private var focusDebounceWorkItem: DispatchWorkItem?
   private var focusTimeoutWorkItem: DispatchWorkItem?
   private var focusWasAdjusting = false
+  private var pendingFocusPoint: FocusPoint?
   var onFocusResult: ((FocusPoint, Bool) -> Void)?
 
   var onLensSwitched: ((LensType) -> Void)?
@@ -175,6 +176,7 @@ final class CameraManager {
     self.device = device
     self.input = input
     installObservers(for: session)
+    installFocusKVO(on: device)
 
     let capturedSession = session
     await withCheckedContinuation { continuation in
@@ -194,6 +196,7 @@ final class CameraManager {
     focusTimeoutWorkItem?.cancel()
     focusTimeoutWorkItem = nil
     focusWasAdjusting = false
+    pendingFocusPoint = nil
     sessionQueue.async { [weak self] in
       self?.session?.stopRunning()
       if let inputs = self?.session?.inputs {
@@ -293,6 +296,9 @@ final class CameraManager {
       return
     }
     try device.lockForConfiguration()
+    if device.isSmoothAutoFocusSupported {
+      device.isSmoothAutoFocusEnabled = false
+    }
     device.focusPointOfInterest = sensorPoint
     device.focusMode = .autoFocus
     if device.isExposurePointOfInterestSupported {
@@ -306,45 +312,50 @@ final class CameraManager {
       sensorPoint.x, sensorPoint.y, "\(device.deviceType.rawValue)"
     )
     DispatchQueue.main.async { [weak self] in
-      self?.observeFocusAdjustment(on: device, point: normalizedPoint)
+      self?.armFocusObservation(for: normalizedPoint)
     }
   }
 
-  private func observeFocusAdjustment(on device: AVCaptureDevice, point: FocusPoint) {
+  private func installFocusKVO(on device: AVCaptureDevice) {
     focusKVO?.invalidate()
-    focusDebounceWorkItem?.cancel()
-    focusTimeoutWorkItem?.cancel()
-    focusWasAdjusting = false
     focusKVO = device.observe(\.isAdjustingFocus, options: [.new]) { [weak self] _, change in
       let adjusting = change.newValue ?? false
       DispatchQueue.main.async { [weak self] in
         guard let self = self else { return }
+        guard let pendingPoint = self.pendingFocusPoint else { return }
         if adjusting {
           self.focusWasAdjusting = true
           return
         }
         guard self.focusWasAdjusting else { return }
         let work = DispatchWorkItem { [weak self] in
-          self?.focusTimeoutWorkItem?.cancel()
-          self?.focusTimeoutWorkItem = nil
-          self?.focusKVO?.invalidate()
-          self?.focusKVO = nil
-          self?.focusDebounceWorkItem = nil
-          self?.focusWasAdjusting = false
-          self?.onFocusResult?(point, true)
+          guard let self = self else { return }
+          self.focusTimeoutWorkItem?.cancel()
+          self.focusTimeoutWorkItem = nil
+          self.focusDebounceWorkItem = nil
+          self.focusWasAdjusting = false
+          self.pendingFocusPoint = nil
+          self.onFocusResult?(pendingPoint, true)
         }
         self.focusDebounceWorkItem = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.016, execute: work)
       }
     }
+  }
+
+  private func armFocusObservation(for point: FocusPoint) {
+    focusDebounceWorkItem?.cancel()
+    focusTimeoutWorkItem?.cancel()
+    focusWasAdjusting = false
+    pendingFocusPoint = point
     let timeout = DispatchWorkItem { [weak self] in
-      self?.focusKVO?.invalidate()
-      self?.focusKVO = nil
-      self?.focusDebounceWorkItem?.cancel()
-      self?.focusDebounceWorkItem = nil
-      self?.focusTimeoutWorkItem = nil
-      self?.focusWasAdjusting = false
-      self?.onFocusResult?(point, false)
+      guard let self = self else { return }
+      self.focusDebounceWorkItem?.cancel()
+      self.focusDebounceWorkItem = nil
+      self.focusTimeoutWorkItem = nil
+      self.focusWasAdjusting = false
+      self.pendingFocusPoint = nil
+      self.onFocusResult?(point, false)
     }
     focusTimeoutWorkItem = timeout
     DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: timeout)

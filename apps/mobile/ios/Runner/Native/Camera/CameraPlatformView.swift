@@ -45,6 +45,8 @@ final class CameraPreviewContainerView: UIView {
     ring.add(opacity, forKey: "opacity")
 
     layer.addSublayer(ring)
+    ring.setNeedsDisplay()
+
     DispatchQueue.main.asyncAfter(deadline: .now() + FocusRingConfig.duration) { [weak ring] in
       ring?.removeFromSuperlayer()
     }

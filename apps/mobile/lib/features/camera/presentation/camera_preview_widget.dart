@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,19 +18,26 @@ class CameraPreviewWidget extends ConsumerWidget {
 
   final bool showOverlays;
 
+  static final Set<Factory<OneSequenceGestureRecognizer>>
+  _eagerGestureRecognizers = <Factory<OneSequenceGestureRecognizer>>{
+    const Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
+  };
+
   Widget _buildPlatformView() {
     if (Platform.isIOS) {
-      return const UiKitView(
+      return UiKitView(
         viewType: _viewType,
-        creationParams: <String, Object?>{},
-        creationParamsCodec: StandardMessageCodec(),
+        creationParams: const <String, Object?>{},
+        creationParamsCodec: const StandardMessageCodec(),
+        gestureRecognizers: _eagerGestureRecognizers,
       );
     }
     if (Platform.isAndroid) {
-      return const AndroidView(
+      return AndroidView(
         viewType: _viewType,
-        creationParams: <String, Object?>{},
-        creationParamsCodec: StandardMessageCodec(),
+        creationParams: const <String, Object?>{},
+        creationParamsCodec: const StandardMessageCodec(),
+        gestureRecognizers: _eagerGestureRecognizers,
       );
     }
     return const SizedBox.shrink();
