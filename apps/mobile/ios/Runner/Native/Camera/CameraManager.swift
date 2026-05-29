@@ -4,13 +4,6 @@ import os.log
 
 private let cameraLog = OSLog(subsystem: "com.rarocamera", category: "camera")
 
-private final class AtomicBool {
-  private let queue = DispatchQueue(label: "com.rarocamera.atomic-bool")
-  private var value = false
-  func get() -> Bool { queue.sync { value } }
-  func set(_ newValue: Bool) { queue.sync { value = newValue } }
-}
-
 final class CameraManager {
   private let sessionQueue = DispatchQueue(label: "com.rarocamera.session")
   private(set) var session: AVCaptureSession?
@@ -20,6 +13,7 @@ final class CameraManager {
   private var focusKVO: NSKeyValueObservation?
   private var focusDebounceWorkItem: DispatchWorkItem?
   private var focusTimeoutWorkItem: DispatchWorkItem?
+  private var focusWasAdjusting = false
   var onFocusResult: ((FocusPoint, Bool) -> Void)?
 
   var onLensSwitched: ((LensType) -> Void)?
@@ -199,6 +193,7 @@ final class CameraManager {
     focusDebounceWorkItem = nil
     focusTimeoutWorkItem?.cancel()
     focusTimeoutWorkItem = nil
+    focusWasAdjusting = false
     sessionQueue.async { [weak self] in
       self?.session?.stopRunning()
       if let inputs = self?.session?.inputs {
@@ -276,22 +271,23 @@ final class CameraManager {
     focusKVO?.invalidate()
     focusDebounceWorkItem?.cancel()
     focusTimeoutWorkItem?.cancel()
-    let adjustingBox = AtomicBool()
+    focusWasAdjusting = false
     focusKVO = device.observe(\.isAdjustingFocus, options: [.new]) { [weak self] _, change in
-      guard let self = self else { return }
-      DispatchQueue.main.async {
-        let adjusting = change.newValue ?? false
+      let adjusting = change.newValue ?? false
+      DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
         if adjusting {
-          adjustingBox.set(true)
+          self.focusWasAdjusting = true
           return
         }
-        guard adjustingBox.get() else { return }
+        guard self.focusWasAdjusting else { return }
         let work = DispatchWorkItem { [weak self] in
           self?.focusTimeoutWorkItem?.cancel()
           self?.focusTimeoutWorkItem = nil
           self?.focusKVO?.invalidate()
           self?.focusKVO = nil
           self?.focusDebounceWorkItem = nil
+          self?.focusWasAdjusting = false
           self?.onFocusResult?(point, true)
         }
         self.focusDebounceWorkItem = work
@@ -304,6 +300,7 @@ final class CameraManager {
       self?.focusDebounceWorkItem?.cancel()
       self?.focusDebounceWorkItem = nil
       self?.focusTimeoutWorkItem = nil
+      self?.focusWasAdjusting = false
       self?.onFocusResult?(point, false)
     }
     focusTimeoutWorkItem = timeout
