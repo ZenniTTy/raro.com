@@ -235,7 +235,41 @@ Antes de declarar feature pronta:
 
 ---
 
-## 13. Quando em dúvida
+## 13. Workflow iOS — terminal-first (anti-loop SPM)
+
+**Build/run/test iOS sempre via terminal**, não via Xcode UI. Esse é o workflow sênior 2026 com agents (Claude/Cursor/Copilot) + iPhone físico.
+
+| Operação | Comando | Por quê NÃO usar Xcode UI |
+|---|---|---|
+| Rodar app no iPhone 12 / Simulator | `bun --filter @raro/mobile run dev:ios -- -d "<device-id>"` | Encadeia `flutter pub get → fix-spm sed (Package.swift 13→15) → bootstrap-permissions → flutter run`. Xcode UI ⌘B pula o `fix-spm` (Pre-action só dispara em scheme actions, NÃO em SPM Resolve automático), causando regressão recorrente Firebase 15 vs 13. |
+| Tests Flutter | `bun --filter @raro/mobile run test` | — |
+| Native XCTest (RunnerTests) | `bun --filter @raro/mobile run test:ios` | Auto-detecta Simulator disponível (iPhone 17/16/15/14/13 fallback) + encadeia pub:get + fix-spm |
+| Verify build compila para simulator | `cd apps/mobile && flutter build ios --simulator --no-codesign` | (pre-existe: `SUPPORTED_PLATFORMS = iphoneos` bloqueia release/profile, mas debug funciona) |
+| Análise | `bun --filter @raro/mobile run analyze` | — |
+
+**Xcode UI usado APENAS para**:
+- Edit signing/capabilities (Bundle ID, entitlements, provisioning profile)
+- Debug breakpoints quando attach a um processo iOS rodando
+- Inspecionar storyboards/asset catalogs (raro)
+- Configurar Scheme Pre-actions/Build Phases (excepcional)
+
+**❌ NÃO usar Xcode UI para**:
+- Build (⌘B) ou Run (⌘R) — usar terminal
+- "Reset Package Caches" + "Resolve Package Versions" — terminal `bun pub:get` faz isso corretamente
+- Trocar destination de build — terminal já passa via `-d <device-id>` ou `--simulator`
+
+**Se o loop SPM iOS 13/15 voltar a aparecer:**
+1. Quit Xcode completamente (⌘Q)
+2. Rodar `bun --filter @raro/mobile run pub:get` (encadeia recovery)
+3. Se persistir: `rm -rf ~/Library/Developer/Xcode/DerivedData/Runner-*`
+4. Reabrir SOMENTE para signing/debug — não para build
+5. Build via terminal
+
+Memória: `raro-pattern-flutter-ios-regen-xcconfig-spm-recovery` (workflow recovery) + `feedback_ios_workflow_terminal_first_no_xcode_build` (esse anti-pattern).
+
+---
+
+## 14. Quando em dúvida
 
 1. Re-leia esta seção (`CLAUDE.md`).
 2. Re-leia o Blueprint.
