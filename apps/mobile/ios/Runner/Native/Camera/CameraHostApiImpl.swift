@@ -101,36 +101,35 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
 
   func focusAt(point: FocusPoint, completion: @escaping (Result<Void, Error>) -> Void) {
     let t0 = CFAbsoluteTimeGetCurrent()
-    DispatchQueue.main.async {
-      let sensorPoint = self.convertNormalizedToSensor(point) ?? CGPoint(x: point.x, y: point.y)
-      let t1 = CFAbsoluteTimeGetCurrent()
-      os_log(
-        "focusAt input=(%.3f,%.3f) sensor=(%.3f,%.3f) convertMs=%.1f",
-        log: focusLog, type: .info,
-        point.x, point.y, sensorPoint.x, sensorPoint.y, (t1 - t0) * 1000
+    let renderRing: () -> Void = { [weak self] in
+      guard let self = self, let factory = self.platformViewFactory else { return }
+      factory.lastPlatformView?.showFocusRing(
+        at: factory.toViewCoordinates(focusPoint: point)
       )
-      do {
-        try self.manager.focusAt(sensorPoint: sensorPoint, normalizedPoint: point)
-        let t2 = CFAbsoluteTimeGetCurrent()
-        guard let factory = self.platformViewFactory else {
-          os_log("focusAt no factory totalMs=%.1f", log: focusLog, type: .info, (t2 - t0) * 1000)
-          completion(.success(()))
-          return
-        }
-        factory.lastPlatformView?.showFocusRing(
-          at: factory.toViewCoordinates(focusPoint: point)
-        )
-        let t3 = CFAbsoluteTimeGetCurrent()
+    }
+    let runOnMain: (@escaping () -> Void) -> Void = { block in
+      if Thread.isMainThread { block() } else { DispatchQueue.main.async(execute: block) }
+    }
+    runOnMain {
+      renderRing()
+      let tRing = CFAbsoluteTimeGetCurrent()
+      os_log(
+        "focusAt ring rendered ringMs=%.1f input=(%.3f,%.3f)",
+        log: focusLog, type: .info,
+        (tRing - t0) * 1000, point.x, point.y
+      )
+      let sensorPoint = self.convertNormalizedToSensor(point) ?? CGPoint(x: point.x, y: point.y)
+      let tConvert = CFAbsoluteTimeGetCurrent()
+      completion(.success(()))
+      self.manager.focusAtAsync(sensorPoint: sensorPoint, normalizedPoint: point) { focusErr in
+        let tFocus = CFAbsoluteTimeGetCurrent()
         os_log(
-          "focusAt ring rendered totalMs=%.1f focusMs=%.1f ringMs=%.1f",
+          "focusAt focus applied totalMs=%.1f convertMs=%.1f focusMs=%.1f sensor=(%.3f,%.3f) err=%{public}@",
           log: focusLog, type: .info,
-          (t3 - t0) * 1000, (t2 - t1) * 1000, (t3 - t2) * 1000
+          (tFocus - t0) * 1000, (tConvert - tRing) * 1000, (tFocus - tConvert) * 1000,
+          sensorPoint.x, sensorPoint.y,
+          focusErr.map { "\($0)" } ?? "nil"
         )
-        completion(.success(()))
-      } catch let error as CameraNativeError {
-        completion(.failure(self.pigeonError(from: error)))
-      } catch {
-        completion(.failure(self.pigeonError(code: .sessionFailed, message: error.localizedDescription)))
       }
     }
   }

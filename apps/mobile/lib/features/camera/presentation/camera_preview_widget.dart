@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -40,11 +41,13 @@ class CameraPreviewWidget extends ConsumerWidget {
       builder: (context, constraints) {
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTapDown: (details) async {
+          onTapDown: (details) {
             final pos = details.localPosition;
             final nx = (pos.dx / constraints.maxWidth).clamp(0.0, 1.0);
             final ny = (pos.dy / constraints.maxHeight).clamp(0.0, 1.0);
-            await ref.read(cameraControllerProvider.notifier).focusAt(nx, ny);
+            unawaited(
+              ref.read(cameraControllerProvider.notifier).focusAt(nx, ny),
+            );
           },
           child: showOverlays
               ? Stack(

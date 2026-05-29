@@ -259,6 +259,35 @@ final class CameraManager {
 
   func focusAt(sensorPoint: CGPoint, normalizedPoint: FocusPoint) throws {
     guard let device = device else { throw CameraNativeError.notRunning }
+    try applyFocusConfig(device: device, sensorPoint: sensorPoint, normalizedPoint: normalizedPoint)
+  }
+
+  func focusAtAsync(
+    sensorPoint: CGPoint,
+    normalizedPoint: FocusPoint,
+    completion: @escaping (CameraNativeError?) -> Void
+  ) {
+    sessionQueue.async { [weak self] in
+      guard let self = self, let device = self.device else {
+        completion(CameraNativeError.notRunning)
+        return
+      }
+      do {
+        try self.applyFocusConfig(device: device, sensorPoint: sensorPoint, normalizedPoint: normalizedPoint)
+        completion(nil)
+      } catch let err as CameraNativeError {
+        completion(err)
+      } catch {
+        completion(CameraNativeError.sessionFailed(error.localizedDescription))
+      }
+    }
+  }
+
+  private func applyFocusConfig(
+    device: AVCaptureDevice,
+    sensorPoint: CGPoint,
+    normalizedPoint: FocusPoint
+  ) throws {
     guard device.isFocusPointOfInterestSupported else {
       os_log("focusAt skipped — device lacks isFocusPointOfInterestSupported", log: cameraLog, type: .info)
       return
@@ -276,7 +305,9 @@ final class CameraManager {
       log: cameraLog, type: .info,
       sensorPoint.x, sensorPoint.y, "\(device.deviceType.rawValue)"
     )
-    observeFocusAdjustment(on: device, point: normalizedPoint)
+    DispatchQueue.main.async { [weak self] in
+      self?.observeFocusAdjustment(on: device, point: normalizedPoint)
+    }
   }
 
   private func observeFocusAdjustment(on device: AVCaptureDevice, point: FocusPoint) {
