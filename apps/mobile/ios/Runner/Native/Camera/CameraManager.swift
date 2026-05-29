@@ -257,14 +257,26 @@ final class CameraManager {
     )
   }
 
-  func focusAt(point: FocusPoint) throws {
+  func focusAt(sensorPoint: CGPoint, normalizedPoint: FocusPoint) throws {
     guard let device = device else { throw CameraNativeError.notRunning }
-    guard device.isFocusPointOfInterestSupported else { return }
+    guard device.isFocusPointOfInterestSupported else {
+      os_log("focusAt skipped — device lacks isFocusPointOfInterestSupported", log: cameraLog, type: .info)
+      return
+    }
     try device.lockForConfiguration()
-    device.focusPointOfInterest = CGPoint(x: point.x, y: point.y)
+    device.focusPointOfInterest = sensorPoint
     device.focusMode = .autoFocus
+    if device.isExposurePointOfInterestSupported {
+      device.exposurePointOfInterest = sensorPoint
+      device.exposureMode = .continuousAutoExposure
+    }
     device.unlockForConfiguration()
-    observeFocusAdjustment(on: device, point: point)
+    os_log(
+      "focusAt applied sensor=(%.3f,%.3f) device=%{public}@",
+      log: cameraLog, type: .info,
+      sensorPoint.x, sensorPoint.y, "\(device.deviceType.rawValue)"
+    )
+    observeFocusAdjustment(on: device, point: normalizedPoint)
   }
 
   private func observeFocusAdjustment(on device: AVCaptureDevice, point: FocusPoint) {

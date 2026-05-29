@@ -1,5 +1,9 @@
+import AVFoundation
 import Flutter
 import Foundation
+import os.log
+
+private let focusLog = OSLog(subsystem: "com.rarocamera", category: "focus")
 
 final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
   private let manager = CameraManager()
@@ -96,23 +100,52 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
   }
 
   func focusAt(point: FocusPoint, completion: @escaping (Result<Void, Error>) -> Void) {
-    do {
-      try manager.focusAt(point: point)
-      DispatchQueue.main.async {
+    let t0 = CFAbsoluteTimeGetCurrent()
+    DispatchQueue.main.async {
+      let sensorPoint = self.convertNormalizedToSensor(point) ?? CGPoint(x: point.x, y: point.y)
+      let t1 = CFAbsoluteTimeGetCurrent()
+      os_log(
+        "focusAt input=(%.3f,%.3f) sensor=(%.3f,%.3f) convertMs=%.1f",
+        log: focusLog, type: .info,
+        point.x, point.y, sensorPoint.x, sensorPoint.y, (t1 - t0) * 1000
+      )
+      do {
+        try self.manager.focusAt(sensorPoint: sensorPoint, normalizedPoint: point)
+        let t2 = CFAbsoluteTimeGetCurrent()
         guard let factory = self.platformViewFactory else {
+          os_log("focusAt no factory totalMs=%.1f", log: focusLog, type: .info, (t2 - t0) * 1000)
           completion(.success(()))
           return
         }
         factory.lastPlatformView?.showFocusRing(
           at: factory.toViewCoordinates(focusPoint: point)
         )
+        let t3 = CFAbsoluteTimeGetCurrent()
+        os_log(
+          "focusAt ring rendered totalMs=%.1f focusMs=%.1f ringMs=%.1f",
+          log: focusLog, type: .info,
+          (t3 - t0) * 1000, (t2 - t1) * 1000, (t3 - t2) * 1000
+        )
         completion(.success(()))
+      } catch let error as CameraNativeError {
+        completion(.failure(self.pigeonError(from: error)))
+      } catch {
+        completion(.failure(self.pigeonError(code: .sessionFailed, message: error.localizedDescription)))
       }
-    } catch let error as CameraNativeError {
-      completion(.failure(pigeonError(from: error)))
-    } catch {
-      completion(.failure(pigeonError(code: .sessionFailed, message: error.localizedDescription)))
     }
+  }
+
+  private func convertNormalizedToSensor(_ point: FocusPoint) -> CGPoint? {
+    guard let container = platformViewFactory?.lastPlatformView?.view() as? CameraPreviewContainerView else {
+      return nil
+    }
+    let bounds = container.bounds
+    guard bounds.width > 0, bounds.height > 0 else { return nil }
+    let layerPoint = CGPoint(
+      x: CGFloat(point.x) * bounds.width,
+      y: CGFloat(point.y) * bounds.height
+    )
+    return container.previewLayer.captureDevicePointConverted(fromLayerPoint: layerPoint)
   }
 
   func requestPermission(completion: @escaping (Result<Bool, Error>) -> Void) {
