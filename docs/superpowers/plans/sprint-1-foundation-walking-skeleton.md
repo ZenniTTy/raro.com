@@ -232,7 +232,7 @@ Cada S1.X é potencialmente 1 sessão. Cadência real emerge — se S1.D termina
 
 **DONE criteria**: Cada anti-pattern restante satisfaz pelo menos UM dos 3 critérios: (a) impacto não-recuperável, (b) aplicável a >1 feature, (c) não cabe em memória.
 
-- [ ] **Step 1**: Ler §11 atual (23 anti-patterns).
+- [ ] **Step 1**: Ler §11 atual (29 anti-patterns).
 - [ ] **Step 2**: Para cada bullet, classificar:
   - **KEEP** se atende >=1 critério acima.
   - **MOVE-TO-MEMORY** se é hyper-específico mas útil (e.g., padrões CATransaction → vira memória se ainda não tem).
@@ -257,7 +257,7 @@ Cada S1.X é potencialmente 1 sessão. Cadência real emerge — se S1.D termina
   - UiKitView gestureRecognizers (já em memória atual)
   - "fix sem logs reais" (já em memória `feedback_device_debug_use_real_logs_not_assumptions`)
   - Pigeon String(rawValue) (já em hook `block-pigeon-error-rawvalue.sh` + memória)
-- [ ] **Step 6**: Validar resultado: contagem de bullets em §11 ≤ 12. Anotar reduzido X → Y na commit message.
+- [ ] **Step 6**: Validar resultado: contagem de bullets em §11 ≤ 12 (alvo 11). Anotar reduzido 29 → Y na commit message.
 
 #### B3. Atualizar Blueprint §11 com roadmap 3-Sprint
 
@@ -343,20 +343,23 @@ Cada S1.X é potencialmente 1 sessão. Cadência real emerge — se S1.D termina
   - Master plan v2: ~/.claude/plans/glimmering-dancing-pnueli.md
   - 3 sprint MDs em docs/superpowers/plans/
 
-  ## Commits
-  - chore(cleanup): align claude.md §8 hooks
-  - refactor(workflow): simplify §6 + critério §11 + Blueprint §11 roadmap 3-sprint
-  - docs(planning): master plan v2 + 3 sprint MDs
+  ## Commits (Sprint-0 reais — `06ec0fb`..`1160c9f`, 4 commits)
+  - 06ec0fb docs(docs): sprint 1/2/3 detailed execution plans
+  - 0e17eb9 docs(docs): session prompts copy-paste para iniciar cada sprint
+  - d319847 docs(docs): session prompts rigorous self-contained kickoffs per sprint
+  - 1160c9f docs(docs): split session prompts em 3 arquivos por sprint
 
   ## Próxima sessão
   Executar Sprint 1.C — Camera merge (validação perceptual no iPhone 12).
   ```
-- [ ] **Step 2**: Atualizar `docs/sessions/0001-INDEX.md` adicionando linha no topo da tabela:
+- [ ] **Step 2**: Atualizar `docs/sessions/0001-INDEX.md` inserindo a linha **abaixo de 0008** (0007 é cronologicamente anterior — Sprint-0 antecede a Task A; a tabela é most-recent-on-top e 0008 é mais recente):
   ```
-  | [0007](0007-sprint0-reset-roadmap-workflow.md) | 2026-05-29 | sprint 0: master plan v2 + 3 sprint MDs (reset estratégico) | branch atual | 3 commits |
+  | [0007](0007-sprint0-reset-roadmap-workflow.md) | 2026-05-29 | sprint 0: master plan v2 + 3 sprint MDs (reset estratégico) | `feat/camera-native-bridge` | `06ec0fb`…`1160c9f` (4 commits) |
   ```
 
-#### B5. Commit 2 — `refactor(workflow): claude.md §6+§11 simplify, blueprint §11 sprint roadmap, session 0007`
+#### B5. Commit 2 — `docs(harness): §6 simplify + §11 criterion cut + blueprint sprint roadmap`
+
+> **Nota scope (audit 2026-05-29):** `workflow` **não** está no scope-enum de `commitlint.config.cjs`. Usar `docs(harness)` (precedente `4f9085e`). Type `docs` porque a mudança é doc/process-only (CLAUDE.md + Blueprint + session), não código.
 
 **Files**: stage as edições de Tasks B1-B4.
 
@@ -369,12 +372,12 @@ Cada S1.X é potencialmente 1 sessão. Cadência real emerge — se S1.D termina
 - [ ] **Step 2**: Commit:
   ```bash
   git commit -m "$(cat <<'EOF'
-  refactor(workflow): §6 simplify + §11 criterion cut + blueprint sprint roadmap
+  docs(harness): §6 simplify + §11 criterion cut + blueprint sprint roadmap
 
   CLAUDE.md:
   - §6 substituído por 4 regras não-negociáveis + sprint MD references
     (removido auto-sizing tabela — não estava sendo seguida)
-  - §11 cortado de 23 → ~12 anti-patterns aplicando critério: keep se (a)
+  - §11 cortado de 29 → 11 anti-patterns aplicando critério: keep se (a)
     impacto não-recuperável, (b) aplicável >1 feature, (c) não cabe em
     memória. Patterns hyper-específicos movidos pra memória local.
 
