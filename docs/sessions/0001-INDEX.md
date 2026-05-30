@@ -4,6 +4,7 @@
 
 | # | Data | Título | Branch | Commits |
 |---|---|---|---|---|
+| [0009](0009-sprint1-task-b-workflow-refactor.md) | 2026-05-29 | Sprint 1 Task B (workflow refactor: CLAUDE.md §6 → "1 sessão = 1 entregável"; §11 cortada 29→11 por critério, 18 viram memória/hook + 1 memória nova Pigeon; Blueprint §11 roadmap 3-Sprint com checkboxes reais; session 0007 retroativo criado) | `feat/camera-native-bridge` | `8292ded`, `8442dea` (2 commits) |
 | [0008](0008-sprint1-task-a-cleanup.md) | 2026-05-29 | Sprint 1 Kickoff + Task A (audit FASE 1–4 de 26 deps/APIs via Context7+WebSearch + 6 telas de gate; MD audit fixes; cleanup: 6 memórias renomeadas consertando índice, multicam mantido p/ não quebrar refs em docs, §8 → 9 hooks reais; 0007 reservado p/ Sprint-0 reset retroativo na Task B) | `feat/camera-native-bridge` | `7608c59`, `4f9085e` (2 commits) |
 | [0007](0007-sprint0-reset-roadmap-workflow.md) | 2026-05-29 | sprint 0: master plan v2 + 3 sprint MDs (reset estratégico — Fases v1 → 3-Sprint; cleanup com critério; Riverpod providers vs MockData; free Apple ID até Sprint 3) | `feat/camera-native-bridge` | `06ec0fb`…`1160c9f` (4 commits) |
 | [0006](0006-camera-task-19-focus-perf.md) | 2026-05-28 → 2026-05-29 | camera task 19 focus + perf (G4 focus ring nativo via CALayer + 5 root causes tap-to-focus delay no iPhone 12 colapsados: smoothAutoFocus, debounce 100→16ms, EagerGestureRecognizer, KVO permanente, setNeedsDisplay; terminal-first iOS workflow §13; 3 workflows audit ~60 agents 2.6M tokens; ADR-0016 harness E2E híbrido Proposed; decisão $99 Apple Dev em 30d) | `feat/camera-native-bridge` (extensão Task 19, mesma branch) | `cba16ce` … `3b79021` (6 commits) |
@@ -13,22 +14,17 @@
 | [0002](0002-api-contract-shared.md) | 2026-05-26 | api-contract-shared (rm-2 spec bloqueante, 12 famílias) | `feat/api-contract-shared` | `2783166` … `f30bb1b` (16 commits) |
 | [0001](0001-bootstrap.md) | 2026-05-25 | Bootstrap do projeto (Fases 1–5 + 3 sprints de fixes) | `develop` | `c40e55d` … `1c43be0` (33 commits) |
 
-## Próxima sessão (Sessão 2 — validação perceptual + harness E2E híbrido)
+## Próxima sessão (Sprint 1 Task C — Camera merge)
 
-**Objetivo combinado:**
+Validação perceptual no iPhone 12 físico (tap-to-focus <50ms ring + <300ms settle após os 5 fixes da sessão 0006) → fechar G4 → atualizar spec `2026-05-28-camera-task-19-closure-design.md` para `Done` + ADR-0015 addendum I → merge `feat/camera-native-bridge` → `develop`. Detalhe em `docs/superpowers/plans/sprint-1-foundation-walking-skeleton.md` §"Task C".
 
-1. **Opção B (destrava merge)** — Validar perceptualmente no iPhone 12 físico que o tap-to-focus está <50ms ring + <300ms settle após os 5 fixes da Sessão 0006. Se OK, fechar G4 formalmente, atualizar status da spec `2026-05-28-camera-task-19-closure-design.md` para `Done`, escrever ADR-0015 addendum I (5 fixes), mergear `feat/camera-native-bridge` → `develop`.
-2. **Opção A (em paralelo)** — Implementar primeira camada do harness E2E híbrido descrito em [ADR-0016](../decisions/0016-e2e-harness-hybrid.md) + spec [`2026-05-29-e2e-harness-hybrid-design.md`](../superpowers/specs/2026-05-29-e2e-harness-hybrid-design.md): toolchain local (Maestro CLI + go-ios + pymobiledevice3) + Pigeon `CameraDebugHostApi` + rota `/debug/self-test` (kDebugMode) + primeiro `integration_test camera_tap_to_focus_test.dart` rodando em ~90s no iPhone 12.
-
-**Opção C (paralelo, sem bloqueio)** — Iniciar `feat/replay-buffer-native-bridge` (Roadmap rm-8). Workflow: `/new-spec replay-buffer-native-bridge` → `superpowers:brainstorming` → Sizing **Large** → `/new-plan` → `superpowers:writing-plans` → `superpowers:subagent-driven-development`. Pode esperar Sessão 3 ou 4 (Camera 19 ainda não merged).
-
-**Opção D (defer 30d)** — Upgrade Patrol após Apple Dev Program ($99/ano) pago, conforme ADR-0016. Cobre Volume bridge + permission dialog real automation.
+> **Nota (Sprint 0 reset):** as antigas "Opções A/C/D" (harness E2E híbrido, replay buffer, Patrol) viraram backlog de Sprint 2/3 no roadmap (Blueprint §11). Sprint 1 foca cleanup + walking skeleton iOS. ADR-0016 e a spec do harness E2E continuam válidos como referência para Sprint 2.
 
 ## Como retomar (prompt sugerido)
 
-Cole no início da próxima sessão:
+Cole no início da próxima sessão (de `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução", `[TASK]` = C):
 
-> Sessão 2 do RARO. Branch `feat/camera-native-bridge`. Ler em ordem: `docs/sessions/0006-camera-task-19-focus-perf.md`, `docs/decisions/0016-e2e-harness-hybrid.md`, `docs/superpowers/specs/2026-05-29-e2e-harness-hybrid-design.md`, `CLAUDE.md §10-§13`. Objetivos da sessão: (a) destravar merge fazendo validação perceptual no iPhone 12 e atualizando spec/ADR, (b) iniciar implementação do harness E2E híbrido pela camada 1 (toolchain local + Pigeon `CameraDebugHostApi` + rota `/debug/self-test`). Rodar `/prime` primeiro.
+> Sessão Sprint 1 — Task C. CONTEXTO: Sprint 1 já passou pelo Kickoff (audit FASE 1-4) e Tasks A/B. Esta sessão executa apenas Task C. Setup: `/prime` → `git log`/`status` → ler `sprint-1-foundation-walking-skeleton.md` §"Task C" + "Riscos conhecidos" + "Out of scope" → mini-audit. Execução: Task C step-by-step, **confirme destrutivos (merge, `git branch -d`) antes**. Closure: `/session-end` → próximo objetivo "Sprint 1 Task D". Guardrails idem Kickoff.
 
 ## Recovery rápido (se algo quebrar ao retomar)
 
