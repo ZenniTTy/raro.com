@@ -6,7 +6,7 @@
 
 **Arquitetura**: Cleanup → Camera merge → Walking skeleton (Riverpod 3 providers reais, implementação mock). Tudo iOS-only, free Apple ID (rebuild via Xcode 7-day refresh).
 
-**Tech Stack**: Flutter 3.44+, Dart 3.12, Riverpod 3 codegen, go_router 17, shared_preferences, video_player, permission_handler. Sem novas deps.
+**Tech Stack**: Flutter 3.44+, Dart 3.12, Riverpod 3 codegen, go_router 17, shared_preferences, permission_handler — todas já em `apps/mobile/pubspec.yaml`. **Exceção (audit 2026-05-29)**: `video_player` (usado na Task G) **não está** em `pubspec.yaml` nem na stack pinada do Blueprint §2 → é dep nova e exige ADR (micro-ADR ou adendo Blueprint §2) ANTES da Task G, conforme CLAUDE.md §3 ("Atualizar dep = abrir ADR"). Ver pré-requisito em Task G1.
 
 ---
 
@@ -20,7 +20,7 @@ Estado de entrada (Sprint 0 deliverable):
 
 Estado de saída (depois de Sprint 1):
 - Memórias ≤ 25 (de 35), MEMORY.md ≤ 30 linhas
-- CLAUDE.md atualizado (§8 com 9 hooks, §11 critério-cortada, §15 nova com roadmap 3-sprint)
+- CLAUDE.md atualizado (§8 com 9 hooks reais, §11 anti-patterns critério-cortada, §6 simplificado). Roadmap 3-sprint vive em **Blueprint §11** (Task B3), não em CLAUDE.md (correção audit 2026-05-29: não existe CLAUDE.md §15)
 - Branch `feat/camera-native-bridge` MERGED em `develop` + deletada local + remote
 - 12 telas Flutter navegáveis no iPhone 12 (dados mockados, Riverpod providers)
 - App instalado no iPhone 12 via Xcode (cert 7-day refresh)
@@ -46,7 +46,7 @@ Estado de saída (depois de Sprint 1):
 - **G3 — App roda no iPhone 12 com 12 telas navegáveis**: usuário consegue: splash → onboarding 1 → onboarding 2 → permissions → camera (UI shell, REC mock) → settings → gallery (mocks) → preview (mock) → paywall → checkout (mock subscribe) → trial countdown.
 - **G4 — Riverpod 3 providers em uso**: cada feature tem `application/<name>_provider.dart` com `@riverpod` annotation, implementação retornando dados hard-coded mas signature pronta pra swap em Sprint 2.
 - **G5 — Lefthook gates GREEN**: `flutter analyze` 0 issues, `flutter test` PASS, contract tests PASS, commitlint GREEN em todos commits.
-- **G6 — CLAUDE.md aligned com estado real**: §8 lista 9 hooks reais, §11 cortado por critério objetivo, §15 nova existe com roadmap 3-sprint.
+- **G6 — Docs aligned com estado real**: CLAUDE.md §8 lista 9 hooks reais, §11 (anti-patterns) cortado por critério objetivo, §6 simplificado; **Blueprint §11** contém o roadmap 3-sprint com checkbox por tela/feature (Task B3). (Correção audit 2026-05-29: não existe CLAUDE.md §15 — o roadmap é do Blueprint, não do CLAUDE.md.)
 
 ---
 
@@ -844,7 +844,8 @@ Cada S1.X é potencialmente 1 sessão. Cadência real emerge — se S1.D termina
 
 **DONE criteria**: tela carrega video player com asset mock; scrubber funciona; metadata (size, length, codec) mockada visível; share/trash/info buttons presentes mas com toast "Coming Sprint 2".
 
-- [ ] Implementar usando `video_player` (já em pubspec? Se não, adicionar).
+- [ ] **PRÉ-REQUISITO BLOQUEANTE (audit 2026-05-29)**: `video_player` NÃO está em `apps/mobile/pubspec.yaml` NEM na stack pinada do Blueprint §2. Adicionar dep nova exige ADR (CLAUDE.md §3 "Atualizar dep = abrir ADR. Sem exceção."). Antes de implementar: (1) abrir micro-ADR `docs/decisions/0017-video-player-preview.md` OU adendo no Blueprint §2 registrando a escolha + versão pinada via Context7/pub.dev; (2) `cd apps/mobile && flutter pub add video_player` + `bun --filter @raro/mobile run pub:get`; (3) só então implementar a tela.
+- [ ] Implementar usando `video_player` (após pré-requisito acima resolvido).
 - [ ] Wire route `/preview/:id` puxando do videoListProvider.
 - [ ] Commit: `feat(preview): p09 video player mock + scrubber + metadata mock`.
 
@@ -955,6 +956,7 @@ Cada S1.X é potencialmente 1 sessão. Cadência real emerge — se S1.D termina
 | Riverpod codegen falha em build | Run `bun --filter @raro/mobile run codegen` após cada mudança em provider. Verificar `.g.dart` gerado. |
 | `flutter analyze` falha por strict lints | Manter sempre `require_trailing_commas` + `prefer_const_constructors`. Rodar analyze após cada commit. |
 | Branch deletada antes do merge confirmar OK | Step C4 só deleta APÓS step verifica `git log develop --oneline` mostra merge commit + push origin OK. |
+| `SharedPreferences.getInstance()` é API legada em 2026 (nota audit 2026-05-29) | Aceitável no Sprint 1 (walking skeleton, mocks). Os exemplos D3/F/G2 usam o padrão legado de propósito. Sprint 2 migra pra `SharedPreferencesWithCache`/`SharedPreferencesAsync` ao trocar implementação mock por real. Não bloqueia Sprint 1. |
 
 ---
 
