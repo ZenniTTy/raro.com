@@ -149,13 +149,15 @@ Configurados em `.claude/agents/` (a serem criados na Fase 4). Lista canônica:
 
 ## 8. Hooks (Fase 4)
 
-Em `.claude/hooks/`. 6 hooks registrados em eventos + 1 utilitário invocável manualmente:
+Em `.claude/hooks/`. 8 hooks registrados em eventos + 1 utilitário invocável manualmente:
 
 | Hook | Evento | Comportamento |
 |---|---|---|
 | `block-env.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia escrita em `.env`, `key.properties`, `keystore.jks`, `GoogleService-Info.plist`, `google-services.json` |
 | `block-secrets.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia content com api_key, private_key, BEGIN PEM, etc. |
 | `warn-adr-drift.sh` | PreToolUse Write/Edit/MultiEdit | Avisa (não bloqueia) se mudança toca pubspec/Blueprint/native_bridges sem ADR novo no branch |
+| `block-forbidden-terms.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia termos de marca proibidos (`OkCamera`, `Ok Camera`, `hey OkCamera`, `okCamera`, `ok_camera`); wake word é `"Raro"` (ADR-0009). Lista espelha `packages/shared/lib/src/contract/forbidden_terms.dart` |
+| `block-pigeon-error-rawvalue.sh` | PreToolUse Write/Edit/MultiEdit (`.swift`/`.kt`) | Bloqueia `String(<enum>.rawValue)` / `.rawValue.toString()` dentro de `PigeonError()`/`FlutterError()` — preserva semântica do enum na fronteira Pigeon |
 | `format-dart.sh` | PostToolUse Write/Edit/MultiEdit | Roda `dart format` em `*.dart` editado (ignora `*.g.dart`, `*.freezed.dart`) |
 | `run-riverpod-codegen.sh` | PostToolUse Write/Edit/MultiEdit | Detecta `@riverpod` e sinaliza necessidade de codegen (não roda inline) |
 | `reinject-roadmap.sh` | SessionStart | Ecoa locked invariants + estado de sessions/0001-INDEX.md |
