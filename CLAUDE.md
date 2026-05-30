@@ -93,41 +93,25 @@ Quando precisar de doc de lib externa, a ordem é:
 
 ---
 
-## 6. Workflow de feature (TLC Spec-Driven 4 fases)
+## 6. Workflow de feature (1 sessão = 1 entregável fechado)
 
-4 fases adaptativas: **Specify** → **Design** → **Tasks** → **Execute**. Auto-sizing decide quantas fases rodar.
+### Regras não-negociáveis (vigentes a partir de Sprint 1)
 
-### Auto-sizing
+1. **1 sessão = 1 entregável fechado declarado upfront.** "Entregável fechado" = (a) UI fiel ao prototype, (b) navegação in/out funciona, (c) estado persiste se aplicável, (d) testes não regridem. Mid-flight tangents proibidas — viram backlog de Sessão+1.
+2. **Toda sessão começa com `/prime`** + audit do Sprint MD vigente (usuário invoca).
+3. **Toda sessão termina com `/session-end`** que: appenda em `docs/sessions/`, define objetivo da próxima sessão em 1 linha, commit `docs(docs): close session N` (scope `session` não existe no scope-enum — usar `docs`).
+4. **Workflows multi-agent são opt-in via `/audit`**, nunca default. Se necessidade de audit adversarial surgir mid-feature, isso é SINAL pra parar e criar spec dedicada — não interromper a sessão atual.
 
-| Tamanho | Quando | Workflow |
-|---|---|---|
-| **Quick** (≤3 arquivos, sem mudança arquitetural) | Bugfix, copy tweak, ajuste visual | Specify direto na conversa → Execute → `/commit`. Pula Design e Tasks. |
-| **Medium** (1 feature, multi-file, sem novo bridge) | Tela completa, lógica de UI | `/new-spec <slug>` → `superpowers:brainstorming` → implement com `implementer` → `/verify-slice` |
-| **Large** (novo bridge, novo ADR, multi-feature) | Native bridge, mudança de stack | `/new-spec` → `brainstorming` → `/new-plan` → `superpowers:writing-plans` → `implementer` → `validator` → `design-fidelity-checker` (se UI) → ADR commit → `/verify-slice` |
+### Sprint MDs ativos
 
-### Arquivos canônicos
+- `docs/superpowers/plans/sprint-1-foundation-walking-skeleton.md` (em execução)
+- `docs/superpowers/plans/sprint-2-backend-logic-ios.md` (backlog)
+- `docs/superpowers/plans/sprint-3-android-parity-testflight-client.md` (backlog)
 
-- Templates: [`docs/superpowers/specs/0000-template.md`](docs/superpowers/specs/0000-template.md) + [`docs/superpowers/plans/0000-template.md`](docs/superpowers/plans/0000-template.md)
-- Specs criadas: `docs/superpowers/specs/<YYYY-MM-DD>-<slug>-design.md`
-- Plans criados: `docs/superpowers/plans/<YYYY-MM-DD>-<slug>.md`
+### Spec/plan templates (uso de exceção, não rotina)
 
-### Sinais que escalam a fatia
-
-Mesmo começando como Quick, escala para Medium/Large se:
-
-- Tocar Method Channel (native bridge)
-- Tocar `pubspec.yaml`, `package.json`, `turbo.json` ou qualquer config root
-- Tocar `Blueprint.md` em decisão técnica
-- Adicionar dep nova
-- Mudar wake word, free trial, SKUs (não negociáveis sem ADR)
-- Mudar 3+ telas
-- Tocar > 5 arquivos
-
-Se algum sinal disparar mid-flight, **pare**, abra spec/plan e retome.
-
-### Primeira spec sugerida
-
-`feat/camera-native-bridge` (Roadmap prioridade 1). Valida pipeline native bridge crítico cedo, conforme [Blueprint Seção 11](docs/Blueprint.md).
+Pra mudança fora dos Sprint MDs (ex: nova lib externa, mudança arquitetural não-roadmap):
+- `docs/superpowers/specs/0000-template.md` + `docs/superpowers/plans/0000-template.md`
 
 ---
 
@@ -198,35 +182,19 @@ Antes de declarar feature pronta:
 
 ## 11. Anti-patterns proibidos
 
+> **Critério (Sprint 1 Task B, 2026-05-29):** um anti-pattern fica aqui só se (a) impacto não-recuperável, (b) aplicável a >1 feature, ou (c) não cabe em memória. Padrões hyper-específicos (iOS/AVFoundation/CALayer/SPM/Pigeon/TDD/perf) foram movidos pra memória local + hooks (§8). Reduzido 29 → 11. Índice completo das memórias: `MEMORY.md` no diretório de memória do projeto.
+
 - ❌ Mencionar `OkCamera`, `Ok Camera`, ou variações em qualquer lugar do repo
 - ❌ Hardcoded de valores que devem estar em `raro_shared` (wake word, SKUs, free trial dias)
 - ❌ `Provider` ou `ChangeNotifier` legados — só Riverpod 3 codegen
 - ❌ Imports relativos `../../../`
 - ❌ Comentários explicando WHAT em código de produção
 - ❌ `setState` em tela que já usa Riverpod (escolha um)
-- ❌ Catch-all `try { } catch (_) {}` sem log + rethrow ou tratamento explícito
+- ❌ Swallow de erro sem log — `try { } catch (_) {}` (Dart/Kotlin) ou `do { try ... } catch {}` (Swift). Sempre logar via `logger` ou rethrow com contexto.
 - ❌ Strings literais de UI fora de `.arb` (i18n)
 - ❌ Asset path absoluto (sempre `assets/` relativo)
 - ❌ `print()` em produção (usar `logger`)
-- ❌ Codificar enum tipado em `String(<enum>.rawValue)` ao cruzar Pigeon (perde semântica). Use `"\(code)"` (nome simbólico) ou route via `FlutterApi` callback tipado.
-- ❌ `expect(state, isA<T>())` sem assertions de campo. TDD requer pin de comportamento: cada branch da implementação deve ter ≥1 teste que falha se a branch for removida.
-- ❌ Swallow de erros via `do { try ... } catch {}` sem log (Swift) ou `try { } catch (_) {}` sem log (Dart/Kotlin). Sempre logar via `logger` ou rethrow com contexto.
-- ❌ Assumir que arquivo `Generated. Do not edit.` respeita configuração externa (ex: `IPHONEOS_DEPLOYMENT_TARGET` do `project.pbxproj`). Sempre ler o code que gera antes de tentar fix. Ex: Flutter 3.44 hardcoda iOS 13 em `darwin.dart:71` independente do pbxproj — fix é Xcode Build Phase (ver memória `raro-pattern-flutter-spm-ios-13-hardcoded` + ADR-0015 addendum).
-- ❌ Editar arquivo gerado e esperar persistência. Se precisar patchar gerado, faça-o via Build Phase / hook / pre-commit que reaplica em todo build.
-- ❌ Improvisar workaround antes de WebSearch + docs oficiais. Para qualquer problema de SDK/framework, **primeiro** consultar (a) docs oficial, (b) issue tracker do projeto, (c) Context7 — só então inventar. Ex: bug Flutter SPM iOS 13 tinha solução documentada em `docs.flutter.dev/packages-and-plugins/swift-package-manager/for-app-developers` o tempo todo.
-- ❌ Usar Xcode **Build Phase** para fix de SPM. Build Phases rodam DEPOIS de SPM Package Resolution. Para qualquer hook que precise mexer em SPM antes do build, usar **Scheme Pre-action** (`xcshareddata/xcschemes/<Scheme>.xcscheme` → `<PreActions>`).
-- ❌ Chamar `flutter build`, `pod install`, ou qualquer comando que regenere `project.pbxproj`/`xcworkspace` **dentro** de Xcode Scheme Pre-action. Modifica o workspace durante o build e o Xcode aborta silenciosamente (status falso "succeeded", zero Build Phases executadas). Pre-actions devem ser instantâneas (<1s), read-only ou patches mínimos via `sed`. Roda `flutter build ios --config-only` offline via `bun run pub:get` ou terminal — nunca dentro do build. Ver `raro-pattern-xcode-preaction-modifies-workspace`.
-- ❌ Confiar no status "BUILD SUCCEEDED" do Xcode sem inspecionar `.xcactivitylog`. Pre-actions que abortam build não falham o status do scheme. Use `xclogparser parse --reporter flatJson` em `~/Library/Developer/Xcode/DerivedData/<Proj>-*/Logs/Build/*.xcactivitylog` para verificar que Build Phases (Compile/Link/Sources) efetivamente rodaram, não só Pre-actions.
-- ❌ Adicionar plugin Flutter iOS no `pubspec.yaml` sem ler o **README de setup iOS** do plugin. Plugins com flag-based compilation (`permission_handler`, `firebase_messaging` background mode, `flutter_local_notifications` etc.) exigem macros no `Podfile post_install` (ex: `PERMISSION_CAMERA=1`) — sem isso, o plugin retorna estados sintéticos (`denied`, `unavailable`) silenciosamente, **sem stack trace e sem chamar APIs nativas**. Diagnosticar via `grep PERMISSION_ ios/Pods/Pods.xcodeproj/project.pbxproj` — vazio = macros ausentes. Ver `raro-pattern-permission-handler-ios-podfile-macros`.
-- ❌ Inventar fix para bug em device físico sem ler logs reais primeiro. Build: `xclogparser parse --reporter flatJson`. Runtime: instrumentar `os_log` estratégico + pedir conteúdo do Xcode Console ao usuário. **`idevicesyslog` da libimobiledevice NÃO captura logs de apps de terceiros em iOS 18+** — só sistema. Ver `feedback_device_debug_use_real_logs_not_assumptions`.
-- ❌ Tratar a tela "iOS 14+ debug mode Flutter apps can only be launched from Xcode" como bug. **É restrição arquitetural Apple+Flutter** (debug usa JIT, JIT exige conexão Xcode). Para testar lifecycle (background→foreground, permission denied → openAppSettings → volta): usar Control Center / multitasking parcial (não fecha app). Para release no device físico real precisa Apple Developer Program ($99/ano) — free tier não basta. Ver `raro-pattern-flutter-debug-vs-release-on-device`.
-- ❌ Assumir que "Clean Build Folder" do Xcode resolve erro `firebase requires 15.0 but target supports 13.0`. **Não resolve** — esse erro vem de combinação de 3 estados desincronizados: (a) `ios/Flutter/Generated.xcconfig` + `Debug.xcconfig` + `Release.xcconfig` ausentes (gitignored, regenerados por `flutter pub get`); (b) `Package.swift` ephemeral regerado em iOS 13 (`darwin.dart:71` hardcoda); (c) `DerivedData/Runner-*` cacheado contra estado antigo. Fix correto: quit Xcode → `bun --filter @raro/mobile run pub:get` → `rm -rf ~/Library/Developer/Xcode/DerivedData/Runner-*` → reabrir Xcode → aguardar Package Resolution → build. Triggers: `flutter clean`, `git clean -fd`, Xcode `Reset Package Caches`, troca de destino do build. Plans iOS-touching incluem `bun pub:get` na Phase 0 pre-flight. Ver `raro-pattern-flutter-ios-regen-xcconfig-spm-recovery`.
-- ❌ Investir em infra de observabilidade (Signpost, MetricKit, XCTClockMetric, dashboards P95/P99, Pigeon telemetry) ANTES de aplicar fixes técnicos conhecidos. Quando há causas mapeadas (ProGuard, CATransaction, gesture arena, KVO churn, smooth auto focus ramp), fix PRIMEIRO; instrumentar APENAS o delay residual. Workflow audit `w3cediota` da sessão 0006 (tap-to-focus iPhone 12) provou: 13/18 itens propostos eram OVERENGINEERING/DEFER, 5 eram HIGH_VALUE (fixes diretos), 0 eram ESSENTIAL pré-fix. É o anti-pattern INVERSO de "inventar fix sem logs reais" — aqui o erro é evitar o fix se preparando infinitamente para medi-lo. Ver `feedback_infra_observability_before_known_fix_is_inversion`.
-- ❌ Envolver `layer.add(animation, forKey:)` em `CATransaction.setDisableActions(true)` no iOS. Esse flag desabilita a registration interna do CATransaction → `layer.animation(forKey:)` retorna `nil` em XCTest e a animation não roda em release. Use `CATransaction.setDisableActions(true)` APENAS em torno de mutations de layer (bounds/position/path) onde quer pular implicit animation, NUNCA em torno de `add(animation:forKey:)` explícita. Descoberto na sessão 0006 (G4 focus ring) — fix substituiu `setDisableActions`/`flush` por `setNeedsDisplay` após `addSublayer`. Ver `raro-pattern-cashapelayer-catransaction-disables-explicit-animations`.
-- ❌ Usar `CATransaction.flush()` esperando que a animation persista em testes que leem `layer.animation(forKey:)` imediatamente após (ex: `showFocusRing`). `flush()` força commit sync, mas explicit animation com `removedOnCompletion = true` (default em `CABasicAnimation`/`CAKeyframeAnimation`) é removida pelo runtime assim que a duração termina — o teste pode ver `nil`. Para sub-frame display sem perder a animation: `setNeedsDisplay` é o caminho; `flush` não. Em XCTest, setar `removedOnCompletion = false` no fixture ou usar `XCTestExpectation` com short delay para inspecionar.
-- ❌ Embutir `UiKitView`/`AndroidView` em Flutter SEM passar `gestureRecognizers` explícito quando o widget está dentro de `Stack`/`Listener` com gesture detector concorrente. O Flutter gesture arena espera resolução antes de propagar o tap para o platform view, adicionando ~80ms de latência percebida (Flutter issue [#170735](https://github.com/flutter/flutter/issues/170735)). Solução: passar `gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new)}` como `static final` no widget — reclama o gesture imediatamente no native view. Aplicável a `CameraPlatformView`, `VideoPlayer`, `MapView` e qualquer PlatformView que precise tap responsivo. Ver `raro-pattern-flutter-uikitview-eager-gesture-recognizer-issue-170735`.
-- ❌ Deixar `AVCaptureDevice.isSmoothAutoFocusEnabled = true` (default em formats que suportam) ativado em uma sessão usada para tap-to-focus interativo. Smooth auto focus adiciona ramp cinematic de 150-400ms ao reposicionar o lens — perfeito para gravação de vídeo, ruim para responsividade percebida de tap. Setar `device.isSmoothAutoFocusEnabled = false` DENTRO de `lockForConfiguration` ANTES de setar `focusPointOfInterest`. Se a mesma session for usada para gravar vídeo, restaurar `true` ao iniciar gravação e voltar `false` ao parar. Ver `raro-pattern-avfoundation-smoothautofocus-cinematic-ramp`.
-- ❌ Re-instalar KVO observer de `isAdjustingFocus` em todo tap (`addObserver` no handler do tap, `removeObserver` ao resolver). Cada registration custa 5-20ms + churn no observer system + risco de race em taps rápidos sequenciais. Instalar UMA vez em `startSession`, invalidar UMA vez em `stopSession`, e coordenar qual tap deve resolver via property `pendingFocusPoint: FocusPoint?` (set no tap, lido no callback de KVO, comparado e nilizado quando o focus atual é o esperado). Pattern aplicável também a KVO de `isAdjustingExposure`, `isAdjustingWhiteBalance`. Ver `raro-pattern-avfoundation-kvo-permanent-vs-per-tap`.
+- ❌ Improvisar workaround antes de WebSearch + docs oficiais. Para qualquer problema de SDK/framework, **primeiro** consultar (a) docs oficial, (b) issue tracker do projeto, (c) Context7 — só então inventar.
 
 ---
 

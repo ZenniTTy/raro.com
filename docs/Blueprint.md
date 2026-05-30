@@ -566,14 +566,55 @@ Bundle ID / Application ID: `com.rarocamera`.
 
 ---
 
-## 11. Próximos passos após aprovação
+## 11. Roadmap (3 Sprints — vigente a partir de 2026-05-29)
 
-1. **Fase 2 — Scaffold:** estrutura monorepo, `apps/mobile`, `packages/shared`, Bun workspaces, Turborepo, Biome, lefthook, commitlint, instalação de todas as deps fixadas na Seção 2.
-2. **Fase 3 — Foundation:** `AGENTS.md` + `CLAUDE.md` + `docs/01-10` + ADRs 0001–0012 + `docs/sessions/`.
-3. **Fase 4 — Harness:** subagents Flutter, hooks Claude Code, slash commands, `.claude/settings.json`.
-4. **Fase 5 — Spec-Driven:** templates de spec + plan, sugestão de primeira spec (`feat/camera-native-bridge`).
-5. **Primeira spec sugerida:** `feat/camera-native-bridge` (valida pipeline native bridge crítico mais cedo, conforme briefing Seção 10 roadmap).
+> Cada Sprint tem MD detalhado em `docs/superpowers/plans/sprint-N-*.md`.
+
+### Sprint 1 — Foundation + Walking Skeleton iOS
+Status: ⏳ Em execução
+
+Cleanup:
+- [x] Sprint 0: master plan v2 + 3 sprint MDs criados
+- [x] Task A: memórias auditadas — 6 renomeadas (índice consertado), 33 mantidas com justificativa (meta ≤25 reinterpretada; ver sessão 0008)
+- [x] Task B: CLAUDE.md aligned (§8 9 hooks, §11 cortada 29→11 por critério, §6 simplificado) + Blueprint §11 roadmap
+- [ ] Task C: branch `feat/camera-native-bridge` merged em `develop`
+
+Telas (12 Walking Skeleton):
+- [ ] P01 Splash
+- [ ] P02 Onboarding 1 ("Grave sem tocar")
+- [ ] P03 Onboarding 2 ("Nunca perca o momento")
+- [ ] P04 Permissions (camera + mic)
+- [ ] P05 Camera UI shell (REC mock, lens switch real, HUD)
+- [ ] P06 Subscription popup
+- [ ] P07 Settings (persistência via shared_preferences)
+- [ ] P08 Gallery (5 vídeos mock em assets/)
+- [ ] P09 Preview (video_player mock)
+- [ ] P10 Paywall (cards selecionáveis)
+- [ ] P11 Checkout (Apple Pay/Google Play mock)
+- [ ] Trial countdown (DateTime.now() + shared_preferences)
+
+### Sprint 2 — Backend/Lógica Real iOS
+Status: 📋 Planejado em `sprint-2-backend-logic-ios.md`
+
+- [ ] Recording real (MP4 H.264/H.265 → vault)
+- [ ] Replay buffer 15/30s native (ring buffer iOS)
+- [ ] Wake word "Raro" iOS (SFSpeechRecognizer)
+- [ ] Volume button trigger iOS (KVO AVAudioSession)
+- [ ] RevenueCat paywall real (sandbox)
+- [ ] Vault + share via share_plus
+- [ ] Gallery persistência real
+
+### Sprint 3 — Android Parity + TestFlight + Cliente
+Status: 📋 Planejado em `sprint-3-android-parity-testflight-client.md`
+
+- [ ] Android native bridges (CameraX, replay, voice, volume)
+- [ ] Apple Developer Program pago + TestFlight pipeline
+- [ ] Google Play Console + Internal Testing track
+- [ ] i18n PT/ES/EN (ARB + intl)
+- [ ] P12/P13/P14 modais
+- [ ] Performance gates (golden tests + integration_test E2E)
+- [ ] Cliente convidado em TestFlight + Internal Testing
 
 ---
 
-> **Status:** Approved em 2026-05-25. Fase 2 em execução em micro-sprints com 1 commit por sprint.
+> **Status:** Approved em 2026-05-25. Roadmap 3-Sprint vigente desde 2026-05-29 (ver §11) — Sprint 1 em execução.
