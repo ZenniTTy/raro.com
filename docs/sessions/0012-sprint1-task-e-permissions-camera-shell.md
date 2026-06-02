@@ -1,10 +1,10 @@
 # 0012 — Sprint 1 Task E (walking skeleton: P04 Permissions + P05 Camera UI shell)
 
 - **Data:** 2026-06-02
-- **Duração:** ~média (2 telas via TDD + design-fidelity + 2 fixes de fidelidade + 2 memórias)
+- **Duração:** ~média (2 telas via TDD + design-fidelity + validação no iPhone 12 + 3 memórias)
 - **Participantes:** Eduardo Rodrigues + Claude Code
 - **Branch:** `feat/camera-native-bridge`
-- **Commits:** `2c75f4a`, `9c76877`, `900efd7`, `d5a2406` (+ close 0012)
+- **Commits:** `2c75f4a`, `9c76877`, `900efd7`, `d5a2406`, `e4578c0` (close), `af74c01` (device fidelity)
 
 ## Objetivo
 
@@ -49,16 +49,29 @@ Executar Sprint 1 Task E (`SPRINT-1-PROMPTS.md` §"1 — Sessão de execução",
 - **commit + format hook:** o primeiro commit do E2 falhou (`exit 1`) porque o `dart-format` reformatou 4 arquivos staged → snapshot stale. Re-`git add` + re-commit resolveu (hook é idempotente na 2ª). Não usei `--no-verify`.
 - **design-fidelity como gate de verdade:** o subagent pegou 2 desvios reais de leitura do protótipo (ASCII x, pill active) que os widget tests não pegariam — eles checam presença de texto/Key, não o glifo exato nem a cor de fundo. Reforça o §10 do CLAUDE.md.
 
+## Addendum — validação perceptual no iPhone 12 (mesma sessão, pós-fechamento inicial)
+
+A pedido do usuário, **buildei e validei no iPhone 12 físico** (build profile assinado + `devicectl install/launch`, workflow §13; SPM com os 2 git overrides; pre-flight `pub:get`). Isso ANTECIPOU a validação device que o §Task E deixava pra Task H — então a Task E fica fechada COM validação perceptual, não só estrutural.
+
+O olho no device pegou **3 desvios que o design-fidelity (leitura de código) NÃO pegou** — todos confirmados contra o HTML antes de corrigir, fix no commit `af74c01`:
+1. **Glow do REC button bruto** — `BoxShadow(RaroAccents.red opaco, blur 30)` brilhava demais; o CSS usa `rgba(...,.4)`. Fix: `red.withValues(alpha: 0.35)` + blur 14. → memória `raro-pattern-flutter-boxshadow-opacity-glow-too-bright`.
+2. **grad-line no lugar errado** — estava na base; o protótipo (confirmado pelo print do usuário) põe a linha arco-íris no **topo**, abaixo do header "RARO". Movida pra cima.
+3. **Ícone central errado** — `Icons.videocam_outlined` (filmadora) → `Icons.camera_alt_outlined` (câmera fotográfica, = `I.camera` do protótipo).
+
+Rebuild + reinstall + relaunch → **usuário aprovou os 3** ("Tudo ok agora! Perfeito"). Gate full re-rodado: analyze 0 issues + 122/122 GREEN antes do commit.
+
+**Lição reforçada:** design-fidelity por leitura de código pega copy/cor/token, mas glow/posição/ícone-Material só fecham olhando a tela real. Confirma a família [[raro-pattern-flutter-drop-shadow-vs-boxshadow-png-glow]].
+
 ## Próximos passos
 
 - **Sprint 1 Task F — Settings (P06) + Gallery (P07)** (`sprint-1-foundation-walking-skeleton.md` §Task F). Substitui os stubs `/settings` e `/gallery` por telas reais: Settings com `RecordingSettings` (freezed) persistido em shared_preferences; Gallery com 5-6 `VideoEntity` mock em grid + filtros. **Pré-requisito Task G:** `video_player` é dep nova → exige ADR/adendo Blueprint §2 ANTES da Task G (não da F). Cole `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução", `[TASK]=F`.
-- **Device validation deferida:** P04/P05 só foram validados por widget test + design-fidelity; validação perceptual no iPhone 12 acontece no smoke test fim-a-fim da Task H.
+- **Device validation FEITA nesta sessão** (ver Addendum): P04/P05 validados no iPhone 12 físico + 3 fixes de fidelidade aprovados. A Task H (smoke fim-a-fim) ainda re-valida o fluxo COMPLETO das 12 telas junto, mas P04/P05 individualmente já têm o olho-no-device.
 
 ## Referências
 
 - Prompts: `docs/superpowers/plans/SPRINT-1-PROMPTS.md` §"1 — Sessão de execução"
 - Plan: `docs/superpowers/plans/sprint-1-foundation-walking-skeleton.md` (Task E)
 - Protótipo: `docs/briefing/prototype/Prototipo-RARO.html` (screenPerms 784-812, screenCamera 825-963, tokens 12-25)
-- Commits: `2c75f4a` (P04), `9c76877` (P05), `900efd7` (fidelity fix), `d5a2406` (blueprint)
-- Memórias novas: `raro-pattern-flutter-late-final-animationcontroller-dispose-crash`, `raro-pattern-flutter-pumpandsettle-infinite-animation-timeout` (índice em MEMORY.md)
-- Blueprint §11: P04/P05 ✅
+- Commits: `2c75f4a` (P04), `9c76877` (P05), `900efd7` (fidelity fix), `d5a2406` (blueprint), `e4578c0` (close), `af74c01` (device fidelity: glow/grad-line/ícone)
+- Memórias novas (3): `raro-pattern-flutter-late-final-animationcontroller-dispose-crash`, `raro-pattern-flutter-pumpandsettle-infinite-animation-timeout`, `raro-pattern-flutter-boxshadow-opacity-glow-too-bright` (índice em MEMORY.md)
+- Blueprint §11: P04/P05 ✅ (validados no iPhone 12)
