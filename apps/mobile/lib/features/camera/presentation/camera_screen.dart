@@ -75,7 +75,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                   elapsed: _elapsed,
                   bufferDuration: shell.bufferDuration,
                   lens: shell.lens,
-                  lensLabel: shell.lensLabel,
+                  lensLabel: shell.hudLensLabel,
                   onToggleBuffer: () => ref
                       .read(cameraShellProvider.notifier)
                       .toggleBufferDuration(),

@@ -23,4 +23,6 @@ abstract class CameraShellState with _$CameraShellState {
   const CameraShellState._();
 
   String get lensLabel => lens == LensType.ultraWide ? '0.5×' : '1×';
+
+  String get hudLensLabel => lens == LensType.ultraWide ? '0.5x' : '1x';
 }

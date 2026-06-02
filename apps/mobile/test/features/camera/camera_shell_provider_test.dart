@@ -68,7 +68,7 @@ void main() {
   });
 
   group('CameraShellState helpers', () {
-    test('lensLabel: wide = "1×", ultraWide = "0.5×"', () {
+    test('lensLabel (chips) usa × ; hudLensLabel (#hudLens) usa x ASCII', () {
       const wide = CameraShellState(
         recording: false,
         lens: LensType.wide,
@@ -82,6 +82,8 @@ void main() {
 
       expect(wide.lensLabel, '1×');
       expect(ultra.lensLabel, '0.5×');
+      expect(wide.hudLensLabel, '1x');
+      expect(ultra.hudLensLabel, '0.5x');
     });
 
     test('bufferSeconds: 15 / 30', () {

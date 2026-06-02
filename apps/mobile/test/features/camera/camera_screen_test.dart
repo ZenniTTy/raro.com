@@ -38,9 +38,11 @@ void main() {
       expect(find.text('DIGA “RARO” PARA GRAVAR'), findsOneWidget);
     });
 
-    testWidgets('mostra HUD com resolução/fps/lens', (tester) async {
+    testWidgets('mostra HUD com resolução/fps/lens (ASCII x como #hudLens)', (
+      tester,
+    ) async {
       await tester.pumpWidget(harness());
-      expect(find.text('1080p · 60FPS · 1×'), findsOneWidget);
+      expect(find.text('1080p · 60FPS · 1x'), findsOneWidget);
     });
 
     testWidgets('mostra a buffer pill Raro Replay 15s', (tester) async {

@@ -38,11 +38,9 @@ class _BufferPillState extends State<BufferPill>
       onTap: widget.onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: ShapeDecoration(
-          color: Colors.black.withValues(alpha: 0.6),
-          shape: StadiumBorder(
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
-          ),
+        decoration: const ShapeDecoration(
+          color: Colors.white,
+          shape: StadiumBorder(side: BorderSide(color: Colors.white)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -66,7 +64,7 @@ class _BufferPillState extends State<BufferPill>
                 fontFamily: RaroFonts.mono,
                 fontSize: 10,
                 letterSpacing: 0.8,
-                color: Colors.white,
+                color: Colors.black,
               ),
             ),
           ],
