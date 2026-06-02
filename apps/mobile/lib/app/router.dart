@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/features/camera/presentation/camera_screen.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_1.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_2.dart';
 import 'package:raro_mobile/features/permissions/presentation/permissions_screen.dart';
@@ -39,23 +40,51 @@ GoRouter buildAppRouter() {
       ),
       GoRoute(
         path: AppScreen.p05Camera.path,
-        builder: (context, state) => const _CameraPlaceholder(),
+        builder: (context, state) => CameraScreen(
+          onClose: () => context.go(AppScreen.p04Permissions.path),
+          onGallery: () => context.go(AppScreen.p07Gallery.path),
+          onSettings: () => context.go(AppScreen.p06Settings.path),
+        ),
+      ),
+      GoRoute(
+        path: AppScreen.p06Settings.path,
+        builder: (context, state) => const _ScreenStub(
+          stubKey: Key('settings_placeholder'),
+          label: 'Configurações — Task F',
+        ),
+      ),
+      GoRoute(
+        path: AppScreen.p07Gallery.path,
+        builder: (context, state) => const _ScreenStub(
+          stubKey: Key('gallery_placeholder'),
+          label: 'Galeria — Task F',
+        ),
       ),
     ],
   );
 }
 
-class _CameraPlaceholder extends StatelessWidget {
-  const _CameraPlaceholder();
+class _ScreenStub extends StatelessWidget {
+  const _ScreenStub({required this.stubKey, required this.label});
+
+  final Key stubKey;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
     return Scaffold(
-      key: const Key('camera_placeholder'),
+      key: stubKey,
       backgroundColor: colors.bgDeep,
+      appBar: AppBar(
+        backgroundColor: colors.bgDeep,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: colors.ink),
+          onPressed: () => context.go(AppScreen.p05Camera.path),
+        ),
+      ),
       body: Center(
-        child: Text('Câmera — Task E2', style: TextStyle(color: colors.inkDim)),
+        child: Text(label, style: TextStyle(color: colors.inkDim)),
       ),
     );
   }

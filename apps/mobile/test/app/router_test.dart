@@ -80,9 +80,7 @@ void main() {
       expect(find.text('Permissões essenciais'), findsOneWidget);
     });
 
-    testWidgets('permissions → Continuar (granted) → camera (P05)', (
-      tester,
-    ) async {
+    Future<void> goToCamera(WidgetTester tester) async {
       when(gateway.requestCamera).thenAnswer((_) async => true);
       when(gateway.requestMicrophone).thenAnswer((_) async => true);
       await tester.pumpWidget(app());
@@ -91,10 +89,34 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Pular'));
       await tester.pumpAndSettle();
-
       await tester.tap(find.text('Continuar'));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('camera_placeholder')), findsOneWidget);
+      // Camera tem animações infinitas (buffer pill pulse) → pumpAndSettle
+      // nunca converge; pump bounded deixa a transição de rota completar.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    testWidgets('permissions → Continuar (granted) → camera (P05)', (
+      tester,
+    ) async {
+      await goToCamera(tester);
+      expect(find.text('DIGA “RARO” PARA GRAVAR'), findsOneWidget);
+    });
+
+    testWidgets('camera → settings (P06 stub)', (tester) async {
+      await goToCamera(tester);
+      await tester.tap(find.byKey(const Key('camera_settings_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byKey(const Key('settings_placeholder')), findsOneWidget);
+    });
+
+    testWidgets('camera → gallery (P07 stub)', (tester) async {
+      await goToCamera(tester);
+      await tester.tap(find.byKey(const Key('camera_gallery_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byKey(const Key('gallery_placeholder')), findsOneWidget);
     });
   });
 }
