@@ -36,6 +36,18 @@ void main() {
     test('entitlement is "premium"', () {
       expect(SubscriptionConfig.entitlement, 'premium');
     });
+
+    test('monthly display price is R\$ 9,90 (ADR-0010)', () {
+      expect(PlanPricing.monthlyBRL, 9.90);
+    });
+
+    test('yearly display price is R\$ 89,90 (ADR-0010)', () {
+      expect(PlanPricing.yearlyBRL, 89.90);
+    });
+
+    test('yearly monthly-equivalent is R\$ 7,49 (ADR-0010)', () {
+      expect(PlanPricing.yearlyMonthlyEquivalentBRL, 7.49);
+    });
   });
 
   group('Family 5 — Domain enums', () {
@@ -150,6 +162,8 @@ void main() {
         StorageKeys.xiaomiGuideShown,
         StorageKeys.firstLaunchAt,
         StorageKeys.lastLanguageDetected,
+        StorageKeys.subscriptionActive,
+        StorageKeys.trialStartedAt,
       ];
       for (final k in keys) {
         expect(k, matches(RegExp(r'^raro\.[a-z_]+\.[a-z_]+$')));
