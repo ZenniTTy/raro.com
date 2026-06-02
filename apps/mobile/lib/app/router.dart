@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/camera/presentation/camera_screen.dart';
+import 'package:raro_mobile/features/gallery/presentation/gallery_screen.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_1.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_2.dart';
 import 'package:raro_mobile/features/permissions/presentation/permissions_screen.dart';
+import 'package:raro_mobile/features/settings/presentation/settings_screen.dart';
 import 'package:raro_mobile/features/splash/presentation/splash_screen.dart';
 import 'package:raro_shared/raro_shared.dart';
 
@@ -48,16 +50,30 @@ GoRouter buildAppRouter() {
       ),
       GoRoute(
         path: AppScreen.p06Settings.path,
-        builder: (context, state) => const _ScreenStub(
-          stubKey: Key('settings_placeholder'),
-          label: 'Configurações — Task F',
+        builder: (context, state) => SettingsScreen(
+          onBack: () => context.go(AppScreen.p05Camera.path),
+          onSeePlans: () => context.go(AppScreen.p09Paywall.path),
         ),
       ),
       GoRoute(
         path: AppScreen.p07Gallery.path,
+        builder: (context, state) => GalleryScreen(
+          onBack: () => context.go(AppScreen.p05Camera.path),
+          onOpenVideo: (id) => context.go('${AppScreen.p08Preview.path}/$id'),
+        ),
+      ),
+      GoRoute(
+        path: AppScreen.p09Paywall.path,
         builder: (context, state) => const _ScreenStub(
-          stubKey: Key('gallery_placeholder'),
-          label: 'Galeria — Task F',
+          stubKey: Key('paywall_placeholder'),
+          label: 'Planos — Task G',
+        ),
+      ),
+      GoRoute(
+        path: '${AppScreen.p08Preview.path}/:id',
+        builder: (context, state) => _ScreenStub(
+          stubKey: const Key('preview_placeholder'),
+          label: 'Preview ${state.pathParameters['id']} — Task G',
         ),
       ),
     ],

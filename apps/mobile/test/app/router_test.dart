@@ -6,8 +6,23 @@ import 'package:raro_mobile/app/router.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
 import 'package:raro_mobile/features/permissions/data/permission_gateway.dart';
+import 'package:raro_mobile/features/settings/application/settings_controller.dart';
+import 'package:raro_mobile/features/settings/data/settings_store.dart';
+import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 
 class _MockPermissionGateway extends Mock implements PermissionGateway {}
+
+class _FakeSettingsStore implements SettingsStore {
+  RecordingSettings stored = const RecordingSettings();
+
+  @override
+  Future<RecordingSettings> load() async => stored;
+
+  @override
+  Future<void> save(RecordingSettings settings) async {
+    stored = settings;
+  }
+}
 
 void main() {
   late _MockPermissionGateway gateway;
@@ -20,7 +35,10 @@ void main() {
 
   Widget app() {
     return ProviderScope(
-      overrides: [permissionGatewayProvider.overrideWithValue(gateway)],
+      overrides: [
+        permissionGatewayProvider.overrideWithValue(gateway),
+        settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
+      ],
       child: MaterialApp.router(
         theme: buildRaroDarkTheme(),
         routerConfig: buildAppRouter(),
@@ -103,20 +121,21 @@ void main() {
       expect(find.text('DIGA “RARO” PARA GRAVAR'), findsOneWidget);
     });
 
-    testWidgets('camera → settings (P06 stub)', (tester) async {
+    testWidgets('camera → settings (P06) abre a tela real', (tester) async {
       await goToCamera(tester);
       await tester.tap(find.byKey(const Key('camera_settings_button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.byKey(const Key('settings_placeholder')), findsOneWidget);
+      expect(find.text('Configurações'), findsOneWidget);
+      expect(find.text('Qualidade de Gravação'), findsOneWidget);
     });
 
-    testWidgets('camera → gallery (P07 stub)', (tester) async {
+    testWidgets('camera → gallery (P07) abre a tela real', (tester) async {
       await goToCamera(tester);
       await tester.tap(find.byKey(const Key('camera_gallery_button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.byKey(const Key('gallery_placeholder')), findsOneWidget);
+      expect(find.text('Galeria'), findsOneWidget);
     });
   });
 }
