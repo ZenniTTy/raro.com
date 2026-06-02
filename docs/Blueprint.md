@@ -598,13 +598,15 @@ Telas (12 Walking Skeleton):
 - [x] P03 Onboarding 2 ("Nunca perca o momento") — buffer waveform viz; validado no iPhone 12
 - [x] P04 Permissions (camera + mic via permission_handler, gateway port mockável) — TDD + design-fidelity PASS + **validado no iPhone 12** (Task E, sessão 0012)
 - [x] P05 Camera UI shell (HUD res/fps/lens, REC mock + timer fake, buffer pill, lens switcher local) — TDD + design-fidelity + **validado no iPhone 12**: 2 fixes design-fidelity (hud lens ascii x, buffer pill active) + 3 fixes device (rec glow sutil, grad-line topo, ícone câmera). Preview é mock (UiKitView nativo só Sprint 2)
-- [ ] P06 Subscription popup
+> **⚠️ Naming (numeração do MD vs. contrato `AppScreen`):** os rótulos `Pnn` abaixo seguem a numeração histórica do MD do Sprint 0, que **não** bate com o enum `AppScreen` em `raro_shared`. O mapeamento autoritativo (usar SEMPRE o enum no código) está anotado em cada linha como `(= AppScreen.pXX...)`. O "Subscription popup" é o modal `AppModal.m01SubscriptionPopup`, não uma rota.
+
+- [ ] P06 Subscription popup (= `AppModal.m01SubscriptionPopup`) — Task G
 - [x] P07 Settings (= `AppScreen.p06Settings`) — persistência via `SharedPreferencesAsync` (API moderna 2026, port `SettingsStore` mockável swap-able Sprint 2); entity `RecordingSettings` freezed com enums canônicos do `raro_shared`; estabilização = status fixo "SEMPRE ATIVADA" (não-editável, conforme protótipo); idioma só persiste preferência (i18n real Sprint 3); TDD + design-fidelity 13/13 PASS (Task F, sessão 0013). Device pendente p/ Task H
 - [x] P08 Gallery (= `AppScreen.p07Gallery`) — grid 3-col com 6 `VideoEntity` mock; thumbnails por gradiente HSL (sem assets PNG, conforme protótipo); filtros client-side Todos/Hoje/Esta semana/Raro Replay com lógica pura testável; TDD + design-fidelity PASS (Task F, sessão 0013). Device pendente p/ Task H
-- [ ] P09 Preview (video_player mock)
-- [ ] P10 Paywall (cards selecionáveis)
-- [ ] P11 Checkout (Apple Pay/Google Play mock)
-- [ ] Trial countdown (DateTime.now() + shared_preferences)
+- [ ] P09 Preview (= `AppScreen.p08Preview`, rota `/preview/:id`) — `video_player` mock — Task G (**stub `preview_placeholder` já no router**)
+- [ ] P10 Paywall (= `AppScreen.p09Paywall`, rota `/paywall`) — cards selecionáveis — Task G (**stub `paywall_placeholder` já no router**)
+- [ ] P11 Checkout (= `AppScreen.p10Checkout`, rota `/checkout`) — Apple Pay/Google Play mock — Task G
+- [ ] Trial countdown (DateTime.now() + shared_preferences) — Task G
 
 ### Sprint 2 — Backend/Lógica Real iOS
 Status: 📋 Planejado em `sprint-2-backend-logic-ios.md`
