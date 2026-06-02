@@ -19,7 +19,7 @@
 
 Primeiras telas Flutter navegáveis: P01 Splash + P02 Onboarding 1 ("Grave sem tocar") + P03 Onboarding 2 ("Nunca perca o momento"), com Riverpod 3 providers (impl mock, signature real) + go_router. Detalhe em `docs/superpowers/plans/sprint-1-foundation-walking-skeleton.md` §"Task D". Cole `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução" com `[TASK]=D`.
 
-> **Task C (camera G4) parcialmente fechada na sessão 0010:** focus ring iOS validado em device. **Merge segurado** — gates G1/G7 (perf) + Android M54 + goldens deferidos pra Sprint 2/3 (ver spec `2026-05-28-camera-task-19-closure-design.md` §progresso). Branch `feat/camera-native-bridge` NÃO mergeada em `develop`; 12 commits unpushed. Backlog Sprint 3: tap-to-focus nativo Android (CameraX/Kotlin).
+> **Task C (camera G4) parcialmente fechada na sessão 0010:** focus ring iOS validado em device. **Merge segurado** — gates G1/G7 (perf) + Android M54 + goldens deferidos pra Sprint 2/3 (ver spec `2026-05-28-camera-task-19-closure-design.md` §progresso). Branch `feat/camera-native-bridge` NÃO mergeada em `develop` (pushed pra origin em 2026-06-01, sincronizada). Backlog Sprint 3: tap-to-focus nativo Android (CameraX/Kotlin).
 
 > **Nota (Sprint 0 reset):** as antigas "Opções A/C/D" (harness E2E híbrido, replay buffer, Patrol) viraram backlog de Sprint 2/3 no roadmap (Blueprint §11). Sprint 1 foca cleanup + walking skeleton iOS. ADR-0016 e a spec do harness E2E continuam válidos como referência para Sprint 2.
 
