@@ -785,6 +785,8 @@ Cada S1.X é potencialmente 1 sessão. Cadência real emerge — se S1.D termina
 
 ### Task F — Walking skeleton: Settings + Gallery (S1.F)
 
+> **Handoff da Task E (sessão 0012):** o router já tem stubs `/settings` (`AppScreen.p06Settings.path`, Key `settings_placeholder`) e `/gallery` (`AppScreen.p07Gallery.path`, Key `gallery_placeholder`) — ambos via a classe `_ScreenStub` em `apps/mobile/lib/app/router.dart`, alcançáveis pelos botões da câmera P05 (`camera_settings_button` / `camera_gallery_button`). Os "Step Wire route" abaixo **SUBSTITUEM** esses stubs (trocar o `builder` do `GoRoute` existente pela tela real + remover `_ScreenStub` se não sobrar uso), NÃO criam rota nova. Os 2 nav-tests em `test/app/router_test.dart` ("camera → settings (P06 stub)" / "camera → gallery (P07 stub)") apontam pras keys de placeholder — atualizar pros asserts da tela real (mesmo padrão que a Task E fez com `permissions_placeholder`). **Atenção naming:** o MD chama as telas de "P07 Settings / P08 Gallery", mas o contrato `AppScreen` em `raro_shared` usa `p06Settings`/`p07Gallery` — usar os enums do contrato, não os números do MD.
+
 #### F1. Settings screen (P07)
 
 **Files**:
