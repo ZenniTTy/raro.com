@@ -10,6 +10,7 @@ abstract final class RaroAccents {
   static const Color purple = Color(0xFFAF52DE);
 
   static const Color dotIdle = Color(0xFF333333);
+  static const Color selectedSurface = Color(0xFF1A1A1A);
 }
 
 abstract final class RaroGradients {
