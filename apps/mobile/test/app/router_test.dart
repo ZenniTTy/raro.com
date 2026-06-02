@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:raro_mobile/app/router.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
+import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
+import 'package:raro_mobile/features/permissions/data/permission_gateway.dart';
+
+class _MockPermissionGateway extends Mock implements PermissionGateway {}
 
 void main() {
+  late _MockPermissionGateway gateway;
+
+  setUp(() {
+    gateway = _MockPermissionGateway();
+    when(gateway.cameraStatus).thenAnswer((_) async => false);
+    when(gateway.microphoneStatus).thenAnswer((_) async => false);
+  });
+
   Widget app() {
     return ProviderScope(
+      overrides: [permissionGatewayProvider.overrideWithValue(gateway)],
       child: MaterialApp.router(
         theme: buildRaroDarkTheme(),
         routerConfig: buildAppRouter(),
@@ -42,9 +56,7 @@ void main() {
       expect(find.text('Nunca perca o momento'), findsOneWidget);
     });
 
-    testWidgets('onboarding 2 → Avançar → permissions placeholder', (
-      tester,
-    ) async {
+    testWidgets('onboarding 2 → Avançar → permissions (P04)', (tester) async {
       await tester.pumpWidget(app());
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1900));
@@ -54,12 +66,10 @@ void main() {
 
       await tester.tap(find.text('Avançar'));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('permissions_placeholder')), findsOneWidget);
+      expect(find.text('Permissões essenciais'), findsOneWidget);
     });
 
-    testWidgets('onboarding 1 → Pular → permissions placeholder', (
-      tester,
-    ) async {
+    testWidgets('onboarding 1 → Pular → permissions (P04)', (tester) async {
       await tester.pumpWidget(app());
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1900));
@@ -67,7 +77,24 @@ void main() {
 
       await tester.tap(find.text('Pular'));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('permissions_placeholder')), findsOneWidget);
+      expect(find.text('Permissões essenciais'), findsOneWidget);
+    });
+
+    testWidgets('permissions → Continuar (granted) → camera (P05)', (
+      tester,
+    ) async {
+      when(gateway.requestCamera).thenAnswer((_) async => true);
+      when(gateway.requestMicrophone).thenAnswer((_) async => true);
+      await tester.pumpWidget(app());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1900));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pular'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('camera_placeholder')), findsOneWidget);
     });
   });
 }
