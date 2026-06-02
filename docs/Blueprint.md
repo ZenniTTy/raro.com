@@ -599,8 +599,8 @@ Telas (12 Walking Skeleton):
 - [x] P04 Permissions (camera + mic via permission_handler, gateway port mockável) — TDD + design-fidelity PASS + **validado no iPhone 12** (Task E, sessão 0012)
 - [x] P05 Camera UI shell (HUD res/fps/lens, REC mock + timer fake, buffer pill, lens switcher local) — TDD + design-fidelity + **validado no iPhone 12**: 2 fixes design-fidelity (hud lens ascii x, buffer pill active) + 3 fixes device (rec glow sutil, grad-line topo, ícone câmera). Preview é mock (UiKitView nativo só Sprint 2)
 - [ ] P06 Subscription popup
-- [ ] P07 Settings (persistência via shared_preferences)
-- [ ] P08 Gallery (5 vídeos mock em assets/)
+- [x] P07 Settings (= `AppScreen.p06Settings`) — persistência via `SharedPreferencesAsync` (API moderna 2026, port `SettingsStore` mockável swap-able Sprint 2); entity `RecordingSettings` freezed com enums canônicos do `raro_shared`; estabilização = status fixo "SEMPRE ATIVADA" (não-editável, conforme protótipo); idioma só persiste preferência (i18n real Sprint 3); TDD + design-fidelity 13/13 PASS (Task F, sessão 0013). Device pendente p/ Task H
+- [x] P08 Gallery (= `AppScreen.p07Gallery`) — grid 3-col com 6 `VideoEntity` mock; thumbnails por gradiente HSL (sem assets PNG, conforme protótipo); filtros client-side Todos/Hoje/Esta semana/Raro Replay com lógica pura testável; TDD + design-fidelity PASS (Task F, sessão 0013). Device pendente p/ Task H
 - [ ] P09 Preview (video_player mock)
 - [ ] P10 Paywall (cards selecionáveis)
 - [ ] P11 Checkout (Apple Pay/Google Play mock)
