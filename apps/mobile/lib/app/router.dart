@@ -6,6 +6,7 @@ import 'package:raro_mobile/features/gallery/presentation/gallery_screen.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_1.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_2.dart';
 import 'package:raro_mobile/features/permissions/presentation/permissions_screen.dart';
+import 'package:raro_mobile/features/preview/presentation/preview_screen.dart';
 import 'package:raro_mobile/features/settings/presentation/settings_screen.dart';
 import 'package:raro_mobile/features/splash/presentation/splash_screen.dart';
 import 'package:raro_shared/raro_shared.dart';
@@ -71,9 +72,9 @@ GoRouter buildAppRouter() {
       ),
       GoRoute(
         path: '${AppScreen.p08Preview.path}/:id',
-        builder: (context, state) => _ScreenStub(
-          stubKey: const Key('preview_placeholder'),
-          label: 'Preview ${state.pathParameters['id']} — Task G',
+        builder: (context, state) => PreviewScreen(
+          videoId: state.pathParameters['id']!,
+          onBack: () => context.go(AppScreen.p07Gallery.path),
         ),
       ),
     ],

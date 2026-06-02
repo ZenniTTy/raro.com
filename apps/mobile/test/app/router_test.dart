@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:raro_mobile/app/router.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
+import 'package:raro_mobile/features/gallery/presentation/widgets/video_thumbnail.dart';
 import 'package:raro_mobile/features/permissions/data/permission_gateway.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/data/settings_store.dart';
@@ -136,6 +137,21 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Galeria'), findsOneWidget);
+    });
+
+    testWidgets('gallery → tap thumbnail → preview (P08) abre a tela real', (
+      tester,
+    ) async {
+      await goToCamera(tester);
+      await tester.tap(find.byKey(const Key('camera_gallery_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      await tester.tap(find.byType(VideoThumbnail).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('INFO'), findsOneWidget);
+      expect(find.text('Compartilhar'), findsOneWidget);
     });
   });
 }
