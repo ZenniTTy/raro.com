@@ -57,21 +57,13 @@ class _RecButtonState extends State<RecButton>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: recording ? Colors.black : RaroAccents.red,
-          boxShadow: recording
-              ? [
-                  const BoxShadow(
-                    color: RaroAccents.red,
-                    blurRadius: 30,
-                    spreadRadius: -8,
-                  ),
-                ]
-              : const [
-                  BoxShadow(
-                    color: RaroAccents.red,
-                    blurRadius: 30,
-                    spreadRadius: -12,
-                  ),
-                ],
+          boxShadow: [
+            BoxShadow(
+              color: RaroAccents.red.withValues(alpha: 0.35),
+              blurRadius: 14,
+              spreadRadius: -10,
+            ),
+          ],
           border: recording
               ? const Border.fromBorderSide(
                   BorderSide(color: Colors.white, width: 3),

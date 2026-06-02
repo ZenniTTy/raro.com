@@ -65,6 +65,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       body: Column(
         children: [
           _TopBar(onClose: widget.onClose),
+          const _GradLine(),
+          const SizedBox(height: 12),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -229,38 +231,37 @@ class _BottomControls extends StatelessWidget {
     final colors = Theme.of(context).extension<RaroColors>()!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-      child: Stack(
-        alignment: Alignment.bottomCenter,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _RoundButton(
-                key: const Key('camera_gallery_button'),
-                icon: Icons.folder_outlined,
-                onTap: onGallery,
-                colors: colors,
-              ),
-              RecButton(recording: recording, onTap: onRecTap),
-              _RoundButton(
-                key: const Key('camera_settings_button'),
-                icon: Icons.settings_outlined,
-                onTap: onSettings,
-                colors: colors,
-              ),
-            ],
+          _RoundButton(
+            key: const Key('camera_gallery_button'),
+            icon: Icons.folder_outlined,
+            onTap: onGallery,
+            colors: colors,
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              height: 1.5,
-              decoration: const BoxDecoration(gradient: RaroGradients.rainbow),
-            ),
+          RecButton(recording: recording, onTap: onRecTap),
+          _RoundButton(
+            key: const Key('camera_settings_button'),
+            icon: Icons.settings_outlined,
+            onTap: onSettings,
+            colors: colors,
           ),
         ],
       ),
+    );
+  }
+}
+
+class _GradLine extends StatelessWidget {
+  const _GradLine();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1.5,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: const BoxDecoration(gradient: RaroGradients.rainbow),
     );
   }
 }

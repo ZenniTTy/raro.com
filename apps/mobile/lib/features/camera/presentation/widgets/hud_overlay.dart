@@ -117,7 +117,7 @@ class CameraCenterHint extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.videocam_outlined,
+            Icons.camera_alt_outlined,
             size: 42,
             color: Colors.white.withValues(alpha: 0.6),
           ),
