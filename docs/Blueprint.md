@@ -577,7 +577,7 @@ Cleanup:
 - [x] Sprint 0: master plan v2 + 3 sprint MDs criados
 - [x] Task A: memórias auditadas — 6 renomeadas (índice consertado), 33 mantidas com justificativa (meta ≤25 reinterpretada; ver sessão 0008)
 - [x] Task B: CLAUDE.md aligned (§8 9 hooks, §11 cortada 29→11 por critério, §6 simplificado) + Blueprint §11 roadmap
-- [ ] Task C: branch `feat/camera-native-bridge` merged em `develop`
+- [ ] Task C: branch `feat/camera-native-bridge` merged em `develop` — merge **segurado** (Sprint 1.C 2026-06-01); G4 focus ring iOS validado em device (3 bugs corrigidos + tap re-arquitetado pro nativo), mas gates G1/G7 perf + Android M54 + goldens seguem abertos (Sprint 2/3). Ver spec `2026-05-28-camera-task-19-closure-design.md` §progresso
 
 Telas (12 Walking Skeleton):
 - [ ] P01 Splash

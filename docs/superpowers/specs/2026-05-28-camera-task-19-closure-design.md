@@ -2,7 +2,29 @@
 
 ## Status
 
-`In implementation — partial` (atualizado em 2026-05-29 ao final da Sessão 0006).
+`In implementation — partial` (atualizado em 2026-06-01, Sprint 1.C). **G4 validado em device; gates de perf/Android/goldens deferidos para Sprint 2/3.**
+
+### Progresso Sprint 1.C (2026-06-01) — G4 validado em device, com re-arquitetura do tap
+
+Validação perceptual no iPhone 12 físico (build `--profile` via `devicectl`, pois debug não roda standalone — Flutter #179234 / memória `raro-pattern-flutter-debug-vs-release-on-device`). **Usuário confirmou: focus ring instantâneo, centrado no ponto do tap, fade 1.2s.**
+
+Durante a validação, o ring **não aparecia** — 3 root causes empilhados foram diagnosticados (workflows multi-agente + refs Apple/objc.io) e corrigidos (commit `fix(camera): focus ring agora aparece no ponto do tap`):
+
+1. **opacity invisível** — `ring.opacity=0` no model + `CAAnimation removedOnCompletion=true` revertia presentation pro model (0). Fix: opacity model=1 + keyframes `[1,1,0]` + `fillMode .forwards` + `isRemovedOnCompletion=false`. Memória `raro-pattern-calayer-opacity-zero-model-invisible`.
+2. **tap caía no vão (re-arquitetura)** — o `EagerGestureRecognizer` entrega o tap à view nativa, mas a view nativa não escutava; o `GestureDetector` Flutter pai (que chamava `focusAt` via Pigeon) nunca disparava. **Mudança de design vs. spec original:** o tap agora é detectado **no nativo** (`UITapGestureRecognizer` na `CameraPreviewContainerView` → `showFocusRing` + `focusAtAsync` direto), não mais via Pigeon do Dart. `GestureDetector` Dart removido; Eager mantido. Pigeon `focusAt` continua existindo para contract tests/harness E2E. Memória `raro-pattern-flutter-platformview-tap-must-be-native` + hook `warn-gesturedetector-over-platformview.sh`.
+3. **ring vinha do canto** — `CAShapeLayer` com bounds zero + path em coords absolutas → `transform.scale` ancorava em (0,0) da superlayer. Fix: `layer.bounds` próprio + `position` no ponto + path centrado em (0,0). Memória `raro-pattern-calayer-scale-anchor-zero-bounds`.
+
+Pin de comportamento (XCTest): `testShowFocusRingIsVisibleWhileAnimating` (opacity>0) + `testShowFocusRingOpacityAnimationFreezesAtEnd` (fillMode/isRemovedOnCompletion). Widget test atualizado: tap é nativo, não chama `focusAt` do Dart. `flutter analyze` GREEN, widget tests GREEN.
+
+**Gates G4 fechados (iOS):** G4a/G4c (XCTest + widget), G4f (device — ring <50ms percebido, confirmado pelo usuário).
+
+**Deferido (NÃO validado nesta sessão — Sprint 2/3, alinhado ao roadmap Blueprint §11):**
+- G1 (startSession ≤500ms) + G7 (memory ±5MB) — perf gates via `integration_test` + Pigeon `CameraDebugHostApi` (ADR-0016). Não medidos.
+- G4d/G4e (goldens iOS/Android) — `actool` trava no Xcode 26 local; rodar em CI.
+- G2b/G3b/G4g/G5b/G6b — Android/Samsung M54: não tocado (Sprint 3 paridade). Inclui o tap-to-focus Android, que ficou **sem input** ao remover o `GestureDetector` Dart (instalar `setOnTouchListener`/GestureDetector na `PreviewView` Kotlin no Sprint 3).
+- T14 design-fidelity-checker vs protótipo.
+
+**Merge `feat/camera-native-bridge` → `develop`: NÃO feito nesta sessão.** Decisão (Sprint 1.C): segurar o merge enquanto gates de perf/Android seguem abertos. Os fixes estão commitados na branch. Merge revisitado quando a spec atingir Done real.
 
 **Concluído na Sessão 0006:**
 - **G4 — focus ring nativo iOS via CALayer** (T1, T2, T3 do plan): `FocusRingConfig.swift` + `CameraPlatformView.showFocusRing` + remoção do `FocusRingOverlay` Flutter. **Expandido além do plan original** para colapsar 5 root causes adicionais de tap-to-focus latency no iPhone 12 físico — ver [Session log 0006](../../sessions/0006-camera-task-19-focus-perf.md):
@@ -29,7 +51,7 @@
 5. `AVCaptureDevice.isSmoothAutoFocusEnabled=true` adiciona ramp cinematic 150-400ms
 6. KVO `isAdjustingFocus` re-registrado por tap (deve ser permanente em `startSession`)
 
-Plan original: [`docs/superpowers/plans/2026-05-28-camera-task-19-closure.md`](../plans/2026-05-28-camera-task-19-closure.md). Próxima transição: `Done` ao mergear `feat/camera-native-bridge` → `develop` após validação perceptual.
+Plan original: [`docs/superpowers/plans/2026-05-28-camera-task-19-closure.md`](../plans/2026-05-28-camera-task-19-closure.md). Próxima transição: `Done` quando os gates deferidos (G1/G7 perf, Android M54, goldens) fecharem em Sprint 2/3 — então o merge `feat/camera-native-bridge` → `develop` ocorre. G4 (focus ring iOS) já validado em device na Sprint 1.C (ver seção de progresso acima).
 
 ## Owner / Implementer
 
