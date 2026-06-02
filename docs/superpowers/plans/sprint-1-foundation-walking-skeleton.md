@@ -502,6 +502,14 @@ Cada S1.X é potencialmente 1 sessão. Cadência real emerge — se S1.D termina
 
 ### Task D — Walking skeleton: Splash + Onboarding (S1.D)
 
+> **Reconciliação com codebase real (mini-audit 2026-06-02, sessão de execução Task D):** os exemplos de código abaixo foram escritos no Sprint 0 antes do estado atual existir. Correções aplicadas pra alinhar com o que está no repo:
+> - **Rotas**: usar o contrato canônico `AppScreen` de `packages/shared` (`p01Splash('/splash')`, `p02Onboarding1('/onboarding/1')`, `p03Onboarding2('/onboarding/2')`, `p04Permissions('/permissions')`). NÃO usar `/` como splash — o enum já define `/splash`. `initialLocation` do router = `/splash`.
+> - **Logo**: o asset real é `docs/briefing/prototype/assets/raro-logo.png` (hífen). Copiar pra `apps/mobile/assets/logo/raro_logo.png` e registrar em `pubspec.yaml` (não há seção `assets:` ainda).
+> - **Fontes**: Space Grotesk / Inter / JetBrains Mono (Google Fonts, SIL OFL) bundladas em `assets/fonts/` + registradas no `pubspec.yaml` `fonts:` (decisão sessão Task D). Tema passa a aplicar `fontFamily`. Bundlar assets de fonte ≠ adicionar dependência → **não exige ADR** (CLAUDE.md §3 é sobre packages; o próprio pubspec já reserva "Fonts ... adicionados em sprints subsequentes").
+> - **Harness vs router**: `app.dart` hoje abre direto em `CameraTestHarnessScreen` (flag `RARO_HARNESS`, default `true`). Vira `MaterialApp.router` com o walking skeleton por padrão; o harness fica acessível só com `--dart-define=RARO_HARNESS=true`. `test/smoke_test.dart` ajustado pra continuar passando (boota `RaroApp` dentro de `ProviderScope`).
+> - **Storage keys**: reusar `StorageKeys.onboardingCompleted` (já existe em `raro_shared`) em vez de inventar `'raro.onboarding.step'`. Onboarding é binário (completou ou não) no walking skeleton — Sprint 2 expande se precisar de step granular.
+> - **`SplashScreen` sem nav inline**: a navegação 1.8s mora no router/controller, não num `Future.delayed` solto no `initState` (testável + sem leak). Widget de splash recebe callback ou usa `GoRouter.of(context).go(...)`.
+
 #### D1. Feature folder structure
 
 **Files**: criar diretórios.
@@ -607,33 +615,33 @@ Cada S1.X é potencialmente 1 sessão. Cadência real emerge — se S1.D termina
   // onboarding_step.dart
   enum OnboardingStep { intro, replay, permissions, done }
   ```
-- [ ] **Step 2**: Provider Riverpod 3 com persistência via shared_preferences (signature Sprint 2 reusará):
+- [ ] **Step 2**: Provider Riverpod 3 com persistência via shared_preferences. Persistir o boolean canônico `StorageKeys.onboardingCompleted` (`raro_shared`); o `OnboardingStep` enum é estado in-memory de UI (qual página mostrar), não persistido granularmente no walking skeleton. Imports absolutos `package:raro_mobile/...`:
   ```dart
-  // onboarding_progress_provider.dart
+  // lib/features/onboarding/application/onboarding_progress_provider.dart
+  import 'package:raro_mobile/features/onboarding/domain/onboarding_step.dart';
   import 'package:riverpod_annotation/riverpod_annotation.dart';
   import 'package:shared_preferences/shared_preferences.dart';
-  import '../domain/onboarding_step.dart';
 
   part 'onboarding_progress_provider.g.dart';
 
   @riverpod
   class OnboardingProgress extends _$OnboardingProgress {
-    static const _key = 'raro.onboarding.step';
-
     @override
-    Future<OnboardingStep> build() async {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_key);
-      return raw == null ? OnboardingStep.intro : OnboardingStep.values.byName(raw);
+    OnboardingStep build() => OnboardingStep.intro;
+
+    void advanceTo(OnboardingStep step) {
+      state = step;
     }
 
-    Future<void> advanceTo(OnboardingStep step) async {
-      state = AsyncData(step);
+    Future<void> markCompleted() async {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_key, step.name);
+      // StorageKeys.onboardingCompleted de raro_shared = 'raro.onboarding.completed'
+      await prefs.setBool('raro.onboarding.completed', true);
+      state = OnboardingStep.done;
     }
   }
   ```
+  > **Nota**: importar `StorageKeys` de `raro_shared` no provider real. O literal acima é só pra ilustrar o valor. Sprint 2 substitui `markCompleted` por persistência granular se um deep-link de retomada exigir.
 - [ ] **Step 3**: Rodar codegen:
   ```bash
   bun --filter @raro/mobile run codegen
@@ -671,28 +679,44 @@ Cada S1.X é potencialmente 1 sessão. Cadência real emerge — se S1.D termina
 
 **DONE criteria**: navegação splash → /onboarding/1 → /onboarding/2 → /permissions funciona end-to-end no Simulator; integration test passa.
 
-- [ ] **Step 1**: Definir rotas:
+- [ ] **Step 1**: Definir rotas usando os paths canônicos de `AppScreen` (`raro_shared`), com imports absolutos `package:raro_mobile/...`:
   ```dart
-  // router.dart
+  // lib/app/router.dart
   import 'package:go_router/go_router.dart';
-  import '../features/splash/presentation/splash_screen.dart';
-  import '../features/onboarding/presentation/onboarding_page_1.dart';
-  import '../features/onboarding/presentation/onboarding_page_2.dart';
+  import 'package:raro_mobile/features/splash/presentation/splash_screen.dart';
+  import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_1.dart';
+  import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_2.dart';
+  import 'package:raro_shared/raro_shared.dart';
 
-  final appRouter = GoRouter(
-    initialLocation: '/',
-    routes: [
-      GoRoute(path: '/', builder: (_, __) => const SplashScreen()),
-      GoRoute(path: '/onboarding/1', builder: (_, __) => const OnboardingPage1()),
-      GoRoute(path: '/onboarding/2', builder: (_, __) => const OnboardingPage2()),
-      // permissions, camera, etc. — adicionados em D5-D7+
-    ],
-  );
+  GoRouter buildAppRouter() => GoRouter(
+        initialLocation: AppScreen.p01Splash.path, // '/splash'
+        routes: [
+          GoRoute(
+            path: AppScreen.p01Splash.path,
+            builder: (context, state) => const SplashScreen(),
+          ),
+          GoRoute(
+            path: AppScreen.p02Onboarding1.path,
+            builder: (context, state) => const OnboardingPage1(),
+          ),
+          GoRoute(
+            path: AppScreen.p03Onboarding2.path,
+            builder: (context, state) => const OnboardingPage2(),
+          ),
+          // permissions, camera, etc. — adicionados em Tasks E-G
+        ],
+      );
   ```
-- [ ] **Step 2**: Wire em `app.dart`:
+  Placeholder de `/permissions` (Task E ainda não existe): adicionar uma `GoRoute` mínima apontando pra um `Scaffold` placeholder com `Key('permissions_placeholder')` pra navegação de "Avançar" do P03 não dar 404. Substituído na Task E.
+- [ ] **Step 2**: Wire em `app.dart` preservando o harness sob flag:
   ```dart
-  MaterialApp.router(routerConfig: appRouter)
+  // RARO_HARNESS=true mantém o CameraTestHarnessScreen (validação câmera Task C).
+  // Default agora é o walking skeleton via router.
+  return showHarness
+      ? MaterialApp(home: const CameraTestHarnessScreen(), theme: buildRaroDarkTheme(), ...)
+      : MaterialApp.router(routerConfig: buildAppRouter(), theme: buildRaroDarkTheme(), ...);
   ```
+  Atualizar `test/smoke_test.dart` se a mudança de `home:` pra `.router` quebrar o `find.byType(RaroApp)` (não deve — `RaroApp` continua sendo o root widget).
 - [ ] **Step 3**: Rodar `bun --filter @raro/mobile run dev:ios -- -d <simulator-udid>`. Navegar manualmente. Validar sequência.
 - [ ] **Step 4**: Commit: `feat(app): wire go_router pra splash + onboarding routes`.
 
