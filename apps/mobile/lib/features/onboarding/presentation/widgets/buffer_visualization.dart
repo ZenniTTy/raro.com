@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
+import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 
 class BufferVisualization extends StatelessWidget {
@@ -65,6 +66,37 @@ class _WaveformPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final markerX = size.width * switchFraction;
+
+    final pastRect = Rect.fromLTWH(0, 0, markerX, size.height);
+    canvas.drawRect(
+      pastRect,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [
+            Colors.transparent,
+            RaroAccents.orange.withValues(alpha: 0.15),
+            RaroAccents.green.withValues(alpha: 0.2),
+          ],
+        ).createShader(pastRect),
+    );
+
+    final nowRect = Rect.fromLTWH(
+      markerX,
+      0,
+      size.width - markerX,
+      size.height,
+    );
+    canvas.saveLayer(
+      nowRect,
+      Paint()..color = Colors.white.withValues(alpha: 0.85),
+    );
+    canvas.drawRect(
+      nowRect,
+      Paint()..shader = RaroGradients.rainbow.createShader(nowRect),
+    );
+    canvas.restore();
+
     final slot = size.width / barCount;
     final paint = Paint()..strokeCap = StrokeCap.round;
 
@@ -82,7 +114,6 @@ class _WaveformPainter extends CustomPainter {
       );
     }
 
-    final markerX = size.width * switchFraction;
     canvas.drawLine(
       Offset(markerX, 0),
       Offset(markerX, size.height),
