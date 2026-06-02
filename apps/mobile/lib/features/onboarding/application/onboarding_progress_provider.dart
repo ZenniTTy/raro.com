@@ -1,9 +1,12 @@
+import 'package:raro_mobile/features/onboarding/data/onboarding_store.dart';
 import 'package:raro_mobile/features/onboarding/domain/onboarding_step.dart';
-import 'package:raro_shared/raro_shared.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 part 'onboarding_progress_provider.g.dart';
+
+@Riverpod(keepAlive: true)
+OnboardingStore onboardingStore(Ref ref) =>
+    const SharedPreferencesOnboardingStore();
 
 @Riverpod(keepAlive: true)
 class OnboardingProgress extends _$OnboardingProgress {
@@ -15,8 +18,7 @@ class OnboardingProgress extends _$OnboardingProgress {
   }
 
   Future<void> markCompleted() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(StorageKeys.onboardingCompleted, true);
+    await ref.read(onboardingStoreProvider).markCompleted();
     state = OnboardingStep.done;
   }
 }

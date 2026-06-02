@@ -1,17 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/features/onboarding/application/onboarding_progress_provider.dart';
+import 'package:raro_mobile/features/onboarding/data/onboarding_store.dart';
 import 'package:raro_mobile/features/onboarding/domain/onboarding_step.dart';
-import 'package:raro_shared/raro_shared.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+class _FakeOnboardingStore implements OnboardingStore {
+  bool completed = false;
+
+  @override
+  Future<bool> isCompleted() async => completed;
+
+  @override
+  Future<void> markCompleted() async {
+    completed = true;
+  }
+}
 
 void main() {
+  late _FakeOnboardingStore store;
+
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    store = _FakeOnboardingStore();
   });
 
   ProviderContainer makeContainer() {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [onboardingStoreProvider.overrideWithValue(store)],
+    );
     addTearDown(container.dispose);
     return container;
   }
@@ -29,22 +44,15 @@ void main() {
           .advanceTo(OnboardingStep.replay);
 
       expect(container.read(onboardingProgressProvider), OnboardingStep.replay);
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getBool(StorageKeys.onboardingCompleted), isNull);
+      expect(store.completed, isFalse);
     });
 
-    test(
-      'markCompleted persiste onboardingCompleted=true e seta step done',
-      () async {
-        final container = makeContainer();
-        await container
-            .read(onboardingProgressProvider.notifier)
-            .markCompleted();
+    test('markCompleted persiste via store e seta step done', () async {
+      final container = makeContainer();
+      await container.read(onboardingProgressProvider.notifier).markCompleted();
 
-        expect(container.read(onboardingProgressProvider), OnboardingStep.done);
-        final prefs = await SharedPreferences.getInstance();
-        expect(prefs.getBool(StorageKeys.onboardingCompleted), isTrue);
-      },
-    );
+      expect(container.read(onboardingProgressProvider), OnboardingStep.done);
+      expect(store.completed, isTrue);
+    });
   });
 }
