@@ -580,9 +580,9 @@ Cleanup:
 - [ ] Task C: branch `feat/camera-native-bridge` merged em `develop` — merge **segurado** (Sprint 1.C 2026-06-01); G4 focus ring iOS validado em device (3 bugs corrigidos + tap re-arquitetado pro nativo), mas gates G1/G7 perf + Android M54 + goldens seguem abertos (Sprint 2/3). Ver spec `2026-05-28-camera-task-19-closure-design.md` §progresso
 
 Telas (12 Walking Skeleton):
-- [ ] P01 Splash
-- [ ] P02 Onboarding 1 ("Grave sem tocar")
-- [ ] P03 Onboarding 2 ("Nunca perca o momento")
+- [x] P01 Splash — logo breathe (drop-shadow) + dot loader + tagline; validado no iPhone 12 (Task D, sessão 0011)
+- [x] P02 Onboarding 1 ("Grave sem tocar") — mic+halos, wake word "Raro", provider Riverpod keepAlive; validado no iPhone 12
+- [x] P03 Onboarding 2 ("Nunca perca o momento") — buffer waveform viz; validado no iPhone 12
 - [ ] P04 Permissions (camera + mic)
 - [ ] P05 Camera UI shell (REC mock, lens switch real, HUD)
 - [ ] P06 Subscription popup

@@ -4,6 +4,7 @@
 
 | # | Data | Título | Branch | Commits |
 |---|---|---|---|---|
+| [0011](0011-sprint1-task-d-splash-onboarding.md) | 2026-06-02 | Sprint 1 Task D (walking skeleton: P01 splash + P02/P03 onboarding + go_router — 3 telas Flutter navegáveis via TDD com Riverpod 3 providers keepAlive + go_router; fontes Space Grotesk/Inter/JetBrains Mono bundladas (VF) + logo + tokens de gradiente centralizados; design-fidelity PASS; **validado no iPhone 12** (build profile assinado): 2 fixes pegos em device — buffer fill layers P03 + glow drop-shadow vs BoxShadow no splash; 1 memória nova) | `feat/camera-native-bridge` | `bc5e6ed`…`22e0462` (7 commits) |
 | [0010](0010-sprint1-task-c-camera-focus-ring.md) | 2026-06-01 | Sprint 1 Task C (camera G4: focus ring validado no iPhone 12 — 3 bugs empilhados corrigidos via systematic-debugging + TDD + workflows 3-ângulos: opacity model=0 invisível, tap caindo no vão → re-arquitetado pro nativo (UITapGestureRecognizer), ring vindo do canto (anchor/bounds); + desbloqueio build iOS sandbox (bun filter, SPM 2-gate git override, profile vs debug); 5 memórias + hook novo + CLAUDE.md §13/§8. **Merge SEGURADO** — gates G1/G7 perf + Android M54 + goldens → Sprint 2/3) | `feat/camera-native-bridge` | `8d4a5d9`, `b8b9a01`, `42bb901` (3 commits) |
 | [0009](0009-sprint1-task-b-workflow-refactor.md) | 2026-05-29 | Sprint 1 Task B (workflow refactor: CLAUDE.md §6 → "1 sessão = 1 entregável"; §11 cortada 29→11 por critério, 18 viram memória/hook + 1 memória nova Pigeon; Blueprint §11 roadmap 3-Sprint com checkboxes reais; session 0007 retroativo criado) | `feat/camera-native-bridge` | `8292ded`, `8442dea` (2 commits) |
 | [0008](0008-sprint1-task-a-cleanup.md) | 2026-05-29 | Sprint 1 Kickoff + Task A (audit FASE 1–4 de 26 deps/APIs via Context7+WebSearch + 6 telas de gate; MD audit fixes; cleanup: 6 memórias renomeadas consertando índice, multicam mantido p/ não quebrar refs em docs, §8 → 9 hooks reais; 0007 reservado p/ Sprint-0 reset retroativo na Task B) | `feat/camera-native-bridge` | `7608c59`, `4f9085e` (2 commits) |
@@ -15,19 +16,21 @@
 | [0002](0002-api-contract-shared.md) | 2026-05-26 | api-contract-shared (rm-2 spec bloqueante, 12 famílias) | `feat/api-contract-shared` | `2783166` … `f30bb1b` (16 commits) |
 | [0001](0001-bootstrap.md) | 2026-05-25 | Bootstrap do projeto (Fases 1–5 + 3 sprints de fixes) | `develop` | `c40e55d` … `1c43be0` (33 commits) |
 
-## Próxima sessão (Sprint 1 Task D — Walking skeleton: Splash + Onboarding)
+## Próxima sessão (Sprint 1 Task E — Permissions P04 + Camera UI shell P05)
 
-Primeiras telas Flutter navegáveis: P01 Splash + P02 Onboarding 1 ("Grave sem tocar") + P03 Onboarding 2 ("Nunca perca o momento"), com Riverpod 3 providers (impl mock, signature real) + go_router. Detalhe em `docs/superpowers/plans/sprint-1-foundation-walking-skeleton.md` §"Task D". Cole `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução" com `[TASK]=D`.
+Substituir o `_PermissionsPlaceholder` por tela P04 real (camera + mic via `permission_handler`) e implementar o Camera UI shell P05 fiel ao protótipo (HUD com resolution/fps/lens, REC button mock, buffer pill, lens switcher real). Detalhe em `docs/superpowers/plans/sprint-1-foundation-walking-skeleton.md` §"Task E". Cole `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução" com `[TASK]=E`.
 
-> **Task C (camera G4) parcialmente fechada na sessão 0010:** focus ring iOS validado em device. **Merge segurado** — gates G1/G7 (perf) + Android M54 + goldens deferidos pra Sprint 2/3 (ver spec `2026-05-28-camera-task-19-closure-design.md` §progresso). Branch `feat/camera-native-bridge` NÃO mergeada em `develop` (pushed pra origin em 2026-06-01, sincronizada). Backlog Sprint 3: tap-to-focus nativo Android (CameraX/Kotlin).
+> **Task D fechada na sessão 0011:** P01/P02/P03 implementados via TDD (24 testes), fontes/logo bundlados, go_router wirado, design-fidelity PASS, **validado no iPhone 12** (build profile assinado). 2 fixes pegos em device (buffer fill P03, glow drop-shadow P01). Blueprint §11 P01-P03 ✅. App agora abre no walking skeleton por padrão; harness câmera sob `--dart-define=RARO_HARNESS=true`.
+
+> **Task C (camera G4) parcialmente fechada na sessão 0010:** focus ring iOS validado em device. **Merge segurado** — gates G1/G7 (perf) + Android M54 + goldens deferidos pra Sprint 2/3 (ver spec `2026-05-28-camera-task-19-closure-design.md` §progresso). Branch `feat/camera-native-bridge` NÃO mergeada em `develop`. Backlog Sprint 3: tap-to-focus nativo Android (CameraX/Kotlin).
 
 > **Nota (Sprint 0 reset):** as antigas "Opções A/C/D" (harness E2E híbrido, replay buffer, Patrol) viraram backlog de Sprint 2/3 no roadmap (Blueprint §11). Sprint 1 foca cleanup + walking skeleton iOS. ADR-0016 e a spec do harness E2E continuam válidos como referência para Sprint 2.
 
 ## Como retomar (prompt sugerido)
 
-Cole no início da próxima sessão (de `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução", `[TASK]` = C):
+Cole no início da próxima sessão (de `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução", `[TASK]` = E):
 
-> Sessão Sprint 1 — Task C. CONTEXTO: Sprint 1 já passou pelo Kickoff (audit FASE 1-4) e Tasks A/B. Esta sessão executa apenas Task C. Setup: `/prime` → `git log`/`status` → ler `sprint-1-foundation-walking-skeleton.md` §"Task C" + "Riscos conhecidos" + "Out of scope" → mini-audit. Execução: Task C step-by-step, **confirme destrutivos (merge, `git branch -d`) antes**. Closure: `/session-end` → próximo objetivo "Sprint 1 Task D". Guardrails idem Kickoff.
+> Sessão Sprint 1 — Task E. CONTEXTO: Sprint 1 já passou pelo Kickoff (audit FASE 1-4) e Tasks A/B/C/D. Esta sessão executa apenas Task E. Setup: `/prime` → `git log`/`status` → ler `sprint-1-foundation-walking-skeleton.md` §"Task E" + "Riscos conhecidos" + "Out of scope" → mini-audit. Execução: Task E step-by-step (P04 Permissions real + P05 Camera UI shell), TDD, **confirme destrutivos antes**. Closure: `/session-end` → próximo objetivo "Sprint 1 Task F". Guardrails idem Kickoff.
 
 ## Recovery rápido (se algo quebrar ao retomar)
 
