@@ -156,6 +156,19 @@ raro/
 | XML parse (parity tests) | `xml` | `^6.5.0` |
 | Dart formatter | `dart format` (SDK) | — |
 
+### 2.11 Assets e fontes (regra de ADR)
+
+| Família | Arquivos | Origem |
+|---|---|---|
+| Display | **Space Grotesk** (VF, eixo `wght`) | Google Fonts — SIL OFL |
+| UI default | **Inter** (VF, eixo `wght`) | Google Fonts — SIL OFL |
+| Mono / dados técnicos | **JetBrains Mono** (VF, eixo `wght`) | Google Fonts — SIL OFL |
+| Logo | `raro_logo.png` | protótipo (`assets/logo/`) |
+
+Bundlados em `apps/mobile/assets/{fonts,logo}/` e registrados em `pubspec.yaml` (`fonts:`/`assets:`). Variable fonts: 1 arquivo por família; `FontWeight.w400..w700` ajusta o eixo `wght` automaticamente (Flutter 3.44 breaking change `font-weight-variation`).
+
+**Regra de ADR (resolve drift detectado na sessão 0011):** **bundlar assets (fontes, imagens, ícones) e registrá-los no `pubspec.yaml` NÃO exige ADR.** ADR é obrigatório apenas para **dependências/packages** (CLAUDE.md §3 "atualizar dep = abrir ADR"). O hook `warn-adr-drift` avisa em qualquer toque no `pubspec.yaml` — esse aviso é informativo para mudanças de asset; bloqueante de fato só para mudança de `dependencies:`/`dev_dependencies:`.
+
 ---
 
 ## 3. Arquitetura técnica
