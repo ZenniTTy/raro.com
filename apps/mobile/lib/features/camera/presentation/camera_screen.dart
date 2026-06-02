@@ -14,6 +14,8 @@ import 'package:raro_mobile/features/camera/presentation/widgets/buffer_pill.dar
 import 'package:raro_mobile/features/camera/presentation/widgets/hud_overlay.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/lens_switcher.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/rec_button.dart';
+import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
+import 'package:raro_mobile/features/paywall/presentation/widgets/subscription_popup.dart';
 
 class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({
@@ -21,11 +23,13 @@ class CameraScreen extends ConsumerStatefulWidget {
     required this.onClose,
     required this.onGallery,
     required this.onSettings,
+    required this.onSeePlans,
   });
 
   final VoidCallback onClose;
   final VoidCallback onGallery;
   final VoidCallback onSettings;
+  final VoidCallback onSeePlans;
 
   @override
   ConsumerState<CameraScreen> createState() => _CameraScreenState();
@@ -33,7 +37,23 @@ class CameraScreen extends ConsumerStatefulWidget {
 
 class _CameraScreenState extends ConsumerState<CameraScreen> {
   Timer? _timer;
+  Timer? _popupTimer;
   Duration _elapsed = Duration.zero;
+  bool _popupShown = false;
+  bool _popupVisible = false;
+
+  void _maybeScheduledPopup(bool isSubscribed) {
+    if (isSubscribed || _popupShown || _popupTimer != null) return;
+    _popupTimer = Timer(const Duration(milliseconds: 450), () {
+      if (!mounted) return;
+      setState(() {
+        _popupVisible = true;
+        _popupShown = true;
+      });
+    });
+  }
+
+  void _dismissPopup() => setState(() => _popupVisible = false);
 
   void _onRecTap() {
     final wasRecording = ref.read(cameraShellProvider).recording;
@@ -53,6 +73,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _popupTimer?.cancel();
     super.dispose();
   }
 
@@ -60,40 +81,63 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
     final shell = ref.watch(cameraShellProvider);
+
+    ref.listen(subscriptionControllerProvider, (_, next) {
+      final value = next.value;
+      if (value != null) _maybeScheduledPopup(value.isSubscribed);
+    });
+    final subscription = ref.watch(subscriptionControllerProvider).value;
+    if (subscription != null) {
+      _maybeScheduledPopup(subscription.isSubscribed);
+    }
+
     return Scaffold(
       backgroundColor: colors.bgDeep,
-      body: Column(
+      body: Stack(
         children: [
-          _TopBar(onClose: widget.onClose),
-          const _GradLine(),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: _Viewport(
-                  recording: shell.recording,
-                  elapsed: _elapsed,
-                  bufferDuration: shell.bufferDuration,
-                  lens: shell.lens,
-                  lensLabel: shell.hudLensLabel,
-                  onToggleBuffer: () => ref
-                      .read(cameraShellProvider.notifier)
-                      .toggleBufferDuration(),
-                  onSelectLens: (lens) =>
-                      ref.read(cameraShellProvider.notifier).selectLens(lens),
-                  onTapHud: widget.onSettings,
+          Column(
+            children: [
+              _TopBar(onClose: widget.onClose),
+              const _GradLine(),
+              const SizedBox(height: 12),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: _Viewport(
+                      recording: shell.recording,
+                      elapsed: _elapsed,
+                      bufferDuration: shell.bufferDuration,
+                      lens: shell.lens,
+                      lensLabel: shell.hudLensLabel,
+                      onToggleBuffer: () => ref
+                          .read(cameraShellProvider.notifier)
+                          .toggleBufferDuration(),
+                      onSelectLens: (lens) => ref
+                          .read(cameraShellProvider.notifier)
+                          .selectLens(lens),
+                      onTapHud: widget.onSettings,
+                    ),
+                  ),
                 ),
               ),
+              _BottomControls(
+                recording: shell.recording,
+                onGallery: widget.onGallery,
+                onSettings: widget.onSettings,
+                onRecTap: _onRecTap,
+              ),
+            ],
+          ),
+          if (_popupVisible)
+            SubscriptionPopup(
+              onSubscribe: () {
+                _dismissPopup();
+                widget.onSeePlans();
+              },
+              onLater: _dismissPopup,
             ),
-          ),
-          _BottomControls(
-            recording: shell.recording,
-            onGallery: widget.onGallery,
-            onSettings: widget.onSettings,
-            onRecTap: _onRecTap,
-          ),
         ],
       ),
     );

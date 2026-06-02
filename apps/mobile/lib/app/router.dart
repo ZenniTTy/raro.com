@@ -47,6 +47,7 @@ GoRouter buildAppRouter() {
           onClose: () => context.go(AppScreen.p04Permissions.path),
           onGallery: () => context.go(AppScreen.p07Gallery.path),
           onSettings: () => context.go(AppScreen.p06Settings.path),
+          onSeePlans: () => context.go(AppScreen.p09Paywall.path),
         ),
       ),
       GoRoute(
