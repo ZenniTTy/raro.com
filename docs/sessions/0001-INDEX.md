@@ -4,6 +4,7 @@
 
 | # | Data | Título | Branch | Commits |
 |---|---|---|---|---|
+| [0012](0012-sprint1-task-e-permissions-camera-shell.md) | 2026-06-02 | Sprint 1 Task E (walking skeleton: P04 Permissions + P05 Camera UI shell — 2 telas Flutter via TDD com Riverpod 3; P04 via `PermissionGateway` port mockável + `permission_handler`; P05 com HUD res/fps/lens, REC button mock + timer fake, buffer pill, lens switcher (preview MOCK — UiKitView nativo só Sprint 2, REC inline sem Lock mode); best-practices validadas via Context7+WebSearch; design-fidelity PASS-WITH-DEVIATIONS → 2 fixes (hud lens ascii x, buffer pill active); suíte 122/122 GREEN; 2 memórias novas (late-final AnimationController dispose crash + pumpAndSettle timeout em repeat infinito); device validation deferida pra Task H) | `feat/camera-native-bridge` | `2c75f4a`…`d5a2406` (4 commits) |
 | [0011](0011-sprint1-task-d-splash-onboarding.md) | 2026-06-02 | Sprint 1 Task D (walking skeleton: P01 splash + P02/P03 onboarding + go_router — 3 telas Flutter navegáveis via TDD com Riverpod 3 providers keepAlive + go_router; fontes Space Grotesk/Inter/JetBrains Mono bundladas (VF) + logo + tokens de gradiente centralizados; design-fidelity PASS; **validado no iPhone 12** (build profile assinado): 2 fixes pegos em device — buffer fill layers P03 + glow drop-shadow vs BoxShadow no splash; 1 memória nova) | `feat/camera-native-bridge` | `bc5e6ed`…`22e0462` (7 commits) |
 | [0010](0010-sprint1-task-c-camera-focus-ring.md) | 2026-06-01 | Sprint 1 Task C (camera G4: focus ring validado no iPhone 12 — 3 bugs empilhados corrigidos via systematic-debugging + TDD + workflows 3-ângulos: opacity model=0 invisível, tap caindo no vão → re-arquitetado pro nativo (UITapGestureRecognizer), ring vindo do canto (anchor/bounds); + desbloqueio build iOS sandbox (bun filter, SPM 2-gate git override, profile vs debug); 5 memórias + hook novo + CLAUDE.md §13/§8. **Merge SEGURADO** — gates G1/G7 perf + Android M54 + goldens → Sprint 2/3) | `feat/camera-native-bridge` | `8d4a5d9`, `b8b9a01`, `42bb901` (3 commits) |
 | [0009](0009-sprint1-task-b-workflow-refactor.md) | 2026-05-29 | Sprint 1 Task B (workflow refactor: CLAUDE.md §6 → "1 sessão = 1 entregável"; §11 cortada 29→11 por critério, 18 viram memória/hook + 1 memória nova Pigeon; Blueprint §11 roadmap 3-Sprint com checkboxes reais; session 0007 retroativo criado) | `feat/camera-native-bridge` | `8292ded`, `8442dea` (2 commits) |
@@ -16,11 +17,13 @@
 | [0002](0002-api-contract-shared.md) | 2026-05-26 | api-contract-shared (rm-2 spec bloqueante, 12 famílias) | `feat/api-contract-shared` | `2783166` … `f30bb1b` (16 commits) |
 | [0001](0001-bootstrap.md) | 2026-05-25 | Bootstrap do projeto (Fases 1–5 + 3 sprints de fixes) | `develop` | `c40e55d` … `1c43be0` (33 commits) |
 
-## Próxima sessão (Sprint 1 Task E — Permissions P04 + Camera UI shell P05)
+## Próxima sessão (Sprint 1 Task F — Settings P06 + Gallery P07)
 
-Substituir o `_PermissionsPlaceholder` por tela P04 real (camera + mic via `permission_handler`) e implementar o Camera UI shell P05 fiel ao protótipo (HUD com resolution/fps/lens, REC button mock, buffer pill, lens switcher real). Detalhe em `docs/superpowers/plans/sprint-1-foundation-walking-skeleton.md` §"Task E". Cole `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução" com `[TASK]=E`.
+Substituir os stubs `/settings` e `/gallery` (criados na Task E) por telas reais: **Settings (P07 no MD / P06 no contrato)** com entity `RecordingSettings` freezed persistida em shared_preferences (signature swap-able Sprint 2); **Gallery (P08 no MD / P07 no contrato)** com 5-6 `VideoEntity` mock em grid 3-col + filtros (Todos/Hoje/Esta semana/Raro Replay). Detalhe em `docs/superpowers/plans/sprint-1-foundation-walking-skeleton.md` §"Task F". Cole `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução" com `[TASK]=F`.
 
-> **Task D fechada na sessão 0011:** P01/P02/P03 implementados via TDD (24 testes), fontes/logo bundlados, go_router wirado, design-fidelity PASS, **validado no iPhone 12** (build profile assinado). 2 fixes pegos em device (buffer fill P03, glow drop-shadow P01). Blueprint §11 P01-P03 ✅. App agora abre no walking skeleton por padrão; harness câmera sob `--dart-define=RARO_HARNESS=true`.
+> **Pré-requisito Task G (não F):** `video_player` é dep nova (não está no pubspec nem na stack pinada Blueprint §2) → exige ADR/adendo Blueprint §2 ANTES da Task G (preview P09). A Task F não toca `video_player`.
+
+> **Task E fechada na sessão 0012:** P04 Permissions + P05 Camera shell via TDD (29 testes novos, suíte 122/122). P04 usa `PermissionGateway` port (mockável). P05 com preview **MOCK** (UiKitView nativo só Sprint 2), REC inline (sem Lock mode P05a), lens switch = estado local. design-fidelity PASS-WITH-DEVIATIONS → 2 fixes aplicados. Blueprint §11 P04/P05 ✅. **Validação perceptual no iPhone 12 deferida pra Task H** (gate do §Task E foi widget test + design-fidelity). 2 memórias novas (AnimationController dispose / pumpAndSettle).
 
 > **Task C (camera G4) parcialmente fechada na sessão 0010:** focus ring iOS validado em device. **Merge segurado** — gates G1/G7 (perf) + Android M54 + goldens deferidos pra Sprint 2/3 (ver spec `2026-05-28-camera-task-19-closure-design.md` §progresso). Branch `feat/camera-native-bridge` NÃO mergeada em `develop`. Backlog Sprint 3: tap-to-focus nativo Android (CameraX/Kotlin).
 
@@ -28,9 +31,9 @@ Substituir o `_PermissionsPlaceholder` por tela P04 real (camera + mic via `perm
 
 ## Como retomar (prompt sugerido)
 
-Cole no início da próxima sessão (de `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução", `[TASK]` = E):
+Cole no início da próxima sessão (de `SPRINT-1-PROMPTS.md` §"1 — Sessão de execução", `[TASK]` = F):
 
-> Sessão Sprint 1 — Task E. CONTEXTO: Sprint 1 já passou pelo Kickoff (audit FASE 1-4) e Tasks A/B/C/D. Esta sessão executa apenas Task E. Setup: `/prime` → `git log`/`status` → ler `sprint-1-foundation-walking-skeleton.md` §"Task E" + "Riscos conhecidos" + "Out of scope" → mini-audit. Execução: Task E step-by-step (P04 Permissions real + P05 Camera UI shell), TDD, **confirme destrutivos antes**. Closure: `/session-end` → próximo objetivo "Sprint 1 Task F". Guardrails idem Kickoff.
+> Sessão Sprint 1 — Task F. CONTEXTO: Sprint 1 já passou pelo Kickoff (audit FASE 1-4) e Tasks A/B/C/D/E. Esta sessão executa apenas Task F. Setup: `/prime` → `git log`/`status` → ler `sprint-1-foundation-walking-skeleton.md` §"Task F" + "Riscos conhecidos" + "Out of scope" → mini-audit. Execução: Task F step-by-step (P06 Settings real persistido em shared_preferences + P07 Gallery com vídeos mock), TDD, substituir os stubs `/settings` e `/gallery` criados na Task E, **confirme destrutivos antes**. Closure: `/session-end` → próximo objetivo "Sprint 1 Task G". Guardrails idem Kickoff.
 
 ## Recovery rápido (se algo quebrar ao retomar)
 
