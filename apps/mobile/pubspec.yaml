@@ -35,6 +35,9 @@ dependencies:
   share_plus: ^13.1.0
   device_info_plus: ^13.1.0
 
+  # Video playback — Preview P08 (Blueprint 2.7.1, ADR-0017)
+  video_player: ^2.11.1
+
   # i18n (Blueprint 2.8)
   intl: ^0.20.2
 
@@ -83,6 +86,7 @@ flutter:
 
   assets:
     - assets/logo/
+    - assets/sample_videos/
 
   fonts:
     - family: Space Grotesk

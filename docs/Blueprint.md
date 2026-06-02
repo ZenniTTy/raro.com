@@ -121,6 +121,12 @@ raro/
 | Compartilhamento | `share_plus` | `^13.1.0` |
 | Device info (detecção MIUI) | `device_info_plus` | `^13.1.0` |
 
+### 2.7.1 Reprodução de vídeo (Preview P08) — adendo ADR-0017 (2026-06-02)
+
+| Categoria | Lib | Versão | Notas |
+|---|---|---|---|
+| Player de vídeo | `video_player` | `^2.11.1` | Oficial Flutter Team (texture-based, iOS AVPlayer / Android ExoPlayer). Requer Flutter `>=3.38.0` (compatível com nosso `>=3.44.0`). Ciclo de vida via provider Riverpod `autoDispose` + `ref.onDispose(controller.dispose)` (memória `raro-pattern-flutter-video-player-disposal`). Sprint 1: clipe de teste bundlado em `assets/sample_videos/`; Sprint 2 migra pra `VideoPlayerController.file` lendo do vault. Ver [ADR-0017](decisions/0017-video-player-preview.md). |
+
 ### 2.8 i18n
 
 | Categoria | Decisão |
