@@ -81,6 +81,16 @@ flutter:
   uses-material-design: true
   generate: true
 
-  # Fonts (Space Grotesk, Inter, JetBrains Mono — Blueprint 4.3) e assets
-  # (logo, ícones) são adicionados em sprints subsequentes da Fase 5 quando o
-  # tema for implementado.
+  assets:
+    - assets/logo/
+
+  fonts:
+    - family: Space Grotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-VF.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-VF.ttf
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-VF.ttf
