@@ -7,6 +7,6 @@ enum FocusRingConfig {
   static let scaleFrom: CGFloat = 1.4
   static let scaleTo: CGFloat = 1.0
   static let radius: CGFloat = 32.0
-  static let opacityKeyframes: [NSNumber] = [0.0, 1.0, 0.0]
-  static let opacityKeyTimes: [NSNumber] = [0.0, 0.2, 1.0]
+  static let opacityKeyframes: [NSNumber] = [1.0, 1.0, 0.0]
+  static let opacityKeyTimes: [NSNumber] = [0.0, 0.8, 1.0]
 }

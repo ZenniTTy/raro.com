@@ -28,4 +28,24 @@ final class CameraPlatformViewTests: XCTestCase {
     XCTAssertEqual(opacity?.values as? [NSNumber], FocusRingConfig.opacityKeyframes)
     XCTAssertEqual(opacity?.keyTimes, FocusRingConfig.opacityKeyTimes)
   }
+
+  func testShowFocusRingIsVisibleWhileAnimating() {
+    let view = CameraPreviewContainerView(frame: CGRect(x: 0, y: 0, width: 400, height: 800))
+    view.showFocusRing(at: CGPoint(x: 200, y: 400))
+    let ring = view.layer.sublayers?.last as? CAShapeLayer
+    XCTAssertNotNil(ring)
+    XCTAssertGreaterThan(
+      ring?.opacity ?? 0, 0,
+      "ring model opacity must be visible; opacity=0 makes the ring invisible whenever the explicit CAAnimation is not actively driving the presentation layer (Core Animation reverts presentation to the model value)"
+    )
+  }
+
+  func testShowFocusRingOpacityAnimationFreezesAtEnd() {
+    let view = CameraPreviewContainerView(frame: CGRect(x: 0, y: 0, width: 400, height: 800))
+    view.showFocusRing(at: CGPoint(x: 100, y: 100))
+    let ring = view.layer.sublayers?.last as? CAShapeLayer
+    let opacity = ring?.animation(forKey: "opacity") as? CAKeyframeAnimation
+    XCTAssertEqual(opacity?.fillMode, .forwards)
+    XCTAssertEqual(opacity?.isRemovedOnCompletion, false)
+  }
 }

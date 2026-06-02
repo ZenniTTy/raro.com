@@ -38,7 +38,8 @@ void main() {
     );
   });
 
-  testWidgets('tap on preview calls focusAt with normalized coordinates', (
+  testWidgets('does not route tap through Flutter GestureDetector to focusAt '
+      '(tap-to-focus is detected natively via UITapGestureRecognizer)', (
     tester,
   ) async {
     final repo = _MockRepo();
@@ -68,15 +69,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(
+      find.byType(GestureDetector),
+      findsNothing,
+      reason:
+          'no Flutter GestureDetector over the UiKitView — Eager'
+          'GestureRecognizer hands the tap to the native view, so a parent '
+          'GestureDetector would never fire onTapDown',
+    );
+
     final widgetBox = tester.getRect(find.byType(CameraPreviewWidget));
     await tester.tapAt(widgetBox.center);
     await tester.pumpAndSettle();
 
-    final captured = verify(() => repo.focusAt(captureAny())).captured;
-    expect(captured.length, 1);
-    final point = captured.first as FocusPoint;
-    expect(point.x, closeTo(0.5, 0.01));
-    expect(point.y, closeTo(0.5, 0.01));
+    verifyNever(() => repo.focusAt(any()));
   });
 
   testWidgets(

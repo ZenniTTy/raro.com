@@ -15,7 +15,11 @@ final class CameraPlatformViewFactory: NSObject, FlutterPlatformViewFactory {
     viewIdentifier viewId: Int64,
     arguments args: Any?
   ) -> FlutterPlatformView {
-    let view = CameraPlatformView(frame: frame, session: hostApi.cameraManager.session)
+    let view = CameraPlatformView(
+      frame: frame,
+      session: hostApi.cameraManager.session,
+      manager: hostApi.cameraManager
+    )
     lastPlatformView = view
     return view
   }

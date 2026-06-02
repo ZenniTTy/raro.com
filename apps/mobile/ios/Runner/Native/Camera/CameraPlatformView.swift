@@ -5,6 +5,8 @@ import UIKit
 final class CameraPreviewContainerView: UIView {
   override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
 
+  weak var cameraManager: CameraManager?
+
   var previewLayer: AVCaptureVideoPreviewLayer {
     return layer as! AVCaptureVideoPreviewLayer
   }
@@ -14,21 +16,41 @@ final class CameraPreviewContainerView: UIView {
     set { previewLayer.session = newValue }
   }
 
+  func installTapToFocus() {
+    let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+    tap.delaysTouchesBegan = false
+    tap.delaysTouchesEnded = false
+    addGestureRecognizer(tap)
+  }
+
+  @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
+    let tapPoint = recognizer.location(in: self)
+    showFocusRing(at: tapPoint)
+
+    let viewBounds = bounds
+    guard viewBounds.width > 0, viewBounds.height > 0 else { return }
+    let normalized = FocusPoint(
+      x: Double(min(max(tapPoint.x / viewBounds.width, 0), 1)),
+      y: Double(min(max(tapPoint.y / viewBounds.height, 0), 1))
+    )
+    let sensorPoint = previewLayer.captureDevicePointConverted(fromLayerPoint: tapPoint)
+    cameraManager?.focusAtAsync(sensorPoint: sensorPoint, normalizedPoint: normalized) { _ in }
+  }
+
   func showFocusRing(at point: CGPoint) {
     let ring = CAShapeLayer()
     let radius = FocusRingConfig.radius
-    let bounds = CGRect(
-      x: point.x - radius,
-      y: point.y - radius,
-      width: radius * 2,
-      height: radius * 2
-    )
-    ring.path = UIBezierPath(ovalIn: bounds).cgPath
+    let diameter = radius * 2
+    ring.bounds = CGRect(x: 0, y: 0, width: diameter, height: diameter)
+    ring.position = point
+    ring.path = UIBezierPath(
+      ovalIn: CGRect(x: 0, y: 0, width: diameter, height: diameter)
+    ).cgPath
     ring.strokeColor = FocusRingConfig.color.cgColor
     ring.fillColor = UIColor.clear.cgColor
     ring.lineWidth = FocusRingConfig.strokeWidth
     ring.contentsScale = UIScreen.main.scale
-    ring.opacity = 0
+    ring.opacity = 1
 
     let scale = CABasicAnimation(keyPath: "transform.scale")
     scale.fromValue = FocusRingConfig.scaleFrom
@@ -40,6 +62,8 @@ final class CameraPreviewContainerView: UIView {
     opacity.values = FocusRingConfig.opacityKeyframes
     opacity.keyTimes = FocusRingConfig.opacityKeyTimes
     opacity.duration = FocusRingConfig.duration
+    opacity.fillMode = .forwards
+    opacity.isRemovedOnCompletion = false
 
     ring.add(scale, forKey: "scale")
     ring.add(opacity, forKey: "opacity")
@@ -56,12 +80,14 @@ final class CameraPreviewContainerView: UIView {
 final class CameraPlatformView: NSObject, FlutterPlatformView {
   private let container: CameraPreviewContainerView
 
-  init(frame: CGRect, session: AVCaptureSession?) {
+  init(frame: CGRect, session: AVCaptureSession?, manager: CameraManager?) {
     container = CameraPreviewContainerView(frame: frame)
     super.init()
     container.backgroundColor = .black
     container.previewLayer.videoGravity = .resizeAspectFill
     container.session = session
+    container.cameraManager = manager
+    container.installTapToFocus()
   }
 
   func view() -> UIView { container }
