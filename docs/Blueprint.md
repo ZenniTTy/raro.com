@@ -596,8 +596,8 @@ Telas (12 Walking Skeleton):
 - [x] P01 Splash — logo breathe (drop-shadow) + dot loader + tagline; validado no iPhone 12 (Task D, sessão 0011)
 - [x] P02 Onboarding 1 ("Grave sem tocar") — mic+halos, wake word "Raro", provider Riverpod keepAlive; validado no iPhone 12
 - [x] P03 Onboarding 2 ("Nunca perca o momento") — buffer waveform viz; validado no iPhone 12
-- [ ] P04 Permissions (camera + mic)
-- [ ] P05 Camera UI shell (REC mock, lens switch real, HUD)
+- [x] P04 Permissions (camera + mic via permission_handler, gateway port mockável) — TDD + design-fidelity PASS (Task E, sessão 0012)
+- [x] P05 Camera UI shell (HUD res/fps/lens, REC mock + timer fake, buffer pill, lens switcher local) — TDD + design-fidelity PASS-WITH-DEVIATIONS → 2 fixes (hud lens ascii x, buffer pill active). Preview é mock (UiKitView nativo só Sprint 2); validação perceptual device → Task H
 - [ ] P06 Subscription popup
 - [ ] P07 Settings (persistência via shared_preferences)
 - [ ] P08 Gallery (5 vídeos mock em assets/)
