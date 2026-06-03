@@ -7,6 +7,8 @@ abstract class CameraRepository {
   Future<void> switchLens(LensType lens);
   Future<void> setFormat(Resolution resolution, Fps fps);
   Future<void> focusAt(FocusPoint point);
+  Future<String> startRecording(RecordingOptions options);
+  Future<void> stopRecording();
   Future<bool> requestPermission();
   Future<bool> hasPermission();
 }

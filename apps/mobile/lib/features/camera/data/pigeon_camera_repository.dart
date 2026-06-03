@@ -28,6 +28,13 @@ class PigeonCameraRepository implements CameraRepository {
   Future<void> focusAt(FocusPoint point) => _api.focusAt(point);
 
   @override
+  Future<String> startRecording(RecordingOptions options) =>
+      _api.startRecording(options);
+
+  @override
+  Future<void> stopRecording() => _api.stopRecording();
+
+  @override
   Future<bool> requestPermission() => _api.requestPermission();
 
   @override

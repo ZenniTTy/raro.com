@@ -18,6 +18,13 @@ void main() {
     registerFallbackValue(LensType.wide);
     registerFallbackValue(Resolution.fhd1080);
     registerFallbackValue(Fps.fps30);
+    registerFallbackValue(
+      RecordingOptions(
+        resolution: Resolution.fhd1080,
+        fps: Fps.fps30,
+        codec: 'h265',
+      ),
+    );
   });
 
   test('discoverCapabilities delegates to host api', () async {
@@ -102,5 +109,32 @@ void main() {
     final result = await repo.hasPermission();
     expect(result, isFalse);
     verify(api.hasPermission).called(1);
+  });
+
+  test('startRecording forwards options + returns session id', () async {
+    final api = _MockHostApi();
+    when(() => api.startRecording(any())).thenAnswer((_) async => 'sess-1');
+    final repo = PigeonCameraRepository(api);
+    final id = await repo.startRecording(
+      RecordingOptions(
+        resolution: Resolution.fhd1080,
+        fps: Fps.fps60,
+        codec: 'h265',
+      ),
+    );
+    expect(id, 'sess-1');
+    final captured = verify(() => api.startRecording(captureAny())).captured;
+    final opts = captured.single as RecordingOptions;
+    expect(opts.resolution, Resolution.fhd1080);
+    expect(opts.fps, Fps.fps60);
+    expect(opts.codec, 'h265');
+  });
+
+  test('stopRecording delegates to host api', () async {
+    final api = _MockHostApi();
+    when(api.stopRecording).thenAnswer((_) async {});
+    final repo = PigeonCameraRepository(api);
+    await repo.stopRecording();
+    verify(api.stopRecording).called(1);
   });
 }
