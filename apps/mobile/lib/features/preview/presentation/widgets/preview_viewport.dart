@@ -7,8 +7,6 @@ import 'package:raro_mobile/features/gallery/domain/video_entity.dart';
 import 'package:raro_mobile/features/preview/application/preview_controller_provider.dart';
 import 'package:video_player/video_player.dart';
 
-const String _sampleAsset = 'assets/sample_videos/sample_preview.mp4';
-
 class PreviewViewport extends ConsumerStatefulWidget {
   const PreviewViewport({super.key, required this.video});
 
@@ -32,7 +30,7 @@ class _PreviewViewportState extends ConsumerState<PreviewViewport> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
-    final controllerAsync = ref.watch(previewControllerProvider(_sampleAsset));
+    final controllerAsync = ref.watch(previewControllerProvider(widget.video));
     final controller = controllerAsync.value;
     final base = HSLColor.fromAHSL(
       1,
