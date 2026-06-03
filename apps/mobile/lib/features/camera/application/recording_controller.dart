@@ -1,6 +1,14 @@
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository.dart';
+import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/domain/recording_phase.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'recording_controller.g.dart';
+
+@riverpod
+RecordingController recordingController(Ref ref) =>
+    RecordingController(repo: ref.watch(cameraRepositoryProvider));
 
 class RecordingController {
   RecordingController({required this.repo});

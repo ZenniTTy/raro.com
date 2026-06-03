@@ -1,11 +1,31 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:raro_mobile/features/camera/data/vault_service.dart';
+import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
 import 'package:raro_mobile/features/gallery/application/video_list_provider.dart';
 import 'package:raro_mobile/features/gallery/domain/gallery_filter.dart';
 
 void main() {
+  late Directory tempRoot;
+
+  setUp(() async {
+    tempRoot = await Directory.systemTemp.createTemp('video_list_test_');
+  });
+
+  tearDown(() async {
+    if (tempRoot.existsSync()) tempRoot.deleteSync(recursive: true);
+  });
+
   ProviderContainer makeContainer() {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [
+        vaultServiceProvider.overrideWith(
+          (ref) async => VaultService(documentsDir: tempRoot),
+        ),
+      ],
+    );
     addTearDown(container.dispose);
     return container;
   }

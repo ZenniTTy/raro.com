@@ -6,8 +6,15 @@ import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/features/camera/application/camera_controller.dart';
+import 'package:raro_mobile/features/camera/application/camera_flutter_api_provider.dart';
 import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
+import 'package:raro_mobile/features/camera/application/recording_controller.dart';
+import 'package:raro_mobile/features/camera/domain/camera_settings.dart';
 import 'package:raro_mobile/features/camera/domain/camera_shell_state.dart';
+import 'package:raro_mobile/features/camera/domain/recording_options_mapper.dart';
+import 'package:raro_mobile/features/camera/domain/recording_phase.dart';
+import 'package:raro_mobile/features/camera/presentation/camera_preview_widget.dart';
 import 'package:raro_mobile/features/camera/presentation/rule_of_thirds_painter.dart';
 import 'package:raro_mobile/features/camera/presentation/viewport_grain_painter.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/buffer_pill.dart';
@@ -16,6 +23,8 @@ import 'package:raro_mobile/features/camera/presentation/widgets/lens_switcher.d
 import 'package:raro_mobile/features/camera/presentation/widgets/rec_button.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/presentation/widgets/subscription_popup.dart';
+import 'package:raro_mobile/features/settings/application/settings_controller.dart';
+import 'package:raro_shared/raro_shared.dart' show Codec;
 
 class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({
@@ -41,6 +50,33 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   Duration _elapsed = Duration.zero;
   bool _popupShown = false;
   bool _popupVisible = false;
+  bool _recording = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startSession());
+  }
+
+  Future<void> _startSession() async {
+    final notifier = ref.read(cameraControllerProvider.notifier);
+    final granted = await notifier.hasPermission();
+    if (!granted || !mounted) return;
+    final settings = await ref.read(settingsControllerProvider.future);
+    if (!mounted) return;
+    final fmt = mapToPigeonFormat(
+      resolution: settings.resolution,
+      fps: settings.fps,
+    );
+    await notifier.start(
+      textureId: 0,
+      settings: CameraSettings(
+        lens: ref.read(cameraShellProvider).lens,
+        resolution: fmt.resolution,
+        fps: fmt.fps,
+      ),
+    );
+  }
 
   void _maybeScheduledPopup(bool isSubscribed) {
     if (isSubscribed || _popupShown || _popupTimer != null) return;
@@ -55,19 +91,33 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
   void _dismissPopup() => setState(() => _popupVisible = false);
 
-  void _onRecTap() {
-    final wasRecording = ref.read(cameraShellProvider).recording;
-    ref.read(cameraShellProvider.notifier).toggleRecording();
-    if (wasRecording) {
+  Future<void> _onRecTap() async {
+    final controller = ref.read(recordingControllerProvider);
+    if (controller.phase is RecordingActive) {
+      await controller.stop();
       _timer?.cancel();
       _timer = null;
       _elapsed = Duration.zero;
     } else {
+      final settings = await ref.read(settingsControllerProvider.future);
+      final fmt = mapToPigeonFormat(
+        resolution: settings.resolution,
+        fps: settings.fps,
+      );
+      await controller.start(
+        RecordingOptions(
+          resolution: fmt.resolution,
+          fps: fmt.fps,
+          codec: Codec.h265.label,
+        ),
+      );
       _elapsed = Duration.zero;
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         setState(() => _elapsed += const Duration(seconds: 1));
       });
     }
+    if (!mounted) return;
+    setState(() => _recording = controller.phase is RecordingActive);
   }
 
   @override
@@ -81,6 +131,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
     final shell = ref.watch(cameraShellProvider);
+    ref.watch(cameraControllerProvider);
+    ref.watch(recordingVaultSinkProvider);
 
     ref.listen(subscriptionControllerProvider, (_, next) {
       final value = next.value;
@@ -106,7 +158,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: _Viewport(
-                      recording: shell.recording,
+                      recording: _recording,
                       elapsed: _elapsed,
                       bufferDuration: shell.bufferDuration,
                       lens: shell.lens,
@@ -123,7 +175,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                 ),
               ),
               _BottomControls(
-                recording: shell.recording,
+                recording: _recording,
                 onGallery: widget.onGallery,
                 onSettings: widget.onSettings,
                 onRecTap: _onRecTap,
@@ -210,11 +262,10 @@ class _Viewport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<RaroColors>()!;
     return Stack(
       fit: StackFit.expand,
       children: [
-        ColoredBox(color: colors.bgDeep),
+        const Positioned.fill(child: CameraPreviewWidget(showOverlays: false)),
         const Positioned.fill(
           child: IgnorePointer(
             child: CustomPaint(painter: ViewportGrainPainter()),

@@ -1,9 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:raro_mobile/app/router.dart';
+import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
+import 'package:raro_mobile/features/camera/data/camera_repository.dart';
+import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
+import 'package:raro_mobile/features/camera/data/vault_service.dart';
+import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
 import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
 import 'package:raro_mobile/features/gallery/presentation/widgets/video_thumbnail.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
@@ -15,6 +22,8 @@ import 'package:raro_mobile/features/settings/data/settings_store.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 
 class _MockPermissionGateway extends Mock implements PermissionGateway {}
+
+class _MockCameraRepository extends Mock implements CameraRepository {}
 
 class _FakeSettingsStore implements SettingsStore {
   RecordingSettings stored = const RecordingSettings();
@@ -43,12 +52,39 @@ class _FakeSubscriptionStore implements SubscriptionStore {
 void main() {
   late _MockPermissionGateway gateway;
   late _FakeSubscriptionStore subscriptionStore;
+  late _MockCameraRepository cameraRepository;
+  late Directory vaultRoot;
 
-  setUp(() {
+  setUpAll(() {
+    registerFallbackValue(
+      RecordingOptions(
+        resolution: Resolution.fhd1080,
+        fps: Fps.fps30,
+        codec: 'h265',
+      ),
+    );
+  });
+
+  setUp(() async {
     gateway = _MockPermissionGateway();
     when(gateway.cameraStatus).thenAnswer((_) async => false);
     when(gateway.microphoneStatus).thenAnswer((_) async => false);
     subscriptionStore = _FakeSubscriptionStore();
+    cameraRepository = _MockCameraRepository();
+    when(cameraRepository.discoverCapabilities).thenAnswer(
+      (_) async => CameraCapabilities(
+        availableLenses: [LensType.ultraWide, LensType.wide],
+        supportedResolutions: [Resolution.fhd1080],
+        supportedFps: [Fps.fps30, Fps.fps60],
+      ),
+    );
+    when(cameraRepository.hasPermission).thenAnswer((_) async => false);
+    when(cameraRepository.stopSession).thenAnswer((_) async {});
+    vaultRoot = await Directory.systemTemp.createTemp('router_vault_');
+  });
+
+  tearDown(() {
+    if (vaultRoot.existsSync()) vaultRoot.deleteSync(recursive: true);
   });
 
   Widget app() {
@@ -57,6 +93,10 @@ void main() {
         permissionGatewayProvider.overrideWithValue(gateway),
         settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
         subscriptionStoreProvider.overrideWithValue(subscriptionStore),
+        cameraRepositoryProvider.overrideWithValue(cameraRepository),
+        vaultServiceProvider.overrideWith(
+          (ref) async => VaultService(documentsDir: vaultRoot),
+        ),
       ],
       child: MaterialApp.router(
         theme: buildRaroDarkTheme(),
