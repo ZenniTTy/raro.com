@@ -181,22 +181,23 @@ class _RecordingQuality extends StatelessWidget {
       children: [
         _Label('Resolução', colors),
         const SizedBox(height: 8),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 6,
-          crossAxisSpacing: 6,
-          childAspectRatio: 3.4,
-          children: [
-            for (final (value, label) in _resolutions)
-              SettingsChip(
-                label: label,
-                active: settings.resolution == value,
-                onTap: () => onResolution(value),
-              ),
-          ],
-        ),
+        for (var i = 0; i < _resolutions.length; i += 2) ...[
+          if (i > 0) const SizedBox(height: 6),
+          Row(
+            children: [
+              for (var j = i; j < i + 2 && j < _resolutions.length; j++) ...[
+                if (j > i) const SizedBox(width: 6),
+                Expanded(
+                  child: SettingsChip(
+                    label: _resolutions[j].$2,
+                    active: settings.resolution == _resolutions[j].$1,
+                    onTap: () => onResolution(_resolutions[j].$1),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
         const SizedBox(height: 14),
         _Label('FPS', colors),
         const SizedBox(height: 8),
