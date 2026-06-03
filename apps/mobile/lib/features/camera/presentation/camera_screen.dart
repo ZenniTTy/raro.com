@@ -51,6 +51,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   bool _popupShown = false;
   bool _popupVisible = false;
   bool _recording = false;
+  PigeonFormat _format = const PigeonFormat(
+    resolution: Resolution.fhd1080,
+    fps: Fps.fps60,
+  );
 
   @override
   void initState() {
@@ -63,11 +67,12 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     final granted = await notifier.hasPermission();
     if (!granted || !mounted) return;
     final settings = await ref.read(settingsControllerProvider.future);
-    if (!mounted) return;
     final fmt = mapToPigeonFormat(
       resolution: settings.resolution,
       fps: settings.fps,
     );
+    if (!mounted) return;
+    setState(() => _format = fmt);
     await notifier.start(
       textureId: 0,
       settings: CameraSettings(
@@ -99,15 +104,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       _timer = null;
       _elapsed = Duration.zero;
     } else {
-      final settings = await ref.read(settingsControllerProvider.future);
-      final fmt = mapToPigeonFormat(
-        resolution: settings.resolution,
-        fps: settings.fps,
-      );
       await controller.start(
         RecordingOptions(
-          resolution: fmt.resolution,
-          fps: fmt.fps,
+          resolution: _format.resolution,
+          fps: _format.fps,
           codec: Codec.h265.label,
         ),
       );
@@ -133,6 +133,16 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     final shell = ref.watch(cameraShellProvider);
     ref.watch(cameraControllerProvider);
     ref.watch(recordingVaultSinkProvider);
+
+    ref.listen(settingsControllerProvider, (_, next) {
+      final value = next.value;
+      if (value == null) return;
+      final fmt = mapToPigeonFormat(
+        resolution: value.resolution,
+        fps: value.fps,
+      );
+      if (mounted) setState(() => _format = fmt);
+    });
 
     ref.listen(subscriptionControllerProvider, (_, next) {
       final value = next.value;
