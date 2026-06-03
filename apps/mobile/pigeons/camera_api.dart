@@ -61,6 +61,18 @@ class FocusPoint {
   final double y;
 }
 
+class RecordingOptions {
+  RecordingOptions({
+    required this.resolution,
+    required this.fps,
+    required this.codec,
+  });
+
+  Resolution resolution;
+  Fps fps;
+  String codec;
+}
+
 @HostApi()
 abstract class CameraHostApi {
   @async
@@ -81,6 +93,13 @@ abstract class CameraHostApi {
   @async
   void focusAt(FocusPoint point);
 
+  /// Starts recording on the running session. Returns a session id.
+  String startRecording(RecordingOptions options);
+
+  /// Stops recording. The saved file path arrives via
+  /// [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
+  void stopRecording();
+
   @async
   bool requestPermission();
 
@@ -95,4 +114,6 @@ abstract class CameraFlutterApi {
   void onLensSwitched(LensType lens);
   void onFocusChanged(FocusPoint point, bool locked);
   void onError(CameraErrorCode code, String? message);
+  void onRecordingFinished(String path, int durationMs);
+  void onRecordingFailed(CameraErrorCode code, String? message);
 }

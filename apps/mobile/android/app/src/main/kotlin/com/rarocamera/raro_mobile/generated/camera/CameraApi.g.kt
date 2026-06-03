@@ -366,6 +366,48 @@ data class FocusPoint (
     return result
   }
 }
+
+/** Generated class from Pigeon that represents data sent in messages. */
+data class RecordingOptions (
+  val resolution: Resolution,
+  val fps: Fps,
+  val codec: String
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): RecordingOptions {
+      val resolution = pigeonVar_list[0] as Resolution
+      val fps = pigeonVar_list[1] as Fps
+      val codec = pigeonVar_list[2] as String
+      return RecordingOptions(resolution, fps, codec)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      resolution,
+      fps,
+      codec,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as RecordingOptions
+    return CameraApiPigeonUtils.deepEquals(this.resolution, other.resolution) && CameraApiPigeonUtils.deepEquals(this.fps, other.fps) && CameraApiPigeonUtils.deepEquals(this.codec, other.codec)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + CameraApiPigeonUtils.deepHash(this.resolution)
+    result = 31 * result + CameraApiPigeonUtils.deepHash(this.fps)
+    result = 31 * result + CameraApiPigeonUtils.deepHash(this.codec)
+    return result
+  }
+}
 private open class CameraApiPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -404,6 +446,11 @@ private open class CameraApiPigeonCodec : StandardMessageCodec() {
           FocusPoint.fromList(it)
         }
       }
+      136.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          RecordingOptions.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -437,6 +484,10 @@ private open class CameraApiPigeonCodec : StandardMessageCodec() {
         stream.write(135)
         writeValue(stream, value.toList())
       }
+      is RecordingOptions -> {
+        stream.write(136)
+        writeValue(stream, value.toList())
+      }
       else -> super.writeValue(stream, value)
     }
   }
@@ -451,6 +502,13 @@ interface CameraHostApi {
   fun switchLens(lens: LensType, callback: (Result<Unit>) -> Unit)
   fun setFormat(resolution: Resolution, fps: Fps, callback: (Result<Unit>) -> Unit)
   fun focusAt(point: FocusPoint, callback: (Result<Unit>) -> Unit)
+  /** Starts recording on the running session. Returns a session id. */
+  fun startRecording(options: RecordingOptions): String
+  /**
+   * Stops recording. The saved file path arrives via
+   * [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
+   */
+  fun stopRecording()
   fun requestPermission(callback: (Result<Boolean>) -> Unit)
   fun hasPermission(callback: (Result<Boolean>) -> Unit)
 
@@ -577,6 +635,39 @@ interface CameraHostApi {
         }
       }
       run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.CameraHostApi.startRecording$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val optionsArg = args[0] as RecordingOptions
+            val wrapped: List<Any?> = try {
+              listOf(api.startRecording(optionsArg))
+            } catch (exception: Throwable) {
+              CameraApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.CameraHostApi.stopRecording$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              api.stopRecording()
+              listOf(null)
+            } catch (exception: Throwable) {
+              CameraApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.CameraHostApi.requestPermission$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
@@ -695,6 +786,40 @@ class CameraFlutterApi(private val binaryMessenger: BinaryMessenger, private val
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
     val channelName = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onError$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(codeArg, messageArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(CameraApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  fun onRecordingFinished(pathArg: String, durationMsArg: Long, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onRecordingFinished$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(pathArg, durationMsArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(CameraApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  fun onRecordingFailed(codeArg: CameraErrorCode, messageArg: String?, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onRecordingFailed$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(codeArg, messageArg)) {
       if (it is List<*>) {
