@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/camera/presentation/camera_screen.dart';
+import 'package:raro_mobile/features/checkout/presentation/checkout_screen.dart';
 import 'package:raro_mobile/features/gallery/presentation/gallery_screen.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_1.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_2.dart';
+import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
+import 'package:raro_mobile/features/paywall/presentation/paywall_screen.dart';
 import 'package:raro_mobile/features/permissions/presentation/permissions_screen.dart';
 import 'package:raro_mobile/features/preview/presentation/preview_screen.dart';
 import 'package:raro_mobile/features/settings/presentation/settings_screen.dart';
@@ -66,9 +67,20 @@ GoRouter buildAppRouter() {
       ),
       GoRoute(
         path: AppScreen.p09Paywall.path,
-        builder: (context, state) => const _ScreenStub(
-          stubKey: Key('paywall_placeholder'),
-          label: 'Planos — Task G',
+        builder: (context, state) => PaywallScreen(
+          onClose: () => context.go(AppScreen.p05Camera.path),
+          onCheckout: (plan) =>
+              context.go(AppScreen.p10Checkout.path, extra: plan),
+        ),
+      ),
+      GoRoute(
+        path: AppScreen.p10Checkout.path,
+        builder: (context, state) => CheckoutScreen(
+          plan: state.extra is PlanType
+              ? state.extra! as PlanType
+              : PlanType.monthly,
+          onBack: () => context.go(AppScreen.p09Paywall.path),
+          onConfirmed: () => context.go(AppScreen.p05Camera.path),
         ),
       ),
       GoRoute(
@@ -80,30 +92,4 @@ GoRouter buildAppRouter() {
       ),
     ],
   );
-}
-
-class _ScreenStub extends StatelessWidget {
-  const _ScreenStub({required this.stubKey, required this.label});
-
-  final Key stubKey;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<RaroColors>()!;
-    return Scaffold(
-      key: stubKey,
-      backgroundColor: colors.bgDeep,
-      appBar: AppBar(
-        backgroundColor: colors.bgDeep,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.ink),
-          onPressed: () => context.go(AppScreen.p05Camera.path),
-        ),
-      ),
-      body: Center(
-        child: Text(label, style: TextStyle(color: colors.inkDim)),
-      ),
-    );
-  }
 }

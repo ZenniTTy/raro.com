@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:raro_mobile/features/settings/presentation/widgets/control_mode_card.dart';
@@ -143,6 +144,7 @@ class _SettingsBody extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 14),
+        const _TrialBanner(),
         _SeePlansButton(onTap: onSeePlans),
         const SizedBox(height: 14),
         const SettingsSection(title: 'Sobre', child: _About()),
@@ -350,6 +352,53 @@ class _ControlMode extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _TrialBanner extends ConsumerWidget {
+  const _TrialBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).extension<RaroColors>()!;
+    final subscription = ref.watch(subscriptionControllerProvider).value;
+    if (subscription == null) return const SizedBox.shrink();
+    final remaining = subscription.trialDaysRemaining(DateTime.now());
+    if (!subscription.isSubscribed || remaining <= 0) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: RaroAccents.yellow.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: RaroAccents.yellow.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.hourglass_bottom,
+              size: 18,
+              color: RaroAccents.yellow,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Período de teste · $remaining dias restantes',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: colors.ink,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

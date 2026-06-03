@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
+import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
+import 'package:raro_mobile/features/paywall/data/subscription_store.dart';
+import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/data/settings_store.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
@@ -20,6 +23,17 @@ class _FakeSettingsStore implements SettingsStore {
   }
 }
 
+class _FakeSubscriptionStore implements SubscriptionStore {
+  _FakeSubscriptionStore(this._stored);
+  final SubscriptionState _stored;
+
+  @override
+  Future<SubscriptionState> load() async => _stored;
+
+  @override
+  Future<void> save(SubscriptionState state) async {}
+}
+
 void main() {
   late _FakeSettingsStore store;
 
@@ -27,9 +41,15 @@ void main() {
     store = _FakeSettingsStore();
   });
 
-  Widget app() {
+  Widget app({SubscriptionState? subscription}) {
     return ProviderScope(
-      overrides: [settingsStoreProvider.overrideWithValue(store)],
+      overrides: [
+        settingsStoreProvider.overrideWithValue(store),
+        if (subscription != null)
+          subscriptionStoreProvider.overrideWithValue(
+            _FakeSubscriptionStore(subscription),
+          ),
+      ],
       child: MaterialApp(
         theme: buildRaroDarkTheme(),
         home: SettingsScreen(onBack: () {}, onSeePlans: () {}),
@@ -37,8 +57,11 @@ void main() {
     );
   }
 
-  Future<void> pumpReady(WidgetTester tester) async {
-    await tester.pumpWidget(app());
+  Future<void> pumpReady(
+    WidgetTester tester, {
+    SubscriptionState? subscription,
+  }) async {
+    await tester.pumpWidget(app(subscription: subscription));
     await tester.pump();
     await tester.pump();
   }
@@ -125,5 +148,24 @@ void main() {
     await tester.pump();
 
     expect(tapped, isTrue);
+  });
+
+  testWidgets('mostra trial countdown quando há trial ativo', (tester) async {
+    await pumpReady(
+      tester,
+      subscription: SubscriptionState(
+        isSubscribed: true,
+        trialStartedAt: DateTime.now().subtract(const Duration(days: 5)),
+      ),
+    );
+
+    await scrollTo(tester, find.textContaining('dias restantes'));
+    expect(find.textContaining('25 dias restantes'), findsOneWidget);
+  });
+
+  testWidgets('NÃO mostra trial countdown quando não-assinado', (tester) async {
+    await pumpReady(tester, subscription: const SubscriptionState.initial());
+
+    expect(find.textContaining('dias restantes'), findsNothing);
   });
 }

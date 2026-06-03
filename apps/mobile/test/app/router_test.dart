@@ -6,6 +6,9 @@ import 'package:raro_mobile/app/router.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
 import 'package:raro_mobile/features/gallery/presentation/widgets/video_thumbnail.dart';
+import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
+import 'package:raro_mobile/features/paywall/data/subscription_store.dart';
+import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
 import 'package:raro_mobile/features/permissions/data/permission_gateway.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/data/settings_store.dart';
@@ -25,13 +28,27 @@ class _FakeSettingsStore implements SettingsStore {
   }
 }
 
+class _FakeSubscriptionStore implements SubscriptionStore {
+  SubscriptionState stored = const SubscriptionState.initial();
+
+  @override
+  Future<SubscriptionState> load() async => stored;
+
+  @override
+  Future<void> save(SubscriptionState state) async {
+    stored = state;
+  }
+}
+
 void main() {
   late _MockPermissionGateway gateway;
+  late _FakeSubscriptionStore subscriptionStore;
 
   setUp(() {
     gateway = _MockPermissionGateway();
     when(gateway.cameraStatus).thenAnswer((_) async => false);
     when(gateway.microphoneStatus).thenAnswer((_) async => false);
+    subscriptionStore = _FakeSubscriptionStore();
   });
 
   Widget app() {
@@ -39,6 +56,7 @@ void main() {
       overrides: [
         permissionGatewayProvider.overrideWithValue(gateway),
         settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
+        subscriptionStoreProvider.overrideWithValue(subscriptionStore),
       ],
       child: MaterialApp.router(
         theme: buildRaroDarkTheme(),
@@ -152,6 +170,33 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('INFO'), findsOneWidget);
       expect(find.text('Compartilhar'), findsOneWidget);
+    });
+
+    testWidgets('camera → popup M01 → paywall → checkout → confirma → camera', (
+      tester,
+    ) async {
+      await goToCamera(tester);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Assinatura necessária'), findsOneWidget);
+
+      await tester.tap(find.text('Assinar agora'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Escolha seu plano'), findsOneWidget);
+
+      await tester.tap(find.text('Assinar agora'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Finalizar assinatura'), findsOneWidget);
+
+      await tester.tap(find.text('Apple Pay'));
+      await tester.pump();
+      await tester.tap(find.text('Confirmar assinatura'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('DIGA “RARO” PARA GRAVAR'), findsOneWidget);
+      expect(subscriptionStore.stored.isSubscribed, isTrue);
     });
   });
 }

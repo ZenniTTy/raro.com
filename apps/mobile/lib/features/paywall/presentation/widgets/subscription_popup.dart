@@ -30,17 +30,7 @@ class SubscriptionPopup extends StatelessWidget {
               padding: const EdgeInsets.all(1.5),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(22),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0x80FF2D55),
-                    Color(0x4DFFCC00),
-                    Color(0x6600C7BE),
-                    Color(0x80AF52DE),
-                  ],
-                  stops: [0, 0.3, 0.6, 1],
-                ),
+                gradient: RaroGradients.modalBorder,
               ),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),

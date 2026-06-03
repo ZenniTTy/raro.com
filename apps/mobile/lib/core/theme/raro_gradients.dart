@@ -30,4 +30,22 @@ abstract final class RaroGradients {
     colors: [Color(0xFFFF5470), Color(0xFFFF2D55), Color(0xFFC8002A)],
     stops: [0.0, 0.6, 1.0],
   );
+
+  static const LinearGradient modalBorder = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0x80FF2D55),
+      Color(0x4DFFCC00),
+      Color(0x6600C7BE),
+      Color(0x80AF52DE),
+    ],
+    stops: [0, 0.3, 0.6, 1],
+  );
+
+  static const LinearGradient planCardBorder = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [RaroAccents.yellow, RaroAccents.orange, RaroAccents.red],
+  );
 }
