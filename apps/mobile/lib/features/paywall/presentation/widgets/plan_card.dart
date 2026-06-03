@@ -44,18 +44,34 @@ class PlanCard extends StatelessWidget {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Premium',
-                    style: TextStyle(
-                      fontFamily: RaroFonts.display,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  Icon(
+                    Icons.bolt,
+                    size: 26,
+                    color: selected ? RaroAccents.yellow : colors.inkFaint,
                   ),
                   if (badge != null) _Badge(text: badge!),
                 ],
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Premium',
+                style: TextStyle(
+                  fontFamily: RaroFonts.display,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Desbloqueie todo o potencial',
+                style: TextStyle(
+                  fontFamily: RaroFonts.display,
+                  fontSize: 12,
+                  color: colors.inkDim,
+                ),
               ),
               const SizedBox(height: 12),
               Row(
@@ -100,6 +116,8 @@ class PlanCard extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 12),
+              const _PlanFeatures(),
+              const SizedBox(height: 12),
               _TrialBox(selected: selected),
               if (selected) ...[
                 const SizedBox(height: 12),
@@ -109,6 +127,52 @@ class PlanCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PlanFeatures extends StatelessWidget {
+  const _PlanFeatures();
+
+  static const _features = [
+    'Gravação em 4K 60fps',
+    'Buffer estendido',
+    'Sem anúncios',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<RaroColors>()!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final f in _features)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 14,
+                  height: 14,
+                  margin: const EdgeInsets.only(top: 1),
+                  decoration: const BoxDecoration(
+                    gradient: RaroGradients.redRadial,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check, size: 9, color: Colors.white),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    f,
+                    style: TextStyle(fontSize: 11.5, color: colors.ink),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

@@ -153,15 +153,15 @@ class _OrderSummary extends StatelessWidget {
               Container(
                 width: 44,
                 height: 44,
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: colors.bgDeep,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: colors.border),
                 ),
-                child: const Icon(
-                  Icons.camera_alt,
-                  size: 22,
-                  color: Colors.white,
+                child: Image.asset(
+                  'assets/logo/raro_logo.png',
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(width: 12),
@@ -244,7 +244,6 @@ class _PayTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
-    final icon = method == PaymentMethod.apple ? Icons.apple : Icons.play_arrow;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -261,12 +260,19 @@ class _PayTile extends StatelessWidget {
             Container(
               width: 42,
               height: 42,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: colors.bgDeep,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: colors.border),
               ),
-              child: Icon(icon, size: 22, color: colors.ink),
+              child: method == PaymentMethod.apple
+                  ? Icon(Icons.apple, size: 22, color: colors.ink)
+                  : const SizedBox(
+                      width: 18,
+                      height: 20,
+                      child: CustomPaint(painter: _GooglePlayPainter()),
+                    ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -423,4 +429,46 @@ class _GradLine extends StatelessWidget {
       decoration: const BoxDecoration(gradient: RaroGradients.rainbow),
     );
   }
+}
+
+class _GooglePlayPainter extends CustomPainter {
+  const _GooglePlayPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final mid = Offset(w * 0.62, h / 2);
+    const topLeft = Offset.zero;
+    final bottomLeft = Offset(0, h);
+    final tip = Offset(w, h / 2);
+
+    void tri(List<Offset> pts, List<Color> colors) {
+      final path = Path()..addPolygon(pts, true);
+      final rect = path.getBounds();
+      final paint = Paint()
+        ..shader = LinearGradient(colors: colors).createShader(rect);
+      canvas.drawPath(path, paint);
+    }
+
+    tri(
+      [topLeft, mid, Offset(w * 0.5, 0)],
+      const [RaroAccents.green, RaroAccents.teal],
+    );
+    tri(
+      [bottomLeft, mid, Offset(w * 0.5, h)],
+      const [RaroAccents.blue, RaroAccents.purple],
+    );
+    tri(
+      [Offset(w * 0.5, 0), mid, tip],
+      const [RaroAccents.yellow, RaroAccents.orange],
+    );
+    tri(
+      [Offset(w * 0.5, h), mid, tip],
+      const [RaroAccents.red, RaroAccents.red],
+    );
+  }
+
+  @override
+  bool shouldRepaint(_GooglePlayPainter oldDelegate) => false;
 }

@@ -114,8 +114,17 @@ class SubscriptionPopup extends StatelessWidget {
                       onPressed: onSubscribe,
                       primary: true,
                     ),
-                    const SizedBox(height: 8),
-                    OnboardingCta(label: 'Talvez depois', onPressed: onLater),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: onLater,
+                        child: Text(
+                          'Talvez depois',
+                          style: TextStyle(fontSize: 13, color: colors.inkDim),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

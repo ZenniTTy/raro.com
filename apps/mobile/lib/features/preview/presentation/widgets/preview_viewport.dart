@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
+import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/gallery/domain/video_entity.dart';
 import 'package:raro_mobile/features/preview/application/preview_controller_provider.dart';
@@ -164,15 +165,25 @@ class _Scrubber extends StatelessWidget {
       return ValueListenableBuilder<VideoPlayerValue>(
         valueListenable: controller!,
         builder: (context, value, _) {
+          final dur = value.duration.inMilliseconds;
+          final progress = dur == 0
+              ? 0.0
+              : (value.position.inMilliseconds / dur).clamp(0.0, 1.0);
           return _ScrubberView(
-            controller: controller,
+            progress: progress,
             position: _format(value.position),
             total: total,
+            onSeek: (fraction) => controller!.seekTo(
+              Duration(
+                milliseconds: (value.duration.inMilliseconds * fraction)
+                    .round(),
+              ),
+            ),
           );
         },
       );
     }
-    return _ScrubberView(controller: null, position: '00:00', total: total);
+    return _ScrubberView(progress: 0, position: '00:00', total: total);
   }
 
   static String _format(Duration d) {
@@ -184,34 +195,73 @@ class _Scrubber extends StatelessWidget {
 
 class _ScrubberView extends StatelessWidget {
   const _ScrubberView({
-    required this.controller,
+    required this.progress,
     required this.position,
     required this.total,
+    this.onSeek,
   });
 
-  final VideoPlayerController? controller;
+  final double progress;
   final String position;
   final String total;
+  final ValueChanged<double>? onSeek;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (controller != null)
-          VideoProgressIndicator(
-            controller!,
-            allowScrubbing: true,
-            padding: const EdgeInsets.symmetric(vertical: 4),
-          )
-        else
-          Container(
-            height: 3,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            void seek(Offset local) {
+              if (onSeek == null || width == 0) return;
+              onSeek!((local.dx / width).clamp(0.0, 1.0));
+            }
+
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapDown: (d) => seek(d.localPosition),
+              onHorizontalDragUpdate: (d) => seek(d.localPosition),
+              child: SizedBox(
+                height: 16,
+                child: Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    Container(
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: progress,
+                      child: Container(
+                        height: 3,
+                        decoration: BoxDecoration(
+                          gradient: RaroGradients.rainbow,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment(progress * 2 - 1, 0),
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
         const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

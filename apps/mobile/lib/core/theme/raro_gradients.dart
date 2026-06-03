@@ -24,6 +24,7 @@ abstract final class RaroGradients {
       RaroAccents.blue,
       RaroAccents.purple,
     ],
+    stops: [0, 0.16, 0.33, 0.50, 0.66, 0.83, 1.0],
   );
 
   static const RadialGradient redRadial = RadialGradient(
@@ -47,5 +48,16 @@ abstract final class RaroGradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [RaroAccents.yellow, RaroAccents.orange, RaroAccents.red],
+  );
+
+  static const RadialGradient paywallGlowWarm = RadialGradient(
+    center: Alignment(0, -0.4),
+    radius: 0.9,
+    colors: [Color(0x14FF6B35), Color(0x00000000)],
+  );
+
+  static const RadialGradient paywallGlowCool = RadialGradient(
+    radius: 0.8,
+    colors: [Color(0x0F007AFF), Color(0x00000000)],
   );
 }

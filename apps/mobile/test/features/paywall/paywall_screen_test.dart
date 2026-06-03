@@ -39,6 +39,14 @@ void main() {
     expect(find.textContaining('15 dias'), findsNothing);
   });
 
+  testWidgets('features aparecem dentro de cada card (1 por plano)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(app());
+    expect(find.text('Gravação em 4K 60fps'), findsNWidgets(2));
+    expect(find.text('Sem anúncios'), findsNWidgets(2));
+  });
+
   testWidgets('mensal selecionado por padrão; CTA leva o plano ao checkout', (
     tester,
   ) async {
