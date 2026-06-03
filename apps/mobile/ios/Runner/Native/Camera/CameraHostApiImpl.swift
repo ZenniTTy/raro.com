@@ -28,6 +28,16 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
         self?.flutterApi.onFocusChanged(point: point, locked: success) { _ in }
       }
     }
+    manager.onRecordingFinished = { [weak self] url, durationMs in
+      DispatchQueue.main.async {
+        self?.flutterApi.onRecordingFinished(path: url.path, durationMs: Int64(durationMs)) { _ in }
+      }
+    }
+    manager.onRecordingFailed = { [weak self] message in
+      DispatchQueue.main.async {
+        self?.flutterApi.onRecordingFailed(code: .sessionFailed, message: message) { _ in }
+      }
+    }
   }
 
   var cameraManager: CameraManager { manager }
@@ -71,6 +81,29 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
     manager.stopSession()
     flutterApi.onSessionStopped { _ in }
     completion(.success(()))
+  }
+
+  func startRecording(options: RecordingOptions) throws -> String {
+    let sessionId = UUID().uuidString
+    do {
+      try manager.setFormat(resolution: options.resolution, fps: options.fps)
+      try manager.startRecording(sessionId: sessionId, codec: options.codec)
+      return sessionId
+    } catch let error as CameraNativeError {
+      throw pigeonError(from: error)
+    } catch {
+      throw pigeonError(code: .sessionFailed, message: error.localizedDescription)
+    }
+  }
+
+  func stopRecording() throws {
+    do {
+      try manager.stopRecording()
+    } catch let error as CameraNativeError {
+      throw pigeonError(from: error)
+    } catch {
+      throw pigeonError(code: .sessionFailed, message: error.localizedDescription)
+    }
   }
 
   func switchLens(lens: LensType, completion: @escaping (Result<Void, Error>) -> Void) {

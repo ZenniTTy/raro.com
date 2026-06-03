@@ -20,6 +20,8 @@ final class CameraManager {
   var onLensSwitched: ((LensType) -> Void)?
   var onError: ((CameraNativeError) -> Void)?
 
+  private let recordingPipeline = RecordingPipeline()
+
   deinit {
     removeObservers()
   }
@@ -173,6 +175,14 @@ final class CameraManager {
     }
 
     self.session = session
+    do {
+      try recordingPipeline.attach(to: session)
+    } catch {
+      os_log(
+        "recording pipeline attach failed: %{public}@",
+        log: cameraLog, type: .error, error.localizedDescription
+      )
+    }
     self.device = device
     self.input = input
     installObservers(for: session)
@@ -206,6 +216,25 @@ final class CameraManager {
       self?.device = nil
       self?.input = nil
     }
+  }
+
+  func startRecording(sessionId: String, codec: String) throws {
+    guard session != nil else { throw CameraNativeError.notRunning }
+    try recordingPipeline.start(sessionId: sessionId, requestedCodec: codec)
+  }
+
+  func stopRecording() throws {
+    try recordingPipeline.stop()
+  }
+
+  var onRecordingFinished: ((URL, Int) -> Void)? {
+    get { recordingPipeline.onFinished }
+    set { recordingPipeline.onFinished = newValue }
+  }
+
+  var onRecordingFailed: ((String) -> Void)? {
+    get { recordingPipeline.onFailed }
+    set { recordingPipeline.onFailed = newValue }
   }
 
   func switchLens(_ lens: LensType) throws {
