@@ -13,4 +13,9 @@ void main() {
       expect(Codec.fromLabel(c.label), c);
     }
   });
+
+  test('Codec.fromLabel falls back to h265 for unknown labels', () {
+    expect(Codec.fromLabel('vp9'), Codec.h265);
+    expect(Codec.fromLabel(''), Codec.h265);
+  });
 }
