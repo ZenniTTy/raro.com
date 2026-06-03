@@ -86,7 +86,6 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
   func startRecording(options: RecordingOptions) throws -> String {
     let sessionId = UUID().uuidString
     do {
-      try manager.setFormat(resolution: options.resolution, fps: options.fps)
       try manager.startRecording(sessionId: sessionId, codec: options.codec)
       return sessionId
     } catch let error as CameraNativeError {
