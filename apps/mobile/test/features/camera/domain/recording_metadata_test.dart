@@ -14,7 +14,9 @@ void main() {
       thumbnailHue: 200,
     );
     expect(m.id, id);
+    expect(m.name, 'Vídeo 14:30');
     expect(m.duration, const Duration(seconds: 12));
+    expect(m.recordedAt, at);
     expect(m.isReplay, isFalse);
     expect(m.thumbnailHue, 200);
   });
