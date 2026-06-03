@@ -45,6 +45,19 @@ void main() {
 
       expect(a, b);
     });
+
+    test('VideoEntity filePath defaults to null and round-trips', () {
+      final v = VideoEntity(
+        id: '1',
+        name: 'x',
+        duration: Duration.zero,
+        recordedAt: DateTime(2026),
+        isReplay: false,
+        thumbnailHue: 0,
+      );
+      expect(v.filePath, isNull);
+      expect(v.copyWith(filePath: '/vault/1.mov').filePath, '/vault/1.mov');
+    });
   });
 }
 
