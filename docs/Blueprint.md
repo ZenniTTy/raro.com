@@ -564,6 +564,9 @@ Bundle ID / Application ID: `com.rarocamera`.
 | 0012 | Onboarding Xiaomi híbrido (automático em MIUI + manual em Settings) | Divergência #6 |
 | 0013 | Pigeon + Theme Tailor + gates anti-drift | spec api-contract-shared |
 | 0014 | Flutter 3.44 + SPM + iOS 15 | spec flutter-3.44-spm-migration |
+| 0015 | Estratégia da native bridge de câmera | spec camera-native-bridge |
+| 0016 | Harness E2E híbrido (integration_test + Pigeon debug) | spec camera task-19 |
+| 0017 | `video_player` para a tela Preview (P08) | Sprint 1 Task G |
 
 ---
 
@@ -606,13 +609,13 @@ Telas (12 Walking Skeleton):
 - [x] P05 Camera UI shell (HUD res/fps/lens, REC mock + timer fake, buffer pill, lens switcher local) — TDD + design-fidelity + **validado no iPhone 12**: 2 fixes design-fidelity (hud lens ascii x, buffer pill active) + 3 fixes device (rec glow sutil, grad-line topo, ícone câmera). Preview é mock (UiKitView nativo só Sprint 2)
 > **⚠️ Naming (numeração do MD vs. contrato `AppScreen`):** os rótulos `Pnn` abaixo seguem a numeração histórica do MD do Sprint 0, que **não** bate com o enum `AppScreen` em `raro_shared`. O mapeamento autoritativo (usar SEMPRE o enum no código) está anotado em cada linha como `(= AppScreen.pXX...)`. O "Subscription popup" é o modal `AppModal.m01SubscriptionPopup`, não uma rota.
 
-- [ ] P06 Subscription popup (= `AppModal.m01SubscriptionPopup`) — Task G
+- [x] P06 Subscription popup (= `AppModal.m01SubscriptionPopup`) — overlay na câmera, auto após 450ms se `!isSubscribed`; CTA Assinar agora → `/paywall`, Talvez depois fecha; copy **30 dias** (invariante, protótipo diz 15); `SubscriptionController` `@riverpod` keepAlive via port `SubscriptionStore`. TDD + design-fidelity PASS (Task G, sessão 0014). Device pendente p/ Task H
 - [x] P07 Settings (= `AppScreen.p06Settings`) — persistência via `SharedPreferencesAsync` (API moderna 2026, port `SettingsStore` mockável swap-able Sprint 2); entity `RecordingSettings` freezed com enums canônicos do `raro_shared`; estabilização = status fixo "SEMPRE ATIVADA" (não-editável, conforme protótipo); idioma só persiste preferência (i18n real Sprint 3); TDD + design-fidelity 13/13 PASS (Task F, sessão 0013). Device pendente p/ Task H
 - [x] P08 Gallery (= `AppScreen.p07Gallery`) — grid 3-col com 6 `VideoEntity` mock; thumbnails por gradiente HSL (sem assets PNG, conforme protótipo); filtros client-side Todos/Hoje/Esta semana/Raro Replay com lógica pura testável; TDD + design-fidelity PASS (Task F, sessão 0013). Device pendente p/ Task H
-- [ ] P09 Preview (= `AppScreen.p08Preview`, rota `/preview/:id`) — `video_player` mock — Task G (**stub `preview_placeholder` já no router**)
-- [ ] P10 Paywall (= `AppScreen.p09Paywall`, rota `/paywall`) — cards selecionáveis — Task G (**stub `paywall_placeholder` já no router**)
-- [ ] P11 Checkout (= `AppScreen.p10Checkout`, rota `/checkout`) — Apple Pay/Google Play mock — Task G
-- [ ] Trial countdown (DateTime.now() + shared_preferences) — Task G
+- [x] P09 Preview (= `AppScreen.p08Preview`, rota `/preview/:id`) — `video_player ^2.11.1` (ADR-0017) com clipe mock bundlado; provider `autoDispose` + `ref.onDispose`; scrubber rainbow custom + seek; metadata mock (`PreviewMetadata`: H.265 / size determinístico / duração). TDD + design-fidelity PASS (Task G, sessão 0014). Device pendente p/ Task H
+- [x] P10 Paywall (= `AppScreen.p09Paywall`, rota `/paywall`) — 2 `PlanCard` selecionáveis (mensal default, anual badge MELHOR OFERTA + R$ 7,49 equiv.), features dentro dos cards, ícone de plano, rodapé legal + watermark + glows; preços de `PlanPricing` (`raro_shared`). TDD + design-fidelity PASS (Task G, sessão 0014). Device pendente p/ Task H
+- [x] P11 Checkout (= `AppScreen.p10Checkout`, rota `/checkout`) — order summary (teste 30d + preço pós-teste), tiles Apple Pay / Google Play (ícone multicolor), CTA disabled até método + hint dinâmico; confirma → `subscribe(now)` → `/camera`. TDD + design-fidelity PASS (Task G, sessão 0014). Device pendente p/ Task H
+- [x] Trial countdown (DateTime.now() + `SharedPreferencesAsync` via port) — `SubscriptionState.trialDaysRemaining`; banner "X dias restantes" em Settings quando trial ativo (Task G, sessão 0014)
 
 ### Sprint 2 — Backend/Lógica Real iOS
 Status: 📋 Planejado em `sprint-2-backend-logic-ios.md`

@@ -2,6 +2,29 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-06-02] — 0.5.0 (Sprint 1 walking skeleton iOS — 12 telas Flutter navegáveis)
+
+> Registra o walking skeleton da Sprint 1 (Tasks D–G). Todas as telas são UI fiel ao protótipo com dados mockados via Riverpod 3 providers de signature swap-able pro Sprint 2. iOS-only, free Apple ID. Backend/lógica real = Sprint 2.
+
+### Adicionado
+- **Task D (sessão 0011):** P01 Splash (logo breathe + dot loader + tagline), P02/P03 Onboarding (mic+halos / buffer waveform), go_router com rotas do contrato `AppScreen`; fontes Space Grotesk/Inter/JetBrains Mono bundladas + logo + tokens de gradiente. Validado no iPhone 12.
+- **Task E (sessão 0012):** P04 Permissions (`PermissionGateway` port + `permission_handler`), P05 Camera UI shell (HUD res/fps/lens, REC mock + timer, buffer pill, lens switcher; preview MOCK — UiKitView nativo é Sprint 2). Validado no iPhone 12.
+- **Task F (sessão 0013):** P06 Settings (`RecordingSettings` freezed + `SettingsStore` port via `SharedPreferencesAsync`), P07 Gallery (6 `VideoEntity` mock, grid 3-col, thumbnails HSL, filtros client-side). Onboarding migrado pro mesmo padrão async.
+- **Task G (sessão 0014):** P08 Preview (`video_player ^2.11.1` via ADR-0017, clipe mock, provider autoDispose + `ref.onDispose`, scrubber rainbow custom, `PreviewMetadata`), M01 Subscription popup (auto 450ms se `!subscribed`), P09 Paywall (2 cards selecionáveis + features + rodapé legal + watermark), P10 Checkout (tiles Apple/Google Play + CTA disabled→`subscribe`→câmera), trial countdown 30d em Settings.
+- **Contrato `raro_shared`:** `PlanPricing` (9.90/89.90/7.49) + `StorageKeys.subscriptionActive`/`trialStartedAt`.
+- `docs/decisions/0017-video-player-preview.md` (Accepted) + Blueprint §2.7.1 + §9 (tabela ADR completada 0015–0017).
+
+### Mudado
+- `app.dart` abre o walking skeleton via `MaterialApp.router` por padrão; harness de câmera só com `--dart-define=RARO_HARNESS=true`.
+- `RaroGradients.rainbow` ganhou `stops` explícitos (fidelidade ao protótipo); novos `modalBorder`/`planCardBorder`/`paywallGlowWarm`/`Cool`.
+- Persistência migrada de `SharedPreferences.getInstance()` (legado 2026) para `SharedPreferencesAsync` via ports mockáveis (Settings, Onboarding, Subscription).
+- Router: stubs `_ScreenStub` substituídos por todas as telas reais e a classe removida.
+
+### Notas
+- **Device pendente (Task H):** validação física fim-a-fim das 12 telas no iPhone 12 é a próxima sessão (closure da Sprint 1).
+- Copy de trial usa **30 dias** (invariante ADR-0010 + Blueprint §1 div#2); o protótipo HTML diz 15 (desatualizado).
+- Suíte: 200 testes mobile + 39 shared GREEN; `flutter analyze` 0 issues; design-fidelity-checker PASS em todas as telas.
+
 ## [2026-05-29] — 0.4.2 (camera-native-bridge — G4 focus ring nativo + tap-to-focus latency collapse)
 
 ### Adicionado
