@@ -1,5 +1,8 @@
 import Flutter
+import os.log
 import UIKit
+
+private let factoryLog = OSLog(subsystem: "com.rarocamera", category: "camera")
 
 final class CameraPlatformViewFactory: NSObject, FlutterPlatformViewFactory {
   private let hostApi: CameraHostApiImpl
@@ -15,9 +18,16 @@ final class CameraPlatformViewFactory: NSObject, FlutterPlatformViewFactory {
     viewIdentifier viewId: Int64,
     arguments args: Any?
   ) -> FlutterPlatformView {
+    let session = hostApi.cameraManager.session
+    os_log(
+      "platformView create session=%{public}@ running=%{public}@",
+      log: factoryLog, type: .debug,
+      session == nil ? "nil" : "present",
+      "\(session?.isRunning ?? false)"
+    )
     let view = CameraPlatformView(
       frame: frame,
-      session: hostApi.cameraManager.session,
+      session: session,
       manager: hostApi.cameraManager
     )
     lastPlatformView = view

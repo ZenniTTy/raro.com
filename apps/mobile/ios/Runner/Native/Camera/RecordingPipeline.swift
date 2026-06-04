@@ -10,7 +10,7 @@ enum RecordingPipelineError: Error {
   case notRecording
 }
 
-final class RecordingPipeline: NSObject {
+final class RecordingPipeline: NSObject, @unchecked Sendable {
   private var movieOutput: AVCaptureMovieFileOutput?
   private var startedAt: CFTimeInterval = 0
   private var currentSessionId: String?

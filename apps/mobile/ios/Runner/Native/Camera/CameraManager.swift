@@ -162,6 +162,21 @@ final class CameraManager {
     session.sessionPreset = .inputPriority
     let input = try AVCaptureDeviceInput(device: device)
     if session.canAddInput(input) { session.addInput(input) }
+    if let audioDevice = AVCaptureDevice.default(for: .audio) {
+      do {
+        let audioInput = try AVCaptureDeviceInput(device: audioDevice)
+        if session.canAddInput(audioInput) {
+          session.addInput(audioInput)
+          os_log("audio input added", log: cameraLog, type: .info)
+        } else {
+          os_log("audio input cannot be added", log: cameraLog, type: .error)
+        }
+      } catch {
+        os_log("audio input failed: %{public}@", log: cameraLog, type: .error, error.localizedDescription)
+      }
+    } else {
+      os_log("no audio device available", log: cameraLog, type: .info)
+    }
     try device.lockForConfiguration()
     try applyFormat(device: device, resolution: config.resolution, fps: config.fps)
     device.unlockForConfiguration()
@@ -175,22 +190,22 @@ final class CameraManager {
     }
 
     self.session = session
-    do {
-      try recordingPipeline.attach(to: session)
-    } catch {
-      os_log(
-        "recording pipeline attach failed: %{public}@",
-        log: cameraLog, type: .error, error.localizedDescription
-      )
-    }
     self.device = device
     self.input = input
     installObservers(for: session)
     installFocusKVO(on: device)
 
     let capturedSession = session
+    let capturedPipeline = recordingPipeline
     await withCheckedContinuation { continuation in
       sessionQueue.async {
+        capturedSession.beginConfiguration()
+        do {
+          try capturedPipeline.attach(to: capturedSession)
+        } catch {
+          os_log("recording attach failed: %{public}@", log: cameraLog, type: .error, error.localizedDescription)
+        }
+        capturedSession.commitConfiguration()
         capturedSession.startRunning()
         continuation.resume()
       }
