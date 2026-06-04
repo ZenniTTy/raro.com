@@ -1,5 +1,5 @@
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
-import 'package:raro_mobile/features/camera/data/camera_repository.dart';
+import 'package:raro_mobile/features/camera/application/camera_flutter_api_provider.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/domain/recording_phase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -7,26 +7,33 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'recording_controller.g.dart';
 
 @riverpod
-RecordingController recordingController(Ref ref) =>
-    RecordingController(repo: ref.watch(cameraRepositoryProvider));
-
-class RecordingController {
-  RecordingController({required this.repo});
-
-  final CameraRepository repo;
-  RecordingPhase _phase = const RecordingIdle();
-
-  RecordingPhase get phase => _phase;
+class RecordingController extends _$RecordingController {
+  @override
+  RecordingPhase build() {
+    final events = ref.watch(recordingEventsProvider);
+    final subscription = events.listen((result) {
+      if (result is RecordingFinished || result is RecordingFailed) {
+        state = const RecordingIdle();
+      }
+    });
+    ref.onDispose(subscription.cancel);
+    return const RecordingIdle();
+  }
 
   Future<void> start(RecordingOptions options) async {
-    if (_phase is RecordingActive) return;
+    if (state is RecordingActive) return;
+    final repo = ref.read(cameraRepositoryProvider);
     final sessionId = await repo.startRecording(options);
-    _phase = RecordingActive(sessionId: sessionId, startedAt: DateTime.now());
+    state = RecordingActive(sessionId: sessionId, startedAt: DateTime.now());
   }
 
   Future<void> stop() async {
-    if (_phase is! RecordingActive) return;
-    await repo.stopRecording();
-    _phase = const RecordingIdle();
+    if (state is! RecordingActive) return;
+    final repo = ref.read(cameraRepositoryProvider);
+    try {
+      await repo.stopRecording();
+    } finally {
+      state = const RecordingIdle();
+    }
   }
 }

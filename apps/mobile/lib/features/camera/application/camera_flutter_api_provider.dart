@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
 import 'package:raro_mobile/features/camera/domain/recording_metadata.dart';
@@ -52,6 +53,14 @@ Raw<Stream<RecordingResult>> recordingEvents(Ref ref) {
 StreamSubscription<RecordingResult> recordingVaultSink(Ref ref) {
   final events = ref.watch(recordingEventsProvider);
   final subscription = events.listen((event) async {
+    if (event is RecordingFailed) {
+      ref
+          .read(appLoggerProvider)
+          .e(
+            'recording failed code=${event.code.name} message=${event.message}',
+          );
+      return;
+    }
     if (event is! RecordingFinished) {
       return;
     }

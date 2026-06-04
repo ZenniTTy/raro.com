@@ -12,6 +12,7 @@ import 'package:raro_mobile/features/camera/application/camera_shell_provider.da
 import 'package:raro_mobile/features/camera/application/recording_controller.dart';
 import 'package:raro_mobile/features/camera/domain/camera_settings.dart';
 import 'package:raro_mobile/features/camera/domain/camera_shell_state.dart';
+import 'package:raro_mobile/features/camera/domain/camera_state.dart';
 import 'package:raro_mobile/features/camera/domain/recording_options_mapper.dart';
 import 'package:raro_mobile/features/camera/domain/recording_phase.dart';
 import 'package:raro_mobile/features/camera/presentation/camera_preview_widget.dart';
@@ -50,7 +51,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   Duration _elapsed = Duration.zero;
   bool _popupShown = false;
   bool _popupVisible = false;
-  bool _recording = false;
   PigeonFormat _format = const PigeonFormat(
     resolution: Resolution.fhd1080,
     fps: Fps.fps60,
@@ -96,28 +96,39 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
   void _dismissPopup() => setState(() => _popupVisible = false);
 
+  void _stopElapsedTimer() {
+    _timer?.cancel();
+    _timer = null;
+    _elapsed = Duration.zero;
+  }
+
   Future<void> _onRecTap() async {
-    final controller = ref.read(recordingControllerProvider);
-    if (controller.phase is RecordingActive) {
-      await controller.stop();
-      _timer?.cancel();
-      _timer = null;
-      _elapsed = Duration.zero;
-    } else {
-      await controller.start(
-        RecordingOptions(
-          resolution: _format.resolution,
-          fps: _format.fps,
-          codec: Codec.h265.label,
-        ),
-      );
-      _elapsed = Duration.zero;
-      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        setState(() => _elapsed += const Duration(seconds: 1));
-      });
+    final notifier = ref.read(recordingControllerProvider.notifier);
+    final wasActive = ref.read(recordingControllerProvider) is RecordingActive;
+    try {
+      if (wasActive) {
+        await notifier.stop();
+        _stopElapsedTimer();
+      } else {
+        await notifier.start(
+          RecordingOptions(
+            resolution: _format.resolution,
+            fps: _format.fps,
+            codec: Codec.h265.label,
+          ),
+        );
+        _elapsed = Duration.zero;
+        _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+          setState(() => _elapsed += const Duration(seconds: 1));
+        });
+      }
+    } on Object catch (_) {
+      _stopElapsedTimer();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Falha ao gravar')));
     }
-    if (!mounted) return;
-    setState(() => _recording = controller.phase is RecordingActive);
   }
 
   @override
@@ -131,8 +142,14 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
     final shell = ref.watch(cameraShellProvider);
-    ref.watch(cameraControllerProvider);
+    final camAsync = ref.watch(cameraControllerProvider);
+    final cameraReady = camAsync.value is CameraStateReady;
+    final recording = ref.watch(recordingControllerProvider) is RecordingActive;
     ref.watch(recordingVaultSinkProvider);
+
+    ref.listen(recordingControllerProvider, (_, next) {
+      if (next is RecordingIdle) _stopElapsedTimer();
+    });
 
     ref.listen(settingsControllerProvider, (_, next) {
       final value = next.value;
@@ -168,7 +185,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: _Viewport(
-                      recording: _recording,
+                      cameraReady: cameraReady,
+                      recording: recording,
                       elapsed: _elapsed,
                       bufferDuration: shell.bufferDuration,
                       lens: shell.lens,
@@ -185,7 +203,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                 ),
               ),
               _BottomControls(
-                recording: _recording,
+                recording: recording,
                 onGallery: widget.onGallery,
                 onSettings: widget.onSettings,
                 onRecTap: _onRecTap,
@@ -251,6 +269,7 @@ class _TopBar extends StatelessWidget {
 
 class _Viewport extends StatelessWidget {
   const _Viewport({
+    required this.cameraReady,
     required this.recording,
     required this.elapsed,
     required this.bufferDuration,
@@ -261,6 +280,7 @@ class _Viewport extends StatelessWidget {
     required this.onTapHud,
   });
 
+  final bool cameraReady;
   final bool recording;
   final Duration elapsed;
   final BufferDuration bufferDuration;
@@ -272,10 +292,14 @@ class _Viewport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<RaroColors>()!;
     return Stack(
       fit: StackFit.expand,
       children: [
-        const Positioned.fill(child: CameraPreviewWidget(showOverlays: false)),
+        if (cameraReady)
+          const Positioned.fill(child: CameraPreviewWidget(showOverlays: false))
+        else
+          Positioned.fill(child: ColoredBox(color: colors.bgDeep)),
         const Positioned.fill(
           child: IgnorePointer(
             child: CustomPaint(painter: ViewportGrainPainter()),
