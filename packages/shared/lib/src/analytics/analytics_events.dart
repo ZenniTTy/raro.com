@@ -31,4 +31,10 @@ abstract final class AnalyticsEvents {
 
   static const String languageChanged = 'language_changed';
   static const String xiaomiModalShown = 'xiaomi_modal_shown';
+
+  static const String cameraStarted = 'camera_started';
+  static const String cameraStopped = 'camera_stopped';
+  static const String cameraFocusTapped = 'camera_focus_tapped';
+  static const String cameraPermissionDenied = 'camera_permission_denied';
+  static const String cameraError = 'camera_error';
 }

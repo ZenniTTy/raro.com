@@ -7,3 +7,9 @@ abstract final class SubscriptionConfig {
   static const String entitlement = 'premium';
   static const int freeTrialDays = 30;
 }
+
+abstract final class PlanPricing {
+  static const double monthlyBRL = 9.90;
+  static const double yearlyBRL = 89.90;
+  static const double yearlyMonthlyEquivalentBRL = 7.49;
+}

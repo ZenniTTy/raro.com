@@ -26,6 +26,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>A Raro Camera precisa da câmera para gravar vídeos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>A Raro Camera precisa do microfone para capturar áudio.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>A Raro Camera usa reconhecimento de voz no dispositivo para detectar "Raro".</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -55,22 +61,10 @@
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
-		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>A Raro Camera precisa da câmera para gravar vídeos.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>A Raro Camera precisa do microfone para capturar áudio.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>A Raro Camera usa reconhecimento de voz no dispositivo para detectar "Raro".</string>
 </dict>
 </plist>

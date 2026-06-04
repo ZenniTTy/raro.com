@@ -35,6 +35,9 @@ dependencies:
   share_plus: ^13.1.0
   device_info_plus: ^13.1.0
 
+  # Video playback — Preview P08 (Blueprint 2.7.1, ADR-0017)
+  video_player: ^2.11.1
+
   # i18n (Blueprint 2.8)
   intl: ^0.20.2
 
@@ -53,6 +56,9 @@ dependencies:
   raro_shared:
     path: ../../packages/shared
 
+  # Freezed sealed unions (domain states)
+  freezed_annotation: ^3.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -64,6 +70,7 @@ dev_dependencies:
   pigeon: ^26.3.2
   riverpod_generator: ^4.0.3
   theme_tailor: ^3.1.3
+  freezed: ^3.2.5
 
   # Lints
   flutter_lints: ^6.0.0
@@ -77,6 +84,17 @@ flutter:
   uses-material-design: true
   generate: true
 
-  # Fonts (Space Grotesk, Inter, JetBrains Mono — Blueprint 4.3) e assets
-  # (logo, ícones) são adicionados em sprints subsequentes da Fase 5 quando o
-  # tema for implementado.
+  assets:
+    - assets/logo/
+    - assets/sample_videos/
+
+  fonts:
+    - family: Space Grotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-VF.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-VF.ttf
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-VF.ttf

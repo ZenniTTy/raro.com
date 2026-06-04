@@ -68,11 +68,372 @@ private func nilOrValue<T>(_ value: Any?) -> T? {
   return value as! T?
 }
 
+private func doubleEqualsCameraApi(_ lhs: Double, _ rhs: Double) -> Bool {
+  return (lhs.isNaN && rhs.isNaN) || lhs == rhs
+}
+
+private func doubleHashCameraApi(_ value: Double, _ hasher: inout Hasher) {
+  if value.isNaN {
+    hasher.combine(0x7FF8000000000000)
+  } else {
+    // Normalize -0.0 to 0.0
+    hasher.combine(value == 0 ? 0 : value)
+  }
+}
+
+func deepEqualsCameraApi(_ lhs: Any?, _ rhs: Any?) -> Bool {
+  let cleanLhs = nilOrValue(lhs) as Any?
+  let cleanRhs = nilOrValue(rhs) as Any?
+  switch (cleanLhs, cleanRhs) {
+  case (nil, nil):
+    return true
+
+  case (nil, _), (_, nil):
+    return false
+
+  case (let lhs as AnyObject, let rhs as AnyObject) where lhs === rhs:
+    return true
+
+  case is (Void, Void):
+    return true
+
+  case (let lhsArray, let rhsArray) as ([Any?], [Any?]):
+    guard lhsArray.count == rhsArray.count else { return false }
+    for (index, element) in lhsArray.enumerated() {
+      if !deepEqualsCameraApi(element, rhsArray[index]) {
+        return false
+      }
+    }
+    return true
+
+  case (let lhsArray, let rhsArray) as ([Double], [Double]):
+    guard lhsArray.count == rhsArray.count else { return false }
+    for (index, element) in lhsArray.enumerated() {
+      if !doubleEqualsCameraApi(element, rhsArray[index]) {
+        return false
+      }
+    }
+    return true
+
+  case (let lhsDictionary, let rhsDictionary) as ([AnyHashable: Any?], [AnyHashable: Any?]):
+    guard lhsDictionary.count == rhsDictionary.count else { return false }
+    for (lhsKey, lhsValue) in lhsDictionary {
+      var found = false
+      for (rhsKey, rhsValue) in rhsDictionary {
+        if deepEqualsCameraApi(lhsKey, rhsKey) {
+          if deepEqualsCameraApi(lhsValue, rhsValue) {
+            found = true
+            break
+          } else {
+            return false
+          }
+        }
+      }
+      if !found { return false }
+    }
+    return true
+
+  case (let lhs as Double, let rhs as Double):
+    return doubleEqualsCameraApi(lhs, rhs)
+
+  case (let lhsHashable, let rhsHashable) as (AnyHashable, AnyHashable):
+    return lhsHashable == rhsHashable
+
+  default:
+    return false
+  }
+}
+
+func deepHashCameraApi(value: Any?, hasher: inout Hasher) {
+  let cleanValue = nilOrValue(value) as Any?
+  if let cleanValue = cleanValue {
+    if let doubleValue = cleanValue as? Double {
+      doubleHashCameraApi(doubleValue, &hasher)
+    } else if let valueList = cleanValue as? [Any?] {
+      for item in valueList {
+        deepHashCameraApi(value: item, hasher: &hasher)
+      }
+    } else if let valueList = cleanValue as? [Double] {
+      for item in valueList {
+        doubleHashCameraApi(item, &hasher)
+      }
+    } else if let valueDict = cleanValue as? [AnyHashable: Any?] {
+      var result = 0
+      for (key, value) in valueDict {
+        var entryKeyHasher = Hasher()
+        deepHashCameraApi(value: key, hasher: &entryKeyHasher)
+        var entryValueHasher = Hasher()
+        deepHashCameraApi(value: value, hasher: &entryValueHasher)
+        result = result &+ ((entryKeyHasher.finalize() &* 31) ^ entryValueHasher.finalize())
+      }
+      hasher.combine(result)
+    } else if let hashableValue = cleanValue as? AnyHashable {
+      hasher.combine(hashableValue)
+    } else {
+      hasher.combine(String(describing: cleanValue))
+    }
+  } else {
+    hasher.combine(0)
+  }
+}
+
+
+enum LensType: Int {
+  case ultraWide = 0
+  case wide = 1
+}
+
+enum Resolution: Int {
+  case hd720 = 0
+  case fhd1080 = 1
+  case uhd4k = 2
+}
+
+enum Fps: Int {
+  case fps30 = 0
+  case fps60 = 1
+}
+
+enum CameraErrorCode: Int {
+  case permissionDenied = 0
+  case deviceUnavailable = 1
+  case lensUnavailable = 2
+  case formatUnsupported = 3
+  case sessionFailed = 4
+  case alreadyRunning = 5
+  case notRunning = 6
+}
+
+/// Generated class from Pigeon that represents data sent in messages.
+struct CameraCapabilities: Hashable {
+  var availableLenses: [LensType]
+  var supportedResolutions: [Resolution]
+  var supportedFps: [Fps]
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> CameraCapabilities? {
+    let availableLenses = pigeonVar_list[0] as! [LensType]
+    let supportedResolutions = pigeonVar_list[1] as! [Resolution]
+    let supportedFps = pigeonVar_list[2] as! [Fps]
+
+    return CameraCapabilities(
+      availableLenses: availableLenses,
+      supportedResolutions: supportedResolutions,
+      supportedFps: supportedFps
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      availableLenses,
+      supportedResolutions,
+      supportedFps,
+    ]
+  }
+  static func == (lhs: CameraCapabilities, rhs: CameraCapabilities) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return deepEqualsCameraApi(lhs.availableLenses, rhs.availableLenses) && deepEqualsCameraApi(lhs.supportedResolutions, rhs.supportedResolutions) && deepEqualsCameraApi(lhs.supportedFps, rhs.supportedFps)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("CameraCapabilities")
+    deepHashCameraApi(value: availableLenses, hasher: &hasher)
+    deepHashCameraApi(value: supportedResolutions, hasher: &hasher)
+    deepHashCameraApi(value: supportedFps, hasher: &hasher)
+  }
+}
+
+/// Generated class from Pigeon that represents data sent in messages.
+struct CameraConfig: Hashable {
+  var lens: LensType
+  var resolution: Resolution
+  var fps: Fps
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> CameraConfig? {
+    let lens = pigeonVar_list[0] as! LensType
+    let resolution = pigeonVar_list[1] as! Resolution
+    let fps = pigeonVar_list[2] as! Fps
+
+    return CameraConfig(
+      lens: lens,
+      resolution: resolution,
+      fps: fps
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      lens,
+      resolution,
+      fps,
+    ]
+  }
+  static func == (lhs: CameraConfig, rhs: CameraConfig) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return deepEqualsCameraApi(lhs.lens, rhs.lens) && deepEqualsCameraApi(lhs.resolution, rhs.resolution) && deepEqualsCameraApi(lhs.fps, rhs.fps)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("CameraConfig")
+    deepHashCameraApi(value: lens, hasher: &hasher)
+    deepHashCameraApi(value: resolution, hasher: &hasher)
+    deepHashCameraApi(value: fps, hasher: &hasher)
+  }
+}
+
+/// Generated class from Pigeon that represents data sent in messages.
+struct FocusPoint: Hashable {
+  var x: Double
+  var y: Double
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> FocusPoint? {
+    let x = pigeonVar_list[0] as! Double
+    let y = pigeonVar_list[1] as! Double
+
+    return FocusPoint(
+      x: x,
+      y: y
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      x,
+      y,
+    ]
+  }
+  static func == (lhs: FocusPoint, rhs: FocusPoint) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return deepEqualsCameraApi(lhs.x, rhs.x) && deepEqualsCameraApi(lhs.y, rhs.y)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("FocusPoint")
+    deepHashCameraApi(value: x, hasher: &hasher)
+    deepHashCameraApi(value: y, hasher: &hasher)
+  }
+}
+
+/// Generated class from Pigeon that represents data sent in messages.
+struct RecordingOptions: Hashable {
+  var resolution: Resolution
+  var fps: Fps
+  var codec: String
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> RecordingOptions? {
+    let resolution = pigeonVar_list[0] as! Resolution
+    let fps = pigeonVar_list[1] as! Fps
+    let codec = pigeonVar_list[2] as! String
+
+    return RecordingOptions(
+      resolution: resolution,
+      fps: fps,
+      codec: codec
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      resolution,
+      fps,
+      codec,
+    ]
+  }
+  static func == (lhs: RecordingOptions, rhs: RecordingOptions) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return deepEqualsCameraApi(lhs.resolution, rhs.resolution) && deepEqualsCameraApi(lhs.fps, rhs.fps) && deepEqualsCameraApi(lhs.codec, rhs.codec)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("RecordingOptions")
+    deepHashCameraApi(value: resolution, hasher: &hasher)
+    deepHashCameraApi(value: fps, hasher: &hasher)
+    deepHashCameraApi(value: codec, hasher: &hasher)
+  }
+}
 
 private class CameraApiPigeonCodecReader: FlutterStandardReader {
+  override func readValue(ofType type: UInt8) -> Any? {
+    switch type {
+    case 129:
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return LensType(rawValue: enumResultAsInt)
+      }
+      return nil
+    case 130:
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return Resolution(rawValue: enumResultAsInt)
+      }
+      return nil
+    case 131:
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return Fps(rawValue: enumResultAsInt)
+      }
+      return nil
+    case 132:
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return CameraErrorCode(rawValue: enumResultAsInt)
+      }
+      return nil
+    case 133:
+      return CameraCapabilities.fromList(self.readValue() as! [Any?])
+    case 134:
+      return CameraConfig.fromList(self.readValue() as! [Any?])
+    case 135:
+      return FocusPoint.fromList(self.readValue() as! [Any?])
+    case 136:
+      return RecordingOptions.fromList(self.readValue() as! [Any?])
+    default:
+      return super.readValue(ofType: type)
+    }
+  }
 }
 
 private class CameraApiPigeonCodecWriter: FlutterStandardWriter {
+  override func writeValue(_ value: Any) {
+    if let value = value as? LensType {
+      super.writeByte(129)
+      super.writeValue(value.rawValue)
+    } else if let value = value as? Resolution {
+      super.writeByte(130)
+      super.writeValue(value.rawValue)
+    } else if let value = value as? Fps {
+      super.writeByte(131)
+      super.writeValue(value.rawValue)
+    } else if let value = value as? CameraErrorCode {
+      super.writeByte(132)
+      super.writeValue(value.rawValue)
+    } else if let value = value as? CameraCapabilities {
+      super.writeByte(133)
+      super.writeValue(value.toList())
+    } else if let value = value as? CameraConfig {
+      super.writeByte(134)
+      super.writeValue(value.toList())
+    } else if let value = value as? FocusPoint {
+      super.writeByte(135)
+      super.writeValue(value.toList())
+    } else if let value = value as? RecordingOptions {
+      super.writeByte(136)
+      super.writeValue(value.toList())
+    } else {
+      super.writeValue(value)
+    }
+  }
 }
 
 private class CameraApiPigeonCodecReaderWriter: FlutterStandardReaderWriter {
@@ -89,9 +450,26 @@ class CameraApiPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
   static let shared = CameraApiPigeonCodec(readerWriter: CameraApiPigeonCodecReaderWriter())
 }
 
+
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol CameraHostApi {
-  func cameraPing() throws
+  func discoverCapabilities(completion: @escaping (Result<CameraCapabilities, Error>) -> Void)
+  func startSession(textureId: Int64, config: CameraConfig, completion: @escaping (Result<Void, Error>) -> Void)
+  func stopSession(completion: @escaping (Result<Void, Error>) -> Void)
+  func switchLens(lens: LensType, completion: @escaping (Result<Void, Error>) -> Void)
+  func setFormat(resolution: Resolution, fps: Fps, completion: @escaping (Result<Void, Error>) -> Void)
+  func focusAt(point: FocusPoint, completion: @escaping (Result<Void, Error>) -> Void)
+  /// Starts recording on the running session. Returns a session id.
+  func startRecording(options: RecordingOptions) throws -> String
+  /// Stops recording. The saved file path arrives via
+  /// [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
+  func stopRecording() throws
+  /// Extracts the first frame of [videoPath] as a JPEG and returns the path of
+  /// the generated `.jpg`. iOS uses AVAssetImageGenerator (ADR-0019); Android is
+  /// a no-op stub until Sprint 3 and throws CameraErrorCode.formatUnsupported.
+  func generateThumbnail(videoPath: String, completion: @escaping (Result<String, Error>) -> Void)
+  func requestPermission(completion: @escaping (Result<Bool, Error>) -> Void)
+  func hasPermission(completion: @escaping (Result<Bool, Error>) -> Void)
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -100,24 +478,198 @@ class CameraHostApiSetup {
   /// Sets up an instance of `CameraHostApi` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: CameraHostApi?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    let cameraPingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.cameraPing\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let discoverCapabilitiesChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.discoverCapabilities\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      cameraPingChannel.setMessageHandler { _, reply in
+      discoverCapabilitiesChannel.setMessageHandler { _, reply in
+        api.discoverCapabilities { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      discoverCapabilitiesChannel.setMessageHandler(nil)
+    }
+    let startSessionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.startSession\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      startSessionChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let textureIdArg = args[0] as! Int64
+        let configArg = args[1] as! CameraConfig
+        api.startSession(textureId: textureIdArg, config: configArg) { result in
+          switch result {
+          case .success:
+            reply(wrapResult(nil))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      startSessionChannel.setMessageHandler(nil)
+    }
+    let stopSessionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.stopSession\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      stopSessionChannel.setMessageHandler { _, reply in
+        api.stopSession { result in
+          switch result {
+          case .success:
+            reply(wrapResult(nil))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      stopSessionChannel.setMessageHandler(nil)
+    }
+    let switchLensChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.switchLens\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      switchLensChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let lensArg = args[0] as! LensType
+        api.switchLens(lens: lensArg) { result in
+          switch result {
+          case .success:
+            reply(wrapResult(nil))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      switchLensChannel.setMessageHandler(nil)
+    }
+    let setFormatChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.setFormat\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      setFormatChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let resolutionArg = args[0] as! Resolution
+        let fpsArg = args[1] as! Fps
+        api.setFormat(resolution: resolutionArg, fps: fpsArg) { result in
+          switch result {
+          case .success:
+            reply(wrapResult(nil))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      setFormatChannel.setMessageHandler(nil)
+    }
+    let focusAtChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.focusAt\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      focusAtChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let pointArg = args[0] as! FocusPoint
+        api.focusAt(point: pointArg) { result in
+          switch result {
+          case .success:
+            reply(wrapResult(nil))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      focusAtChannel.setMessageHandler(nil)
+    }
+    /// Starts recording on the running session. Returns a session id.
+    let startRecordingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.startRecording\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      startRecordingChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let optionsArg = args[0] as! RecordingOptions
         do {
-          try api.cameraPing()
+          let result = try api.startRecording(options: optionsArg)
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      startRecordingChannel.setMessageHandler(nil)
+    }
+    /// Stops recording. The saved file path arrives via
+    /// [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
+    let stopRecordingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.stopRecording\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      stopRecordingChannel.setMessageHandler { _, reply in
+        do {
+          try api.stopRecording()
           reply(wrapResult(nil))
         } catch {
           reply(wrapError(error))
         }
       }
     } else {
-      cameraPingChannel.setMessageHandler(nil)
+      stopRecordingChannel.setMessageHandler(nil)
+    }
+    /// Extracts the first frame of [videoPath] as a JPEG and returns the path of
+    /// the generated `.jpg`. iOS uses AVAssetImageGenerator (ADR-0019); Android is
+    /// a no-op stub until Sprint 3 and throws CameraErrorCode.formatUnsupported.
+    let generateThumbnailChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.generateThumbnail\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      generateThumbnailChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let videoPathArg = args[0] as! String
+        api.generateThumbnail(videoPath: videoPathArg) { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      generateThumbnailChannel.setMessageHandler(nil)
+    }
+    let requestPermissionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.requestPermission\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      requestPermissionChannel.setMessageHandler { _, reply in
+        api.requestPermission { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      requestPermissionChannel.setMessageHandler(nil)
+    }
+    let hasPermissionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.hasPermission\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      hasPermissionChannel.setMessageHandler { _, reply in
+        api.hasPermission { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      hasPermissionChannel.setMessageHandler(nil)
     }
   }
 }
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol CameraFlutterApiProtocol {
-  func cameraReady(completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onSessionStarted(activeConfig activeConfigArg: CameraConfig, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onSessionStopped(completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onLensSwitched(lens lensArg: LensType, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onFocusChanged(point pointArg: FocusPoint, locked lockedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onError(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onRecordingFinished(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onRecordingFailed(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void)
 }
 class CameraFlutterApi: CameraFlutterApiProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -129,10 +681,118 @@ class CameraFlutterApi: CameraFlutterApiProtocol {
   var codec: CameraApiPigeonCodec {
     return CameraApiPigeonCodec.shared
   }
-  func cameraReady(completion: @escaping (Result<Void, PigeonError>) -> Void) {
-    let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.cameraReady\(messageChannelSuffix)"
+  func onSessionStarted(activeConfig activeConfigArg: CameraConfig, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onSessionStarted\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([activeConfigArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
+      }
+    }
+  }
+  func onSessionStopped(completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onSessionStopped\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage(nil) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
+      }
+    }
+  }
+  func onLensSwitched(lens lensArg: LensType, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onLensSwitched\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([lensArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
+      }
+    }
+  }
+  func onFocusChanged(point pointArg: FocusPoint, locked lockedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onFocusChanged\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([pointArg, lockedArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
+      }
+    }
+  }
+  func onError(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onError\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([codeArg, messageArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
+      }
+    }
+  }
+  func onRecordingFinished(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onRecordingFinished\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([pathArg, durationMsArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
+      }
+    }
+  }
+  func onRecordingFailed(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onRecordingFailed\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([codeArg, messageArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {
         completion(.failure(createConnectionError(withChannelName: channelName)))
         return

@@ -55,4 +55,37 @@ void main() {
       }
     });
   });
+
+  group('Family 3/4 — camera_preview PlatformView registration parity', () {
+    test('iOS AppDelegate registers cameraPreview viewType', () {
+      final iosFile = File('ios/Runner/AppDelegate.swift').readAsStringSync();
+      expect(
+        iosFile.contains(BridgeChannels.cameraPreview),
+        isTrue,
+        reason:
+            'ios/Runner/AppDelegate.swift must register PlatformView with viewType ${BridgeChannels.cameraPreview}',
+      );
+    });
+
+    test('Android MainActivity registers cameraPreview viewType', () {
+      final androidFile = File(
+        'android/app/src/main/kotlin/com/rarocamera/raro_mobile/MainActivity.kt',
+      ).readAsStringSync();
+      expect(
+        androidFile.contains(BridgeChannels.cameraPreview),
+        isTrue,
+        reason:
+            'MainActivity.kt must register PlatformView with viewType ${BridgeChannels.cameraPreview}',
+      );
+    });
+
+    test('BridgeChannels.cameraPreview matches canonical native string', () {
+      expect(
+        BridgeChannels.cameraPreview,
+        'com.rarocamera/camera_preview',
+        reason:
+            'Shared constant must equal native viewType string (single source of truth)',
+      );
+    });
+  });
 }

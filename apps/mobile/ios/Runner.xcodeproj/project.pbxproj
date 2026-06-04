@@ -18,6 +18,19 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		CA00000000000000000000A1 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B1 /* CameraManager.swift */; };
+		CA00000000000000000000A2 /* CameraErrorMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B2 /* CameraErrorMapper.swift */; };
+		CA00000000000000000000A3 /* CameraHostApiImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B3 /* CameraHostApiImpl.swift */; };
+		CA00000000000000000000A4 /* CameraPlatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B4 /* CameraPlatformView.swift */; };
+		CA00000000000000000000A5 /* CameraPlatformViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B5 /* CameraPlatformViewFactory.swift */; };
+		CA00000000000000000000A6 /* CameraApi.g.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B6 /* CameraApi.g.swift */; };
+		CA00000000000000000000A7 /* FocusRingConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B7 /* FocusRingConfig.swift */; };
+		CA00000000000000000000A8 /* CameraPlatformViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B8 /* CameraPlatformViewTests.swift */; };
+		CA00000000000000000000A9 /* CameraManagerFocusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B9 /* CameraManagerFocusTests.swift */; };
+		CA00000000000000000000AA /* RecordingPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000BA /* RecordingPipeline.swift */; };
+		CA00000000000000000000AB /* CameraManagerRecordingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000BB /* CameraManagerRecordingTests.swift */; };
+		CA00000000000000000000AC /* ThumbnailGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000BC /* ThumbnailGenerator.swift */; };
+		CA00000000000000000000AD /* ThumbnailGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000BD /* ThumbnailGeneratorTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +80,19 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B05C1B29D68A9DDF989FF3B5 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
+		CA00000000000000000000B1 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/CameraManager.swift; sourceTree = "<group>"; };
+		CA00000000000000000000B2 /* CameraErrorMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/CameraErrorMapper.swift; sourceTree = "<group>"; };
+		CA00000000000000000000B3 /* CameraHostApiImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/CameraHostApiImpl.swift; sourceTree = "<group>"; };
+		CA00000000000000000000B4 /* CameraPlatformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/CameraPlatformView.swift; sourceTree = "<group>"; };
+		CA00000000000000000000B5 /* CameraPlatformViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/CameraPlatformViewFactory.swift; sourceTree = "<group>"; };
+		CA00000000000000000000B6 /* CameraApi.g.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Generated/CameraApi.g.swift; sourceTree = "<group>"; };
+		CA00000000000000000000B7 /* FocusRingConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/FocusRingConfig.swift; sourceTree = "<group>"; };
+		CA00000000000000000000B8 /* CameraPlatformViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPlatformViewTests.swift; sourceTree = "<group>"; };
+		CA00000000000000000000B9 /* CameraManagerFocusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManagerFocusTests.swift; sourceTree = "<group>"; };
+		CA00000000000000000000BA /* RecordingPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/RecordingPipeline.swift; sourceTree = "<group>"; };
+		CA00000000000000000000BB /* CameraManagerRecordingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManagerRecordingTests.swift; sourceTree = "<group>"; };
+		CA00000000000000000000BC /* ThumbnailGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/ThumbnailGenerator.swift; sourceTree = "<group>"; };
+		CA00000000000000000000BD /* ThumbnailGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailGeneratorTests.swift; sourceTree = "<group>"; };
 		DEA69524B3E9912E3431748D /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		E0E272C120536D714518903C /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -111,7 +137,6 @@
 				2F3979CA85878C4C06D94F6C /* Pods-RunnerTests.release.xcconfig */,
 				E0E272C120536D714518903C /* Pods-RunnerTests.profile.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -119,6 +144,10 @@
 			isa = PBXGroup;
 			children = (
 				331C807B294A618700263BE5 /* RunnerTests.swift */,
+				CA00000000000000000000B8 /* CameraPlatformViewTests.swift */,
+				CA00000000000000000000B9 /* CameraManagerFocusTests.swift */,
+				CA00000000000000000000BB /* CameraManagerRecordingTests.swift */,
+				CA00000000000000000000BD /* ThumbnailGeneratorTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -168,6 +197,15 @@
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				CA00000000000000000000B1 /* CameraManager.swift */,
+				CA00000000000000000000B2 /* CameraErrorMapper.swift */,
+				CA00000000000000000000B3 /* CameraHostApiImpl.swift */,
+				CA00000000000000000000B4 /* CameraPlatformView.swift */,
+				CA00000000000000000000B5 /* CameraPlatformViewFactory.swift */,
+				CA00000000000000000000B6 /* CameraApi.g.swift */,
+				CA00000000000000000000B7 /* FocusRingConfig.swift */,
+				CA00000000000000000000BA /* RecordingPipeline.swift */,
+				CA00000000000000000000BC /* ThumbnailGenerator.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -383,6 +421,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */,
+				CA00000000000000000000A8 /* CameraPlatformViewTests.swift in Sources */,
+				CA00000000000000000000A9 /* CameraManagerFocusTests.swift in Sources */,
+				CA00000000000000000000AB /* CameraManagerRecordingTests.swift in Sources */,
+				CA00000000000000000000AD /* ThumbnailGeneratorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -393,6 +435,15 @@
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
+				CA00000000000000000000A1 /* CameraManager.swift in Sources */,
+				CA00000000000000000000A2 /* CameraErrorMapper.swift in Sources */,
+				CA00000000000000000000A3 /* CameraHostApiImpl.swift in Sources */,
+				CA00000000000000000000A4 /* CameraPlatformView.swift in Sources */,
+				CA00000000000000000000A5 /* CameraPlatformViewFactory.swift in Sources */,
+				CA00000000000000000000A6 /* CameraApi.g.swift in Sources */,
+				CA00000000000000000000A7 /* FocusRingConfig.swift in Sources */,
+				CA00000000000000000000AA /* RecordingPipeline.swift in Sources */,
+				CA00000000000000000000AC /* ThumbnailGenerator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -450,6 +501,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -472,6 +524,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -485,13 +538,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = Y8772MU6JG;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rarocamera.raroMobile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rarocamera;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -506,6 +560,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y8772MU6JG;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rarocamera.raroMobile.RunnerTests;
@@ -524,6 +579,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y8772MU6JG;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rarocamera.raroMobile.RunnerTests;
@@ -540,6 +596,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y8772MU6JG;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rarocamera.raroMobile.RunnerTests;
@@ -573,6 +630,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -602,6 +660,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -630,6 +689,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -652,6 +712,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
@@ -667,13 +728,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = Y8772MU6JG;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rarocamera.raroMobile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rarocamera;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -689,13 +751,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = Y8772MU6JG;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Runner/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rarocamera.raroMobile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rarocamera;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

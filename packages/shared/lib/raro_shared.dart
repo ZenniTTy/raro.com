@@ -1,9 +1,11 @@
 export 'src/analytics/analytics_events.dart';
 export 'src/analytics/analytics_payloads.dart';
 export 'src/bridges/bridge_channels.dart';
+export 'src/camera/focus_ring_config.dart';
 export 'src/contract/forbidden_terms.dart';
 export 'src/enums/app_language.dart';
 export 'src/enums/buffer_duration.dart';
+export 'src/enums/codec.dart';
 export 'src/enums/control_mode.dart';
 export 'src/enums/fps.dart';
 export 'src/enums/lens.dart';

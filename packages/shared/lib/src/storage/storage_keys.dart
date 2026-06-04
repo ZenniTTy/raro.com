@@ -8,4 +8,6 @@ abstract final class StorageKeys {
   static const String xiaomiGuideShown = 'raro.xiaomi.guide_shown';
   static const String firstLaunchAt = 'raro.first.launch_at';
   static const String lastLanguageDetected = 'raro.language.detected';
+  static const String subscriptionActive = 'raro.subscription.active';
+  static const String trialStartedAt = 'raro.subscription.trial_started_at';
 }

@@ -1,0 +1,37 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:raro_mobile/features/camera/domain/recording_metadata.dart';
+
+void main() {
+  test('RecordingMetadata holds all fields', () {
+    final at = DateTime(2026, 6, 3, 14, 30);
+    const id = 'abc';
+    final m = RecordingMetadata(
+      id: id,
+      name: 'Vídeo 14:30',
+      duration: const Duration(seconds: 12),
+      recordedAt: at,
+      isReplay: false,
+      thumbnailHue: 200,
+      thumbnailPath: '/vault/abc.jpg',
+    );
+    expect(m.id, id);
+    expect(m.name, 'Vídeo 14:30');
+    expect(m.duration, const Duration(seconds: 12));
+    expect(m.recordedAt, at);
+    expect(m.isReplay, isFalse);
+    expect(m.thumbnailHue, 200);
+    expect(m.thumbnailPath, '/vault/abc.jpg');
+  });
+
+  test('RecordingMetadata thumbnailPath defaults to null', () {
+    final m = RecordingMetadata(
+      id: 'x',
+      name: 'Vídeo',
+      duration: const Duration(seconds: 1),
+      recordedAt: DateTime(2026, 6, 4),
+      isReplay: false,
+      thumbnailHue: 0,
+    );
+    expect(m.thumbnailPath, isNull);
+  });
+}

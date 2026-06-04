@@ -52,7 +52,12 @@
           { "type": "command", "command": ".claude/hooks/block-env.sh" },
           { "type": "command", "command": ".claude/hooks/block-secrets.sh" },
           { "type": "command", "command": ".claude/hooks/warn-adr-drift.sh" },
-          { "type": "command", "command": ".claude/hooks/block-forbidden-terms.sh" }
+          { "type": "command", "command": ".claude/hooks/block-forbidden-terms.sh" },
+          { "type": "command", "command": ".claude/hooks/block-pigeon-error-rawvalue.sh" },
+          {
+            "type": "command",
+            "command": ".claude/hooks/warn-gesturedetector-over-platformview.sh"
+          }
         ]
       }
     ],

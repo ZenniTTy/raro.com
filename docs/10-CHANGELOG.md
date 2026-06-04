@@ -2,6 +2,210 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-06-04] — 0.6.1 (Thumbnail real na galeria — Sprint 2)
+
+> Capa da galeria (P07) passa a ser o 1º frame real de cada vídeo do vault, no lugar do gradiente HSL (reverte decisão de design Sprint 1 para vídeos reais). Sessão 0017. Validado no iPhone 12.
+
+### Adicionado
+- **Thumbnail nativo (ADR-0019):** Pigeon `@async generateThumbnail(videoPath)→jpgPath` + `ThumbnailGenerator.swift` (`AVAssetImageGenerator`, `appliesPreferredTrackTransform`, JPEG q0.8 → `<id>.jpg` ao lado do `.mov`); gerado no save no `recordingVaultSink`; `thumbnailPath` em `RecordingMetadata`/sidecar/`VideoEntity`; `VideoThumbnail` mostra `Image.file` com fallback gradiente HSL. Android stub no-op até Sprint 3.
+- `docs/decisions/0019-thumbnail-avassetimagegenerator.md` (Accepted).
+- Testes: 3 XCTest nativos (`ThumbnailGeneratorTests`, inclui JPEG de `.mov` real) + Dart vault/repository/metadata/vault_sink.
+
+### Mudado
+- `videoListProvider` agora é **vault-only** (removidos os 6 `VideoEntity` mock); galeria reflete só vídeos reais gravados.
+- `VaultService` escreve sidecar JSON **atomicamente** (tmp+rename) — corrige race read-during-write com a galeria.
+
+### Corrigido
+- **`ref` após dispose** no `recordingVaultSink` (listener async usava `ref.read`/`invalidate` pós-await): deps lidas no `build` + `ref.mounted` antes de `invalidate`.
+
+## [2026-06-03] — 0.6.0 (Sprint 2 Task A — Recording real + Vault iOS)
+
+> S2.A: a câmera virou real. P05 monta `CameraPreviewWidget` (UiKitView) ao vivo; tap REC grava `.mov` real no vault; galeria lista; preview reproduz o arquivo. Sessão 0016. Validado no iPhone 12 físico. Cobre o Sprint Goal G1 (recording funcional) — exceto a medição formal de latência <300ms (pendente).
+
+### Adicionado
+- **Recording pipeline (ADR-0018):** `RecordingPipeline.swift` (`AVCaptureMovieFileOutput`, codec HEVC fallback H264 via `setOutputSettings`) grava container `.mov` (não `.mp4`); path entregue async via `onRecordingFinished`. Áudio via `AVCaptureAudioDeviceInput`.
+- **Pigeon:** `startRecording(RecordingOptions)→sessionId` + `stopRecording()` + callbacks `onRecordingFinished`/`onRecordingFailed`. Enum `Codec` em `raro_shared`. Mapper shared→pigeon (`uhd4k60`→`uhd4k`+`fps60`).
+- **`VaultService`** (Dart, `Directory` injetável + sidecar JSON) salva em `documents/vault/`; `videoListProvider` lê vault; preview reproduz arquivo real (`VideoPlayerController.file` fallback `.asset`).
+- `docs/decisions/0018-recording-pipeline-mp4.md` (Accepted, supersedes ADR-0015 item 7 "sem gravação").
+
+### Mudado
+- `RecordingController` promovido a Notifier reativo (`@riverpod` + escuta stream de eventos nativos + `try/finally`); preview montado só quando sessão `ready`; lens 0.5×/1× nativo; `×` removido da câmera; onboarding once-per-install.
+
+### Notas
+- **Out-of-scope (S2.B+):** replay buffer (G2), wake word, volume button, RevenueCat sandbox, share — próximas sessões do Sprint 2.
+
+## [2026-06-02] — 0.5.0 (Sprint 1 walking skeleton iOS — 12 telas Flutter navegáveis)
+
+> Registra o walking skeleton da Sprint 1 (Tasks D–G). Todas as telas são UI fiel ao protótipo com dados mockados via Riverpod 3 providers de signature swap-able pro Sprint 2. iOS-only, free Apple ID. Backend/lógica real = Sprint 2.
+
+### Adicionado
+- **Task D (sessão 0011):** P01 Splash (logo breathe + dot loader + tagline), P02/P03 Onboarding (mic+halos / buffer waveform), go_router com rotas do contrato `AppScreen`; fontes Space Grotesk/Inter/JetBrains Mono bundladas + logo + tokens de gradiente. Validado no iPhone 12.
+- **Task E (sessão 0012):** P04 Permissions (`PermissionGateway` port + `permission_handler`), P05 Camera UI shell (HUD res/fps/lens, REC mock + timer, buffer pill, lens switcher; preview MOCK — UiKitView nativo é Sprint 2). Validado no iPhone 12.
+- **Task F (sessão 0013):** P06 Settings (`RecordingSettings` freezed + `SettingsStore` port via `SharedPreferencesAsync`), P07 Gallery (6 `VideoEntity` mock, grid 3-col, thumbnails HSL, filtros client-side). Onboarding migrado pro mesmo padrão async.
+- **Task G (sessão 0014):** P08 Preview (`video_player ^2.11.1` via ADR-0017, clipe mock, provider autoDispose + `ref.onDispose`, scrubber rainbow custom, `PreviewMetadata`), M01 Subscription popup (auto 450ms se `!subscribed`), P09 Paywall (2 cards selecionáveis + features + rodapé legal + watermark), P10 Checkout (tiles Apple/Google Play + CTA disabled→`subscribe`→câmera), trial countdown 30d em Settings.
+- **Contrato `raro_shared`:** `PlanPricing` (9.90/89.90/7.49) + `StorageKeys.subscriptionActive`/`trialStartedAt`.
+- `docs/decisions/0017-video-player-preview.md` (Accepted) + Blueprint §2.7.1 + §9 (tabela ADR completada 0015–0017).
+
+### Mudado
+- `app.dart` abre o walking skeleton via `MaterialApp.router` por padrão; harness de câmera só com `--dart-define=RARO_HARNESS=true`.
+- `RaroGradients.rainbow` ganhou `stops` explícitos (fidelidade ao protótipo); novos `modalBorder`/`planCardBorder`/`paywallGlowWarm`/`Cool`.
+- Persistência migrada de `SharedPreferences.getInstance()` (legado 2026) para `SharedPreferencesAsync` via ports mockáveis (Settings, Onboarding, Subscription).
+- Router: stubs `_ScreenStub` substituídos por todas as telas reais e a classe removida.
+
+### Notas
+- **Device pendente (Task H):** validação física fim-a-fim das 12 telas no iPhone 12 é a próxima sessão (closure da Sprint 1).
+- Copy de trial usa **30 dias** (invariante ADR-0010 + Blueprint §1 div#2); o protótipo HTML diz 15 (desatualizado).
+- Suíte: 200 testes mobile + 39 shared GREEN; `flutter analyze` 0 issues; design-fidelity-checker PASS em todas as telas.
+
+## [2026-05-29] — 0.4.2 (camera-native-bridge — G4 focus ring nativo + tap-to-focus latency collapse)
+
+### Adicionado
+- **G4 — Focus ring nativo iOS via CALayer** desenhado dentro de `CameraPlatformView` (não Flutter overlay), respeitando ADR-0015 (HUD nativo para feedback de captura). Animação fade-in/fade-out 1.2s fiel ao protótipo, registrada via `ring.add(animation, forKey:)` em `CameraManager.showFocusRing`
+- `CameraManager.swift`: `focusLog` (`OSLog(subsystem: "com.rarocamera", category: "focus")`) + `os_log` em pontos do pipeline (tap recebido → conversão de coords → lockForConfiguration → setFocusPointOfInterest → callback KVO → ring shown) para instrumentar latência real no Console do Xcode em iPhone físico
+- `CameraManager.installFocusKVO` instalado UMA vez em `startSession` e invalidado em `stopSession`; property `pendingFocusPoint` coordena qual tap o callback KVO de `isAdjustingFocus` deve resolver (sucesso vs timeout)
+- `CameraManager.focusWasAdjusting` property em main queue serial substitui `AtomicBool` anterior (refactor `cba16ce`: KVO settle + timeout cancellation + closure-capture point corrigidos)
+- **Terminal-first iOS workflow** (`354ddc3`): `apps/mobile/package.json` ganha targets `dev:ios` e `test:ios`; `apps/mobile/scripts/run-ios-native-tests.sh` auto-detecta Simulator disponível (iPhone 17/16/15/14/13 fallback) + encadeia `pub:get` + `fix-spm` antes de rodar XCTest
+- `CLAUDE.md §13` nova seção "Workflow iOS — terminal-first (anti-loop SPM)": build/run/test sempre via terminal, Xcode UI restrito a signing/debug/capabilities
+- 6 anti-patterns novos em `CLAUDE.md §11` documentando descobertas da sessão (infra observability antes do fix, CATransaction.setDisableActions ao redor de add(animation), CATransaction.flush vs removedOnCompletion, UiKitView sem gestureRecognizers, isSmoothAutoFocusEnabled em tap-to-focus, KVO permanente vs per-tap)
+- `docs/decisions/0016-e2e-harness-hybrid.md` (Proposed): stack E2E híbrido `integration_test --machine` + Pigeon `CameraDebugHostApi` + rota `/debug/self-test` + go-ios/pymobiledevice3 + Maestro Simulator, com upgrade incremental para Patrol pós Apple Dev Program ($99/ano em 30d)
+- `docs/superpowers/specs/2026-05-29-e2e-harness-hybrid-design.md` (spec Sessão 2): 6 observable goals + Q-table + out-of-scope explícito (Patrol/XCTClockMetric/MetricKit deferred)
+
+### Mudado
+- `CameraPlatformView.swift` (`d259d8c`): conversão de tap usa `captureDevicePointConverted(fromLayerPoint:)` (sensor coords), substituindo o cálculo manual aspect-ratio que causava drift no DualWide
+- `camera_preview_widget.dart`: `UiKitView`/`AndroidView` com `gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new)}` (elimina ~80ms de baseline — Flutter issue #170735)
+- `CameraManager.focusAtAsync` ofuscado para `sessionQueue.async` (era sync no main queue) — main thread livre para renderizar ring imediatamente após o tap (`beaeade`)
+- `CameraManager.applyFocusConfig`: `isSmoothAutoFocusEnabled = false` dentro do `lockForConfiguration` durante tap (eliminando 150-400ms de ramp cinematic)
+- `CameraManager.installFocusKVO`: debounce do KVO `isAdjustingFocus` reduzido de 100ms → 16ms (1 frame @60fps) — settle perceptual mantido sem custo desnecessário
+- `CameraPlatformView.showFocusRing`: `setNeedsDisplay` após `addSublayer` (substituindo tentativa anterior com `CATransaction.begin/setDisableActions/commit` que falhou `testShowFocusRingAnimationsConfigured` porque `setDisableActions(true)` bloqueia a registration interna que `ring.add(animation, forKey:)` precisa)
+- `camera_preview_widget.dart` (`beaeade`): chamada ao bridge nativo agora `unawaited` (fire-and-forget) — Flutter UI mostra ring otimisticamente em ≤16ms sem aguardar round-trip Pigeon
+
+### Corrigido
+- **Tap-to-focus delay perceptual em iPhone 12 colapsado em 5 root causes** (commit `3b79021` entrega o set completo):
+  1. `isSmoothAutoFocusEnabled=true` adicionando ramp cinematic 150-400ms — agora `false` durante tap
+  2. KVO settle debounce 100ms — agora 16ms (1 frame @60fps)
+  3. `UiKitView` sem `gestureRecognizers` explícito atrasando tap propagation ~80ms (Flutter #170735) — agora reclamado via `EagerGestureRecognizer`
+  4. KVO re-registrado a cada tap — agora permanente em `startSession`, coordenado por `pendingFocusPoint`
+  5. Ring com `CATransaction.flush()` perdendo animation (removida pelo runtime via `removedOnCompletion=true`) — agora `setNeedsDisplay` preserva animation E força layout/render imediato
+- Coordenadas de focus drifavam no DualWide porque a conversão manual usava layer bounds em vez de sensor coords (`d259d8c` troca para `captureDevicePointConverted(fromLayerPoint:)`)
+- KVO timeout cancellation em race com `focusWasAdjusting` (`cba16ce`): closure-capture point ajustado + property substitui `AtomicBool` por main-queue serial
+
+### Decidido
+- **Harness E2E híbrido** (ADR-0016 Proposed) confirmado para Sessão 2: `integration_test --machine` + Pigeon `CameraDebugHostApi` + rota `/debug/self-test` guardada por `kDebugMode` + go-ios/pymobiledevice3 + Maestro Simulator para fluxos não-camera. Maestro iOS não suporta iPhone físico oficial; Patrol exige Apple Developer Program
+- **Upgrade incremental para Patrol em 30d**: usuário confirmou pagamento dos $99 Apple Dev → Volume bridge + permission dialog real automation usarão Patrol após
+- **Validar perceptualmente antes de instrumentar mais**: auditoria adversarial `w3cediota` (22 agents) concluiu que dos 18 itens originalmente propostos para observability, 13 eram OVERENGINEERING/DEFER, 5 HIGH_VALUE, 0 ESSENTIAL. Decisão: shipear os 5 fixes técnicos diretos e medir delay residual no iPhone 12 antes de adicionar MetricKit/XCTClockMetric/Pigeon telemetry
+
+### Verificado
+- `flutter test` mobile: **66/66 PASS** (widget + unit + contract)
+- XCTest native iOS: **5/5 PASS** em iPhone 17 Pro Simulator (`CameraManagerFocus`, `CameraPlatformView`, `RunnerTests`)
+- Contract tests: **30/30 PASS** via `lefthook` pre-push
+- `flutter analyze` mobile: zero issues
+- `lefthook` pre-commit + pre-push: GREEN em todos os 6 commits da sessão (`block-secrets`, `dart-format`, `commitlint`) — zero uso de `--no-verify`
+- Push para `origin/feat/camera-native-bridge` concluído
+
+### Pendente (Sessão 2)
+- Validação perceptual manual no iPhone 12 físico
+- Harness E2E híbrido camada 1 (Pigeon `CameraDebugHostApi` + rota `/debug/self-test` + `camera_tap_to_focus_test.dart`)
+- Status update da spec `2026-05-28-camera-task-19-closure-design.md` para `Done`
+- Addendum no ADR-0015 documentando os 5 root causes colapsados
+
+### Pendente (em 30d, pós Apple Dev Program)
+- Upgrade para Patrol cobrindo Volume bridge + permission dialog real automation
+
+---
+
+## [2026-05-28] — 0.4.1 (camera-native-bridge — device validation Task 19)
+
+### Adicionado
+- `apps/mobile/scripts/bootstrap-ios-permissions.sh` — idempotente; reaplica macros `GCC_PREPROCESSOR_DEFINITIONS` do `permission_handler` no `Podfile` após cada `flutter pub get` (Podfile gitignored, ADR-0014). Suporta `PERMISSION_CAMERA`, `PERMISSION_MICROPHONE`, `PERMISSION_PHOTOS`, `PERMISSION_SPEECH_RECOGNIZER`. `pod install` automático ao final
+- `apps/mobile/package.json`: novo target `bootstrap:ios` (fix-spm + bootstrap-permissions combo); `pub:get` agora chama bootstrap-permissions
+- `CameraManager.swift`: 3 notification observers (`wasInterruptedNotification`, `interruptionEndedNotification`, `runtimeErrorNotification`) com auto-restart em `mediaServicesWereReset` para sobreviver background/foreground
+- `CameraManager.applyVirtualLensZoom`: mapping Apple-correto para iPhone DualWide (0.5x → minZoom, 1x → `virtualDeviceSwitchOverVideoZoomFactors[0]`)
+- `CameraController.openSettings()` + `isPermissionPermanentlyDenied()` (delegando para `permission_handler.openAppSettings`)
+- `CameraTestHarnessScreen`: `WidgetsBindingObserver` invoca `refreshAfterSettingsReturn` em `AppLifecycleState.resumed`; dialog "open settings" exibido em permission denied
+- `RaroApp`: flag `_forceHarness` via `bool.fromEnvironment('RARO_HARNESS')` permite harness em release mode (default true)
+- ADR-0015 addendum 2026-05-28 (seções A-H): mapping correto iPhone 12, setFormat exige `.inputPriority`, observers obrigatórios, smoothAutoFocus, permission_handler macros, Sendable warnings, err=-17281 benigno, limitações free tier, logs reais > suposições
+- 4 memórias persistentes novas:
+  - `raro-pattern-permission-handler-ios-podfile-macros`
+  - `raro-pattern-ios-avcapture-iphone12-dualwide-zoom-mapping`
+  - `raro-pattern-flutter-debug-vs-release-on-device`
+  - `feedback_device_debug_use_real_logs_not_assumptions`
+
+### Mudado
+- `CameraManager.swift`: `selectDevice` prefere virtual device (Triple/DualWide) → fallback físico ultraWide/wide
+- `CameraManager.swift`: `setFormat` agora wrapped em `beginConfiguration` + `sessionPreset = .inputPriority` + `commitConfiguration` (corrige sem-efeito antes)
+- `CameraManager.swift`: `startSession` idempotente — para sessão anterior se já existir em vez de throw `alreadyRunning`
+- `CameraManager.swift`: `applyFormat` ativa `isSmoothAutoFocusEnabled` (se suportado) para reduzir flicker em format switch; também aceita match aproximado (resolução mais próxima) quando exato não disponível
+- `CameraManager.swift`: import `@preconcurrency AVFoundation` para suprimir warnings Sendable Swift 6
+- `CameraHostApiImpl.swift`: `@unchecked Sendable` para closures `@Sendable`
+- `CameraPlatformView.swift`: `layerClass` override Apple-recommended (root layer SER o preview, sincronização automática com bounds)
+- `Podfile`: `post_install` define `GCC_PREPROCESSOR_DEFINITIONS` para `permission_handler` (CAMERA, MICROPHONE, PHOTOS, SPEECH_RECOGNIZER)
+- `Runner.xcscheme`: Pre-action `fix-spm-ios-target.sh` (sed-only, sem `flutter build` interno — versão anterior abortava build silenciosamente)
+- `CLAUDE.md §11 addendum 3`: 3 anti-patterns novos (plugin sem README iOS Setup, fix sem logs reais, debug-mode-tela é restrição arquitetural)
+
+### Corrigido
+- **Bug crítico permission_handler**: Câmera nunca aparecia em Ajustes → App porque plugin retornava `denied` silenciosamente sem chamar `AVCaptureDevice.requestAccess` (macros Podfile ausentes — best practice oficial não seguida no scaffold)
+- **Lens switch sem blackout** no iPhone 12: usa virtual device + zoom mapping em vez de replace-input físico
+- **setFormat sem efeito**: sessionPreset `.inputPriority` necessário
+- **App crash voltando de Settings**: observers AVCaptureSession + auto-restart
+- **Permission dialog não aparecia**: tratamento `isDenied` igual `isPermanentlyDenied` no iOS
+- **Pre-action abortando build silenciosamente**: removido `flutter build` interno; sed-only agora
+
+### Notas
+- 6 anti-patterns adicionais catalogados em CLAUDE.md §11 (total agora cobre device debug, plugins iOS, restrições Apple+Flutter)
+- Goals consolidados pós-validação iPhone 12: **G1, G2, G3, G5, G6, G8, G9 ✅** (G8/G9 via Control Center; lifecycle real fechando app → TestFlight Apple Dev Program). G4 (focus ring nativo CALayer), G7 (Instruments memória), G10 (iPad test): pendentes para próxima sessão.
+
+---
+
+## [2026-05-26] — 0.4.0 (camera-native-bridge)
+
+### Adicionado
+- Bridge nativo de câmera Pigeon-first (iOS AVFoundation + Android CameraX 1.6.1) com preview ao vivo, lens switch 0.5×/1×, tap-to-focus, format control (720p/1080p/4K @ 30/60fps)
+- ADR-0015: estratégia da bridge nativa de câmera (VirtualCameraStrategy única iOS + CameraX 1.6.1 Android + hybrid composition + `activeFormat` manual + threading rules)
+- `AnalyticsEvents`: 5 novas constantes (`cameraStarted`, `cameraStopped`, `cameraFocusTapped`, `cameraPermissionDenied`, `cameraError`)
+- `BridgeChannels.cameraPreview = 'com.rarocamera/camera_preview'` (PlatformView viewType, single source of truth)
+- Feature folder `apps/mobile/lib/features/camera/` (Clean Arch: domain/data/application/presentation + Riverpod 3 codegen)
+- Camera UI widgets: `CameraPreviewWidget` (PlatformView + rule-of-thirds + grain), `LensChipRow` (pill chips 0.5×/1×), `FocusRingOverlay` (1.2s animação fiel ao protótipo)
+- 3 contract tests novos: `ios_pbxproj_parity_test` (Swift files registrados no Xcode), `bridge_channels_parity_test` extension (`camera_preview` ↔ iOS+Android+shared), `camera_state_test` + `pigeon_camera_repository_test` + `camera_controller_test` + `camera_analytics_listener_test` + `lens_chip_row_test` + `lens_chip_row_golden_test`
+- 1 hook anti-drift novo: `.claude/hooks/block-pigeon-error-rawvalue.sh` (bloqueia `String(enum.rawValue)` em PigeonError/FlutterError)
+
+### Mudado
+- `CLAUDE.md` §11: 3 novos anti-patterns proibidos (enum rawValue em Pigeon, `expect isA<T>` sem campo, swallow catch{} sem log)
+- ADR-0014 addendum: confirma Podfile/Podfile.lock gitignored
+- ADR-0015 addendum (pós-auditoria): PlatformView único path, threading refinado, error semantic, TDD pin
+
+### Decidido
+- iOS `VirtualCameraStrategy` única (sem `SwapInputStrategy` v1.0 — YAGNI, iPhones com 0.5× sempre expõem virtual camera)
+- Android CameraX 1.6.1 (latest stable, novo motor CameraPipe — risco de regression em OEMs aceito, device test mandatório)
+- PlatformView com hybrid composition Android (HUD Flutter sobre preview)
+- Telemetria via camada Flutter apenas (bridge nativa não chama Firebase direto)
+
+### Notas
+- **Sem gravação** nesta spec — depende de `feat/replay-buffer-native-bridge` (pre-roll do buffer)
+- `textureId` no Pigeon schema é aceito mas ignorado (PlatformView é o único preview path v1.0; reservado para migração Texture futura)
+- iPad rejeitado via `deviceUnavailable` (Blueprint = iPhone only)
+- Auditoria pós-Task 10 detectou + corrigiu: error code semantic loss (`String(rawValue)` → `"\(code)"`), testes só pin-tipo (10 testes pin-behavior adicionados), iOS `catch{}` sem log (adicionado `os_log`)
+
+### Verificado
+- `flutter build ios --no-codesign --debug` PASS (Runner.app gerado)
+- `flutter build apk --debug` PASS (app-debug.apk gerado)
+- `flutter analyze` mobile: zero issues
+- `dart analyze` shared: zero issues
+- `flutter test` mobile: 62 verdes (smoke + contract + features/camera)
+- `dart test` shared: 33 verdes (smoke + analytics_events)
+- Goldens `lens_chip_row` regenerados pós-fidelity audit (chip active solid white + pill shape)
+
+### Pendente (device tests — Task 19 aguardando iPhone 12 do usuário)
+- G1 start ≤500ms em iPhone 12 + Pixel 6
+- G2 discoverCapabilities = `[ultraWide, wide]` em iPhone 12 / Pixel 6 Pro
+- G3 lens switch <100ms via VirtualCameraStrategy
+- G4 focus ring ≤200ms + fade 1.2s
+- G5 setFormat runtime
+- G6 4K@60 metadata validation
+- G7 memória ±5MB pós-stop (Instruments + Memory Profiler)
+- G8 permission denied UI fallback
+- G9 background→foreground retoma sessão
+- G10 iPad rejected graciosamente
+
 ## [2026-05-26] — 0.3.0 (flutter-3.44-spm-migration)
 
 ### Mudado

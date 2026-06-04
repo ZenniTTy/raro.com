@@ -121,6 +121,12 @@ raro/
 | Compartilhamento | `share_plus` | `^13.1.0` |
 | Device info (detecção MIUI) | `device_info_plus` | `^13.1.0` |
 
+### 2.7.1 Reprodução de vídeo (Preview P08) — adendo ADR-0017 (2026-06-02)
+
+| Categoria | Lib | Versão | Notas |
+|---|---|---|---|
+| Player de vídeo | `video_player` | `^2.11.1` | Oficial Flutter Team (texture-based, iOS AVPlayer / Android ExoPlayer). Requer Flutter `>=3.38.0` (compatível com nosso `>=3.44.0`). Ciclo de vida via provider Riverpod `autoDispose` + `ref.onDispose(controller.dispose)` (memória `raro-pattern-flutter-video-player-disposal`). Sprint 1: clipe de teste bundlado em `assets/sample_videos/`; Sprint 2 migra pra `VideoPlayerController.file` lendo do vault. Ver [ADR-0017](decisions/0017-video-player-preview.md). |
+
 ### 2.8 i18n
 
 | Categoria | Decisão |
@@ -155,6 +161,19 @@ raro/
 | Theme tokens codegen | `theme_tailor` + `theme_tailor_annotation` | `^3.1.3` |
 | XML parse (parity tests) | `xml` | `^6.5.0` |
 | Dart formatter | `dart format` (SDK) | — |
+
+### 2.11 Assets e fontes (regra de ADR)
+
+| Família | Arquivos | Origem |
+|---|---|---|
+| Display | **Space Grotesk** (VF, eixo `wght`) | Google Fonts — SIL OFL |
+| UI default | **Inter** (VF, eixo `wght`) | Google Fonts — SIL OFL |
+| Mono / dados técnicos | **JetBrains Mono** (VF, eixo `wght`) | Google Fonts — SIL OFL |
+| Logo | `raro_logo.png` | protótipo (`assets/logo/`) |
+
+Bundlados em `apps/mobile/assets/{fonts,logo}/` e registrados em `pubspec.yaml` (`fonts:`/`assets:`). Variable fonts: 1 arquivo por família; `FontWeight.w400..w700` ajusta o eixo `wght` automaticamente (Flutter 3.44 breaking change `font-weight-variation`).
+
+**Regra de ADR (resolve drift detectado na sessão 0011):** **bundlar assets (fontes, imagens, ícones) e registrá-los no `pubspec.yaml` NÃO exige ADR.** ADR é obrigatório apenas para **dependências/packages** (CLAUDE.md §3 "atualizar dep = abrir ADR"). O hook `warn-adr-drift` avisa em qualquer toque no `pubspec.yaml` — esse aviso é informativo para mudanças de asset; bloqueante de fato só para mudança de `dependencies:`/`dev_dependencies:`.
 
 ---
 
@@ -545,6 +564,9 @@ Bundle ID / Application ID: `com.rarocamera`.
 | 0012 | Onboarding Xiaomi híbrido (automático em MIUI + manual em Settings) | Divergência #6 |
 | 0013 | Pigeon + Theme Tailor + gates anti-drift | spec api-contract-shared |
 | 0014 | Flutter 3.44 + SPM + iOS 15 | spec flutter-3.44-spm-migration |
+| 0015 | Estratégia da native bridge de câmera | spec camera-native-bridge |
+| 0016 | Harness E2E híbrido (integration_test + Pigeon debug) | spec camera task-19 |
+| 0017 | `video_player` para a tela Preview (P08) | Sprint 1 Task G |
 
 ---
 
@@ -566,14 +588,58 @@ Bundle ID / Application ID: `com.rarocamera`.
 
 ---
 
-## 11. Próximos passos após aprovação
+## 11. Roadmap (3 Sprints — vigente a partir de 2026-05-29)
 
-1. **Fase 2 — Scaffold:** estrutura monorepo, `apps/mobile`, `packages/shared`, Bun workspaces, Turborepo, Biome, lefthook, commitlint, instalação de todas as deps fixadas na Seção 2.
-2. **Fase 3 — Foundation:** `AGENTS.md` + `CLAUDE.md` + `docs/01-10` + ADRs 0001–0012 + `docs/sessions/`.
-3. **Fase 4 — Harness:** subagents Flutter, hooks Claude Code, slash commands, `.claude/settings.json`.
-4. **Fase 5 — Spec-Driven:** templates de spec + plan, sugestão de primeira spec (`feat/camera-native-bridge`).
-5. **Primeira spec sugerida:** `feat/camera-native-bridge` (valida pipeline native bridge crítico mais cedo, conforme briefing Seção 10 roadmap).
+> Cada Sprint tem MD detalhado em `docs/superpowers/plans/sprint-N-*.md`.
+
+### Sprint 1 — Foundation + Walking Skeleton iOS
+Status: ✅ Walking skeleton completo (12 telas validadas no iPhone 12, Task H sessão 0015). Única pendência declarada: Task C (merge → `develop`) **segurada de propósito** até os gates de câmera nativa (G1/G7 perf + Android M54 + goldens) fecharem no Sprint 2/3.
+
+Cleanup:
+- [x] Sprint 0: master plan v2 + 3 sprint MDs criados
+- [x] Task A: memórias auditadas — 6 renomeadas (índice consertado), 33 mantidas com justificativa (meta ≤25 reinterpretada; ver sessão 0008)
+- [x] Task B: CLAUDE.md aligned (§8 9 hooks, §11 cortada 29→11 por critério, §6 simplificado) + Blueprint §11 roadmap
+- [ ] Task C: branch `feat/camera-native-bridge` merged em `develop` — merge **segurado** (Sprint 1.C 2026-06-01, reconfirmado Task H sessão 0015); G4 focus ring iOS validado em device (3 bugs corrigidos + tap re-arquitetado pro nativo), mas gates G1/G7 perf + Android M54 + goldens seguem abertos (Sprint 2/3). Walking skeleton fica funcionalmente completo na branch; merge espera os gates de Sprint 2/3. Ver spec `2026-05-28-camera-task-19-closure-design.md` §progresso
+- [x] Task H: smoke test fim-a-fim das 12 telas validado no iPhone 12 físico (build profile assinado, sem crash, sem regressão na câmera nativa) — sessão 0015. 1 fix device (vão vertical Resolução) + correção infra (Package.resolved firebase 12.13→12.14 stale no `.xcodeproj` que bloqueava o build SPM)
+
+Telas (12 Walking Skeleton):
+- [x] P01 Splash — logo breathe (drop-shadow) + dot loader + tagline; validado no iPhone 12 (Task D, sessão 0011)
+- [x] P02 Onboarding 1 ("Grave sem tocar") — mic+halos, wake word "Raro", provider Riverpod keepAlive; validado no iPhone 12
+- [x] P03 Onboarding 2 ("Nunca perca o momento") — buffer waveform viz; validado no iPhone 12
+- [x] P04 Permissions (camera + mic via permission_handler, gateway port mockável) — TDD + design-fidelity PASS + **validado no iPhone 12** (Task E, sessão 0012)
+- [x] P05 Camera UI shell (HUD res/fps/lens, REC mock + timer fake, buffer pill, lens switcher local) — TDD + design-fidelity + **validado no iPhone 12**: 2 fixes design-fidelity (hud lens ascii x, buffer pill active) + 3 fixes device (rec glow sutil, grad-line topo, ícone câmera). Preview é mock (UiKitView nativo só Sprint 2)
+> **⚠️ Naming (numeração do MD vs. contrato `AppScreen`):** os rótulos `Pnn` abaixo seguem a numeração histórica do MD do Sprint 0, que **não** bate com o enum `AppScreen` em `raro_shared`. O mapeamento autoritativo (usar SEMPRE o enum no código) está anotado em cada linha como `(= AppScreen.pXX...)`. O "Subscription popup" é o modal `AppModal.m01SubscriptionPopup`, não uma rota.
+
+- [x] P06 Subscription popup (= `AppModal.m01SubscriptionPopup`) — overlay na câmera, auto após 450ms se `!isSubscribed`; CTA Assinar agora → `/paywall`, Talvez depois fecha; copy **30 dias** (invariante, protótipo diz 15); `SubscriptionController` `@riverpod` keepAlive via port `SubscriptionStore`. TDD + design-fidelity PASS (Task G, sessão 0014). **Validado no iPhone 12** (Task H, sessão 0015)
+- [x] P07 Settings (= `AppScreen.p06Settings`) — persistência via `SharedPreferencesAsync` (API moderna 2026, port `SettingsStore` mockável swap-able Sprint 2); entity `RecordingSettings` freezed com enums canônicos do `raro_shared`; estabilização = status fixo "SEMPRE ATIVADA" (não-editável, conforme protótipo); idioma só persiste preferência (i18n real Sprint 3); TDD + design-fidelity 13/13 PASS (Task F, sessão 0013). **Validado no iPhone 12** (Task H, sessão 0015): 1 fix device — vão vertical do bloco Resolução (`GridView.count childAspectRatio` forçava altura → 2 `Row`s com `Expanded`)
+- [x] P08 Gallery (= `AppScreen.p07Gallery`) — grid 3-col com 6 `VideoEntity` mock; thumbnails por gradiente HSL (sem assets PNG, conforme protótipo); filtros client-side Todos/Hoje/Esta semana/Raro Replay com lógica pura testável; TDD + design-fidelity PASS (Task F, sessão 0013). **Validado no iPhone 12** (Task H, sessão 0015)
+- [x] P09 Preview (= `AppScreen.p08Preview`, rota `/preview/:id`) — `video_player ^2.11.1` (ADR-0017) com clipe mock bundlado; provider `autoDispose` + `ref.onDispose`; scrubber rainbow custom + seek; metadata mock (`PreviewMetadata`: H.265 / size determinístico / duração). TDD + design-fidelity PASS (Task G, sessão 0014). **Validado no iPhone 12** (Task H, sessão 0015): vídeo tocando + scrubber/seek confirmados em device
+- [x] P10 Paywall (= `AppScreen.p09Paywall`, rota `/paywall`) — 2 `PlanCard` selecionáveis (mensal default, anual badge MELHOR OFERTA + R$ 7,49 equiv.), features dentro dos cards, ícone de plano, rodapé legal + watermark + glows; preços de `PlanPricing` (`raro_shared`). TDD + design-fidelity PASS (Task G, sessão 0014). **Validado no iPhone 12** (Task H, sessão 0015)
+- [x] P11 Checkout (= `AppScreen.p10Checkout`, rota `/checkout`) — order summary (teste 30d + preço pós-teste), tiles Apple Pay / Google Play (ícone multicolor), CTA disabled até método + hint dinâmico; confirma → `subscribe(now)` → `/camera`. TDD + design-fidelity PASS (Task G, sessão 0014). **Validado no iPhone 12** (Task H, sessão 0015)
+- [x] Trial countdown (DateTime.now() + `SharedPreferencesAsync` via port) — `SubscriptionState.trialDaysRemaining`; banner "X dias restantes" em Settings quando trial ativo (Task G, sessão 0014)
+
+### Sprint 2 — Backend/Lógica Real iOS
+Status: 📋 Planejado em `sprint-2-backend-logic-ios.md`
+
+- [ ] Recording real (MP4 H.264/H.265 → vault)
+- [ ] Replay buffer 15/30s native (ring buffer iOS)
+- [ ] Wake word "Raro" iOS (SFSpeechRecognizer)
+- [ ] Volume button trigger iOS (KVO AVAudioSession)
+- [ ] RevenueCat paywall real (sandbox)
+- [ ] Vault + share via share_plus
+- [ ] Gallery persistência real
+
+### Sprint 3 — Android Parity + TestFlight + Cliente
+Status: 📋 Planejado em `sprint-3-android-parity-testflight-client.md`
+
+- [ ] Android native bridges (CameraX, replay, voice, volume)
+- [ ] Apple Developer Program pago + TestFlight pipeline
+- [ ] Google Play Console + Internal Testing track
+- [ ] i18n PT/ES/EN (ARB + intl)
+- [ ] P12/P13/P14 modais
+- [ ] Performance gates (golden tests + integration_test E2E)
+- [ ] Cliente convidado em TestFlight + Internal Testing
 
 ---
 
-> **Status:** Approved em 2026-05-25. Fase 2 em execução em micro-sprints com 1 commit por sprint.
+> **Status:** Approved em 2026-05-25. Roadmap 3-Sprint vigente desde 2026-05-29 (ver §11) — Sprint 1 em execução.

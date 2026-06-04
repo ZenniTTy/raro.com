@@ -6,11 +6,10 @@ import 'package:raro_mobile/app.dart';
 
 void main() {
   group('RaroApp smoke', () {
-    testWidgets('boots inside ProviderScope and renders wordmark', (
-      tester,
-    ) async {
+    testWidgets('boots inside ProviderScope without throwing', (tester) async {
       await tester.pumpWidget(const ProviderScope(child: RaroApp()));
-      expect(find.text('RARO'), findsOneWidget);
+      await tester.pump();
+      expect(find.byType(RaroApp), findsOneWidget);
     });
   });
 
