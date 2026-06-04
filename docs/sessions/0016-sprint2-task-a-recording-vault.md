@@ -63,6 +63,32 @@ Primeiro entregável fechado do Sprint 2 (CLAUDE.md §6 — 1 sessão = 1 entreg
 - **S2.B (próxima sessão):** Replay buffer 15s/30s nativo (`AVAssetWriter` circular + `CVPixelBufferPool`, ADR-0003 refresh). Avaliar coexistência de `MovieFileOutput` (recording) + `VideoDataOutput` (replay) na mesma sessão `.inputPriority` (risco flagado no ADR-0018).
 - **Débitos herdados/novos:** promover `RecordingController` a Notifier `@riverpod` (reatividade de stop nativo); analytics de recording (threading lens/trigger/buffer); unificar `BufferDuration` duplicado (raro_shared vs camera_shell_state, dívida da 0013); robustez do vault contra sidecar órfão (`.mov` sem `.json` ou vice-versa).
 
+## Addendum — Validação em device + fixes (mesma sessão 0016)
+
+Após o "ready-for-device", o usuário instalou no iPhone 12 (`devicectl install/launch`) e **a S2.A NÃO funcionou de primeira** — confirmando que "218 testes verdes" com repo mockado NÃO valida hardware. Falha minha de ter dito "pronto" sem device. Ciclo de depuração (regra de ouro: evidência antes de fix):
+
+**Sintomas reportados pelo usuário:** (1) preview preto; (2) botão de parar gravação travado (só parava ao navegar pra galeria); (3) galeria só com thumbs de mock.
+
+**Varredura adversarial** (workflow 5 auditores cruzando código vs todas as memórias de câmera/iOS) mapeou 8 bugs. Causa-raiz comum: a sessão nativa nunca iniciava de verdade na P05 → cascata.
+
+**Fixes Dart (commit `d03b796`, +3 testes → 221):**
+- **Preview preto (blocker):** P05 montava o `CameraPreviewWidget` no 1º frame com `session=nil`; a factory lê a sessão uma vez e nunca reconecta. O harness (que funcionava) montava só no `CameraStateReady`. Fix: gatear o preview a `cameraReady`. Memória `raro-pattern-ios-platformview-camera-preview-black` **root cause 3** adicionado.
+- **Botão de parar travado (blocker):** `RecordingController` era classe plana; `_phase` mutava sem notificar Riverpod; `bool _recording` local dessincronizava; `stop()` lançava (sessão nula) e nunca resetava. Fix: promover a Notifier `@riverpod` reativo + escutar `recordingEvents` (reset em finished/failed) + `try/finally` no stop + erro surfado (SnackBar) não engolido. Memória nova `raro-pattern-flutter-async-native-state-needs-notifier`. (Reviewer + perf-auditor JÁ tinham alertado sobre o `_recording` local; subestimei — lição.)
+
+**Fixes Swift (commit `e6e1bc7`, 12 XCTests):**
+- **Áudio ausente (high):** sessão só adicionava input de vídeo → `.mov` mudo. Fix: `AVCaptureAudioDeviceInput` dentro de begin/commitConfiguration (`NSMicrophoneUsageDescription` já existia).
+- **Attach não-atômico (high):** `recordingPipeline.attach` chamava `addOutput` fora de begin/commit e fora da sessionQueue. Fix: mover pra dentro da sessionQueue + begin/commit. `RecordingPipeline` marcado `@unchecked Sendable` (Swift 6).
+
+**Resultado device (usuário confirmou):** REC, câmera e foco funcionando; áudio a confirmar. **Novos achados do usuário:**
+- **Lens 0.5×/1× parou (regressão minha):** liguei `onSelectLens` só ao `cameraShell` (UI), não ao `cameraController.switchLens` (nativo). Fix (commit `03b080c`): liga aos dois, gateado a ready.
+- **Botão "×" na câmera:** removido (câmera é home; não faz sentido voltar pra permissões). Topbar = só wordmark RARO centralizado.
+- **Onboarding/permissões repetiam toda abertura:** router não consultava o `OnboardingStore`. Fix: splash decide por `isCompleted()` (1ª vez = tutorial+permissões+`markCompleted`; depois = direto câmera). Recorrente não crasha se permissão revogada (preview placeholder).
+- Commit `03b080c`: +7 testes → 228.
+
+**Estado das Settings (resposta ao usuário):** só **Resolução** e **FPS** têm efeito REAL hoje (vão pro recording via mapper). Replay buffer / Controle (voz/volume) / Idioma **salvam a preferência mas não têm comportamento** ainda (S2.B/C/D/Sprint 3). Estabilização = status fixo. Trial banner + Ver Planos = mock.
+
+**Meta-lição reforçada:** para QUALQUER toque em hardware/bridge nativa, "pronto" exige device ou log real — testes de widget com mock não bastam. Validação em device é gate obrigatório (CLAUDE.md §10), não opcional.
+
 ## Referências
 
 - Plan: `docs/superpowers/plans/2026-06-03-s2a-recording-vault.md` (12 tasks, verificado adversarialmente)
