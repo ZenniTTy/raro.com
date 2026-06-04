@@ -34,7 +34,7 @@ void main() {
       final service = VaultService(documentsDir: tempRoot);
       final entity = await service.save(source, metadata: meta('a1'));
       expect(entity.id, 'a1');
-      expect(entity.filePath, endsWith('vault/a1.mov'));
+      expect(entity.filePath, endsWith('vault/a1.mp4'));
       expect(File(entity.filePath!).existsSync(), isTrue);
       expect(File(entity.filePath!).lengthSync(), 2048);
     },

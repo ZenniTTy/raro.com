@@ -11,7 +11,7 @@ class VaultService {
 
   Directory get _vaultDir => Directory('${documentsDir.path}/vault');
   File _metaFile(String id) => File('${_vaultDir.path}/$id.json');
-  File _videoFile(String id) => File('${_vaultDir.path}/$id.mov');
+  File _videoFile(String id) => File('${_vaultDir.path}/$id.mp4');
 
   Future<VideoEntity> save(
     File source, {
