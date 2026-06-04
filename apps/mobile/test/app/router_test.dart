@@ -13,6 +13,8 @@ import 'package:raro_mobile/features/camera/data/vault_service.dart';
 import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
 import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
 import 'package:raro_mobile/features/gallery/presentation/widgets/video_thumbnail.dart';
+import 'package:raro_mobile/features/onboarding/application/onboarding_progress_provider.dart';
+import 'package:raro_mobile/features/onboarding/data/onboarding_store.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/data/subscription_store.dart';
 import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
@@ -49,10 +51,23 @@ class _FakeSubscriptionStore implements SubscriptionStore {
   }
 }
 
+class _FakeOnboardingStore implements OnboardingStore {
+  bool completed = false;
+
+  @override
+  Future<bool> isCompleted() async => completed;
+
+  @override
+  Future<void> markCompleted() async {
+    completed = true;
+  }
+}
+
 void main() {
   late _MockPermissionGateway gateway;
   late _FakeSubscriptionStore subscriptionStore;
   late _MockCameraRepository cameraRepository;
+  late _FakeOnboardingStore onboardingStore;
   late Directory vaultRoot;
 
   setUpAll(() {
@@ -70,6 +85,7 @@ void main() {
     when(gateway.cameraStatus).thenAnswer((_) async => false);
     when(gateway.microphoneStatus).thenAnswer((_) async => false);
     subscriptionStore = _FakeSubscriptionStore();
+    onboardingStore = _FakeOnboardingStore();
     cameraRepository = _MockCameraRepository();
     when(cameraRepository.discoverCapabilities).thenAnswer(
       (_) async => CameraCapabilities(
@@ -93,6 +109,7 @@ void main() {
         permissionGatewayProvider.overrideWithValue(gateway),
         settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
         subscriptionStoreProvider.overrideWithValue(subscriptionStore),
+        onboardingStoreProvider.overrideWithValue(onboardingStore),
         cameraRepositoryProvider.overrideWithValue(cameraRepository),
         vaultServiceProvider.overrideWith(
           (ref) async => VaultService(documentsDir: vaultRoot),
@@ -112,7 +129,7 @@ void main() {
       expect(find.byKey(const Key('splash_logo')), findsOneWidget);
     });
 
-    testWidgets('splash auto-navega para onboarding 1 após 1.8s', (
+    testWidgets('splash → onboarding 1 quando onboarding incompleto', (
       tester,
     ) async {
       await tester.pumpWidget(app());
@@ -120,6 +137,18 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1900));
       await tester.pumpAndSettle();
       expect(find.text('Grave sem tocar'), findsOneWidget);
+    });
+
+    testWidgets('splash → camera direto quando onboarding completo', (
+      tester,
+    ) async {
+      onboardingStore.completed = true;
+      await tester.pumpWidget(app());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1900));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('DIGA “RARO” PARA GRAVAR'), findsOneWidget);
     });
 
     testWidgets('onboarding 1 → Avançar → onboarding 2', (tester) async {

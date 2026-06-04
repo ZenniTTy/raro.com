@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/features/onboarding/application/onboarding_progress_provider.dart';
 import 'package:raro_mobile/features/splash/presentation/widgets/breathing_logo.dart';
 import 'package:raro_mobile/features/splash/presentation/widgets/dot_loader.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key, this.onComplete});
 
-  final VoidCallback? onComplete;
+  final ValueChanged<bool>? onComplete;
 
   static const Duration holdDuration = Duration(milliseconds: 1800);
 
@@ -24,10 +25,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer(SplashScreen.holdDuration, () {
-      if (!mounted) return;
-      widget.onComplete?.call();
-    });
+    _timer = Timer(SplashScreen.holdDuration, _onHoldComplete);
+  }
+
+  Future<void> _onHoldComplete() async {
+    final completed = await ref.read(onboardingStoreProvider).isCompleted();
+    if (!mounted) return;
+    widget.onComplete?.call(completed);
   }
 
   @override

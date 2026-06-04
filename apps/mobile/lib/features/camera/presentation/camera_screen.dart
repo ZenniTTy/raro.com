@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
@@ -30,13 +31,11 @@ import 'package:raro_shared/raro_shared.dart' show Codec;
 class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({
     super.key,
-    required this.onClose,
     required this.onGallery,
     required this.onSettings,
     required this.onSeePlans,
   });
 
-  final VoidCallback onClose;
   final VoidCallback onGallery;
   final VoidCallback onSettings;
   final VoidCallback onSeePlans;
@@ -95,6 +94,20 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   }
 
   void _dismissPopup() => setState(() => _popupVisible = false);
+
+  Future<void> _onSelectLens(LensType lens) async {
+    ref.read(cameraShellProvider.notifier).selectLens(lens);
+    final isReady =
+        ref.read(cameraControllerProvider).value is CameraStateReady;
+    if (!isReady) return;
+    try {
+      await ref.read(cameraControllerProvider.notifier).switchLens(lens);
+    } on Object catch (error, stackTrace) {
+      ref
+          .read(appLoggerProvider)
+          .w('switchLens failed', error: error, stackTrace: stackTrace);
+    }
+  }
 
   void _stopElapsedTimer() {
     _timer?.cancel();
@@ -176,7 +189,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         children: [
           Column(
             children: [
-              _TopBar(onClose: widget.onClose),
+              const _TopBar(),
               const _GradLine(),
               const SizedBox(height: 12),
               Expanded(
@@ -194,9 +207,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                       onToggleBuffer: () => ref
                           .read(cameraShellProvider.notifier)
                           .toggleBufferDuration(),
-                      onSelectLens: (lens) => ref
-                          .read(cameraShellProvider.notifier)
-                          .selectLens(lens),
+                      onSelectLens: _onSelectLens,
                       onTapHud: widget.onSettings,
                     ),
                   ),
@@ -225,43 +236,23 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.onClose});
-
-  final VoidCallback onClose;
+  const _TopBar();
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<RaroColors>()!;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 60, 20, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: onClose,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
-                shape: BoxShape.circle,
-                border: Border.all(color: colors.borderBright),
-              ),
-              child: Icon(Icons.close, size: 20, color: colors.ink),
-            ),
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(20, 60, 20, 12),
+      child: Center(
+        child: Text(
+          'RARO',
+          style: TextStyle(
+            fontFamily: RaroFonts.display,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 3,
+            color: Colors.white,
           ),
-          const Text(
-            'RARO',
-            style: TextStyle(
-              fontFamily: RaroFonts.display,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 3,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 36),
-        ],
+        ),
       ),
     );
   }

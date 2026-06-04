@@ -54,6 +54,14 @@ void main() {
         codec: 'h265',
       ),
     );
+    registerFallbackValue(LensType.wide);
+    registerFallbackValue(
+      CameraConfig(
+        lens: LensType.wide,
+        resolution: Resolution.fhd1080,
+        fps: Fps.fps30,
+      ),
+    );
   });
 
   _MockCameraRepository buildRepo({
@@ -78,7 +86,6 @@ void main() {
   }
 
   Widget harness({
-    VoidCallback? onClose,
     VoidCallback? onGallery,
     VoidCallback? onSettings,
     VoidCallback? onSeePlans,
@@ -97,7 +104,6 @@ void main() {
       child: MaterialApp(
         theme: buildRaroDarkTheme(),
         home: CameraScreen(
-          onClose: onClose ?? () {},
           onGallery: onGallery ?? () {},
           onSettings: onSettings ?? () {},
           onSeePlans: onSeePlans ?? () {},
@@ -162,7 +168,6 @@ void main() {
               builder: (context, ref, _) {
                 capturedRef = ref;
                 return CameraScreen(
-                  onClose: () {},
                   onGallery: () {},
                   onSettings: () {},
                   onSeePlans: () {},
@@ -178,6 +183,36 @@ void main() {
       await tester.tap(find.text('0.5×'));
       await tester.pump();
       expect(capturedRef.read(cameraShellProvider).lens, LensType.ultraWide);
+    });
+
+    testWidgets('tap na lente chama switchLens nativo quando ready', (
+      tester,
+    ) async {
+      final repo = buildRepo(hasPermission: true);
+      when(() => repo.startSession(any(), any())).thenAnswer((_) async {});
+      when(() => repo.switchLens(any())).thenAnswer((_) async {});
+      await tester.pumpWidget(harness(repository: repo));
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.text('0.5×'));
+      await tester.pump();
+
+      verify(() => repo.switchLens(LensType.ultraWide)).called(1);
+    });
+
+    testWidgets('tap na lente NÃO chama switchLens nativo quando não ready', (
+      tester,
+    ) async {
+      final repo = buildRepo();
+      when(() => repo.switchLens(any())).thenAnswer((_) async {});
+      await tester.pumpWidget(harness(repository: repo));
+      await tester.pump();
+
+      await tester.tap(find.text('0.5×'));
+      await tester.pump();
+
+      verifyNever(() => repo.switchLens(any()));
     });
 
     testWidgets('tap em gallery e settings dispara callbacks', (tester) async {

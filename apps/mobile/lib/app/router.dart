@@ -19,7 +19,11 @@ GoRouter buildAppRouter() {
       GoRoute(
         path: AppScreen.p01Splash.path,
         builder: (context, state) => SplashScreen(
-          onComplete: () => context.go(AppScreen.p02Onboarding1.path),
+          onComplete: (completed) => context.go(
+            completed
+                ? AppScreen.p05Camera.path
+                : AppScreen.p02Onboarding1.path,
+          ),
         ),
       ),
       GoRoute(
@@ -45,7 +49,6 @@ GoRouter buildAppRouter() {
       GoRoute(
         path: AppScreen.p05Camera.path,
         builder: (context, state) => CameraScreen(
-          onClose: () => context.go(AppScreen.p04Permissions.path),
           onGallery: () => context.go(AppScreen.p07Gallery.path),
           onSettings: () => context.go(AppScreen.p06Settings.path),
           onSeePlans: () => context.go(AppScreen.p09Paywall.path),

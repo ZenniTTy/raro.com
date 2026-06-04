@@ -3,11 +3,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
+import 'package:raro_mobile/features/onboarding/application/onboarding_progress_provider.dart';
+import 'package:raro_mobile/features/onboarding/data/onboarding_store.dart';
 import 'package:raro_mobile/features/splash/presentation/splash_screen.dart';
 
+class _FakeOnboardingStore implements OnboardingStore {
+  _FakeOnboardingStore({this.completed = false});
+
+  bool completed;
+
+  @override
+  Future<bool> isCompleted() async => completed;
+
+  @override
+  Future<void> markCompleted() async {
+    completed = true;
+  }
+}
+
 void main() {
-  Widget harness({VoidCallback? onComplete}) {
+  Widget harness({
+    ValueChanged<bool>? onComplete,
+    bool onboardingCompleted = false,
+  }) {
     return ProviderScope(
+      overrides: [
+        onboardingStoreProvider.overrideWithValue(
+          _FakeOnboardingStore(completed: onboardingCompleted),
+        ),
+      ],
       child: MaterialApp(
         theme: buildRaroDarkTheme(),
         home: SplashScreen(onComplete: onComplete),
@@ -39,30 +63,66 @@ void main() {
     });
 
     testWidgets('chama onComplete após 1.8s', (tester) async {
-      var completed = false;
-      await tester.pumpWidget(harness(onComplete: () => completed = true));
+      var called = false;
+      await tester.pumpWidget(harness(onComplete: (_) => called = true));
       await tester.pump();
 
-      expect(completed, isFalse);
+      expect(called, isFalse);
       await tester.pump(const Duration(milliseconds: 1799));
-      expect(completed, isFalse);
+      expect(called, isFalse);
       await tester.pump(const Duration(milliseconds: 2));
-      expect(completed, isTrue);
+      await tester.pump();
+      expect(called, isTrue);
+    });
+
+    testWidgets('onComplete recebe false quando onboarding incompleto', (
+      tester,
+    ) async {
+      bool? received;
+      await tester.pumpWidget(harness(onComplete: (value) => received = value));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1801));
+      await tester.pump();
+
+      expect(received, isFalse);
+    });
+
+    testWidgets('onComplete recebe true quando onboarding completo', (
+      tester,
+    ) async {
+      bool? received;
+      await tester.pumpWidget(
+        harness(
+          onComplete: (value) => received = value,
+          onboardingCompleted: true,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1801));
+      await tester.pump();
+
+      expect(received, isTrue);
     });
 
     testWidgets('não chama onComplete se desmontado antes de 1.8s', (
       tester,
     ) async {
-      var completed = false;
-      await tester.pumpWidget(harness(onComplete: () => completed = true));
+      var called = false;
+      await tester.pumpWidget(harness(onComplete: (_) => called = true));
       await tester.pump(const Duration(milliseconds: 500));
 
       await tester.pumpWidget(
-        const ProviderScope(child: MaterialApp(home: SizedBox.shrink())),
+        ProviderScope(
+          overrides: [
+            onboardingStoreProvider.overrideWithValue(_FakeOnboardingStore()),
+          ],
+          child: const MaterialApp(home: SizedBox.shrink()),
+        ),
       );
       await tester.pump(const Duration(milliseconds: 2000));
+      await tester.pump();
 
-      expect(completed, isFalse);
+      expect(called, isFalse);
     });
   });
 }

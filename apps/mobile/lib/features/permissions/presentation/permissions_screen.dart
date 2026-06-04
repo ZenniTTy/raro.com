@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/features/onboarding/application/onboarding_progress_provider.dart';
 import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
 
 class PermissionsScreen extends ConsumerWidget {
@@ -15,6 +16,7 @@ class PermissionsScreen extends ConsumerWidget {
         .read(permissionControllerProvider.notifier)
         .request();
     if (status == CamMicStatus.granted) {
+      await ref.read(onboardingProgressProvider.notifier).markCompleted();
       onGranted();
     }
   }
