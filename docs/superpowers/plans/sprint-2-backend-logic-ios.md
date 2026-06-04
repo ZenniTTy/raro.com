@@ -61,8 +61,8 @@
 
 | # | Objetivo | Entregável | Files principais |
 |---|---|---|---|
-| **S2.A** | Recording + Vault | MP4 grava, lista, reproduz | `lib/features/camera/data/`, `ios/Runner/Native/Camera/RecordingPipeline.swift` |
-| **S2.B** | Replay buffer | Buffer 15s/30s ativo + salvar replay | `ios/Runner/Native/Camera/ReplayBuffer.swift`, ADR-0003 refresh |
+| **S2.A** ✅ | Recording + Vault | `.mov` grava, lista, reproduz **(DONE — sessão 0016, ADR-0018, device-validated; extra: thumbnail real sessão 0017/ADR-0019)** | `lib/features/camera/data/`, `ios/Runner/Native/Camera/RecordingPipeline.swift` + `ThumbnailGenerator.swift` |
+| **S2.B** ◀ próximo | Replay buffer | Buffer 15s/30s ativo + salvar replay | `ios/Runner/Native/Camera/ReplayBuffer.swift`, ADR-0003 refresh |
 | **S2.C** | Wake word "Raro" | Voz liga REC, sem falso positivo razoável | `ios/Runner/Native/Voice/WakeWordDetector.swift`, Pigeon `VoiceHostApi` |
 | **S2.D** | Volume button trigger | Volume +/- toggla REC | `ios/Runner/Native/Volume/VolumeWatcher.swift`, Pigeon `VolumeHostApi` |
 | **S2.E** | RevenueCat sandbox | Paywall real + trial 30d | `lib/features/paywall/data/revenuecat_repository.dart`, `lib/core/billing/` |
@@ -72,7 +72,9 @@
 
 ## Tasks atômicas
 
-### Task A — Recording real + Vault (S2.A)
+> **Status (2026-06-04):** **Task A (S2.A) DONE** — sessões 0016 (recording+vault, ADR-0018) e 0017 (thumbnail real na galeria, ADR-0019), validadas no iPhone 12 físico. G1 (recording funcional) entregue, **exceto medição formal de latência tap→started <300ms** (validação perceptual feita; instrumentação pendente). Os checkboxes `[ ]` abaixo da Task A são o detalhe do plano original e não foram re-marcados individualmente — ver sessões 0016/0017 + CHANGELOG 0.6.0/0.6.1 para o que de fato entrou. **Próxima sessão: Task B (S2.B) — Replay buffer.** Branch `feat/camera-native-bridge` (PR #1 → develop aberto, NÃO mergeado; merge segurado pelos gates G1-latência/G7-perf/Android/goldens).
+
+### Task A — Recording real + Vault (S2.A) ✅ DONE
 
 #### A1. Pigeon API para start/stop recording
 

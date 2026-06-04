@@ -2,6 +2,38 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-06-04] — 0.6.1 (Thumbnail real na galeria — Sprint 2)
+
+> Capa da galeria (P07) passa a ser o 1º frame real de cada vídeo do vault, no lugar do gradiente HSL (reverte decisão de design Sprint 1 para vídeos reais). Sessão 0017. Validado no iPhone 12.
+
+### Adicionado
+- **Thumbnail nativo (ADR-0019):** Pigeon `@async generateThumbnail(videoPath)→jpgPath` + `ThumbnailGenerator.swift` (`AVAssetImageGenerator`, `appliesPreferredTrackTransform`, JPEG q0.8 → `<id>.jpg` ao lado do `.mov`); gerado no save no `recordingVaultSink`; `thumbnailPath` em `RecordingMetadata`/sidecar/`VideoEntity`; `VideoThumbnail` mostra `Image.file` com fallback gradiente HSL. Android stub no-op até Sprint 3.
+- `docs/decisions/0019-thumbnail-avassetimagegenerator.md` (Accepted).
+- Testes: 3 XCTest nativos (`ThumbnailGeneratorTests`, inclui JPEG de `.mov` real) + Dart vault/repository/metadata/vault_sink.
+
+### Mudado
+- `videoListProvider` agora é **vault-only** (removidos os 6 `VideoEntity` mock); galeria reflete só vídeos reais gravados.
+- `VaultService` escreve sidecar JSON **atomicamente** (tmp+rename) — corrige race read-during-write com a galeria.
+
+### Corrigido
+- **`ref` após dispose** no `recordingVaultSink` (listener async usava `ref.read`/`invalidate` pós-await): deps lidas no `build` + `ref.mounted` antes de `invalidate`.
+
+## [2026-06-03] — 0.6.0 (Sprint 2 Task A — Recording real + Vault iOS)
+
+> S2.A: a câmera virou real. P05 monta `CameraPreviewWidget` (UiKitView) ao vivo; tap REC grava `.mov` real no vault; galeria lista; preview reproduz o arquivo. Sessão 0016. Validado no iPhone 12 físico. Cobre o Sprint Goal G1 (recording funcional) — exceto a medição formal de latência <300ms (pendente).
+
+### Adicionado
+- **Recording pipeline (ADR-0018):** `RecordingPipeline.swift` (`AVCaptureMovieFileOutput`, codec HEVC fallback H264 via `setOutputSettings`) grava container `.mov` (não `.mp4`); path entregue async via `onRecordingFinished`. Áudio via `AVCaptureAudioDeviceInput`.
+- **Pigeon:** `startRecording(RecordingOptions)→sessionId` + `stopRecording()` + callbacks `onRecordingFinished`/`onRecordingFailed`. Enum `Codec` em `raro_shared`. Mapper shared→pigeon (`uhd4k60`→`uhd4k`+`fps60`).
+- **`VaultService`** (Dart, `Directory` injetável + sidecar JSON) salva em `documents/vault/`; `videoListProvider` lê vault; preview reproduz arquivo real (`VideoPlayerController.file` fallback `.asset`).
+- `docs/decisions/0018-recording-pipeline-mp4.md` (Accepted, supersedes ADR-0015 item 7 "sem gravação").
+
+### Mudado
+- `RecordingController` promovido a Notifier reativo (`@riverpod` + escuta stream de eventos nativos + `try/finally`); preview montado só quando sessão `ready`; lens 0.5×/1× nativo; `×` removido da câmera; onboarding once-per-install.
+
+### Notas
+- **Out-of-scope (S2.B+):** replay buffer (G2), wake word, volume button, RevenueCat sandbox, share — próximas sessões do Sprint 2.
+
 ## [2026-06-02] — 0.5.0 (Sprint 1 walking skeleton iOS — 12 telas Flutter navegáveis)
 
 > Registra o walking skeleton da Sprint 1 (Tasks D–G). Todas as telas são UI fiel ao protótipo com dados mockados via Riverpod 3 providers de signature swap-able pro Sprint 2. iOS-only, free Apple ID. Backend/lógica real = Sprint 2.
