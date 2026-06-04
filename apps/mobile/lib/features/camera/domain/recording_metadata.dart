@@ -6,6 +6,7 @@ class RecordingMetadata {
     required this.recordedAt,
     required this.isReplay,
     required this.thumbnailHue,
+    this.thumbnailPath,
   });
 
   final String id;
@@ -14,4 +15,5 @@ class RecordingMetadata {
   final DateTime recordedAt;
   final bool isReplay;
   final int thumbnailHue;
+  final String? thumbnailPath;
 }

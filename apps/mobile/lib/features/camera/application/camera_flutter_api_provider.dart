@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:logger/logger.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
+import 'package:raro_mobile/features/camera/data/camera_repository.dart';
+import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
+import 'package:raro_mobile/features/camera/data/vault_service.dart';
 import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
 import 'package:raro_mobile/features/camera/domain/recording_metadata.dart';
 import 'package:raro_mobile/features/gallery/application/video_list_provider.dart';
@@ -52,13 +56,13 @@ Raw<Stream<RecordingResult>> recordingEvents(Ref ref) {
 @Riverpod(keepAlive: true)
 StreamSubscription<RecordingResult> recordingVaultSink(Ref ref) {
   final events = ref.watch(recordingEventsProvider);
+  final repository = ref.watch(cameraRepositoryProvider);
+  final logger = ref.watch(appLoggerProvider);
   final subscription = events.listen((event) async {
     if (event is RecordingFailed) {
-      ref
-          .read(appLoggerProvider)
-          .e(
-            'recording failed code=${event.code.name} message=${event.message}',
-          );
+      logger.e(
+        'recording failed code=${event.code.name} message=${event.message}',
+      );
       return;
     }
     if (event is! RecordingFinished) {
@@ -76,11 +80,28 @@ StreamSubscription<RecordingResult> recordingVaultSink(Ref ref) {
       isReplay: false,
       thumbnailHue: _hueFor(id),
     );
-    await vault.save(source, metadata: metadata);
-    ref.invalidate(videoListProvider);
+    final entity = await vault.save(source, metadata: metadata);
+    await _generateThumbnail(repository, logger, vault, id, entity.filePath);
+    if (ref.mounted) ref.invalidate(videoListProvider);
   });
   ref.onDispose(subscription.cancel);
   return subscription;
+}
+
+Future<void> _generateThumbnail(
+  CameraRepository repository,
+  Logger logger,
+  VaultService vault,
+  String id,
+  String? videoPath,
+) async {
+  if (videoPath == null) return;
+  try {
+    final thumbnailPath = await repository.generateThumbnail(videoPath);
+    await vault.attachThumbnail(id, thumbnailPath);
+  } on Object catch (error) {
+    logger.w('thumbnail generation failed id=$id error=$error');
+  }
 }
 
 String _idFromPath(String path) {

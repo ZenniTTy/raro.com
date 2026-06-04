@@ -509,6 +509,12 @@ interface CameraHostApi {
    * [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
    */
   fun stopRecording()
+  /**
+   * Extracts the first frame of [videoPath] as a JPEG and returns the path of
+   * the generated `.jpg`. iOS uses AVAssetImageGenerator (ADR-0019); Android is
+   * a no-op stub until Sprint 3 and throws CameraErrorCode.formatUnsupported.
+   */
+  fun generateThumbnail(videoPath: String, callback: (Result<String>) -> Unit)
   fun requestPermission(callback: (Result<Boolean>) -> Unit)
   fun hasPermission(callback: (Result<Boolean>) -> Unit)
 
@@ -662,6 +668,26 @@ interface CameraHostApi {
               CameraApiPigeonUtils.wrapError(exception)
             }
             reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.CameraHostApi.generateThumbnail$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val videoPathArg = args[0] as String
+            api.generateThumbnail(videoPathArg) { result: Result<String> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(CameraApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(CameraApiPigeonUtils.wrapResult(data))
+              }
+            }
           }
         } else {
           channel.setMessageHandler(null)

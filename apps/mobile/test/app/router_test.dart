@@ -11,6 +11,8 @@ import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/data/vault_service.dart';
 import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
+import 'package:raro_mobile/features/gallery/application/video_list_provider.dart';
+import 'package:raro_mobile/features/gallery/domain/video_entity.dart';
 import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
 import 'package:raro_mobile/features/gallery/presentation/widgets/video_thumbnail.dart';
 import 'package:raro_mobile/features/onboarding/application/onboarding_progress_provider.dart';
@@ -69,6 +71,7 @@ void main() {
   late _MockCameraRepository cameraRepository;
   late _FakeOnboardingStore onboardingStore;
   late Directory vaultRoot;
+  List<VideoEntity> seededVideos = const [];
 
   setUpAll(() {
     registerFallbackValue(
@@ -97,6 +100,7 @@ void main() {
     when(cameraRepository.hasPermission).thenAnswer((_) async => false);
     when(cameraRepository.stopSession).thenAnswer((_) async {});
     vaultRoot = await Directory.systemTemp.createTemp('router_vault_');
+    seededVideos = const [];
   });
 
   tearDown(() {
@@ -114,6 +118,7 @@ void main() {
         vaultServiceProvider.overrideWith(
           (ref) async => VaultService(documentsDir: vaultRoot),
         ),
+        videoListProvider.overrideWith((ref) async => seededVideos),
       ],
       child: MaterialApp.router(
         theme: buildRaroDarkTheme(),
@@ -229,6 +234,16 @@ void main() {
     testWidgets('gallery → tap thumbnail → preview (P08) abre a tela real', (
       tester,
     ) async {
+      seededVideos = [
+        VideoEntity(
+          id: 'demo',
+          name: 'Vídeo demo',
+          duration: const Duration(seconds: 12),
+          recordedAt: DateTime(2026, 6, 4, 9, 41),
+          isReplay: false,
+          thumbnailHue: 200,
+        ),
+      ];
       await goToCamera(tester);
       await tester.tap(find.byKey(const Key('camera_gallery_button')));
       await tester.pump();

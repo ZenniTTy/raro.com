@@ -8,6 +8,7 @@ private let focusLog = OSLog(subsystem: "com.rarocamera", category: "focus")
 final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
   private let manager = CameraManager()
   private let flutterApi: CameraFlutterApi
+  private let thumbnailGenerator = ThumbnailGenerator()
   weak var platformViewFactory: CameraPlatformViewFactory?
 
   init(messenger: FlutterBinaryMessenger) {
@@ -102,6 +103,23 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
       throw pigeonError(from: error)
     } catch {
       throw pigeonError(code: .sessionFailed, message: error.localizedDescription)
+    }
+  }
+
+  func generateThumbnail(
+    videoPath: String,
+    completion: @escaping (Result<String, Error>) -> Void
+  ) {
+    thumbnailGenerator.generate(videoPath: videoPath) { [weak self] result in
+      switch result {
+      case let .success(path):
+        completion(.success(path))
+      case let .failure(error):
+        completion(.failure(
+          self?.pigeonError(code: .formatUnsupported, message: error.localizedDescription)
+            ?? error
+        ))
+      }
     }
   }
 

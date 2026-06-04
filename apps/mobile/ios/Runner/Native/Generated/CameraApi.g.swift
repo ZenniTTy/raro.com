@@ -464,6 +464,10 @@ protocol CameraHostApi {
   /// Stops recording. The saved file path arrives via
   /// [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
   func stopRecording() throws
+  /// Extracts the first frame of [videoPath] as a JPEG and returns the path of
+  /// the generated `.jpg`. iOS uses AVAssetImageGenerator (ADR-0019); Android is
+  /// a no-op stub until Sprint 3 and throws CameraErrorCode.formatUnsupported.
+  func generateThumbnail(videoPath: String, completion: @escaping (Result<String, Error>) -> Void)
   func requestPermission(completion: @escaping (Result<Bool, Error>) -> Void)
   func hasPermission(completion: @escaping (Result<Bool, Error>) -> Void)
 }
@@ -604,6 +608,26 @@ class CameraHostApiSetup {
       }
     } else {
       stopRecordingChannel.setMessageHandler(nil)
+    }
+    /// Extracts the first frame of [videoPath] as a JPEG and returns the path of
+    /// the generated `.jpg`. iOS uses AVAssetImageGenerator (ADR-0019); Android is
+    /// a no-op stub until Sprint 3 and throws CameraErrorCode.formatUnsupported.
+    let generateThumbnailChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.generateThumbnail\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      generateThumbnailChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let videoPathArg = args[0] as! String
+        api.generateThumbnail(videoPath: videoPathArg) { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      generateThumbnailChannel.setMessageHandler(nil)
     }
     let requestPermissionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.requestPermission\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {

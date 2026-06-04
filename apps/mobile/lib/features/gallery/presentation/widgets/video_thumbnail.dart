@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
@@ -19,6 +21,9 @@ class VideoThumbnail extends StatelessWidget {
       0.7,
       0.4,
     ).toColor();
+    final thumbnailPath = video.thumbnailPath;
+    final hasThumbnail =
+        thumbnailPath != null && File(thumbnailPath).existsSync();
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
@@ -29,19 +34,15 @@ class VideoThumbnail extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               ColoredBox(color: colors.bgElev),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  backgroundBlendMode: BlendMode.screen,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      base.withValues(alpha: 0.55),
-                      base.withValues(alpha: 0.25),
-                    ],
-                  ),
-                ),
-              ),
+              if (hasThumbnail)
+                Image.file(
+                  File(thumbnailPath),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stack) =>
+                      _GradientFallback(base: base),
+                )
+              else
+                _GradientFallback(base: base),
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -100,6 +101,26 @@ class VideoThumbnail extends StatelessWidget {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GradientFallback extends StatelessWidget {
+  const _GradientFallback({required this.base});
+
+  final Color base;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        backgroundBlendMode: BlendMode.screen,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [base.withValues(alpha: 0.55), base.withValues(alpha: 0.25)],
         ),
       ),
     );

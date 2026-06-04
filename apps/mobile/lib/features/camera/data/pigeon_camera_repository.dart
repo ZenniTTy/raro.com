@@ -35,6 +35,10 @@ class PigeonCameraRepository implements CameraRepository {
   Future<void> stopRecording() => _api.stopRecording();
 
   @override
+  Future<String> generateThumbnail(String videoPath) =>
+      _api.generateThumbnail(videoPath);
+
+  @override
   Future<bool> requestPermission() => _api.requestPermission();
 
   @override

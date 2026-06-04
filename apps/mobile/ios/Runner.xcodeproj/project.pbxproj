@@ -29,6 +29,8 @@
 		CA00000000000000000000A9 /* CameraManagerFocusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B9 /* CameraManagerFocusTests.swift */; };
 		CA00000000000000000000AA /* RecordingPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000BA /* RecordingPipeline.swift */; };
 		CA00000000000000000000AB /* CameraManagerRecordingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000BB /* CameraManagerRecordingTests.swift */; };
+		CA00000000000000000000AC /* ThumbnailGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000BC /* ThumbnailGenerator.swift */; };
+		CA00000000000000000000AD /* ThumbnailGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000BD /* ThumbnailGeneratorTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -89,6 +91,8 @@
 		CA00000000000000000000B9 /* CameraManagerFocusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManagerFocusTests.swift; sourceTree = "<group>"; };
 		CA00000000000000000000BA /* RecordingPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/RecordingPipeline.swift; sourceTree = "<group>"; };
 		CA00000000000000000000BB /* CameraManagerRecordingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManagerRecordingTests.swift; sourceTree = "<group>"; };
+		CA00000000000000000000BC /* ThumbnailGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/ThumbnailGenerator.swift; sourceTree = "<group>"; };
+		CA00000000000000000000BD /* ThumbnailGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailGeneratorTests.swift; sourceTree = "<group>"; };
 		DEA69524B3E9912E3431748D /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		E0E272C120536D714518903C /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -143,6 +147,7 @@
 				CA00000000000000000000B8 /* CameraPlatformViewTests.swift */,
 				CA00000000000000000000B9 /* CameraManagerFocusTests.swift */,
 				CA00000000000000000000BB /* CameraManagerRecordingTests.swift */,
+				CA00000000000000000000BD /* ThumbnailGeneratorTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -200,6 +205,7 @@
 				CA00000000000000000000B6 /* CameraApi.g.swift */,
 				CA00000000000000000000B7 /* FocusRingConfig.swift */,
 				CA00000000000000000000BA /* RecordingPipeline.swift */,
+				CA00000000000000000000BC /* ThumbnailGenerator.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -418,6 +424,7 @@
 				CA00000000000000000000A8 /* CameraPlatformViewTests.swift in Sources */,
 				CA00000000000000000000A9 /* CameraManagerFocusTests.swift in Sources */,
 				CA00000000000000000000AB /* CameraManagerRecordingTests.swift in Sources */,
+				CA00000000000000000000AD /* ThumbnailGeneratorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -436,6 +443,7 @@
 				CA00000000000000000000A6 /* CameraApi.g.swift in Sources */,
 				CA00000000000000000000A7 /* FocusRingConfig.swift in Sources */,
 				CA00000000000000000000AA /* RecordingPipeline.swift in Sources */,
+				CA00000000000000000000AC /* ThumbnailGenerator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

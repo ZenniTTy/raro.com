@@ -87,6 +87,18 @@ class CameraHostApiImpl(
     }
   }
 
+  override fun generateThumbnail(videoPath: String, callback: (Result<String>) -> Unit) {
+    callback(
+      Result.failure(
+        FlutterError(
+          code = "formatUnsupported",
+          message = "generateThumbnail not implemented on Android until Sprint 3 (ADR-0019)",
+          details = null,
+        ),
+      ),
+    )
+  }
+
   override fun requestPermission(callback: (Result<Boolean>) -> Unit) {
     try {
       callback(Result.success(manager.requestPermission()))

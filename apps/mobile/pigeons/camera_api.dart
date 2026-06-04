@@ -100,6 +100,12 @@ abstract class CameraHostApi {
   /// [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
   void stopRecording();
 
+  /// Extracts the first frame of [videoPath] as a JPEG and returns the path of
+  /// the generated `.jpg`. iOS uses AVAssetImageGenerator (ADR-0019); Android is
+  /// a no-op stub until Sprint 3 and throws CameraErrorCode.formatUnsupported.
+  @async
+  String generateThumbnail(String videoPath);
+
   @async
   bool requestPermission();
 

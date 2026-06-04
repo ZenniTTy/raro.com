@@ -9,6 +9,7 @@ abstract class CameraRepository {
   Future<void> focusAt(FocusPoint point);
   Future<String> startRecording(RecordingOptions options);
   Future<void> stopRecording();
+  Future<String> generateThumbnail(String videoPath);
   Future<bool> requestPermission();
   Future<bool> hasPermission();
 }

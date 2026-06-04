@@ -12,6 +12,7 @@ void main() {
       recordedAt: at,
       isReplay: false,
       thumbnailHue: 200,
+      thumbnailPath: '/vault/abc.jpg',
     );
     expect(m.id, id);
     expect(m.name, 'Vídeo 14:30');
@@ -19,5 +20,18 @@ void main() {
     expect(m.recordedAt, at);
     expect(m.isReplay, isFalse);
     expect(m.thumbnailHue, 200);
+    expect(m.thumbnailPath, '/vault/abc.jpg');
+  });
+
+  test('RecordingMetadata thumbnailPath defaults to null', () {
+    final m = RecordingMetadata(
+      id: 'x',
+      name: 'Vídeo',
+      duration: const Duration(seconds: 1),
+      recordedAt: DateTime(2026, 6, 4),
+      isReplay: false,
+      thumbnailHue: 0,
+    );
+    expect(m.thumbnailPath, isNull);
   });
 }

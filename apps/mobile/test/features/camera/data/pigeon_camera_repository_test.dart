@@ -137,4 +137,18 @@ void main() {
     await repo.stopRecording();
     verify(api.stopRecording).called(1);
   });
+
+  test(
+    'generateThumbnail forwards videoPath + returns thumbnail path',
+    () async {
+      final api = _MockHostApi();
+      when(
+        () => api.generateThumbnail(any()),
+      ).thenAnswer((_) async => '/vault/x.jpg');
+      final repo = PigeonCameraRepository(api);
+      final path = await repo.generateThumbnail('/vault/x.mov');
+      expect(path, '/vault/x.jpg');
+      verify(() => api.generateThumbnail('/vault/x.mov')).called(1);
+    },
+  );
 }

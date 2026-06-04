@@ -12,6 +12,7 @@ abstract class VideoEntity with _$VideoEntity {
     required bool isReplay,
     required int thumbnailHue,
     String? filePath,
+    String? thumbnailPath,
   }) = _VideoEntity;
 
   const VideoEntity._();
