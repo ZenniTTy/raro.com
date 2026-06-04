@@ -20,7 +20,7 @@
 - Memórias trimmed (≤25)
 
 **Estado de saída (depois de Sprint 2)**:
-- Gravação real → MP4 H.264/H.265 → vault em `path_provider` documents dir
+- Gravação real → `.mov` H.264/HEVC (S2.A, ADR-0018) → **migra para `.mp4` real via `AVAssetWriter`** (Task B0, ADR-0020) → vault em `path_provider` documents dir
 - Replay buffer 15s/30s rodando em background quando camera ativa
 - Wake word "Raro" liga REC quando pronunciado (com `SFSpeechRecognizer` + transcript matching loop)
 - Volume button (qualquer +/-) liga REC quando pressionado (KVO `AVAudioSession.outputVolume`)
@@ -47,7 +47,7 @@
 
 ## Sprint Goals (observáveis binários)
 
-- **G1 — Recording funcional**: tap REC grava vídeo MP4 em vault, gallery atualiza automaticamente, preview reproduz. Latência tap → started <300ms.
+- **G1 — Recording funcional**: tap REC grava vídeo em vault (`.mov` na S2.A; `.mp4` real após Task B0/ADR-0020), gallery atualiza automaticamente, preview reproduz. Latência tap → started <300ms.
 - **G2 — Replay buffer 15s/30s**: quando camera ativa, últimos N segundos sempre disponíveis em buffer; tap "Salvar replay" persiste como vídeo no vault.
 - **G3 — Wake word "Raro" funcional**: dizer "Raro" enquanto app em foreground + camera ativa liga REC (latência detection → REC start ≤500ms).
 - **G4 — Volume button funcional**: pressionar volume +/- liga ou para REC quando camera ativa.
@@ -75,6 +75,12 @@
 > **Status (2026-06-04):** **Task A (S2.A) DONE** — sessões 0016 (recording+vault, ADR-0018) e 0017 (thumbnail real na galeria, ADR-0019), validadas no iPhone 12 físico. G1 (recording funcional) entregue, **exceto medição formal de latência tap→started <300ms** (validação perceptual feita; instrumentação pendente). Os checkboxes `[ ]` abaixo da Task A são o detalhe do plano original e não foram re-marcados individualmente — ver sessões 0016/0017 + CHANGELOG 0.6.0/0.6.1 para o que de fato entrou. **Próxima sessão: Task B (S2.B) — Replay buffer.** Branch `feat/camera-native-bridge` (PR #1 → develop aberto, NÃO mergeado; merge segurado pelos gates G1-latência/G7-perf/Android/goldens).
 
 ### Task A — Recording real + Vault (S2.A) ✅ DONE
+
+> **⚠️ Nota de drift (Task A já entregue — não re-executar):** os exemplos de código abaixo são do plano ORIGINAL e divergem do que de fato shipou nas sessões 0016/0017. Discrepâncias conhecidas, para não induzir erro em quem ler:
+> - **Artefato real = `.mov`** (QuickTime, não `.mp4`) — ADR-0018 item 3. `vault_service.dart` lê/grava `.mov`, não o `.mp4` dos exemplos A3 (linhas ~208/224). **A partir do ADR-0020 (Task B0), o artefato migra para `.mp4` real** via `AVAssetWriter`.
+> - **`stopRecording()` é `void`** + path por callback `onRecordingFinished` (ADR-0018 item 4) — não retorno síncrono de path como o exemplo A1 (linhas ~97-99).
+> - **Thumbnail é nativo** (`generateThumbnail` via `AVAssetImageGenerator`, ADR-0019) — ignorar o `// gerar thumbnail via video_thumbnail package?` do A3 (linha ~210).
+> - **Provider real = `recording_controller.dart`** (não `recording_state_provider.dart`).
 
 #### A1. Pigeon API para start/stop recording
 
@@ -107,7 +113,7 @@
   ```
 - [ ] **Step 2**: Regenerar:
   ```bash
-  bun --filter @raro/mobile run pigeon
+  bun run --filter @raro/mobile pigeon  # filter DEPOIS de run (Bun 1.3.13 — CLAUDE.md §13)
   ```
 - [ ] **Step 3**: Verificar geração em `.g.dart` e `.g.swift`.
 
@@ -132,7 +138,7 @@
     XCTAssertGreaterThan(attr![.size] as! Int64, 1000) // > 1KB
   }
   ```
-- [ ] **Step 2**: Rodar `bun --filter @raro/mobile run test:ios`. Esperado: FAIL.
+- [ ] **Step 2**: Rodar `bun run --filter @raro/mobile test:ios`. Esperado: FAIL.
 - [ ] **Step 3**: Implementar `RecordingPipeline.swift` usando `AVCaptureMovieFileOutput`:
   ```swift
   import AVFoundation
@@ -242,7 +248,7 @@
 #### A4. Integrar recording → vault → gallery
 
 **Files**:
-- Modify: `apps/mobile/lib/features/camera/application/recording_state_provider.dart`
+- Modify: `apps/mobile/lib/features/camera/application/recording_controller.dart`
 
 **DONE criteria**: tap REC chama bridge real, stop salva no vault, gallery atualiza via auto-invalidate.
 
@@ -277,69 +283,84 @@
 
 ### Task B — Replay buffer 15s/30s (S2.B)
 
-#### B1. ADR-0003 refresh (replay buffer strategy)
+> **⚠️ Task B reescrita em 2026-06-04** (pré-flight S2.B, sessão 0018). A versão original assumia coexistência `AVCaptureMovieFileOutput` + `AVCaptureVideoDataOutput` na mesma sessão — **não suportada pela Apple** (ver ADR-0020). A Task B agora exige **migrar a gravação G1 para o pipeline unificado** ANTES de adicionar o replay. Pré-condição: ADR-0003 (revisado) + ADR-0020 (Accepted) lidos. Leitura obrigatória: ADR-0020 + Addendum 2026-06-04 do ADR-0003.
 
-**Files**: `docs/decisions/0003-replay-buffer-native.md` (existe — atualizar implementation section).
+#### B0. Migrar gravação G1 para o pipeline unificado (PRÉ-REQUISITO, antes de qualquer replay)
 
-**DONE criteria**: ADR descreve estratégia escolhida (`AVAssetWriter` + circular dispatch + `CVPixelBufferPool`).
+**Por quê**: hoje `CameraManager.startSession` anexa `AVCaptureMovieFileOutput` incondicionalmente (`RecordingPipeline.attach`). O replay precisa de `AVCaptureVideoDataOutput`, e os dois **não coexistem** (ADR-0020). A gravação contínua (G1, device-validated na S2.A) tem de migrar para `VideoDataOutput` + `AVAssetWriter` ANTES de o replay entrar.
 
-- [ ] **Step 1**: Ler ADR-0003 atual.
-- [ ] **Step 2**: Atualizar seção "Implementation" com decisão final:
-  - Usar `AVAssetWriter` com `mediaType: .video` + `expectsMediaDataInRealTime: true`
-  - Dispatch queue dedicada serial
-  - Buffer circular: 2 `AVAssetWriter` rotativos, cada um cobrindo metade da janela (15s ou 30s)
-  - Quando tap "Save replay" recebido: flush writer ativo + concat com writer anterior + escrever no vault
-  - Reciclar `CVPixelBuffer` via pool (memória `raro-pattern-ios-cvpixelbufferpool`)
-- [ ] **Step 3**: Commit (com Task B2 batch).
+**Files**:
+- Modify: `apps/mobile/ios/Runner/Native/Camera/RecordingPipeline.swift` (trocar `AVCaptureMovieFileOutput` por `AVAssetWriter` alimentado por `VideoDataOutput`)
+- Modify: `apps/mobile/ios/Runner/Native/Camera/CameraManager.swift` (substituir `recordingPipeline.attach` por `VideoDataOutput`/`AudioDataOutput` + dispatch queue dedicada)
+- Modify: `apps/mobile/lib/features/camera/data/vault_service.dart` (`.mov` → `.mp4`) + qualquer filtro de extensão na galeria
+- Modify: `apps/mobile/ios/RunnerTests/CameraManagerRecordingTests.swift` + `ThumbnailGeneratorTests.swift` (artefato `.mp4`)
+
+**DONE criteria**: gravação G1 produz `.mp4` real via `AVAssetWriter`; **re-validada no iPhone 12 físico** (grava → vault → galeria → preview reproduz + thumbnail). XCTest nativo verde. Sem regressão de preview/foco/lens switch (re-validados em device — ADR-0020 Consequências).
+
+- [ ] **Step 1**: Refatorar `RecordingPipeline` para `VideoDataOutput` → `AVAssetWriter(contentType: .mp4)` + `AVAssetWriterInput` de vídeo e áudio (`expectsMediaDataInRealTime = true`), `startSession(atSourceTime:)` no PTS do 1º buffer, `finishWriting(completionHandler:)` → callback (mantém `onRecordingFinished`).
+- [ ] **Step 2**: `setSampleBufferDelegate(_:queue:)` em **dispatch queue dedicada** (NÃO a `sessionQueue`).
+- [ ] **Step 3**: Migrar `vault_service.dart` e galeria de `.mov` para `.mp4`. Decidir migração retroativa (recomendado: sem migração, vault novo — documentar).
+- [ ] **Step 4**: XCTest + **smoke em iPhone 12 físico** (gravação + preview + foco + lens switch sem regressão).
+- [ ] **Step 5**: Commit: `refactor(camera): migra gravação para pipeline unificado videodataoutput+assetwriter (adr-0020)`.
+
+#### B1. ADR refresh (replay buffer strategy) — ✅ FEITO na sessão 0018
+
+**Status**: ADR-0003 reescrito (Addendum 2026-06-04) + ADR-0020 criado (supersedes 0018) na sessão de pré-flight 0018. Estratégia fixada: pipeline unificado `VideoDataOutput` + `AVAssetWriter`, buffer **encoded** (fragmented MP4 via `AVAssetWriterDelegate.didOutputSegmentData` em deque circular — preferida; ou ring de `CMSampleBuffer` + `startSession(atSourceTime:)`). **Descartado**: 2 writers rotativos + concat; `CVPixelBufferPool` no passthrough; `MultiCamSession`; frames crus.
+
+- [x] ADR-0003 revisado + ADR-0020 criado (sessão 0018, commit de docs).
 
 #### B2. ReplayBuffer.swift implementação
 
 **Files**:
 - Create: `apps/mobile/ios/Runner/Native/Camera/ReplayBuffer.swift`
 - Create: `apps/mobile/ios/RunnerTests/ReplayBufferTests.swift`
-- Modify: `apps/mobile/pigeons/camera_api.dart` (adicionar `enableReplayBuffer`, `saveReplay`)
-- Modify: `apps/mobile/ios/Runner/Native/Camera/CameraManager.swift` (wire pipeline)
+- Modify: `apps/mobile/pigeons/replay_buffer_api.dart` (substituir stubs `ping`/`ready` pelos métodos reais — **NÃO** `camera_api.dart`)
+- Modify: `apps/mobile/ios/Runner/Native/Camera/CameraManager.swift` (drenar o mesmo `VideoDataOutput` do B0 para o ring buffer)
+- Create stub: `ReplayBufferApi.g.kt` impl Kotlin lançando `formatUnsupported` (Android = Sprint 3) para o build Android não quebrar após regenerar pigeon
 
-**DONE criteria**: XCTest valida que após 30s de captura, `saveReplay()` produz MP4 com ~30s do trailing window.
+**DONE criteria**: XCTest valida a **lógica determinística** do ring buffer (rotação/ordem/recorte da janela de segmentos) — NÃO assertar "duração ~30s do arquivo final" com sample buffers fake. Coexistência/entrega real validada em **iPhone 12 físico** (ver B-Gate).
 
-- [ ] **Step 1**: Pigeon methods:
+- [ ] **Step 1**: Pigeon methods em `replay_buffer_api.dart` (contrato dedicado, canal `com.rarocamera/replay_buffer` já em `bridge_channels`):
   ```dart
-  void enableReplayBuffer(int seconds); // 15 ou 30
-  void disableReplayBuffer();
-  String saveReplay();
-  ```
-- [ ] **Step 2**: ReplayBuffer.swift (esqueleto):
-  ```swift
-  final class ReplayBuffer {
-    private let bufferSeconds: Int
-    private var primaryWriter: AVAssetWriter?
-    private var secondaryWriter: AVAssetWriter?
-    // ...
-    
-    func append(sampleBuffer: CMSampleBuffer) {
-      // rotate writers se ativo cruzou metade da janela
-      activeWriter?.append(sampleBuffer)
-    }
-    
-    func save() throws -> URL {
-      // finalize ambos writers, concat se possível, retornar URL
-    }
+  @HostApi()
+  abstract class ReplayBufferHostApi {
+    void enableReplayBuffer(int seconds); // 15 ou 30 (usar BufferDuration.value de raro_shared)
+    void disableReplayBuffer();
+    void saveReplay(); // path entregue ASSÍNCRONO via FlutterApi (AVAssetWriter finaliza async)
+  }
+
+  @FlutterApi()
+  abstract class ReplayBufferFlutterApi {
+    void onReplaySaved(String path, int durationMs);
+    void onReplayFailed(String code, String? message); // nome simbólico, nunca rawValue (hook block-pigeon-error-rawvalue)
   }
   ```
-- [ ] **Step 3**: XCTest cobrindo: encher buffer com sample buffers fake por 30s, chamar save, verificar arquivo MP4 com duração próxima de 30s.
-- [ ] **Step 4**: Integrar em `CameraManager.swift`: quando `enableReplayBuffer(seconds)` chamado, attach data output → ReplayBuffer.
-- [ ] **Step 5**: Smoke test no iPhone 12: ligar camera → esperar 30s → "Save replay" UI → ver MP4 em Gallery contendo últimos 30s.
-- [ ] **Step 6**: Commit: `feat(replay): replay buffer nativo avassetwriter circular + xctests`.
+- [ ] **Step 2**: `ReplayBuffer.swift` — ring buffer **encoded** (estratégia A do Addendum ADR-0003: `AVAssetWriter(contentType: .mp4)` + `preferredOutputSegmentInterval` + `didOutputSegmentData` → deque circular de `Data`). Áudio via `AVCaptureAudioDataOutput` no mesmo writer. `save()` assíncrono.
+- [ ] **Step 3**: XCTest da lógica de ring (rotação/janela/ordem) com helper mínimo de sample buffers reais OU timestamps; **não** assertar duração de arquivo final.
+- [ ] **Step 4**: Wire em `CameraManager.swift`: o `VideoDataOutput` do B0 entrega o `CMSampleBuffer` para (a) o writer de gravação e (b) o ring de replay no mesmo callback. `enableReplayBuffer` liga/desliga o consumo pelo ring.
+- [ ] **Step 5** (B-Gate): **iPhone 12 físico** — ver "B-Gate" abaixo.
+- [ ] **Step 6**: Commit: `feat(replay): ring buffer encoded fragmented-mp4 no pipeline unificado + xctests (adr-0003/0020)`.
 
 #### B3. Wire Dart side
 
 **Files**:
-- Create: `apps/mobile/lib/features/replay/application/replay_buffer_provider.dart`
-- Modify: `apps/mobile/lib/features/camera/presentation/widgets/buffer_pill.dart` (já existe Sprint 1 — agora liga ao provider real)
+- Create: `apps/mobile/lib/features/replay/application/replay_buffer_provider.dart` — **@riverpod Notifier reativo** (NÃO bool local), escutando o stream de `ReplayBufferFlutterApi` no `build`, `ref.onDispose(subscription.cancel)`, `if (ref.mounted)` após `await`, `try/finally` nas transições. Espelha `recording_controller.dart` (memória `raro-pattern-flutter-async-native-state-needs-notifier` + `raro-pattern-riverpod-ref-after-dispose-async-listener`).
+- Modify: `apps/mobile/lib/features/camera/presentation/widgets/buffer_pill.dart` (Sprint 1 — liga ao provider real)
 
-**DONE criteria**: buffer pill toggle 15s/30s liga/desliga buffer nativo; botão "Save replay" persiste vídeo.
+**DONE criteria**: buffer pill toggle 15s/30s liga/desliga buffer nativo (estado reativo, não cacheado); "Save replay" persiste no vault e surfa erro (SnackBar) em falha; estado reseta ao sair da câmera.
 
-- [ ] Commit: `feat(replay): wire replay buffer provider + buffer_pill liga ao native bridge`.
+- [ ] Commit: `feat(replay): wire replay_buffer_provider notifier reativo + buffer_pill ao bridge`.
+
+#### B-Gate. Validação em device (gate §10 + ADR-0016) — NÃO declarar pronto sem isto
+
+Replay buffer toca Method Channel + hot path de câmera. Gate obrigatório em **iPhone 12 físico** (não Simulator; XCTest com sample buffers fake é cego para o bug real de entrega):
+
+- [ ] Contract test do bridge replay verde em iOS **e** Android (Android = stub que lança `formatUnsupported`; o contract test cobre os dois lados do canal).
+- [ ] Com buffer ativo: `startRecording`→`stopRecording` ainda produz vídeo finalizado e reproduzível (G1 não regrediu).
+- [ ] `saveReplay` produz vídeo com ~N segundos **E áudio**.
+- [ ] tap→ring <50ms e tap→focus locked <300ms **não regridem** com buffer ativo (gate §10 hot path; instrumentar `os_log` subsystem `com.rarocamera/replay`).
+- [ ] preview ao vivo permanece (não fica preto) ao chamar `enableReplayBuffer`/`disableReplayBuffer`/`saveReplay`.
+- [ ] memória/térmico: monitorar `ProcessInfo.thermalState`; buffer não estoura jetsam (~2GB) no iPhone 12.
 
 ---
 
@@ -414,7 +435,7 @@ abstract class VoiceFlutterApi {
 
 **Files**:
 - Create: `apps/mobile/lib/features/voice/application/wake_word_provider.dart`
-- Modify: `apps/mobile/lib/features/camera/application/recording_state_provider.dart` (subscribe to wake word stream)
+- Modify: `apps/mobile/lib/features/camera/application/recording_controller.dart` (subscribe to wake word stream)
 
 **DONE criteria**: provider expõe stream<WakeWordEvent>, recording_state_provider chama `toggle()` ao receber evento.
 
@@ -505,7 +526,7 @@ abstract class VolumeFlutterApi {
 
 **Files**:
 - Create: `apps/mobile/lib/features/volume/application/volume_button_provider.dart`
-- Modify: `apps/mobile/lib/features/camera/application/recording_state_provider.dart` (subscribe)
+- Modify: `apps/mobile/lib/features/camera/application/recording_controller.dart` (subscribe)
 
 - [ ] Commit: `feat(volume): subscribe volume event → recording state + on/off via settings.controlMode`.
 
@@ -643,9 +664,10 @@ Re-leitura obrigatória antes de tocar código. Trial 30d configurado em App Sto
 | `SFSpeechRecognizer` quota 1000 req/h excedida em testes | Restart loop 50s mantém abaixo do limite. Smoke test não exercita >10 detections/h. |
 | Wake word falso positivo ("rato", "raro" em outras palavras) | Transcript match exato (regex `\braro\b`). Memória aplicável. |
 | Volume KVO app store review rejection | Memória diz aceito pra captura mídia. Documentar uso em Info.plist `NSAppleEventsUsageDescription`. |
-| Replay buffer memory pressure no iPhone 12 (4GB RAM) | `CVPixelBufferPool` recicla. Limitar buffer a 30s @ 1080p30 = ~150MB de raw frames. Usar codec H.264 com `expectsMediaDataInRealTime` true mantém footprint baixo. |
+| **Coexistência `MovieFileOutput` + `VideoDataOutput` (RISCO RESOLVIDO no design)** | **Não suportada pela Apple (ADR-0020).** Mitigação = NÃO coexistir: migrar gravação para pipeline unificado `VideoDataOutput`+`AVAssetWriter` (Task B0) antes do replay. `canAddOutput` dá falso positivo — gate de entrega real só em device. |
+| Replay buffer memory pressure no iPhone 12 (4GB RAM, jetsam ~2GB) | Buffer **encoded** (~30-37MB para 30s@1080p), NÃO raw (os ~150MB do plano original eram frames crus = anti-padrão). Fragmented MP4 em deque circular. Gate de `ProcessInfo.thermalState` degradando fps/resolução. `append(sampleBuffer:)` direto, sem `CVPixelBufferPool` no passthrough. Validar em device (ADR-0003 Addendum 2026-06-04). |
 | RevenueCat sandbox requer Apple Dev pago | Workaround: config produtos só no RevenueCat Web dashboard, SDK mode sandbox sem App Store Connect product creation. Pode ser que precise pagar $99 prematuramente se workaround não funcionar. Validar EARLY em Task E2. |
-| Recording produz MP4 corrompido por bug native | XCTest valida tamanho > 1KB; smoke test valida reprodução em preview. |
+| Recording/replay produz vídeo corrompido por bug native | XCTest valida lógica determinística + tamanho > 1KB; **smoke test em iPhone 12 físico** valida reprodução real (sample buffers fake NÃO exercitam a entrega da sessão viva). |
 | Vault enche disco do iPhone | Adicionar warning quando vault > 500MB. Task F polish. |
 | Wake word + REC mesma tela → audio capture conflict | `AVAudioSession.ambient` permite mix. Validar em smoke test. |
 | Volume button durante gravação muda volume sem disparar callback | KVO em `outputVolume` cobre. Smoke test confirma. |

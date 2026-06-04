@@ -1,7 +1,7 @@
 # 0018 — Recording pipeline (AVCaptureMovieFileOutput)
 
 - **Data:** 2026-06-03
-- **Status:** Accepted
+- **Status:** Superseded by [0020-unified-capture-pipeline-videodataoutput.md](0020-unified-capture-pipeline-videodataoutput.md) — a gravação contínua migra de `AVCaptureMovieFileOutput` para o pipeline unificado `AVCaptureVideoDataOutput` + `AVAssetWriter` (pré-flight S2.B confirmou que `MovieFileOutput` + `VideoDataOutput` não coexistem na mesma sessão). As decisões de codec adaptativo (item 2), contrato assíncrono `onRecordingFinished`/`onRecordingFailed` (item 4) e enum `Codec` em `raro_shared` (item 5) permanecem válidas sob o ADR-0020. O item 3 (container `.mov`) é revertido pelo ADR-0020: o `AVAssetWriter` passa a emitir `.mp4` real.
 - **Supersedes:** ADR-0015 item 7 ("Sem gravação") — gravação agora está em escopo.
 - **Decisores:** Eduardo Rodrigues
 - **Contexto:** Sprint 2 G1 (gravação real de vídeo em P05). Cruza o boundary explícito de ADR-0015 e precede qualquer mudança no contrato Pigeon (`apps/mobile/pigeons/camera_api.dart`).
