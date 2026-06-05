@@ -76,16 +76,19 @@ class VaultService {
 
   File _thumbFile(String id) => File('${_vaultDir.path}/$id.jpg');
 
-  VideoEntity _toEntity(RecordingMetadata m, String path) => VideoEntity(
-    id: m.id,
-    name: m.name,
-    duration: m.duration,
-    recordedAt: m.recordedAt,
-    isReplay: m.isReplay,
-    thumbnailHue: m.thumbnailHue,
-    filePath: path,
-    thumbnailPath: m.thumbnailPath,
-  );
+  VideoEntity _toEntity(RecordingMetadata m, String path) {
+    final thumb = _thumbFile(m.id);
+    return VideoEntity(
+      id: m.id,
+      name: m.name,
+      duration: m.duration,
+      recordedAt: m.recordedAt,
+      isReplay: m.isReplay,
+      thumbnailHue: m.thumbnailHue,
+      filePath: path,
+      thumbnailPath: thumb.existsSync() ? thumb.path : null,
+    );
+  }
 
   Map<String, Object?> _encode(RecordingMetadata m) => {
     'id': m.id,

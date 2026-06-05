@@ -77,9 +77,12 @@ void main() {
   });
 
   test('attaches thumbnail path when generation succeeds', () async {
-    when(
-      () => repository.generateThumbnail(any()),
-    ).thenAnswer((_) async => '${tempRoot.path}/vault/sess1.jpg');
+    final thumbPath = '${tempRoot.path}/vault/sess1.jpg';
+    when(() => repository.generateThumbnail(any())).thenAnswer((_) async {
+      await Directory('${tempRoot.path}/vault').create(recursive: true);
+      await File(thumbPath).writeAsBytes([0, 1, 2]);
+      return thumbPath;
+    });
     final container = makeContainer();
 
     final videos = await emitAndWaitUntil(
