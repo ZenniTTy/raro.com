@@ -139,7 +139,7 @@ Em `.claude/hooks/`. 9 hooks registrados em eventos + 1 utilitário invocável m
 |---|---|---|
 | `block-env.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia escrita em `.env`, `key.properties`, `keystore.jks`, `GoogleService-Info.plist`, `google-services.json` |
 | `block-secrets.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia content com api_key, private_key, BEGIN PEM, etc. |
-| `warn-adr-drift.sh` | PreToolUse Write/Edit/MultiEdit | Avisa (não bloqueia) se mudança toca pubspec/Blueprint/native_bridges sem ADR novo no branch |
+| `warn-adr-drift.sh` | PreToolUse Write/Edit/MultiEdit | Avisa (não bloqueia) se mudança toca pubspec/Blueprint/native_bridges OU contrato Pigeon source (`apps/mobile/pigeons/*.dart`) sem ADR novo no branch |
 | `block-forbidden-terms.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia termos de marca proibidos (`OkCamera`, `Ok Camera`, `hey OkCamera`, `okCamera`, `ok_camera`); wake word é `"Raro"` (ADR-0009). Lista espelha `packages/shared/lib/src/contract/forbidden_terms.dart` |
 | `block-pigeon-error-rawvalue.sh` | PreToolUse Write/Edit/MultiEdit (`.swift`/`.kt`) | Bloqueia `String(<enum>.rawValue)` / `.rawValue.toString()` dentro de `PigeonError()`/`FlutterError()` — preserva semântica do enum na fronteira Pigeon |
 | `warn-gesturedetector-over-platformview.sh` | PreToolUse Write/Edit/MultiEdit (`.dart`) | Avisa (não bloqueia) se `GestureDetector` envolve `UiKitView`/`AndroidView` com `EagerGestureRecognizer` — tap vai pro nativo, `onTapDown` do pai não dispara (causou focus ring sumir). Detectar tap no nativo. Memória `raro-pattern-flutter-platformview-tap-must-be-native` |
@@ -178,6 +178,7 @@ Antes de declarar feature pronta:
 | Mudou dep ou stack | ADR aberto e mergeado antes |
 | Tocou hot path de focus/zoom/exposure (CameraPlatformView, AVCaptureDevice config, Method Channel de câmera) | Perceived latency validation manual em iPhone físico (não Simulator): rodar `bun run --filter '@raro/mobile' dev:ios -- -d <udid>` e validar tap→ring visível <50ms, tap→focus locked <300ms; instrumentar `os_log` com subsystem dedicado (ex: `com.rarocamera/focus`) em entry/exit dos handlers e anexar trecho do Xcode Console no PR. Em Sessão 2+ substituído por `integration_test --machine` + Pigeon `CameraDebugHostApi` lendo `AVCaptureDevice.focusPointOfInterest` (ADR-0016, harness E2E híbrido) |
 | Tocou animação `CALayer`/`CATransaction` em `PlatformView` | Smoke test em device físico: ring visível em sub-frame (<16ms); XCTest com expectation valida que `layer.animation(forKey:)` retorna não-nil após `showFocusRing`; opcionalmente gravar tela 240fps para validar percepção real |
+| Tocou caminho que decide resolução/fps/codec gravado (`selectDevice`, `applyFormat`/`setFormat`, `discoverCapabilities`, `AVAssetWriter` settings, `FormatCapability`/`CameraCapabilities` no Pigeon) | Prova objetiva de formato em iPhone físico (não Simulator): gravar 1 clipe por formato afetado, puxar o `.mp4` do vault via `xcrun devicectl device copy from --domain-type appDataContainer ...` e rodar `ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate` — anexar a saída no PR comprovando dimensões+fps reais (ex: `3840×2160 @ 60`). Teste Dart/widget não detecta fallback silencioso de formato (ADR-0021, bug 4K60 sessão 0020) |
 
 ---
 
