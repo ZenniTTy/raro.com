@@ -103,3 +103,78 @@ A tabela original assumia frames **crus** (anti-padrão). Com buffer **encoded**
 - Apple Developer Forums: thread/14323, thread/679250, thread/73800, thread/688973 (jetsam iPhone)
 - React Native Vision Camera (prova de existência): github.com/mrousavy/react-native-vision-camera
 - Memórias: `raro-pattern-ios-cvpixelbufferpool`, `raro-pattern-ios-avcapture-multicam-not-needed`, `raro-pattern-ios-platformview-camera-preview-black`, `raro-pattern-flutter-async-native-state-needs-notifier`, `raro-pattern-android-mediacodec-buffer-management`
+
+---
+
+## Addendum 2026-06-05 — Estratégia iOS revisada: chunked disk-ring (`.mp4` progressivo)
+
+- **Status:** Accepted — **substitui a estratégia "(A) Fragmented MP4 em memória" do Addendum 2026-06-04 como caminho PREFERIDO.** A decisão estratégica do ADR (replay 100% nativo, sem plugin, buffer encoded dos últimos 15s/30s, save assíncrono) permanece intacta; muda só a forma de manter o buffer encoded no iOS.
+- **Decisores:** Eduardo Rodrigues
+- **Contexto:** S2.B (sessão de implementação do replay). Pesquisa de fonte primária durante o design (Apple docs do modo segmento do `AVAssetWriter`; artigo "Delaying camera feed with AVFoundation"; código da React Native Vision Camera; padrão `RPScreenRecorder.startClipBuffering` do ReplayKit, WWDC21) expôs dois gaps na estratégia A.
+
+### Por que (A) Fragmented MP4 foi rebaixada
+
+1. **Artefato divergente.** O modo segmento do `AVAssetWriter` exige `outputFileTypeProfile = .mpeg4AppleHLS` e produz **fragmented MP4** (init segment + media segments `.m4s`), **não** um `.mp4` progressivo. Isso diverge do artefato `.mp4` progressivo que a gravação contínua (S2.A/B0) já produz e que o ADR-0020 fixou (ponto 2: "Container `.mp4` real"). Galeria, preview (`video_player`), share sheet e o `ffprobe` do gate §10/ADR-0021 tratam fMP4 de forma menos uniforme; a janela fica granular ao segmento.
+2. **Granularidade e dois writers ativos.** A estratégia A roda um segundo `AVAssetWriter` em modo HLS continuamente, em paralelo ao de gravação — mais estado, mais energia contínua, e formato de saída diferente do resto do app.
+
+A estratégia "(B) ring de `CMSampleBuffer` retidos" também é rejeitada como caminho principal: a `AVCaptureVideoDataOutput` entrega frames **descomprimidos** (`CVPixelBuffer`, ex. `yuv-420`); reter N segundos disso estoura RAM e pressiona o pool de `IOSurface` da connection (anti-padrão `raro-pattern-ios-cvpixelbufferpool`), podendo degradar a entrega de frames da gravação G1.
+
+### Decisão revisada: chunked disk-ring de `.mp4` progressivos
+
+> **Revoga o "Descartado explicitamente: '2 `AVAssetWriter` rotativos + concat de arquivos finalizados'" do Addendum 2026-06-04.** A fonte primária nova mostra que esse é, na prática, o padrão idiomático ("disk-based circular queue of encoded video chunks") e que os 3 riscos que motivaram o descarte são mitigáveis por construção (abaixo).
+
+- **`ReplayBuffer.swift`** mantém uma **deque circular de chunks `.mp4` progressivos** já encodados, escritos em `temporaryDirectory`. Cada chunk é produzido por um `AVAssetWriter(fileType: .mp4)` curto (`chunkDuration` ≈ 1s). Ao fechar um chunk, abre o próximo e **deleta o chunk mais antigo** que cai fora da janela. Teto fixo `K = ceil(N / chunkDuration) + 1` (folga de 1 chunk para cobrir a janela inteira).
+- **Vídeo E áudio** em cada chunk (`AVAssetWriterInput` de vídeo + áudio, `expectsMediaDataInRealTime = true`), alimentados pelo **mesmo `captureOutput`** do pipeline unificado (ADR-0020) via **fan-out**: o `CMSampleBuffer` da `AVCaptureVideoDataOutput`/`AudioDataOutput` vai para (a) o writer de gravação on-demand [já existe] e (b) `replayBuffer.append(...)`. Append do mesmo `CMSampleBuffer` em dois inputs distintos é seguro porque RARO faz passthrough puro (nenhum writer modifica o buffer; cada input retém/libera o seu — Apple `AVAssetWriterInput.append(_:)`).
+- **`saveReplay()`** concatena os chunks da janela via **`AVMutableComposition`** (`insertTimeRange` nas tracks de vídeo e áudio, em ordem) exportado por **`AVAssetExportSession` com `AVAssetExportPresetPassthrough`** → `.mp4` progressivo final em `temporaryDirectory`. **Passthrough não re-encoda** → preserva dimensões/fps/codec dos chunks (evita o fallback silencioso de formato que o gate §10/ADR-0021 existe para pegar). Finalização **assíncrona** → path entregue por `onReplaySaved(path, durationMs)`, nunca síncrono.
+
+### Por que os 3 riscos antes "descartados" ficam mitigados
+
+| Risco do descarte 2026-06-04 | Mitigação na chunked disk-ring |
+|---|---|
+| **keyframe boundaries** (concat corromper GOP) | Cada chunk inicia em keyframe **por construção** (`AVAssetWriter` novo = novo GOP/IDR). A fronteira de concat é sempre keyframe-aligned. |
+| **PTS reset** | A concatenação é por `AVMutableComposition.insertTimeRange` (a composition recompõe o timeline), **não** corte/append cru de GOP. PTS é resolvido pela composition. |
+| **áudio sync no corte** | O boundary de chunk é um ponto de sync limpo (chunk fechado tem vídeo+áudio coerentes); a composition insere as duas tracks em paralelo preservando duração. |
+
+### Footprint revisado (substitui a tabela de RAM do Addendum 2026-06-04)
+
+A tabela "Encoded em memória ~30-37MB/30s@1080p" do Addendum 2026-06-04 **não se aplica** a esta estratégia: o buffer **não fica em RAM**, fica em **disco** (encoda direto). O custo passa a ser:
+
+| Recurso | Custo |
+|---|---|
+| RAM | Apenas os paths dos chunks + buffers em trânsito do `AVAssetWriter` (mínimo). Sem retenção de frames. |
+| Disco | ~30-37MB rotativos para 30s@1080p (teto `K` chunks); deque deleta o mais antigo. Não acumula (≠ "stream 24/7" da opção 3 original). |
+| I/O | Escrita sequencial contínua enquanto habilitado; fechar/abrir/deletar chunk fora do append crítico, na `outputQueue` serial (não na `sessionQueue` de focus — gate §10). |
+
+**Gate de hardware mantido:** `ProcessInfo.thermalState` — sob `.serious`/`.critical`, `enableReplayBuffer` recusa habilitar e emite `onReplayFailed`. Validado em iPhone 12 físico (não Simulator).
+
+### Contrato Pigeon final (substitui os stubs `replayBufferPing`/`replayBufferReady`)
+
+Canal dedicado `com.rarocamera/replay_buffer` em `apps/mobile/pigeons/replay_buffer_api.dart` (NÃO no `camera_api.dart`):
+
+```
+@HostApi    ReplayBufferHostApi:
+  void enableReplayBuffer(int seconds)   // 15 ou 30 — BufferDuration.value de raro_shared
+  void disableReplayBuffer()
+  void saveReplay()                       // path entregue ASSÍNCRONO via onReplaySaved
+
+@FlutterApi ReplayBufferFlutterApi:
+  void onReplaySaved(String path, int durationMs)
+  void onReplayFailed(String code, String? message)  // nome simbólico, nunca rawValue (hook block-pigeon-error-rawvalue)
+```
+
+A forma do contrato já estava antecipada por este ADR (linha 78: callback `onReplaySaved` assíncrono) e pelo ADR-0020 (ponto 7); esta seção apenas a materializa. **Não** requer ADR próprio (Simplicity First).
+
+### Coexistência e re-validação (reforço das Consequências originais)
+
+- `setFormat` (resolução/fps) e lens switch **físico** (4K60 ↔ virtual) mudam as dimensões dos `CMSampleBuffer` → chamam `replayBuffer.reset()` (limpa a deque e reabre o chunk com as novas dimensões). Tratados como evento que zera o buffer de replay.
+- Replay e gravação G1 compartilham o output unificado (ADR-0020) → qualquer mudança no replay **re-valida a gravação contínua em iPhone 12 físico** (XCTest/Simulator não basta — gate §10 + memória `feedback_device_debug_use_real_logs_not_assumptions`).
+- O `.mp4` de replay salvo é puxado do vault (`devicectl copy from appDataContainer`) e validado por **`ffprobe`** (dimensões/fps/codec reais), conforme o gate §10/ADR-0021 — o `saveReplay` é "caminho que decide formato gravado".
+
+### Referências do addendum 2026-06-05
+
+- Apple docs: `AVMutableComposition.insertTimeRange`, `AVAssetExportSession` (`AVAssetExportPresetPassthrough`), `AVAssetWriterInput.append(_:)`, `AVCaptureVideoDataOutput` (frames descomprimidos), `ProcessInfo.thermalState`
+- Artigo "Delaying camera feed with AVFoundation Framework" (Emanuel Luayza, Medium) — disk-based circular queue of encoded chunks
+- ReplayKit `RPScreenRecorder.startClipBuffering` (WWDC21 "Discover rolling clips with ReplayKit") — rolling buffer descarta samples > N segundos
+- IMG.LY / Scott Logic — concat de `.mp4` via `AVMutableComposition` + `AVAssetExportSession`
+- ADR-0020 (pipeline unificado), ADR-0021 (4K60 / gate §10 prova de formato)
+- Veredito adr-guardian (S2.B design): `ADR_AMEND_REQUIRED 0003` — este Addendum atende
