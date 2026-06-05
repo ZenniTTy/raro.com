@@ -28,18 +28,29 @@ enum CameraErrorCode {
   sessionFailed,
   alreadyRunning,
   notRunning,
+  sessionInterrupted,
+}
+
+class FormatCapability {
+  FormatCapability({
+    required this.resolution,
+    required this.fps,
+    required this.requiresPhysicalLens,
+  });
+
+  final Resolution resolution;
+  final Fps fps;
+  final bool requiresPhysicalLens;
 }
 
 class CameraCapabilities {
   CameraCapabilities({
     required this.availableLenses,
-    required this.supportedResolutions,
-    required this.supportedFps,
+    required this.supportedFormats,
   });
 
   final List<LensType> availableLenses;
-  final List<Resolution> supportedResolutions;
-  final List<Fps> supportedFps;
+  final List<FormatCapability> supportedFormats;
 }
 
 class CameraConfig {

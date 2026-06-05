@@ -58,6 +58,41 @@ void main() {
       expect((await store.load()).resolution, Resolution.hd720);
     });
 
+    test(
+      'setResolution(uhd4k60) coage fps para 60 (estado consistente)',
+      () async {
+        final store = _FakeSettingsStore(
+          const RecordingSettings(fps: Fps.fps30),
+        );
+        final container = makeContainer(store);
+        await container.read(settingsControllerProvider.future);
+
+        await container
+            .read(settingsControllerProvider.notifier)
+            .setResolution(Resolution.uhd4k60);
+
+        final state = container.read(settingsControllerProvider).requireValue;
+        expect(state.resolution, Resolution.uhd4k60);
+        expect(state.fps, Fps.fps60);
+        expect((await store.load()).fps, Fps.fps60);
+      },
+    );
+
+    test('setResolution não-4K60 preserva o fps escolhido', () async {
+      final store = _FakeSettingsStore(const RecordingSettings(fps: Fps.fps30));
+      final container = makeContainer(store);
+      await container.read(settingsControllerProvider.future);
+
+      await container
+          .read(settingsControllerProvider.notifier)
+          .setResolution(Resolution.uhd4k);
+
+      expect(
+        container.read(settingsControllerProvider).requireValue.fps,
+        Fps.fps30,
+      );
+    });
+
     test('setControlMode persiste o modo de controle', () async {
       final store = _FakeSettingsStore();
       final container = makeContainer(store);

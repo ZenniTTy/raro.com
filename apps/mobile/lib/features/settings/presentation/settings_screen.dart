@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart'
+    show FormatCapability;
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/features/camera/application/capabilities_provider.dart';
+import 'package:raro_mobile/features/camera/domain/format_catalog.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
@@ -111,6 +115,7 @@ class _SettingsBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(settingsControllerProvider.notifier);
+    final supportedFormats = ref.watch(capabilitiesProvider);
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
@@ -118,6 +123,7 @@ class _SettingsBody extends ConsumerWidget {
           title: 'Qualidade de Gravação',
           child: _RecordingQuality(
             settings: settings,
+            supportedFormats: supportedFormats,
             onResolution: controller.setResolution,
             onFps: controller.setFps,
           ),
@@ -158,70 +164,88 @@ class _SettingsBody extends ConsumerWidget {
 class _RecordingQuality extends StatelessWidget {
   const _RecordingQuality({
     required this.settings,
+    required this.supportedFormats,
     required this.onResolution,
     required this.onFps,
   });
 
   final RecordingSettings settings;
+  final List<FormatCapability> supportedFormats;
   final ValueChanged<Resolution> onResolution;
   final ValueChanged<Fps> onFps;
 
-  static const _resolutions = <(Resolution, String)>[
-    (Resolution.hd720, '720p HD'),
-    (Resolution.fullHd1080, '1080p Full HD'),
-    (Resolution.uhd4k, '4K Ultra HD'),
-    (Resolution.uhd4k60, '4K 60fps'),
+  static const _fallbackResolutions = <Resolution>[
+    Resolution.hd720,
+    Resolution.fullHd1080,
+    Resolution.uhd4k,
   ];
+
+  static const _resolutionLabels = <Resolution, (String, String?)>{
+    Resolution.hd720: ('720p HD', null),
+    Resolution.fullHd1080: ('1080p Full HD', null),
+    Resolution.uhd4k: ('4K Ultra HD', null),
+    Resolution.uhd4k60: ('4K 60fps', 'lente fixa'),
+  };
+
+  List<Resolution> get _resolutions {
+    if (supportedFormats.isEmpty) return _fallbackResolutions;
+    return availableSharedResolutions(supportedFormats);
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final resolutions = _resolutions;
+    final fpsLocked = settings.resolution == Resolution.uhd4k60;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Label('Resolução', colors),
         const SizedBox(height: 8),
-        for (var i = 0; i < _resolutions.length; i += 2) ...[
+        for (var i = 0; i < resolutions.length; i += 2) ...[
           if (i > 0) const SizedBox(height: 6),
           Row(
             children: [
-              for (var j = i; j < i + 2 && j < _resolutions.length; j++) ...[
+              for (var j = i; j < i + 2 && j < resolutions.length; j++) ...[
                 if (j > i) const SizedBox(width: 6),
                 Expanded(
                   child: SettingsChip(
-                    label: _resolutions[j].$2,
-                    active: settings.resolution == _resolutions[j].$1,
-                    onTap: () => onResolution(_resolutions[j].$1),
+                    label: _resolutionLabels[resolutions[j]]!.$1,
+                    hint: _resolutionLabels[resolutions[j]]!.$2,
+                    active: settings.resolution == resolutions[j],
+                    onTap: () => onResolution(resolutions[j]),
                   ),
                 ),
               ],
             ],
           ),
         ],
-        const SizedBox(height: 14),
-        _Label('FPS', colors),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: SettingsChip(
-                label: '30 FPS',
-                hint: 'Standard',
-                active: settings.fps == Fps.fps30,
-                onTap: () => onFps(Fps.fps30),
+        if (!fpsLocked) ...[
+          const SizedBox(height: 14),
+          _Label('FPS', colors),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: SettingsChip(
+                  label: '30 FPS',
+                  hint: 'Standard',
+                  active: settings.fps == Fps.fps30,
+                  onTap: () => onFps(Fps.fps30),
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: SettingsChip(
-                label: '60 FPS',
-                hint: 'Smooth',
-                active: settings.fps == Fps.fps60,
-                onTap: () => onFps(Fps.fps60),
+              const SizedBox(width: 6),
+              Expanded(
+                child: SettingsChip(
+                  label: '60 FPS',
+                  hint: 'Smooth',
+                  active: settings.fps == Fps.fps60,
+                  onTap: () => onFps(Fps.fps60),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
         const SizedBox(height: 16),
         const _StabilizationRow(),
       ],

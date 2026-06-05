@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
+import 'package:raro_mobile/features/camera/domain/camera_error_message.dart';
+import 'package:raro_mobile/features/camera/domain/format_catalog.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
@@ -54,6 +57,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     resolution: Resolution.fhd1080,
     fps: Fps.fps60,
   );
+
+  bool get _is4k60 =>
+      _format.resolution == Resolution.uhd4k && _format.fps == Fps.fps60;
 
   @override
   void initState() {
@@ -109,6 +115,21 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     }
   }
 
+  Future<void> _applyFormatToSession(PigeonFormat fmt) async {
+    final isReady =
+        ref.read(cameraControllerProvider).value is CameraStateReady;
+    if (!isReady) return;
+    try {
+      await ref
+          .read(cameraControllerProvider.notifier)
+          .setFormat(fmt.resolution, fmt.fps);
+    } on Object catch (error, stackTrace) {
+      ref
+          .read(appLoggerProvider)
+          .w('setFormat failed', error: error, stackTrace: stackTrace);
+    }
+  }
+
   void _stopElapsedTimer() {
     _timer?.cancel();
     _timer = null;
@@ -135,6 +156,12 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
           setState(() => _elapsed += const Duration(seconds: 1));
         });
       }
+    } on PlatformException catch (e) {
+      _stopElapsedTimer();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(cameraErrorMessage(mapPigeonErrorCode(e.code)))),
+      );
     } on Object catch (_) {
       _stopElapsedTimer();
       if (!mounted) return;
@@ -171,7 +198,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         resolution: value.resolution,
         fps: value.fps,
       );
+      if (fmt.resolution == _format.resolution && fmt.fps == _format.fps) {
+        return;
+      }
       if (mounted) setState(() => _format = fmt);
+      _applyFormatToSession(fmt);
     });
 
     ref.listen(subscriptionControllerProvider, (_, next) {
@@ -204,6 +235,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                       bufferDuration: shell.bufferDuration,
                       lens: shell.lens,
                       lensLabel: shell.hudLensLabel,
+                      resolutionLabel: resolutionLabel(_format.resolution),
+                      fpsLabel: fpsLabel(_format.fps),
+                      ultraWideEnabled: !_is4k60,
                       onToggleBuffer: () => ref
                           .read(cameraShellProvider.notifier)
                           .toggleBufferDuration(),
@@ -266,6 +300,9 @@ class _Viewport extends StatelessWidget {
     required this.bufferDuration,
     required this.lens,
     required this.lensLabel,
+    required this.resolutionLabel,
+    required this.fpsLabel,
+    required this.ultraWideEnabled,
     required this.onToggleBuffer,
     required this.onSelectLens,
     required this.onTapHud,
@@ -277,6 +314,9 @@ class _Viewport extends StatelessWidget {
   final BufferDuration bufferDuration;
   final LensType lens;
   final String lensLabel;
+  final String resolutionLabel;
+  final String fpsLabel;
+  final bool ultraWideEnabled;
   final VoidCallback onToggleBuffer;
   final ValueChanged<LensType> onSelectLens;
   final VoidCallback onTapHud;
@@ -319,12 +359,16 @@ class _Viewport extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               HudInfoBar(
-                resolutionLabel: '1080p',
-                fpsLabel: '60FPS',
+                resolutionLabel: resolutionLabel,
+                fpsLabel: fpsLabel,
                 lensLabel: lensLabel,
                 onTap: onTapHud,
               ),
-              LensSwitcher(selected: lens, onSelected: onSelectLens),
+              LensSwitcher(
+                selected: lens,
+                onSelected: onSelectLens,
+                ultraWideEnabled: ultraWideEnabled,
+              ),
             ],
           ),
         ),

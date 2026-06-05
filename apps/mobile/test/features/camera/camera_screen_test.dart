@@ -72,8 +72,18 @@ void main() {
     when(repo.discoverCapabilities).thenAnswer(
       (_) async => CameraCapabilities(
         availableLenses: [LensType.ultraWide, LensType.wide],
-        supportedResolutions: [Resolution.fhd1080],
-        supportedFps: [Fps.fps30, Fps.fps60],
+        supportedFormats: [
+          FormatCapability(
+            resolution: Resolution.fhd1080,
+            fps: Fps.fps30,
+            requiresPhysicalLens: false,
+          ),
+          FormatCapability(
+            resolution: Resolution.fhd1080,
+            fps: Fps.fps60,
+            requiresPhysicalLens: false,
+          ),
+        ],
       ),
     );
     when(repo.hasPermission).thenAnswer((_) async => hasPermission);

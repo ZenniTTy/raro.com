@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
+import 'package:raro_mobile/features/camera/application/capabilities_provider.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/domain/camera_settings.dart';
@@ -32,6 +33,7 @@ class CameraController extends _$CameraController {
       _repo.stopSession().ignore();
     });
     final caps = await _repo.discoverCapabilities();
+    ref.read(capabilitiesProvider.notifier).update(caps.supportedFormats);
     return CameraState.idle(capabilities: caps);
   }
 

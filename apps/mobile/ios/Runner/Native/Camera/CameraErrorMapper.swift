@@ -9,6 +9,7 @@ enum CameraNativeError: Error {
   case sessionFailed(String)
   case alreadyRunning
   case notRunning
+  case sessionInterrupted
 }
 
 extension CameraNativeError {
@@ -21,6 +22,7 @@ extension CameraNativeError {
     case .sessionFailed: return .sessionFailed
     case .alreadyRunning: return .alreadyRunning
     case .notRunning: return .notRunning
+    case .sessionInterrupted: return .sessionInterrupted
     }
   }
 

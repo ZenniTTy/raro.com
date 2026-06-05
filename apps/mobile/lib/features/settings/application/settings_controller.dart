@@ -15,8 +15,12 @@ class SettingsController extends _$SettingsController {
     return ref.read(settingsStoreProvider).load();
   }
 
-  Future<void> setResolution(Resolution resolution) =>
-      _update((s) => s.copyWith(resolution: resolution));
+  Future<void> setResolution(Resolution resolution) => _update(
+    (s) => s.copyWith(
+      resolution: resolution,
+      fps: resolution == Resolution.uhd4k60 ? Fps.fps60 : s.fps,
+    ),
+  );
 
   Future<void> setFps(Fps fps) => _update((s) => s.copyWith(fps: fps));
 

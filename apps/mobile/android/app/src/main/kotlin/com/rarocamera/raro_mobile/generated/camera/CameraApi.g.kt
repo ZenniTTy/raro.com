@@ -236,7 +236,8 @@ enum class CameraErrorCode(val raw: Int) {
   FORMAT_UNSUPPORTED(3),
   SESSION_FAILED(4),
   ALREADY_RUNNING(5),
-  NOT_RUNNING(6);
+  NOT_RUNNING(6),
+  SESSION_INTERRUPTED(7);
 
   companion object {
     fun ofRaw(raw: Int): CameraErrorCode? {
@@ -246,25 +247,64 @@ enum class CameraErrorCode(val raw: Int) {
 }
 
 /** Generated class from Pigeon that represents data sent in messages. */
+data class FormatCapability (
+  val resolution: Resolution,
+  val fps: Fps,
+  val requiresPhysicalLens: Boolean
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): FormatCapability {
+      val resolution = pigeonVar_list[0] as Resolution
+      val fps = pigeonVar_list[1] as Fps
+      val requiresPhysicalLens = pigeonVar_list[2] as Boolean
+      return FormatCapability(resolution, fps, requiresPhysicalLens)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      resolution,
+      fps,
+      requiresPhysicalLens,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as FormatCapability
+    return CameraApiPigeonUtils.deepEquals(this.resolution, other.resolution) && CameraApiPigeonUtils.deepEquals(this.fps, other.fps) && CameraApiPigeonUtils.deepEquals(this.requiresPhysicalLens, other.requiresPhysicalLens)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + CameraApiPigeonUtils.deepHash(this.resolution)
+    result = 31 * result + CameraApiPigeonUtils.deepHash(this.fps)
+    result = 31 * result + CameraApiPigeonUtils.deepHash(this.requiresPhysicalLens)
+    return result
+  }
+}
+
+/** Generated class from Pigeon that represents data sent in messages. */
 data class CameraCapabilities (
   val availableLenses: List<LensType>,
-  val supportedResolutions: List<Resolution>,
-  val supportedFps: List<Fps>
+  val supportedFormats: List<FormatCapability>
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): CameraCapabilities {
       val availableLenses = pigeonVar_list[0] as List<LensType>
-      val supportedResolutions = pigeonVar_list[1] as List<Resolution>
-      val supportedFps = pigeonVar_list[2] as List<Fps>
-      return CameraCapabilities(availableLenses, supportedResolutions, supportedFps)
+      val supportedFormats = pigeonVar_list[1] as List<FormatCapability>
+      return CameraCapabilities(availableLenses, supportedFormats)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       availableLenses,
-      supportedResolutions,
-      supportedFps,
+      supportedFormats,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -275,14 +315,13 @@ data class CameraCapabilities (
       return true
     }
     val other = other as CameraCapabilities
-    return CameraApiPigeonUtils.deepEquals(this.availableLenses, other.availableLenses) && CameraApiPigeonUtils.deepEquals(this.supportedResolutions, other.supportedResolutions) && CameraApiPigeonUtils.deepEquals(this.supportedFps, other.supportedFps)
+    return CameraApiPigeonUtils.deepEquals(this.availableLenses, other.availableLenses) && CameraApiPigeonUtils.deepEquals(this.supportedFormats, other.supportedFormats)
   }
 
   override fun hashCode(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + CameraApiPigeonUtils.deepHash(this.availableLenses)
-    result = 31 * result + CameraApiPigeonUtils.deepHash(this.supportedResolutions)
-    result = 31 * result + CameraApiPigeonUtils.deepHash(this.supportedFps)
+    result = 31 * result + CameraApiPigeonUtils.deepHash(this.supportedFormats)
     return result
   }
 }
@@ -433,20 +472,25 @@ private open class CameraApiPigeonCodec : StandardMessageCodec() {
       }
       133.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CameraCapabilities.fromList(it)
+          FormatCapability.fromList(it)
         }
       }
       134.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CameraConfig.fromList(it)
+          CameraCapabilities.fromList(it)
         }
       }
       135.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          FocusPoint.fromList(it)
+          CameraConfig.fromList(it)
         }
       }
       136.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          FocusPoint.fromList(it)
+        }
+      }
+      137.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           RecordingOptions.fromList(it)
         }
@@ -472,20 +516,24 @@ private open class CameraApiPigeonCodec : StandardMessageCodec() {
         stream.write(132)
         writeValue(stream, value.raw.toLong())
       }
-      is CameraCapabilities -> {
+      is FormatCapability -> {
         stream.write(133)
         writeValue(stream, value.toList())
       }
-      is CameraConfig -> {
+      is CameraCapabilities -> {
         stream.write(134)
         writeValue(stream, value.toList())
       }
-      is FocusPoint -> {
+      is CameraConfig -> {
         stream.write(135)
         writeValue(stream, value.toList())
       }
-      is RecordingOptions -> {
+      is FocusPoint -> {
         stream.write(136)
+        writeValue(stream, value.toList())
+      }
+      is RecordingOptions -> {
+        stream.write(137)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)

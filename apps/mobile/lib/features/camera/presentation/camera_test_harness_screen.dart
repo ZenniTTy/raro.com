@@ -265,12 +265,7 @@ class _CameraTestHarnessScreenState
             ),
             const SizedBox(height: 4),
             Text(
-              'res: ${capabilities.supportedResolutions.map((r) => r.name).join(', ')}',
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'fps: ${capabilities.supportedFps.map((f) => f.name).join(', ')}',
+              'formats: ${capabilities.supportedFormats.map((f) => '${f.resolution.name}@${f.fps.name}${f.requiresPhysicalLens ? '*' : ''}').join(', ')}',
               style: const TextStyle(color: Colors.white, fontSize: 12),
             ),
           ],

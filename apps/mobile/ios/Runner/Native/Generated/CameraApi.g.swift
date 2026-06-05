@@ -202,46 +202,83 @@ enum CameraErrorCode: Int {
   case sessionFailed = 4
   case alreadyRunning = 5
   case notRunning = 6
+  case sessionInterrupted = 7
+}
+
+/// Generated class from Pigeon that represents data sent in messages.
+struct FormatCapability: Hashable {
+  var resolution: Resolution
+  var fps: Fps
+  var requiresPhysicalLens: Bool
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> FormatCapability? {
+    let resolution = pigeonVar_list[0] as! Resolution
+    let fps = pigeonVar_list[1] as! Fps
+    let requiresPhysicalLens = pigeonVar_list[2] as! Bool
+
+    return FormatCapability(
+      resolution: resolution,
+      fps: fps,
+      requiresPhysicalLens: requiresPhysicalLens
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      resolution,
+      fps,
+      requiresPhysicalLens,
+    ]
+  }
+  static func == (lhs: FormatCapability, rhs: FormatCapability) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return deepEqualsCameraApi(lhs.resolution, rhs.resolution) && deepEqualsCameraApi(lhs.fps, rhs.fps) && deepEqualsCameraApi(lhs.requiresPhysicalLens, rhs.requiresPhysicalLens)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("FormatCapability")
+    deepHashCameraApi(value: resolution, hasher: &hasher)
+    deepHashCameraApi(value: fps, hasher: &hasher)
+    deepHashCameraApi(value: requiresPhysicalLens, hasher: &hasher)
+  }
 }
 
 /// Generated class from Pigeon that represents data sent in messages.
 struct CameraCapabilities: Hashable {
   var availableLenses: [LensType]
-  var supportedResolutions: [Resolution]
-  var supportedFps: [Fps]
+  var supportedFormats: [FormatCapability]
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> CameraCapabilities? {
     let availableLenses = pigeonVar_list[0] as! [LensType]
-    let supportedResolutions = pigeonVar_list[1] as! [Resolution]
-    let supportedFps = pigeonVar_list[2] as! [Fps]
+    let supportedFormats = pigeonVar_list[1] as! [FormatCapability]
 
     return CameraCapabilities(
       availableLenses: availableLenses,
-      supportedResolutions: supportedResolutions,
-      supportedFps: supportedFps
+      supportedFormats: supportedFormats
     )
   }
   func toList() -> [Any?] {
     return [
       availableLenses,
-      supportedResolutions,
-      supportedFps,
+      supportedFormats,
     ]
   }
   static func == (lhs: CameraCapabilities, rhs: CameraCapabilities) -> Bool {
     if Swift.type(of: lhs) != Swift.type(of: rhs) {
       return false
     }
-    return deepEqualsCameraApi(lhs.availableLenses, rhs.availableLenses) && deepEqualsCameraApi(lhs.supportedResolutions, rhs.supportedResolutions) && deepEqualsCameraApi(lhs.supportedFps, rhs.supportedFps)
+    return deepEqualsCameraApi(lhs.availableLenses, rhs.availableLenses) && deepEqualsCameraApi(lhs.supportedFormats, rhs.supportedFormats)
   }
 
   func hash(into hasher: inout Hasher) {
     hasher.combine("CameraCapabilities")
     deepHashCameraApi(value: availableLenses, hasher: &hasher)
-    deepHashCameraApi(value: supportedResolutions, hasher: &hasher)
-    deepHashCameraApi(value: supportedFps, hasher: &hasher)
+    deepHashCameraApi(value: supportedFormats, hasher: &hasher)
   }
 }
 
@@ -391,12 +428,14 @@ private class CameraApiPigeonCodecReader: FlutterStandardReader {
       }
       return nil
     case 133:
-      return CameraCapabilities.fromList(self.readValue() as! [Any?])
+      return FormatCapability.fromList(self.readValue() as! [Any?])
     case 134:
-      return CameraConfig.fromList(self.readValue() as! [Any?])
+      return CameraCapabilities.fromList(self.readValue() as! [Any?])
     case 135:
-      return FocusPoint.fromList(self.readValue() as! [Any?])
+      return CameraConfig.fromList(self.readValue() as! [Any?])
     case 136:
+      return FocusPoint.fromList(self.readValue() as! [Any?])
+    case 137:
       return RecordingOptions.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
@@ -418,17 +457,20 @@ private class CameraApiPigeonCodecWriter: FlutterStandardWriter {
     } else if let value = value as? CameraErrorCode {
       super.writeByte(132)
       super.writeValue(value.rawValue)
-    } else if let value = value as? CameraCapabilities {
+    } else if let value = value as? FormatCapability {
       super.writeByte(133)
       super.writeValue(value.toList())
-    } else if let value = value as? CameraConfig {
+    } else if let value = value as? CameraCapabilities {
       super.writeByte(134)
       super.writeValue(value.toList())
-    } else if let value = value as? FocusPoint {
+    } else if let value = value as? CameraConfig {
       super.writeByte(135)
       super.writeValue(value.toList())
-    } else if let value = value as? RecordingOptions {
+    } else if let value = value as? FocusPoint {
       super.writeByte(136)
+      super.writeValue(value.toList())
+    } else if let value = value as? RecordingOptions {
+      super.writeByte(137)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)

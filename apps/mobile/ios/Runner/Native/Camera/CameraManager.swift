@@ -15,6 +15,7 @@ final class CameraManager {
   private var focusTimeoutWorkItem: DispatchWorkItem?
   private var focusWasAdjusting = false
   private var pendingFocusPoint: FocusPoint?
+  private var isInterrupted = false
   var onFocusResult: ((FocusPoint, Bool) -> Void)?
 
   var onLensSwitched: ((LensType) -> Void)?
@@ -37,7 +38,7 @@ final class CameraManager {
       ) { [weak self] note in
         let reason = note.userInfo?[AVCaptureSessionInterruptionReasonKey] as? Int ?? -1
         os_log("session interrupted reason=%d", log: cameraLog, type: .info, reason)
-        self?.onError?(.sessionFailed("session interrupted"))
+        self?.isInterrupted = true
       }
     )
     notificationTokens.append(
@@ -47,6 +48,7 @@ final class CameraManager {
         queue: .main
       ) { [weak self] _ in
         os_log("session interruption ended — resuming", log: cameraLog, type: .info)
+        self?.isInterrupted = false
         self?.sessionQueue.async { [weak self] in
           guard let self = self, let s = self.session, !s.isRunning else { return }
           s.startRunning()
@@ -102,6 +104,73 @@ final class CameraManager {
     }
   }
 
+  struct RawFormat: Hashable {
+    let resolution: Resolution
+    let fps: Fps
+  }
+
+  static func resolutionForDimensions(width: Int32, height: Int32) -> Resolution? {
+    let longer = max(width, height)
+    let shorter = min(width, height)
+    switch (longer, shorter) {
+    case (3840, 2160): return .uhd4k
+    case (1920, 1080): return .fhd1080
+    case (1280, 720): return .hd720
+    default: return nil
+    }
+  }
+
+  static func mergeFormatCapabilities(
+    virtual: Set<RawFormat>,
+    physical: Set<RawFormat>
+  ) -> [FormatCapability] {
+    var result: [FormatCapability] = []
+    var seen: Set<RawFormat> = []
+    let order: [(Resolution, Fps)] = [
+      (.hd720, .fps30), (.hd720, .fps60),
+      (.fhd1080, .fps30), (.fhd1080, .fps60),
+      (.uhd4k, .fps30), (.uhd4k, .fps60),
+    ]
+    for (resolution, fps) in order {
+      let raw = RawFormat(resolution: resolution, fps: fps)
+      if virtual.contains(raw) {
+        seen.insert(raw)
+        result.append(
+          FormatCapability(resolution: resolution, fps: fps, requiresPhysicalLens: false)
+        )
+      }
+    }
+    for (resolution, fps) in order {
+      let raw = RawFormat(resolution: resolution, fps: fps)
+      if seen.contains(raw) { continue }
+      if physical.contains(raw) {
+        result.append(
+          FormatCapability(resolution: resolution, fps: fps, requiresPhysicalLens: true)
+        )
+      }
+    }
+    return result
+  }
+
+  private static func rawFormats(of device: AVCaptureDevice) -> Set<RawFormat> {
+    var formats: Set<RawFormat> = []
+    for format in device.formats {
+      let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+      guard
+        let resolution = resolutionForDimensions(width: dims.width, height: dims.height)
+      else { continue }
+      let supports30 = format.videoSupportedFrameRateRanges.contains {
+        $0.minFrameRate <= 30 && $0.maxFrameRate >= 30
+      }
+      let supports60 = format.videoSupportedFrameRateRanges.contains {
+        $0.minFrameRate <= 60 && $0.maxFrameRate >= 60
+      }
+      if supports30 { formats.insert(RawFormat(resolution: resolution, fps: .fps30)) }
+      if supports60 { formats.insert(RawFormat(resolution: resolution, fps: .fps60)) }
+    }
+    return formats
+  }
+
   func discoverCapabilities() throws -> CameraCapabilities {
     let discovery = AVCaptureDevice.DiscoverySession(
       deviceTypes: [
@@ -132,10 +201,21 @@ final class CameraManager {
       lenses.append(.wide)
     }
 
+    let virtualDevice = devices.first {
+      $0.deviceType == .builtInTripleCamera || $0.deviceType == .builtInDualWideCamera
+    }
+    let physicalDevice = devices.first { $0.deviceType == .builtInWideAngleCamera }
+
+    let virtualFormats = virtualDevice.map(Self.rawFormats) ?? []
+    let physicalFormats = physicalDevice.map(Self.rawFormats) ?? []
+    let supportedFormats = Self.mergeFormatCapabilities(
+      virtual: virtualFormats,
+      physical: physicalFormats
+    )
+
     return CameraCapabilities(
       availableLenses: lenses,
-      supportedResolutions: [.hd720, .fhd1080, .uhd4k],
-      supportedFps: [.fps30, .fps60]
+      supportedFormats: supportedFormats
     )
   }
 
@@ -148,9 +228,14 @@ final class CameraManager {
       device = nil
       input = nil
     }
+    isInterrupted = false
     guard hasPermission() else { throw CameraNativeError.permissionDenied }
 
-    let device = try selectDevice(for: config.lens)
+    let device = try selectDevice(
+      for: config.lens,
+      resolution: config.resolution,
+      fps: config.fps
+    )
     os_log(
       "startSession lens=%{public}@ device=%{public}@",
       log: cameraLog, type: .info,
@@ -235,6 +320,7 @@ final class CameraManager {
 
   func startRecording(sessionId: String, codec: String) throws {
     guard session != nil else { throw CameraNativeError.notRunning }
+    guard !isInterrupted else { throw CameraNativeError.sessionInterrupted }
     try recordingPipeline.start(sessionId: sessionId, requestedCodec: codec)
   }
 
@@ -288,20 +374,72 @@ final class CameraManager {
   }
 
   func setFormat(resolution: Resolution, fps: Fps) throws {
-    guard let device = device else { throw CameraNativeError.notRunning }
+    guard let currentDevice = device else { throw CameraNativeError.notRunning }
     guard let session = session else { throw CameraNativeError.notRunning }
+    guard !isInterrupted else { throw CameraNativeError.sessionInterrupted }
+    guard !recordingPipeline.isRecording else {
+      throw CameraNativeError.sessionFailed("cannot change format while recording")
+    }
+
+    let targetDevice = try selectDevice(
+      for: lensFor(device: currentDevice),
+      resolution: resolution,
+      fps: fps
+    )
+
     session.beginConfiguration()
     session.sessionPreset = .inputPriority
-    try device.lockForConfiguration()
-    try applyFormat(device: device, resolution: resolution, fps: fps)
-    let dims = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
-    device.unlockForConfiguration()
+    let activeDevice: AVCaptureDevice
+    if targetDevice.uniqueID != currentDevice.uniqueID {
+      if let oldInput = input { session.removeInput(oldInput) }
+      let newInput = try AVCaptureDeviceInput(device: targetDevice)
+      if session.canAddInput(newInput) {
+        session.addInput(newInput)
+      } else {
+        session.commitConfiguration()
+        throw CameraNativeError.formatUnsupported
+      }
+      self.device = targetDevice
+      self.input = newInput
+      activeDevice = targetDevice
+    } else {
+      activeDevice = currentDevice
+    }
+
+    do {
+      try activeDevice.lockForConfiguration()
+      defer { activeDevice.unlockForConfiguration() }
+      try applyFormat(device: activeDevice, resolution: resolution, fps: fps)
+    } catch {
+      session.commitConfiguration()
+      throw error
+    }
+    let dims = CMVideoFormatDescriptionGetDimensions(activeDevice.activeFormat.formatDescription)
     session.commitConfiguration()
+
+    let switchedDevice = activeDevice.uniqueID != currentDevice.uniqueID
+    if switchedDevice {
+      installFocusKVO(on: activeDevice)
+    }
+
+    let activeIsVirtual =
+      activeDevice.deviceType == .builtInTripleCamera
+      || activeDevice.deviceType == .builtInDualWideCamera
+    if switchedDevice && activeIsVirtual {
+      applyVirtualLensZoom(device: activeDevice, lens: .wide)
+      onLensSwitched?(.wide)
+    }
+
     os_log(
-      "setFormat %{public}@@%{public}@ -> %dx%d",
+      "setFormat %{public}@@%{public}@ device=%{public}@ -> %dx%d",
       log: cameraLog, type: .info,
-      "\(resolution)", "\(fps)", Int(dims.width), Int(dims.height)
+      "\(resolution)", "\(fps)", "\(activeDevice.deviceType.rawValue)",
+      Int(dims.width), Int(dims.height)
     )
+  }
+
+  private func lensFor(device: AVCaptureDevice) -> LensType {
+    return device.deviceType == .builtInUltraWideCamera ? .ultraWide : .wide
   }
 
   func focusAt(sensorPoint: CGPoint, normalizedPoint: FocusPoint) throws {
@@ -405,7 +543,15 @@ final class CameraManager {
     DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: timeout)
   }
 
-  private func selectDevice(for lens: LensType) throws -> AVCaptureDevice {
+  static func requiresPhysicalLens(resolution: Resolution?, fps: Fps?) -> Bool {
+    return resolution == .uhd4k && fps == .fps60
+  }
+
+  private func selectDevice(
+    for lens: LensType,
+    resolution: Resolution? = nil,
+    fps: Fps? = nil
+  ) throws -> AVCaptureDevice {
     let discovery = AVCaptureDevice.DiscoverySession(
       deviceTypes: [
         .builtInTripleCamera, .builtInDualWideCamera,
@@ -414,6 +560,13 @@ final class CameraManager {
       mediaType: .video,
       position: .back
     )
+
+    if Self.requiresPhysicalLens(resolution: resolution, fps: fps) {
+      if let wide = discovery.devices.first(where: { $0.deviceType == .builtInWideAngleCamera }) {
+        return wide
+      }
+      throw CameraNativeError.formatUnsupported
+    }
 
     if let virtual = discovery.devices.first(where: {
       $0.deviceType == .builtInTripleCamera || $0.deviceType == .builtInDualWideCamera
@@ -480,31 +633,14 @@ final class CameraManager {
       return supportsRes && supportsFps
     }
 
-    let chosen: AVCaptureDevice.Format
-    if let match = exactMatches.first {
-      chosen = match
-    } else {
-      let withFps = device.formats.filter { format in
-        format.videoSupportedFrameRateRanges.contains { range in
-          range.minFrameRate <= targetFps && range.maxFrameRate >= targetFps
-        }
-      }
-      let candidates = withFps.isEmpty ? device.formats : withFps
-      guard
-        let best = candidates.min(by: { a, b in
-          let da = CMVideoFormatDescriptionGetDimensions(a.formatDescription)
-          let db = CMVideoFormatDescriptionGetDimensions(b.formatDescription)
-          return abs(Int(da.width) - Int(targetWidth)) < abs(Int(db.width) - Int(targetWidth))
-        })
-      else { throw CameraNativeError.formatUnsupported }
-      chosen = best
-      let dims = CMVideoFormatDescriptionGetDimensions(best.formatDescription)
+    guard let chosen = exactMatches.first else {
       os_log(
-        "applyFormat fallback target=%dx%d@%.0f chose=%dx%d",
-        log: cameraLog, type: .info,
+        "applyFormat unsupported target=%dx%d@%.0f device=%{public}@",
+        log: cameraLog, type: .error,
         Int(targetWidth), Int(targetHeight), targetFps,
-        Int(dims.width), Int(dims.height)
+        "\(device.deviceType.rawValue)"
       )
+      throw CameraNativeError.formatUnsupported
     }
     device.activeFormat = chosen
     let duration = CMTime(value: 1, timescale: Int32(targetFps))
