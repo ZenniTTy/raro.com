@@ -91,7 +91,9 @@ class ReplayBufferApiPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendab
 
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol ReplayBufferHostApi {
-  func replayBufferPing() throws
+  func enableReplayBuffer(seconds: Int64) throws
+  func disableReplayBuffer() throws
+  func saveReplay() throws
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -100,24 +102,53 @@ class ReplayBufferHostApiSetup {
   /// Sets up an instance of `ReplayBufferHostApi` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: ReplayBufferHostApi?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    let replayBufferPingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.ReplayBufferHostApi.replayBufferPing\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let enableReplayBufferChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.ReplayBufferHostApi.enableReplayBuffer\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      replayBufferPingChannel.setMessageHandler { _, reply in
+      enableReplayBufferChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let secondsArg = args[0] as! Int64
         do {
-          try api.replayBufferPing()
+          try api.enableReplayBuffer(seconds: secondsArg)
           reply(wrapResult(nil))
         } catch {
           reply(wrapError(error))
         }
       }
     } else {
-      replayBufferPingChannel.setMessageHandler(nil)
+      enableReplayBufferChannel.setMessageHandler(nil)
+    }
+    let disableReplayBufferChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.ReplayBufferHostApi.disableReplayBuffer\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      disableReplayBufferChannel.setMessageHandler { _, reply in
+        do {
+          try api.disableReplayBuffer()
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      disableReplayBufferChannel.setMessageHandler(nil)
+    }
+    let saveReplayChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.ReplayBufferHostApi.saveReplay\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      saveReplayChannel.setMessageHandler { _, reply in
+        do {
+          try api.saveReplay()
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      saveReplayChannel.setMessageHandler(nil)
     }
   }
 }
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol ReplayBufferFlutterApiProtocol {
-  func replayBufferReady(completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onReplaySaved(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onReplayFailed(code codeArg: String, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void)
 }
 class ReplayBufferFlutterApi: ReplayBufferFlutterApiProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -129,10 +160,28 @@ class ReplayBufferFlutterApi: ReplayBufferFlutterApiProtocol {
   var codec: ReplayBufferApiPigeonCodec {
     return ReplayBufferApiPigeonCodec.shared
   }
-  func replayBufferReady(completion: @escaping (Result<Void, PigeonError>) -> Void) {
-    let channelName: String = "dev.flutter.pigeon.raro_mobile.ReplayBufferFlutterApi.replayBufferReady\(messageChannelSuffix)"
+  func onReplaySaved(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.ReplayBufferFlutterApi.onReplaySaved\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
-    channel.sendMessage(nil) { response in
+    channel.sendMessage([pathArg, durationMsArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
+      }
+    }
+  }
+  func onReplayFailed(code codeArg: String, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.ReplayBufferFlutterApi.onReplayFailed\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([codeArg, messageArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {
         completion(.failure(createConnectionError(withChannelName: channelName)))
         return

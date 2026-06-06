@@ -16,10 +16,13 @@ import 'package:pigeon/pigeon.dart';
 )
 @HostApi()
 abstract class ReplayBufferHostApi {
-  void replayBufferPing();
+  void enableReplayBuffer(int seconds);
+  void disableReplayBuffer();
+  void saveReplay();
 }
 
 @FlutterApi()
 abstract class ReplayBufferFlutterApi {
-  void replayBufferReady();
+  void onReplaySaved(String path, int durationMs);
+  void onReplayFailed(String code, String? message);
 }
