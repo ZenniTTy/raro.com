@@ -78,6 +78,7 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
   private let chunkSeconds: Int
   private var ring: ReplayRing
   private var buffering = false
+  private let finalizationGroup = DispatchGroup()
 
   private var writer: AVAssetWriter?
   private var videoInput: AVAssetWriterInput?
@@ -96,6 +97,10 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
     self.chunkSeconds = chunkSeconds
     self.ring = ReplayRing(windowSeconds: windowSeconds, chunkSeconds: chunkSeconds)
     super.init()
+  }
+
+  deinit {
+    for url in ring.reset() { try? FileManager.default.removeItem(at: url) }
   }
 
   func start(videoSettings: [String: Any], audioSettings: [String: Any]?) {
@@ -117,7 +122,7 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
   func stop() {
     queue.async {
       self.buffering = false
-      self.finishCurrentChunk(keep: false)
+      self.finishCurrentChunk(keep: false, endPts: nil)
       for url in self.ring.reset() { try? FileManager.default.removeItem(at: url) }
       os_log("replay buffering stopped", log: replayLog, type: .info)
     }
@@ -133,7 +138,7 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
 
   func reset() {
     queue.async {
-      self.finishCurrentChunk(keep: false)
+      self.finishCurrentChunk(keep: false, endPts: nil)
       for url in self.ring.reset() { try? FileManager.default.removeItem(at: url) }
     }
   }
@@ -153,9 +158,13 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
       chunkStartedAt = pts
     }
     if isVideo, let input = videoInput, input.isReadyForMoreMediaData {
-      _ = input.append(sampleBuffer)
+      if !input.append(sampleBuffer) {
+        os_log("replay video append failed status=%d", log: replayLog, type: .error, writer.status.rawValue)
+      }
     } else if !isVideo, let input = audioInput, input.isReadyForMoreMediaData {
-      _ = input.append(sampleBuffer)
+      if !input.append(sampleBuffer) {
+        os_log("replay audio append failed", log: replayLog, type: .error)
+      }
     }
 
     if let start = chunkStartedAt {
@@ -190,22 +199,25 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
   }
 
   private func rollChunk(nextPts: CMTime) {
-    finishCurrentChunk(keep: true)
+    finishCurrentChunk(keep: true, endPts: nextPts)
     openChunk(at: nextPts)
   }
 
-  private func finishCurrentChunk(keep: Bool) {
+  private func finishCurrentChunk(keep: Bool, endPts: CMTime?) {
     guard let writer = writer else { return }
     let url = writer.outputURL
     let durationMs: Int
-    if let start = chunkStartedAt {
-      durationMs = Int(CMTimeGetSeconds(CMTimeSubtract(CMClockGetTime(CMClockGetHostTimeClock()), start)) * 1000)
+    if let endPts = endPts, let start = chunkStartedAt {
+      durationMs = Int(CMTimeGetSeconds(CMTimeSubtract(endPts, start)) * 1000)
     } else {
       durationMs = chunkSeconds * 1000
     }
     videoInput?.markAsFinished()
     audioInput?.markAsFinished()
-    writer.finishWriting {}
+    finalizationGroup.enter()
+    writer.finishWriting { [weak self] in
+      self?.finalizationGroup.leave()
+    }
     self.writer = nil
     self.videoInput = nil
     self.audioInput = nil
@@ -223,10 +235,12 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
   func save() {
     queue.async {
       guard self.buffering else { DispatchQueue.main.async { self.onFailed?(.notBuffering) }; return }
-      self.finishCurrentChunk(keep: true)
+      self.finishCurrentChunk(keep: true, endPts: nil)
       let chunks = self.ring.windowChunks()
       guard !chunks.isEmpty else { DispatchQueue.main.async { self.onFailed?(.noChunks) }; return }
-      self.export(chunks: chunks)
+      self.finalizationGroup.notify(queue: self.queue) {
+        self.export(chunks: chunks)
+      }
     }
   }
 
@@ -246,6 +260,11 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
         try? audioTrack?.insertTimeRange(range, of: assetAudio, at: cursor)
       }
       cursor = CMTimeAdd(cursor, asset.duration)
+    }
+    guard cursor > .zero else {
+      os_log("replay export aborted — no usable chunks", log: replayLog, type: .error)
+      DispatchQueue.main.async { self.onFailed?(.exportFailed("no usable chunks")) }
+      return
     }
     let outURL = FileManager.default.temporaryDirectory
       .appendingPathComponent("raro_replay_\(UUID().uuidString).mp4")
