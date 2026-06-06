@@ -1705,6 +1705,13 @@ Expected: dimensões/fps reais coerentes com o formato ativo (passthrough preser
 - **Pré-roll-no-REC** (o fluxo final do produto): ao tocar REC, o `.mp4` final inclui os últimos N segundos do buffer + a gravação contínua, com áudio sync na junção. Esta sessão entregou só a mecânica do ring; o pré-roll é a próxima fatia.
 - **(verificação controlador, Task 9) `.mp4` final do export não é deletado do `temporaryDirectory` após o `vault.save` copiá-lo.** `ReplayBuffer.export` cria `raro_replay_<uuid>.mp4` em `temporaryDirectory` e entrega via `onReplaySaved`; o `replayVaultSink` faz `vault.save` (copia para `documents/vault`), mas o original em tmp fica órfão (acumula 1 por save). Baixo risco (iOS limpa tmp sob pressão), mas é higiene. Fix futuro: deletar o tmp após o save confirmado, OU o sink mover (rename) em vez de copiar. Validar no gate de device que tmp não incha. Nota correlata: chunks (`raro_replay_<índice>.mp4`) e export (`raro_replay_<uuid>.mp4`) compartilham prefixo em tmp — não colidem (índice vs uuid) e `onReplaySaved` entrega só o export, mas confirmar no device que o id extraído (`_idFromPath`) é o uuid, não um índice de chunk.
 
+### Correção dos drafts de teste das Tasks 11/12 (achados dos test-authors — anti-recorrência)
+
+Os drafts de teste das Tasks 11 e 12 deste plano eram **tautológicos** (passavam COM ou SEM o fix de produção). Se reimplementados literalmente no futuro, cairão no mesmo buraco. Padrão correto, já aplicado nos commits `d178582` (órfão 1) e `b751bf8` (órfão 2):
+
+- **Órfão 1 (vault-race, Task 11):** o race read-during-write **não é determinístico em unit test isolado** — `writeAsString`/`readAsStringSync` não se intercalam no event loop (a memória `raro-pattern-vault-sidecar-atomic-write-race` já dizia: só pega em integração de provider/device). Os 2 testes do draft viram smoke-tests suaves. **Cobertura determinística real** = o 3º teste adicionado (`listAll` ignora `.json.tmp` órfão — falha objetivamente se o filtro `.json` sumir) + o órfão 2 (que JÁ é integração de provider exercitando save+dispose concorrente). Não vale um 4º teste de integração de race (valor marginal sobre o órfão 2).
+- **Órfão 2 (ref-after-dispose, Task 12):** o erro `UnmountedRefException` dispara ~175ms após o dispose (cadeia async: `vaultService.future` + `vault.save` + thumbnail + `invalidate`); o draft esperava só 60ms → passava sem provar. **Padrão correto:** `runZonedGuarded` para capturar o erro async não-tratado (não é try/catch — vem como uncaught) + `Completer` no mock do thumbnail para esperar a cadeia drenar antes do `expect(uncaught, isEmpty)`. Provado red-before-green nos dois sentidos.
+
 ---
 
 ## Self-review checklist (preenchido pelo autor do plano)
