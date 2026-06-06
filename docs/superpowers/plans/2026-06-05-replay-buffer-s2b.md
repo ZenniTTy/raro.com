@@ -490,8 +490,8 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
 
 - [ ] **Step 2: Verificar que compila (sem regressão de target)**
 
-Run: `cd apps/mobile && GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=safe.bareRepository GIT_CONFIG_VALUE_0=all GIT_CONFIG_KEY_1=protocol.file.allow GIT_CONFIG_VALUE_1=always flutter build ios --simulator --no-codesign 2>&1 | tail -20`
-Expected: `✓ Built`. (Compila o Swift novo; `ReplayBuffer` ainda não está ligado ao `CameraManager` — isso é a Task 4.)
+Run: `bun run --filter '@raro/mobile' test:ios 2>&1 | tail -25`
+Expected: compila + linka o módulo Runner e roda XCTest verde. (NOTA: `flutter build ios --simulator` NÃO roda neste projeto — o target tem `SUPPORTED_PLATFORMS = iphoneos`, CLAUDE.md §13. `test:ios` compila+linka o Runner contra o workspace e é o gate de compilação real. Compila o Swift novo; `ReplayBuffer` ainda não está ligado ao `CameraManager` — isso é a Task 4.)
 
 - [ ] **Step 3: Commit**
 
@@ -619,8 +619,8 @@ No `switchLens`, no caminho de troca física (após `onLensSwitched?(lens)` no f
 
 - [ ] **Step 3: Verificar build**
 
-Run: `cd apps/mobile && GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=safe.bareRepository GIT_CONFIG_VALUE_0=all GIT_CONFIG_KEY_1=protocol.file.allow GIT_CONFIG_VALUE_1=always flutter build ios --simulator --no-codesign 2>&1 | tail -20`
-Expected: `✓ Built`.
+Run: `bun run --filter '@raro/mobile' test:ios 2>&1 | tail -25`
+Expected: compila + linka o módulo Runner e roda XCTest verde (gate de compilação real; `flutter build ios --simulator` não roda neste projeto — `SUPPORTED_PLATFORMS = iphoneos`, CLAUDE.md §13).
 
 - [ ] **Step 4: Rodar XCTest (sem regressão)**
 
@@ -716,8 +716,8 @@ Run para achar os sítios: `grep -n "CameraHostApiImpl\|CameraApi.g.swift" apps/
 
 - [ ] **Step 4: Build**
 
-Run: `cd apps/mobile && GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=safe.bareRepository GIT_CONFIG_VALUE_0=all GIT_CONFIG_KEY_1=protocol.file.allow GIT_CONFIG_VALUE_1=always flutter build ios --simulator --no-codesign 2>&1 | tail -20`
-Expected: `✓ Built`.
+Run: `bun run --filter '@raro/mobile' test:ios 2>&1 | tail -25`
+Expected: compila + linka o módulo Runner e roda XCTest verde (gate de compilação real; `flutter build ios --simulator` não roda neste projeto — `SUPPORTED_PLATFORMS = iphoneos`, CLAUDE.md §13).
 
 - [ ] **Step 5: Commit**
 
