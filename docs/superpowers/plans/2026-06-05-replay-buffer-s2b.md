@@ -1676,6 +1676,7 @@ cd apps/mobile && GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=safe.bareRepository GIT_CO
   - **(code review C2) último ~1s não some:** salvar replay e provar que a duração do `.mp4` ≈ janela cheia (15/30s), incluindo o último segundo — o fix do `finalizationGroup` gateia o export na finalização do writer; validar que funciona sob carga (o último chunk era o mais propenso a sumir).
   - **(code review I1) save logo após `start`:** abrir a câmera e salvar replay imediatamente (antes de encher a janela) — deve produzir um clipe não-vazio (mesmo curto), não falhar com clipe vazio. Há um gap de startup (frames antes do `start` block rodar) que é aceitável, mas o save não pode quebrar.
   - **(code review I4 — confirmado design) save após `stop`:** ao sair da câmera o buffer é descartado (correto); não há save-após-stop. Só confirmar que sair/voltar da câmera reinicia o buffer limpo, sem crash.
+  - **(code review I-1 — CRÍTICO formato, classe §10/ADR-0021) trocar formato → salvar:** trocar resolução (ex. 1080p→4K, ou 4K30→4K60 lente física) com o buffer ativo e DEPOIS salvar replay; provar via ffprobe que o `.mp4` salvo tem as dimensões/fps **do formato NOVO**, não do antigo. RAIZ: `replayBuffer.reset()` no `setFormat`/`switchLens` limpa a deque mas NÃO re-deriva os `videoSettings`/`audioSettings` (capturados uma vez no `start`) — os chunks reabrem com settings do formato inicial → replay pode sair na resolução errada (silent fallback, o bug da sessão 0020). Esta fatia NÃO corrige (o `saveReplay` só vira alcançável do Dart na Task 5; sem UI de save de produção ainda); a CORREÇÃO está rastreada na fatia de pré-roll-no-REC (out of scope abaixo). Se este caso de device FALHAR, o fix (re-derivar settings no reset, via `replayBuffer.stop()`+`start(makeReplay…)` após `commitConfiguration`) deve entrar ANTES de qualquer save de produção.
 
 - [ ] **Step 3: Prova ffprobe (gate §10/ADR-0021)** — puxar o `.mp4` de replay do vault e provar formato:
 
@@ -1695,6 +1696,13 @@ Expected: dimensões/fps reais coerentes com o formato ativo (passthrough preser
 - [ ] **Step 1: `/session-end`** — appenda session log em `docs/sessions/`, define objetivo da próxima sessão (pré-roll-no-REC), atualiza `0001-INDEX.md`, commit `docs(docs): close session 0021`.
 
 - [ ] **Step 2: Confirmar 0 `--no-verify` em toda a sessão** (`git log --oneline` da sessão; todos passaram pelos hooks).
+
+---
+
+## Débito rastreado (para a fatia de pré-roll-no-REC, fora desta sessão)
+
+- **I-1 (code review Task 4) — `reset()` não re-deriva settings após troca de formato.** `ReplayBuffer.start` captura `videoSettings`/`audioSettings` uma vez; `setFormat`/`switchLens` chamam `reset()` (limpa a deque) mas os chunks reabrem com os settings do formato INICIAL. Após 1080p→4K, o ring pode gravar na resolução errada (silent fallback, classe §10/ADR-0021, bug da sessão 0020). Hoje inofensivo (save não é alcançável do Dart até a Task 5 e não há UI de save de produção). **Fix proposto:** `reset(videoSettings:audioSettings:)` OU `replayBuffer.stop()`+`start(makeReplay…)` dentro de `setFormat`/`switchLens` APÓS `commitConfiguration` (settings pós-commit = dimensões corretas). Validar com o caso de device "trocar formato → salvar" (Task 14 Step 2). Entrar ANTES de qualquer save de produção.
+- **Pré-roll-no-REC** (o fluxo final do produto): ao tocar REC, o `.mp4` final inclui os últimos N segundos do buffer + a gravação contínua, com áudio sync na junção. Esta sessão entregou só a mecânica do ring; o pré-roll é a próxima fatia.
 
 ---
 
