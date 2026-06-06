@@ -1673,6 +1673,9 @@ cd apps/mobile && GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=safe.bareRepository GIT_CO
   - tap→ring <50ms e tap→focus locked <300ms NÃO regridem com buffer ativo (os_log subsystem `com.rarocamera/focus`).
   - preview ao vivo permanece (não fica preto) ao iniciar buffer / `setWindow` / `saveReplay`.
   - memória/térmico: `ProcessInfo.thermalState` — buffer não estoura jetsam.
+  - **(code review C2) último ~1s não some:** salvar replay e provar que a duração do `.mp4` ≈ janela cheia (15/30s), incluindo o último segundo — o fix do `finalizationGroup` gateia o export na finalização do writer; validar que funciona sob carga (o último chunk era o mais propenso a sumir).
+  - **(code review I1) save logo após `start`:** abrir a câmera e salvar replay imediatamente (antes de encher a janela) — deve produzir um clipe não-vazio (mesmo curto), não falhar com clipe vazio. Há um gap de startup (frames antes do `start` block rodar) que é aceitável, mas o save não pode quebrar.
+  - **(code review I4 — confirmado design) save após `stop`:** ao sair da câmera o buffer é descartado (correto); não há save-após-stop. Só confirmar que sair/voltar da câmera reinicia o buffer limpo, sem crash.
 
 - [ ] **Step 3: Prova ffprobe (gate §10/ADR-0021)** — puxar o `.mp4` de replay do vault e provar formato:
 
