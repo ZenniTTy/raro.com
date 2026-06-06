@@ -20,8 +20,17 @@ final class CameraManager {
 
   var onLensSwitched: ((LensType) -> Void)?
   var onError: ((CameraNativeError) -> Void)?
+  var onReplaySaved: ((URL, Int) -> Void)? {
+    get { replayBuffer.onSaved }
+    set { replayBuffer.onSaved = newValue }
+  }
+  var onReplayFailed: ((ReplayBufferError) -> Void)? {
+    get { replayBuffer.onFailed }
+    set { replayBuffer.onFailed = newValue }
+  }
 
   private let recordingPipeline = RecordingPipeline()
+  private lazy var replayBuffer = ReplayBuffer(queue: recordingPipeline.sharedQueue)
 
   deinit {
     removeObservers()
@@ -295,6 +304,14 @@ final class CameraManager {
         continuation.resume()
       }
     }
+
+    recordingPipeline.replayConsumer = { [weak self] buffer, isVideo in
+      self?.replayBuffer.append(buffer, isVideo: isVideo)
+    }
+    replayBuffer.start(
+      videoSettings: recordingPipeline.makeReplayVideoSettings(),
+      audioSettings: recordingPipeline.makeReplayAudioSettings()
+    )
   }
 
   func stopSession() {
@@ -312,6 +329,7 @@ final class CameraManager {
       if let inputs = self?.session?.inputs {
         for input in inputs { self?.session?.removeInput(input) }
       }
+      self?.replayBuffer.stop()
       self?.session = nil
       self?.device = nil
       self?.input = nil
@@ -326,6 +344,16 @@ final class CameraManager {
 
   func stopRecording() throws {
     try recordingPipeline.stop()
+  }
+
+  func setReplayWindow(seconds: Int) {
+    replayBuffer.setWindow(seconds: seconds)
+  }
+
+  func saveReplay() throws {
+    guard session != nil else { throw CameraNativeError.notRunning }
+    guard !isInterrupted else { throw CameraNativeError.sessionInterrupted }
+    replayBuffer.save()
   }
 
   var onRecordingFinished: ((URL, Int) -> Void)? {
@@ -371,6 +399,7 @@ final class CameraManager {
     self.device = newDevice
     self.input = newInput
     onLensSwitched?(lens)
+    replayBuffer.reset()
   }
 
   func setFormat(resolution: Resolution, fps: Fps) throws {
@@ -436,6 +465,8 @@ final class CameraManager {
       "\(resolution)", "\(fps)", "\(activeDevice.deviceType.rawValue)",
       Int(dims.width), Int(dims.height)
     )
+
+    replayBuffer.reset()
   }
 
   private func lensFor(device: AVCaptureDevice) -> LensType {

@@ -27,6 +27,19 @@ final class RecordingPipeline: NSObject, @unchecked Sendable {
 
   var onFinished: ((URL, Int) -> Void)?
   var onFailed: ((String) -> Void)?
+  var replayConsumer: ((CMSampleBuffer, Bool) -> Void)?
+  var sharedQueue: DispatchQueue { outputQueue }
+
+  func makeReplayVideoSettings() -> [String: Any] {
+    var settings = videoOutput.recommendedVideoSettingsForAssetWriter(writingTo: .mp4) ?? [:]
+    settings[AVVideoCodecKey] = Self.selectCodec(
+      requested: requestedCodec, available: videoOutput.availableVideoCodecTypes)
+    return settings
+  }
+
+  func makeReplayAudioSettings() -> [String: Any]? {
+    return audioOutput.recommendedAudioSettingsForAssetWriter(writingTo: .mp4) as? [String: Any]
+  }
 
   var isRecording: Bool { outputQueue.sync { recording } }
 
@@ -187,11 +200,13 @@ extension RecordingPipeline: AVCaptureVideoDataOutputSampleBufferDelegate,
     didOutput sampleBuffer: CMSampleBuffer,
     from connection: AVCaptureConnection
   ) {
-    guard recording, let writer = writer, writer.status == .writing else { return }
     guard CMSampleBufferDataIsReady(sampleBuffer) else { return }
+    let isVideo = output === videoOutput
+    replayConsumer?(sampleBuffer, isVideo)
+
+    guard recording, let writer = writer, writer.status == .writing else { return }
 
     let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-    let isVideo = output === videoOutput
 
     if !sessionStarted {
       guard isVideo else { return }
