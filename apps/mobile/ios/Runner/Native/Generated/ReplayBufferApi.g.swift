@@ -12,7 +12,7 @@ import Foundation
 #endif
 
 /// Error class for passing custom error details to Dart side.
-final class PigeonError: Error {
+final class ReplayBufferPigeonError: Error {
   let code: String
   let message: String?
   let details: Sendable?
@@ -25,7 +25,7 @@ final class PigeonError: Error {
 
   var localizedDescription: String {
     return
-      "PigeonError(code: \(code), message: \(message ?? "<nil>"), details: \(details ?? "<nil>")"
+      "ReplayBufferPigeonError(code: \(code), message: \(message ?? "<nil>"), details: \(details ?? "<nil>")"
   }
 }
 
@@ -34,7 +34,7 @@ private func wrapResult(_ result: Any?) -> [Any?] {
 }
 
 private func wrapError(_ error: Any) -> [Any?] {
-  if let pigeonError = error as? PigeonError {
+  if let pigeonError = error as? ReplayBufferPigeonError {
     return [
       pigeonError.code,
       pigeonError.message,
@@ -55,8 +55,8 @@ private func wrapError(_ error: Any) -> [Any?] {
   ]
 }
 
-private func createConnectionError(withChannelName channelName: String) -> PigeonError {
-  return PigeonError(code: "channel-error", message: "Unable to establish connection on channel: '\(channelName)'.", details: "")
+private func createConnectionError(withChannelName channelName: String) -> ReplayBufferPigeonError {
+  return ReplayBufferPigeonError(code: "channel-error", message: "Unable to establish connection on channel: '\(channelName)'.", details: "")
 }
 
 private func isNullish(_ value: Any?) -> Bool {
@@ -147,8 +147,8 @@ class ReplayBufferHostApiSetup {
 }
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol ReplayBufferFlutterApiProtocol {
-  func onReplaySaved(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, PigeonError>) -> Void)
-  func onReplayFailed(code codeArg: String, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onReplaySaved(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, ReplayBufferPigeonError>) -> Void)
+  func onReplayFailed(code codeArg: String, message messageArg: String?, completion: @escaping (Result<Void, ReplayBufferPigeonError>) -> Void)
 }
 class ReplayBufferFlutterApi: ReplayBufferFlutterApiProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -160,7 +160,7 @@ class ReplayBufferFlutterApi: ReplayBufferFlutterApiProtocol {
   var codec: ReplayBufferApiPigeonCodec {
     return ReplayBufferApiPigeonCodec.shared
   }
-  func onReplaySaved(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func onReplaySaved(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, ReplayBufferPigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.ReplayBufferFlutterApi.onReplaySaved\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([pathArg, durationMsArg] as [Any?]) { response in
@@ -172,13 +172,13 @@ class ReplayBufferFlutterApi: ReplayBufferFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(ReplayBufferPigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }
     }
   }
-  func onReplayFailed(code codeArg: String, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func onReplayFailed(code codeArg: String, message messageArg: String?, completion: @escaping (Result<Void, ReplayBufferPigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.ReplayBufferFlutterApi.onReplayFailed\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([codeArg, messageArg] as [Any?]) { response in
@@ -190,7 +190,7 @@ class ReplayBufferFlutterApi: ReplayBufferFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(ReplayBufferPigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }

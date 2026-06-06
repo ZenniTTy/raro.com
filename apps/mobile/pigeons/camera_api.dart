@@ -5,7 +5,7 @@ import 'package:pigeon/pigeon.dart';
     dartOut: 'lib/core/native_bridges/generated/camera_api.g.dart',
     dartOptions: DartOptions(),
     swiftOut: 'ios/Runner/Native/Generated/CameraApi.g.swift',
-    swiftOptions: SwiftOptions(),
+    swiftOptions: SwiftOptions(errorClassName: 'CameraPigeonError'),
     kotlinOut:
         'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/camera/CameraApi.g.kt',
     kotlinOptions: KotlinOptions(

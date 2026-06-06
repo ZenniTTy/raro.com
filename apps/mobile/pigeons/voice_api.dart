@@ -5,7 +5,7 @@ import 'package:pigeon/pigeon.dart';
     dartOut: 'lib/core/native_bridges/generated/voice_api.g.dart',
     dartOptions: DartOptions(),
     swiftOut: 'ios/Runner/Native/Generated/VoiceApi.g.swift',
-    swiftOptions: SwiftOptions(),
+    swiftOptions: SwiftOptions(errorClassName: 'VoicePigeonError'),
     kotlinOut:
         'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/voice/VoiceApi.g.kt',
     kotlinOptions: KotlinOptions(

@@ -210,11 +210,11 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
     completion(.success(manager.hasPermission()))
   }
 
-  private func pigeonError(from error: CameraNativeError) -> PigeonError {
+  private func pigeonError(from error: CameraNativeError) -> CameraPigeonError {
     return pigeonError(code: error.code, message: error.message)
   }
 
-  private func pigeonError(code: CameraErrorCode, message: String?) -> PigeonError {
-    return PigeonError(code: "\(code)", message: message, details: nil)
+  private func pigeonError(code: CameraErrorCode, message: String?) -> CameraPigeonError {
+    return CameraPigeonError(code: "\(code)", message: message, details: nil)
   }
 }

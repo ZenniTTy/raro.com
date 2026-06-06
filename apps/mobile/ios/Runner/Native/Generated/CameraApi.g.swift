@@ -12,7 +12,7 @@ import Foundation
 #endif
 
 /// Error class for passing custom error details to Dart side.
-final class PigeonError: Error {
+final class CameraPigeonError: Error {
   let code: String
   let message: String?
   let details: Sendable?
@@ -25,7 +25,7 @@ final class PigeonError: Error {
 
   var localizedDescription: String {
     return
-      "PigeonError(code: \(code), message: \(message ?? "<nil>"), details: \(details ?? "<nil>")"
+      "CameraPigeonError(code: \(code), message: \(message ?? "<nil>"), details: \(details ?? "<nil>")"
   }
 }
 
@@ -34,7 +34,7 @@ private func wrapResult(_ result: Any?) -> [Any?] {
 }
 
 private func wrapError(_ error: Any) -> [Any?] {
-  if let pigeonError = error as? PigeonError {
+  if let pigeonError = error as? CameraPigeonError {
     return [
       pigeonError.code,
       pigeonError.message,
@@ -55,8 +55,8 @@ private func wrapError(_ error: Any) -> [Any?] {
   ]
 }
 
-private func createConnectionError(withChannelName channelName: String) -> PigeonError {
-  return PigeonError(code: "channel-error", message: "Unable to establish connection on channel: '\(channelName)'.", details: "")
+private func createConnectionError(withChannelName channelName: String) -> CameraPigeonError {
+  return CameraPigeonError(code: "channel-error", message: "Unable to establish connection on channel: '\(channelName)'.", details: "")
 }
 
 private func isNullish(_ value: Any?) -> Bool {
@@ -705,13 +705,13 @@ class CameraHostApiSetup {
 }
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol CameraFlutterApiProtocol {
-  func onSessionStarted(activeConfig activeConfigArg: CameraConfig, completion: @escaping (Result<Void, PigeonError>) -> Void)
-  func onSessionStopped(completion: @escaping (Result<Void, PigeonError>) -> Void)
-  func onLensSwitched(lens lensArg: LensType, completion: @escaping (Result<Void, PigeonError>) -> Void)
-  func onFocusChanged(point pointArg: FocusPoint, locked lockedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void)
-  func onError(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void)
-  func onRecordingFinished(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, PigeonError>) -> Void)
-  func onRecordingFailed(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func onSessionStarted(activeConfig activeConfigArg: CameraConfig, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
+  func onSessionStopped(completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
+  func onLensSwitched(lens lensArg: LensType, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
+  func onFocusChanged(point pointArg: FocusPoint, locked lockedArg: Bool, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
+  func onError(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
+  func onRecordingFinished(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
+  func onRecordingFailed(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
 }
 class CameraFlutterApi: CameraFlutterApiProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -723,7 +723,7 @@ class CameraFlutterApi: CameraFlutterApiProtocol {
   var codec: CameraApiPigeonCodec {
     return CameraApiPigeonCodec.shared
   }
-  func onSessionStarted(activeConfig activeConfigArg: CameraConfig, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func onSessionStarted(activeConfig activeConfigArg: CameraConfig, completion: @escaping (Result<Void, CameraPigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onSessionStarted\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([activeConfigArg] as [Any?]) { response in
@@ -735,13 +735,13 @@ class CameraFlutterApi: CameraFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(CameraPigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }
     }
   }
-  func onSessionStopped(completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func onSessionStopped(completion: @escaping (Result<Void, CameraPigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onSessionStopped\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage(nil) { response in
@@ -753,13 +753,13 @@ class CameraFlutterApi: CameraFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(CameraPigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }
     }
   }
-  func onLensSwitched(lens lensArg: LensType, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func onLensSwitched(lens lensArg: LensType, completion: @escaping (Result<Void, CameraPigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onLensSwitched\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([lensArg] as [Any?]) { response in
@@ -771,13 +771,13 @@ class CameraFlutterApi: CameraFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(CameraPigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }
     }
   }
-  func onFocusChanged(point pointArg: FocusPoint, locked lockedArg: Bool, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func onFocusChanged(point pointArg: FocusPoint, locked lockedArg: Bool, completion: @escaping (Result<Void, CameraPigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onFocusChanged\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([pointArg, lockedArg] as [Any?]) { response in
@@ -789,13 +789,13 @@ class CameraFlutterApi: CameraFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(CameraPigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }
     }
   }
-  func onError(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func onError(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, CameraPigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onError\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([codeArg, messageArg] as [Any?]) { response in
@@ -807,13 +807,13 @@ class CameraFlutterApi: CameraFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(CameraPigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }
     }
   }
-  func onRecordingFinished(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func onRecordingFinished(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, CameraPigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onRecordingFinished\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([pathArg, durationMsArg] as [Any?]) { response in
@@ -825,13 +825,13 @@ class CameraFlutterApi: CameraFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(CameraPigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }
     }
   }
-  func onRecordingFailed(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func onRecordingFailed(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, CameraPigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onRecordingFailed\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([codeArg, messageArg] as [Any?]) { response in
@@ -843,7 +843,7 @@ class CameraFlutterApi: CameraFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(CameraPigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }

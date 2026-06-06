@@ -12,7 +12,7 @@ import Foundation
 #endif
 
 /// Error class for passing custom error details to Dart side.
-final class PigeonError: Error {
+final class VoicePigeonError: Error {
   let code: String
   let message: String?
   let details: Sendable?
@@ -25,7 +25,7 @@ final class PigeonError: Error {
 
   var localizedDescription: String {
     return
-      "PigeonError(code: \(code), message: \(message ?? "<nil>"), details: \(details ?? "<nil>")"
+      "VoicePigeonError(code: \(code), message: \(message ?? "<nil>"), details: \(details ?? "<nil>")"
   }
 }
 
@@ -34,7 +34,7 @@ private func wrapResult(_ result: Any?) -> [Any?] {
 }
 
 private func wrapError(_ error: Any) -> [Any?] {
-  if let pigeonError = error as? PigeonError {
+  if let pigeonError = error as? VoicePigeonError {
     return [
       pigeonError.code,
       pigeonError.message,
@@ -55,8 +55,8 @@ private func wrapError(_ error: Any) -> [Any?] {
   ]
 }
 
-private func createConnectionError(withChannelName channelName: String) -> PigeonError {
-  return PigeonError(code: "channel-error", message: "Unable to establish connection on channel: '\(channelName)'.", details: "")
+private func createConnectionError(withChannelName channelName: String) -> VoicePigeonError {
+  return VoicePigeonError(code: "channel-error", message: "Unable to establish connection on channel: '\(channelName)'.", details: "")
 }
 
 private func isNullish(_ value: Any?) -> Bool {
@@ -117,7 +117,7 @@ class VoiceHostApiSetup {
 }
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol VoiceFlutterApiProtocol {
-  func voiceReady(completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func voiceReady(completion: @escaping (Result<Void, VoicePigeonError>) -> Void)
 }
 class VoiceFlutterApi: VoiceFlutterApiProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -129,7 +129,7 @@ class VoiceFlutterApi: VoiceFlutterApiProtocol {
   var codec: VoiceApiPigeonCodec {
     return VoiceApiPigeonCodec.shared
   }
-  func voiceReady(completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func voiceReady(completion: @escaping (Result<Void, VoicePigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.VoiceFlutterApi.voiceReady\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage(nil) { response in
@@ -141,7 +141,7 @@ class VoiceFlutterApi: VoiceFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(VoicePigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }

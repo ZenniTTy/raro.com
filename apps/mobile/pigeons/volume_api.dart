@@ -5,7 +5,7 @@ import 'package:pigeon/pigeon.dart';
     dartOut: 'lib/core/native_bridges/generated/volume_api.g.dart',
     dartOptions: DartOptions(),
     swiftOut: 'ios/Runner/Native/Generated/VolumeApi.g.swift',
-    swiftOptions: SwiftOptions(),
+    swiftOptions: SwiftOptions(errorClassName: 'VolumePigeonError'),
     kotlinOut:
         'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/volume/VolumeApi.g.kt',
     kotlinOptions: KotlinOptions(

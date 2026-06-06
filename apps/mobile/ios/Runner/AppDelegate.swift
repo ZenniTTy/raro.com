@@ -4,6 +4,7 @@ import UIKit
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var cameraHostApi: CameraHostApiImpl?
+  private var replayBufferHostApi: ReplayBufferHostApiImpl?
 
   override func application(
     _ application: UIApplication,
@@ -25,5 +26,9 @@ import UIKit
     let factory = CameraPlatformViewFactory(hostApi: hostApi)
     hostApi.platformViewFactory = factory
     registrar.register(factory, withId: "com.rarocamera/camera_preview")
+
+    let replayApi = ReplayBufferHostApiImpl(manager: hostApi.cameraManager, messenger: messenger)
+    self.replayBufferHostApi = replayApi
+    ReplayBufferHostApiSetup.setUp(binaryMessenger: messenger, api: replayApi)
   }
 }
