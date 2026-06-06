@@ -28,6 +28,9 @@ import 'package:raro_mobile/features/camera/presentation/widgets/lens_switcher.d
 import 'package:raro_mobile/features/camera/presentation/widgets/rec_button.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/presentation/widgets/subscription_popup.dart';
+import 'package:raro_mobile/features/replay/application/replay_buffer_controller.dart';
+import 'package:raro_mobile/features/replay/application/replay_vault_sink.dart';
+import 'package:raro_mobile/features/replay/domain/replay_buffer_state.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_shared/raro_shared.dart' show Codec;
 
@@ -171,6 +174,13 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     }
   }
 
+  String _replayErrorMessage(String code) {
+    if (code == 'thermalThrottled') {
+      return 'Replay pausado: o aparelho está aquecido.';
+    }
+    return 'Não foi possível salvar o replay.';
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -186,6 +196,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     final cameraReady = camAsync.value is CameraStateReady;
     final recording = ref.watch(recordingControllerProvider) is RecordingActive;
     ref.watch(recordingVaultSinkProvider);
+    ref.watch(replayVaultSinkProvider);
+    ref.watch(replayBufferControllerProvider);
 
     ref.listen(recordingControllerProvider, (_, next) {
       if (next is RecordingIdle) _stopElapsedTimer();
@@ -203,6 +215,22 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       }
       if (mounted) setState(() => _format = fmt);
       _applyFormatToSession(fmt);
+    });
+
+    ref.listen(cameraControllerProvider, (_, next) {
+      if (next.value is CameraStateReady) {
+        ref
+            .read(replayBufferControllerProvider.notifier)
+            .setWindow(shell.bufferDuration.seconds);
+      }
+    });
+
+    ref.listen(replayBufferControllerProvider, (_, next) {
+      if (next is ReplayFailedState && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_replayErrorMessage(next.message))),
+        );
+      }
     });
 
     ref.listen(subscriptionControllerProvider, (_, next) {
@@ -238,9 +266,17 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                       resolutionLabel: resolutionLabel(_format.resolution),
                       fpsLabel: fpsLabel(_format.fps),
                       ultraWideEnabled: !_is4k60,
-                      onToggleBuffer: () => ref
-                          .read(cameraShellProvider.notifier)
-                          .toggleBufferDuration(),
+                      onToggleBuffer: () {
+                        ref
+                            .read(cameraShellProvider.notifier)
+                            .toggleBufferDuration();
+                        final next = ref
+                            .read(cameraShellProvider)
+                            .bufferDuration;
+                        ref
+                            .read(replayBufferControllerProvider.notifier)
+                            .setWindow(next.seconds);
+                      },
                       onSelectLens: _onSelectLens,
                       onTapHud: widget.onSettings,
                     ),
