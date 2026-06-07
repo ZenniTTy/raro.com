@@ -11,6 +11,9 @@ import 'package:raro_mobile/features/camera/presentation/camera_screen.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/hud_overlay.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/lens_switcher.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/rec_button.dart';
+import 'package:raro_mobile/features/replay/application/replay_flutter_api_provider.dart';
+import 'package:raro_mobile/features/replay/data/replay_buffer_repository.dart';
+import 'package:raro_mobile/features/replay/data/replay_buffer_repository_provider.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/data/subscription_store.dart';
 import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
@@ -44,6 +47,8 @@ class _FakeSettingsStore implements SettingsStore {
 }
 
 class _MockCameraRepository extends Mock implements CameraRepository {}
+
+class _MockReplayRepository extends Mock implements ReplayBufferRepository {}
 
 void main() {
   setUpAll(() {
@@ -101,11 +106,17 @@ void main() {
     VoidCallback? onSeePlans,
     SubscriptionState? subscription,
     CameraRepository? repository,
+    ReplayBufferRepository? replayRepository,
+    Stream<ReplayResult>? replayEvents,
   }) {
     return ProviderScope(
       overrides: [
         cameraRepositoryProvider.overrideWithValue(repository ?? buildRepo()),
         settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
+        if (replayRepository != null)
+          replayBufferRepositoryProvider.overrideWithValue(replayRepository),
+        if (replayEvents != null)
+          replayEventsProvider.overrideWithValue(replayEvents),
         if (subscription != null)
           subscriptionStoreProvider.overrideWithValue(
             _FakeSubscriptionStore(subscription),
@@ -163,6 +174,45 @@ void main() {
       expect(find.byType(RecIndicator), findsOneWidget);
       verify(() => repo.startRecording(any())).called(1);
     });
+
+    testWidgets('tap no REC inclui o pré-roll quando o buffer está armado', (
+      tester,
+    ) async {
+      final repo = buildRepo(hasPermission: true);
+      when(() => repo.startSession(any(), any())).thenAnswer((_) async {});
+      final replayRepo = _MockReplayRepository();
+      when(() => replayRepo.enable(any())).thenAnswer((_) async {});
+      await tester.pumpWidget(
+        harness(repository: repo, replayRepository: replayRepo),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.byType(RecButton));
+      await tester.pump();
+
+      final opts =
+          verify(() => repo.startRecording(captureAny())).captured.single
+              as RecordingOptions;
+      expect(opts.includeReplayPreroll, isTrue);
+    });
+
+    testWidgets(
+      'tap no REC NÃO inclui pré-roll quando o buffer não está armado',
+      (tester) async {
+        final repo = buildRepo(hasPermission: false);
+        await tester.pumpWidget(harness(repository: repo));
+        await tester.pump();
+
+        await tester.tap(find.byType(RecButton));
+        await tester.pump();
+
+        final opts =
+            verify(() => repo.startRecording(captureAny())).captured.single
+                as RecordingOptions;
+        expect(opts.includeReplayPreroll, isFalse);
+      },
+    );
 
     testWidgets('tap na lente 0.5× atualiza o provider', (tester) async {
       late WidgetRef capturedRef;

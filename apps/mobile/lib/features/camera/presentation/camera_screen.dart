@@ -148,11 +148,14 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         await notifier.stop();
         _stopElapsedTimer();
       } else {
+        final replayArmed =
+            ref.read(replayBufferControllerProvider) is ReplayBuffering;
         await notifier.start(
           RecordingOptions(
             resolution: _format.resolution,
             fps: _format.fps,
             codec: Codec.h265.label,
+            includeReplayPreroll: replayArmed,
           ),
         );
         _elapsed = Duration.zero;
