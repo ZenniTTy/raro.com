@@ -32,6 +32,22 @@ final class CameraManager {
   private let recordingPipeline = RecordingPipeline()
   private lazy var replayBuffer = ReplayBuffer(queue: recordingPipeline.sharedQueue)
 
+  var onRecordingStarted: ((String) -> Void)?
+  var onRecordingFinished: ((URL, Int) -> Void)?
+  var onRecordingFailed: ((String) -> Void)?
+
+  private var pendingPrerollChunks: [Chunk]?
+
+  init() {
+    recordingPipeline.onFinished = { [weak self] url, durationMs in
+      self?.handleRecordingFinished(url: url, durationMs: durationMs)
+    }
+    recordingPipeline.onFailed = { [weak self] message in
+      self?.resumeReplayAfterRecording()
+      self?.onRecordingFailed?(message)
+    }
+  }
+
   deinit {
     removeObservers()
   }
@@ -336,14 +352,60 @@ final class CameraManager {
     }
   }
 
-  func startRecording(sessionId: String, codec: String) throws {
+  func startRecording(sessionId: String, codec: String, includePreroll: Bool) throws {
     guard session != nil else { throw CameraNativeError.notRunning }
     guard !isInterrupted else { throw CameraNativeError.sessionInterrupted }
-    try recordingPipeline.start(sessionId: sessionId, requestedCodec: codec)
+
+    if includePreroll {
+      let snapshot = replayBuffer.snapshotChunks()
+      pendingPrerollChunks = snapshot.isEmpty ? nil : snapshot
+      replayBuffer.pauseAppending()
+    } else {
+      pendingPrerollChunks = nil
+    }
+
+    do {
+      try recordingPipeline.start(sessionId: sessionId, requestedCodec: codec)
+    } catch {
+      resumeReplayAfterRecording()
+      throw error
+    }
+    DispatchQueue.main.async { self.onRecordingStarted?(sessionId) }
   }
 
   func stopRecording() throws {
-    try recordingPipeline.stop()
+    do {
+      try recordingPipeline.stop()
+    } catch {
+      resumeReplayAfterRecording()
+      throw error
+    }
+  }
+
+  private func handleRecordingFinished(url: URL, durationMs: Int) {
+    guard let preroll = pendingPrerollChunks else {
+      resumeReplayAfterRecording()
+      DispatchQueue.main.async { self.onRecordingFinished?(url, durationMs) }
+      return
+    }
+    pendingPrerollChunks = nil
+    let g1Chunk = Chunk(url: url, durationMs: durationMs)
+    replayBuffer.exportCombined(prerollChunks: preroll, recording: g1Chunk) { [weak self] result in
+      guard let self = self else { return }
+      self.resumeReplayAfterRecording()
+      switch result {
+      case let .success((combinedURL, combinedMs)):
+        self.onRecordingFinished?(combinedURL, combinedMs)
+      case .failure:
+        os_log("preroll export failed — falling back to recording-only clip", log: cameraLog, type: .error)
+        self.onRecordingFinished?(url, durationMs)
+      }
+    }
+  }
+
+  private func resumeReplayAfterRecording() {
+    pendingPrerollChunks = nil
+    replayBuffer.resumeAppending()
   }
 
   func setReplayWindow(seconds: Int) {
@@ -354,16 +416,6 @@ final class CameraManager {
     guard session != nil else { throw CameraNativeError.notRunning }
     guard !isInterrupted else { throw CameraNativeError.sessionInterrupted }
     replayBuffer.save()
-  }
-
-  var onRecordingFinished: ((URL, Int) -> Void)? {
-    get { recordingPipeline.onFinished }
-    set { recordingPipeline.onFinished = newValue }
-  }
-
-  var onRecordingFailed: ((String) -> Void)? {
-    get { recordingPipeline.onFailed }
-    set { recordingPipeline.onFailed = newValue }
   }
 
   func switchLens(_ lens: LensType) throws {
@@ -384,6 +436,9 @@ final class CameraManager {
     if newDevice.uniqueID == currentDevice.uniqueID {
       onLensSwitched?(lens)
       return
+    }
+    guard !recordingPipeline.isRecording else {
+      throw CameraNativeError.sessionFailed("cannot switch physical lens while recording")
     }
     os_log(
       "switchLens lens=%{public}@ %{public}@->%{public}@",

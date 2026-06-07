@@ -40,4 +40,21 @@ final class ReplayRingTests: XCTestCase {
     XCTAssertEqual(cleared.count, 5)
     XCTAssertTrue(ring.chunks.isEmpty)
   }
+
+  func testWindowChunksReturnsValueCopyNotMutatingRing() {
+    var ring = ReplayRing(windowSeconds: 30, chunkSeconds: 1)
+    for i in 0..<3 { _ = ring.append(Chunk(url: URL(fileURLWithPath: "/tmp/c\(i).mp4"), durationMs: 1000)) }
+    let snapshot = ring.windowChunks()
+    _ = ring.append(Chunk(url: URL(fileURLWithPath: "/tmp/c3.mp4"), durationMs: 1000))
+    XCTAssertEqual(snapshot.count, 3, "snapshot must be a value copy, immune to later appends")
+    XCTAssertEqual(ring.windowChunks().count, 4)
+  }
+
+  func testShouldAppendOnlyWhenBufferingAndNotPaused() {
+    XCTAssertTrue(ReplayBuffer.shouldAppend(buffering: true, paused: false))
+    XCTAssertFalse(ReplayBuffer.shouldAppend(buffering: true, paused: true),
+                   "paused (recording in progress) must stop the ring from duplicating G1 footage")
+    XCTAssertFalse(ReplayBuffer.shouldAppend(buffering: false, paused: false))
+    XCTAssertFalse(ReplayBuffer.shouldAppend(buffering: false, paused: true))
+  }
 }

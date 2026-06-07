@@ -78,6 +78,7 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
   private let chunkSeconds: Int
   private var ring: ReplayRing
   private var buffering = false
+  private var paused = false
   private let finalizationGroup = DispatchGroup()
 
   private var writer: AVAssetWriter?
@@ -142,8 +143,12 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
     }
   }
 
+  static func shouldAppend(buffering: Bool, paused: Bool) -> Bool {
+    return buffering && !paused
+  }
+
   func append(_ sampleBuffer: CMSampleBuffer, isVideo: Bool) {
-    guard buffering else { return }
+    guard Self.shouldAppend(buffering: buffering, paused: paused) else { return }
     guard CMSampleBufferDataIsReady(sampleBuffer) else { return }
     let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
 
@@ -243,7 +248,53 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
     }
   }
 
-  private func export(chunks: [Chunk]) {
+  func pauseAppending() {
+    queue.async { self.paused = true }
+  }
+
+  func resumeAppending() {
+    queue.async { self.paused = false }
+  }
+
+  func snapshotChunks() -> [Chunk] {
+    return queue.sync {
+      guard self.buffering else { return [] }
+      self.finishCurrentChunk(keep: true, endPts: nil)
+      return self.ring.windowChunks()
+    }
+  }
+
+  func exportCombined(
+    prerollChunks: [Chunk],
+    recording: Chunk,
+    completion: @escaping (Result<(URL, Int), ReplayBufferError>) -> Void
+  ) {
+    queue.async {
+      self.finalizationGroup.notify(queue: self.queue) {
+        self.export(chunks: prerollChunks + [recording], completion: completion)
+      }
+    }
+  }
+
+  private func export(
+    chunks: [Chunk],
+    completion: ((Result<(URL, Int), ReplayBufferError>) -> Void)? = nil
+  ) {
+    let report: (Result<(URL, Int), ReplayBufferError>) -> Void = { result in
+      DispatchQueue.main.async {
+        if let completion = completion {
+          completion(result)
+          return
+        }
+        switch result {
+        case let .success((url, durationMs)):
+          self.onSaved?(url, durationMs)
+        case let .failure(error):
+          self.onFailed?(error)
+        }
+      }
+    }
+
     let composition = AVMutableComposition()
     let videoTrack = composition.addMutableTrack(
       withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
@@ -252,39 +303,47 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
     var cursor = CMTime.zero
     for chunk in chunks {
       let asset = AVURLAsset(url: chunk.url)
-      guard let assetVideo = asset.tracks(withMediaType: .video).first else { continue }
-      let range = CMTimeRange(start: .zero, duration: asset.duration)
-      try? videoTrack?.insertTimeRange(range, of: assetVideo, at: cursor)
-      if let assetAudio = asset.tracks(withMediaType: .audio).first {
-        try? audioTrack?.insertTimeRange(range, of: assetAudio, at: cursor)
+      guard let assetVideo = asset.tracks(withMediaType: .video).first else {
+        os_log("replay export skipping chunk without video track: %{public}@",
+               log: replayLog, type: .error, chunk.url.lastPathComponent)
+        continue
       }
-      cursor = CMTimeAdd(cursor, asset.duration)
+      let range = CMTimeRange(start: .zero, duration: asset.duration)
+      do {
+        try videoTrack?.insertTimeRange(range, of: assetVideo, at: cursor)
+        if let assetAudio = asset.tracks(withMediaType: .audio).first {
+          try audioTrack?.insertTimeRange(range, of: assetAudio, at: cursor)
+        }
+        cursor = CMTimeAdd(cursor, asset.duration)
+      } catch {
+        os_log("replay export insert failed for chunk %{public}@: %{public}@",
+               log: replayLog, type: .error,
+               chunk.url.lastPathComponent, error.localizedDescription)
+      }
     }
     guard cursor > .zero else {
       os_log("replay export aborted — no usable chunks", log: replayLog, type: .error)
-      DispatchQueue.main.async { self.onFailed?(.exportFailed("no usable chunks")) }
+      report(.failure(.exportFailed("no usable chunks")))
       return
     }
     let outURL = FileManager.default.temporaryDirectory
       .appendingPathComponent("raro_replay_\(UUID().uuidString).mp4")
     guard let export = AVAssetExportSession(
       asset: composition, presetName: AVAssetExportPresetPassthrough) else {
-      DispatchQueue.main.async { self.onFailed?(.exportFailed("no export session")) }
+      report(.failure(.exportFailed("no export session")))
       return
     }
     export.outputURL = outURL
     export.outputFileType = .mp4
     let totalMs = Int(CMTimeGetSeconds(cursor) * 1000)
     export.exportAsynchronously {
-      DispatchQueue.main.async {
-        if export.status == .completed {
-          os_log("replay saved path=%{public}@ durationMs=%d", log: replayLog, type: .info, outURL.path, totalMs)
-          self.onSaved?(outURL, totalMs)
-        } else {
-          let msg = export.error?.localizedDescription ?? "export failed"
-          os_log("replay export failed: %{public}@", log: replayLog, type: .error, msg)
-          self.onFailed?(.exportFailed(msg))
-        }
+      if export.status == .completed {
+        os_log("replay export saved path=%{public}@ durationMs=%d", log: replayLog, type: .info, outURL.path, totalMs)
+        report(.success((outURL, totalMs)))
+      } else {
+        let msg = export.error?.localizedDescription ?? "export failed"
+        os_log("replay export failed: %{public}@", log: replayLog, type: .error, msg)
+        report(.failure(.exportFailed(msg)))
       }
     }
   }
