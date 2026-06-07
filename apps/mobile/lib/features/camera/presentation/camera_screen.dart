@@ -25,7 +25,9 @@ import 'package:raro_mobile/features/camera/presentation/viewport_grain_painter.
 import 'package:raro_mobile/features/camera/presentation/widgets/buffer_pill.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/hud_overlay.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/lens_switcher.dart';
+import 'package:raro_mobile/features/camera/presentation/widgets/preroll_confirmation.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/rec_button.dart';
+import 'package:raro_mobile/features/camera/presentation/widgets/replay_arm_ring.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/presentation/widgets/subscription_popup.dart';
 import 'package:raro_mobile/features/replay/application/replay_buffer_controller.dart';
@@ -56,6 +58,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   Duration _elapsed = Duration.zero;
   bool _popupShown = false;
   bool _popupVisible = false;
+  bool _recordingHadPreroll = false;
+  int? _recordingPrerollSeconds;
+  int? _prerollConfirmationSeconds;
   PigeonFormat _format = const PigeonFormat(
     resolution: Resolution.fhd1080,
     fps: Fps.fps60,
@@ -148,8 +153,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         await notifier.stop();
         _stopElapsedTimer();
       } else {
-        final replayArmed =
-            ref.read(replayBufferControllerProvider) is ReplayBuffering;
+        final replayState = ref.read(replayBufferControllerProvider);
+        final replayArmed = replayState is ReplayBuffering;
+        _recordingHadPreroll = replayArmed;
+        _recordingPrerollSeconds = replayArmed ? replayState.seconds : null;
         await notifier.start(
           RecordingOptions(
             resolution: _format.resolution,
@@ -178,6 +185,18 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     }
   }
 
+  Timer? _confirmationTimer;
+
+  void _showPrerollConfirmation() {
+    final seconds = _recordingPrerollSeconds;
+    if (seconds == null || !mounted) return;
+    setState(() => _prerollConfirmationSeconds = seconds);
+    _confirmationTimer?.cancel();
+    _confirmationTimer = Timer(const Duration(milliseconds: 1900), () {
+      if (mounted) setState(() => _prerollConfirmationSeconds = null);
+    });
+  }
+
   String _replayErrorMessage(String code) {
     if (code == 'thermalThrottled') {
       return 'Replay pausado: o aparelho está aquecido.';
@@ -189,6 +208,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   void dispose() {
     _timer?.cancel();
     _popupTimer?.cancel();
+    _confirmationTimer?.cancel();
     super.dispose();
   }
 
@@ -204,10 +224,20 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         recordingPhase is RecordingStarting;
     ref.watch(recordingVaultSinkProvider);
     ref.watch(replayVaultSinkProvider);
-    ref.watch(replayBufferControllerProvider);
+    final replayState = ref.watch(replayBufferControllerProvider);
+    final replayArmed = replayState is ReplayBuffering;
+    final replayWindowSeconds = replayState is ReplayBuffering
+        ? replayState.seconds
+        : shell.bufferDuration.seconds;
 
-    ref.listen(recordingControllerProvider, (_, next) {
-      if (next is RecordingIdle) _stopElapsedTimer();
+    ref.listen(recordingControllerProvider, (prev, next) {
+      if (next is RecordingIdle) {
+        _stopElapsedTimer();
+        if (prev is RecordingActive && _recordingHadPreroll) {
+          _showPrerollConfirmation();
+          _recordingHadPreroll = false;
+        }
+      }
     });
 
     ref.listen(settingsControllerProvider, (_, next) {
@@ -292,12 +322,19 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
               ),
               _BottomControls(
                 recording: recording,
+                replayArmed: replayArmed,
+                replayWindowSeconds: replayWindowSeconds,
                 onGallery: widget.onGallery,
                 onSettings: widget.onSettings,
                 onRecTap: _onRecTap,
               ),
             ],
           ),
+          if (_prerollConfirmationSeconds != null)
+            PrerollConfirmation(
+              key: ValueKey('preroll-confirm-$_prerollConfirmationSeconds'),
+              seconds: _prerollConfirmationSeconds!,
+            ),
           if (_popupVisible)
             SubscriptionPopup(
               onSubscribe: () {
@@ -423,12 +460,16 @@ class _Viewport extends StatelessWidget {
 class _BottomControls extends StatelessWidget {
   const _BottomControls({
     required this.recording,
+    required this.replayArmed,
+    required this.replayWindowSeconds,
     required this.onGallery,
     required this.onSettings,
     required this.onRecTap,
   });
 
   final bool recording;
+  final bool replayArmed;
+  final int replayWindowSeconds;
   final VoidCallback onGallery;
   final VoidCallback onSettings;
   final VoidCallback onRecTap;
@@ -447,7 +488,12 @@ class _BottomControls extends StatelessWidget {
             onTap: onGallery,
             colors: colors,
           ),
-          RecButton(recording: recording, onTap: onRecTap),
+          ReplayArmRing(
+            armed: replayArmed,
+            windowSeconds: replayWindowSeconds,
+            recording: recording,
+            child: RecButton(recording: recording, onTap: onRecTap),
+          ),
           _RoundButton(
             key: const Key('camera_settings_button'),
             icon: Icons.settings_outlined,

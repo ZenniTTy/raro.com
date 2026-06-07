@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
+import 'package:raro_mobile/features/camera/application/camera_flutter_api_provider.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/presentation/camera_screen.dart';
@@ -108,6 +111,7 @@ void main() {
     CameraRepository? repository,
     ReplayBufferRepository? replayRepository,
     Stream<ReplayResult>? replayEvents,
+    Stream<RecordingResult>? recordingEvents,
   }) {
     return ProviderScope(
       overrides: [
@@ -117,6 +121,8 @@ void main() {
           replayBufferRepositoryProvider.overrideWithValue(replayRepository),
         if (replayEvents != null)
           replayEventsProvider.overrideWithValue(replayEvents),
+        if (recordingEvents != null)
+          recordingEventsProvider.overrideWithValue(recordingEvents),
         if (subscription != null)
           subscriptionStoreProvider.overrideWithValue(
             _FakeSubscriptionStore(subscription),
@@ -211,6 +217,47 @@ void main() {
             verify(() => repo.startRecording(captureAny())).captured.single
                 as RecordingOptions;
         expect(opts.includeReplayPreroll, isFalse);
+      },
+    );
+
+    testWidgets(
+      'micro-confirmação "últimos Ns incluídos" aparece ao terminar gravação '
+      'com pré-roll',
+      (tester) async {
+        final repo = buildRepo(hasPermission: true);
+        when(() => repo.startSession(any(), any())).thenAnswer((_) async {});
+        final replayRepo = _MockReplayRepository();
+        when(() => replayRepo.enable(any())).thenAnswer((_) async {});
+        final recEvents = StreamController<RecordingResult>.broadcast();
+        addTearDown(recEvents.close);
+
+        await tester.pumpWidget(
+          harness(
+            repository: repo,
+            replayRepository: replayRepo,
+            recordingEvents: recEvents.stream,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        await tester.tap(find.byType(RecButton));
+        await tester.pump();
+        recEvents.add(const RecordingResult.started(sessionId: 'sess-1'));
+        await tester.pump();
+
+        expect(find.textContaining('incluídos'), findsNothing);
+
+        recEvents.add(
+          const RecordingResult.finished(
+            path: '/tmp/raro_sess-1.mp4',
+            durationMs: 5000,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('últimos 15s incluídos'), findsOneWidget);
       },
     );
 
