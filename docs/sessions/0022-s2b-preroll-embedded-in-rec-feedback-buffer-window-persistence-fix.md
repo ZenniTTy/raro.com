@@ -61,3 +61,39 @@ A mecânica do replay buffer fechou na 0021 (chunked disk-ring grava contínuo, 
 - **Arquivos nativos:** `ReplayBuffer.swift` (snapshotChunks/pauseAppending/exportCombined), `CameraManager.swift` (coordenação START/STOP + onRecordingStarted), `CameraHostApiImpl.swift`, `RecordingPipeline.swift`.
 - **Arquivos Dart:** `recording_controller.dart`, `recording_phase.dart`, `camera_flutter_api_provider.dart`, `camera_screen.dart`, `settings_controller.dart`, `camera_shell_state.dart`/`_provider.dart`, widgets `replay_arm_ring.dart` + `preroll_confirmation.dart` + `buffer_pill.dart`.
 - **PRs:** nenhum (branch não mergeada).
+
+---
+
+## Atualização 2026-06-07 (mesma sessão) — rebuild, re-validação device e Gate §10 formal FECHADO
+
+Após o fix de persistência ser commitado (`6d7bf35`, Dart-only), rebuild profile + reinstall no iPhone 12 (`✓ Built 47.1MB`, timestamp fresco). **Usuário re-validou no device:**
+- **Persistência da janela FUNCIONANDO:** trocar 30s no pill → Settings → voltar = continua 30s; mudar em Settings reflete no pill. Os 2 bugs do `6d7bf35` confirmados corrigidos no device.
+- **Pré-roll FUNCIONANDO:** anel enche, "últimos 15/30s incluídos" aparece, botão volta ao normal.
+
+**Gate §10 formal (ffprobe) — PASSOU em 2 amostras puxadas do vault via `devicectl copy from`:**
+| Amostra | dims reais | fps real | codec | duração | prova |
+|---|---|---|---|---|---|
+| 18:41 | 2160×3840 (4K retrato) | 59.94 (60) | HEVC + AAC | 35.79s | gravou ~5.8s → **30s pré-roll embutido** |
+| 18:38 | 1080×1920 | 59.94 (60) | HEVC + AAC | 23.58s | janela 15s + ~8.6s gravados |
+
+`isReplay:false` (é gravação, sink correto). **Frames todos presentes** (`nb_read_frames=2113` @ 59.9fps no de 4K, decode `exit 0`, zero frame dropado). Resolução/fps são os **reais do REC, não do buffer** — exatamente o que o gate §10/ADR-0021 exige provar. **A duração maior que a gravação é a prova viva do pré-roll.**
+
+### Falso alarme registrado (anti-pattern de debug)
+
+Eu inicialmente puxei `tmp/raro_<id>.mp4` e vi `moov atom not found` → conclui "bug, clipe corrompido". **ERRADO:** esse é o **clipe G1 cru intermediário** (fonte descartável que o `exportCombined` consome); naturalmente não é um `.mp4` finalizado standalone. O arquivo real é o **combinado no `vault/`**, que está perfeito. Lição: o artefato a validar no gate §10 do pré-roll é o `vault/<id>.mp4` (saída de `onRecordingFinished`), NUNCA o `tmp/raro_*` intermediário. Reforça `feedback_device_debug_use_real_logs_not_assumptions` (puxar o arquivo CERTO antes de concluir). `idevicesyslog` legado NÃO capturou os `os_log` do app (limitação conhecida) — a evidência veio do ffprobe nos arquivos, não do syslog.
+
+### Débitos conhecidos do combinado (decisão do usuário: backlog, não bloqueiam)
+
+Análise técnica do `.mp4` combinado revelou 2 imperfeições MENORES (riscos baixos já previstos no design memory `raro-preroll-rec-design-s2c` + ADR-0003):
+1. **Áudio-priming AAC ~350ms no início:** os ~350ms iniciais do pré-roll ficam sem áudio (priming do 1º chunk). Vídeo+áudio ficam sincronizados do ~0.35s até o fim (vídeo e áudio terminam alinhados: 35.28s vs 35.35s → **sem drift progressivo**, é só um gap de start). Mitigação futura: `kCMSampleBufferAttachmentKey_TrimDurationAtStart` no 1º chunk ou descartar priming.
+2. **DTS não-monotônico nas emendas dos chunks de 1s:** ffmpeg warning `non monotonically increasing dts` ao re-muxar (timestamps duplicados nas junções). NÃO é erro de decode (todos os frames lidos, playback OK no app). Cosmético; risco só se o arquivo for re-processado/compartilhado/editado por ferramenta estrita. Mitigação futura: forçar IDR por chunk (`AVVideoMaxKeyFrameIntervalKey`) + retiming na composition.
+
+**Decisão do usuário:** fechar a fatia agora (gate §10 passou, funciona no device); atacar (1) e (2) só se virarem problema perceptível (ex: ao adicionar share/edição). Coerente com Simplicity First — evita scope creep sobre feature provada.
+
+### Cosmético (backlog): nome do combinado no vault
+
+O combinado é salvo no vault como `replay_<UUID>.mp4` em vez de `raro_<UUID>.mp4` — artefato do nome `raro_replay_<UUID>` que o `ReplayBuffer.export()` gera (`ReplayBuffer.swift:330`) combinado com o strip de prefixo `raro_` do `_idFromPath` (`camera_flutter_api_provider.dart`). `isReplay:false`, name "Vídeo HH:MM" e thumbnail estão corretos; só o filename diverge. 1 linha pra corrigir (sem efeito funcional). Backlog.
+
+### Estado final da fatia
+
+**Pré-roll embutido no REC = PRONTO e device-validated** (gate §10 formal anexado acima). 3 débitos backlog (áudio-priming, DTS emendas, nome cosmético) — nenhum bloqueia. Próxima fatia de produto = voz ("Raro" aciona o mesmo save).
