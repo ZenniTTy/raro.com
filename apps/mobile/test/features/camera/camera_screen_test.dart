@@ -24,6 +24,7 @@ import 'package:raro_mobile/features/paywall/presentation/widgets/subscription_p
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/data/settings_store.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
+import 'package:raro_shared/raro_shared.dart' show BufferDuration;
 
 class _FakeSubscriptionStore implements SubscriptionStore {
   _FakeSubscriptionStore(this._stored);
@@ -38,7 +39,11 @@ class _FakeSubscriptionStore implements SubscriptionStore {
 }
 
 class _FakeSettingsStore implements SettingsStore {
-  RecordingSettings _stored = const RecordingSettings();
+  _FakeSettingsStore([this._stored = const RecordingSettings()]);
+
+  RecordingSettings _stored;
+
+  RecordingSettings get stored => _stored;
 
   @override
   Future<RecordingSettings> load() async => _stored;
@@ -112,11 +117,14 @@ void main() {
     ReplayBufferRepository? replayRepository,
     Stream<ReplayResult>? replayEvents,
     Stream<RecordingResult>? recordingEvents,
+    SettingsStore? settingsStore,
   }) {
     return ProviderScope(
       overrides: [
         cameraRepositoryProvider.overrideWithValue(repository ?? buildRepo()),
-        settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
+        settingsStoreProvider.overrideWithValue(
+          settingsStore ?? _FakeSettingsStore(),
+        ),
         if (replayRepository != null)
           replayBufferRepositoryProvider.overrideWithValue(replayRepository),
         if (replayEvents != null)
@@ -161,10 +169,12 @@ void main() {
       expect(find.text('1080p · 60FPS · 1x'), findsOneWidget);
     });
 
-    testWidgets('mostra a buffer pill Raro Replay 15s', (tester) async {
+    testWidgets('mostra a buffer pill com a janela persistida (default 30s)', (
+      tester,
+    ) async {
       await tester.pumpWidget(harness());
       await tester.pump();
-      expect(find.text('Raro Replay 15s'), findsOneWidget);
+      expect(find.text('Raro Replay 30s'), findsOneWidget);
     });
 
     testWidgets('tap no REC exibe o indicador de gravação', (tester) async {
@@ -221,6 +231,86 @@ void main() {
     );
 
     testWidgets(
+      'tap no pill persiste a janela em Settings e atualiza o buffer nativo '
+      '(regressão: pill não persistia nem sincronizava)',
+      (tester) async {
+        final repo = buildRepo(hasPermission: true);
+        when(() => repo.startSession(any(), any())).thenAnswer((_) async {});
+        final replayRepo = _MockReplayRepository();
+        when(() => replayRepo.enable(any())).thenAnswer((_) async {});
+        final store = _FakeSettingsStore(
+          const RecordingSettings(bufferDuration: BufferDuration.seconds30),
+        );
+
+        await tester.pumpWidget(
+          harness(
+            repository: repo,
+            replayRepository: replayRepo,
+            settingsStore: store,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('Raro Replay 30s'), findsOneWidget);
+
+        await tester.tap(find.text('Raro Replay 30s'));
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('Raro Replay 15s'), findsOneWidget);
+        expect(store.stored.bufferDuration, BufferDuration.seconds15);
+        verify(() => replayRepo.enable(15)).called(1);
+      },
+    );
+
+    testWidgets(
+      'janela alterada em Settings reflete no buffer nativo da câmera '
+      '(regressão: câmera não via mudança de Settings)',
+      (tester) async {
+        final repo = buildRepo(hasPermission: true);
+        when(() => repo.startSession(any(), any())).thenAnswer((_) async {});
+        final replayRepo = _MockReplayRepository();
+        when(() => replayRepo.enable(any())).thenAnswer((_) async {});
+        late WidgetRef capturedRef;
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              cameraRepositoryProvider.overrideWithValue(repo),
+              settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
+              replayBufferRepositoryProvider.overrideWithValue(replayRepo),
+            ],
+            child: MaterialApp(
+              theme: buildRaroDarkTheme(),
+              home: Consumer(
+                builder: (context, ref, _) {
+                  capturedRef = ref;
+                  return CameraScreen(
+                    onGallery: () {},
+                    onSettings: () {},
+                    onSeePlans: () {},
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        await capturedRef
+            .read(settingsControllerProvider.notifier)
+            .setBufferDuration(BufferDuration.seconds15);
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('Raro Replay 15s'), findsOneWidget);
+        verify(() => replayRepo.enable(15)).called(1);
+      },
+    );
+
+    testWidgets(
       'micro-confirmação "últimos Ns incluídos" aparece ao terminar gravação '
       'com pré-roll',
       (tester) async {
@@ -257,7 +347,7 @@ void main() {
         await tester.pump();
         await tester.pump();
 
-        expect(find.text('últimos 15s incluídos'), findsOneWidget);
+        expect(find.text('últimos 30s incluídos'), findsOneWidget);
       },
     );
 

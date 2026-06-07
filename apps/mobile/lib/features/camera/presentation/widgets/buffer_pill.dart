@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
-import 'package:raro_mobile/features/camera/domain/camera_shell_state.dart';
+import 'package:raro_shared/raro_shared.dart' show BufferDuration;
 
 class BufferPill extends StatefulWidget {
   const BufferPill({super.key, required this.duration, required this.onTap});
@@ -59,7 +59,7 @@ class _BufferPillState extends State<BufferPill>
             ),
             const SizedBox(width: 6),
             Text(
-              'Raro Replay ${widget.duration.seconds}s',
+              'Raro Replay ${widget.duration.value}s',
               style: const TextStyle(
                 fontFamily: RaroFonts.mono,
                 fontSize: 10,

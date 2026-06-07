@@ -12,13 +12,12 @@ void main() {
   }
 
   group('CameraShell', () {
-    test('estado inicial: idle, lente wide, buffer 15s', () {
+    test('estado inicial: idle, lente wide', () {
       final container = makeContainer();
       final state = container.read(cameraShellProvider);
 
       expect(state.recording, isFalse);
       expect(state.lens, LensType.wide);
-      expect(state.bufferDuration, BufferDuration.fifteenSec);
     });
 
     test('toggleRecording alterna recording para true', () {
@@ -48,47 +47,20 @@ void main() {
 
       expect(container.read(cameraShellProvider).lens, LensType.ultraWide);
     });
-
-    test('toggleBufferDuration alterna 15s → 30s → 15s', () {
-      final container = makeContainer();
-      final notifier = container.read(cameraShellProvider.notifier);
-
-      notifier.toggleBufferDuration();
-      expect(
-        container.read(cameraShellProvider).bufferDuration,
-        BufferDuration.thirtySec,
-      );
-
-      notifier.toggleBufferDuration();
-      expect(
-        container.read(cameraShellProvider).bufferDuration,
-        BufferDuration.fifteenSec,
-      );
-    });
   });
 
   group('CameraShellState helpers', () {
     test('lensLabel (chips) usa × ; hudLensLabel (#hudLens) usa x ASCII', () {
-      const wide = CameraShellState(
-        recording: false,
-        lens: LensType.wide,
-        bufferDuration: BufferDuration.fifteenSec,
-      );
+      const wide = CameraShellState(recording: false, lens: LensType.wide);
       const ultra = CameraShellState(
         recording: false,
         lens: LensType.ultraWide,
-        bufferDuration: BufferDuration.fifteenSec,
       );
 
       expect(wide.lensLabel, '1×');
       expect(ultra.lensLabel, '0.5×');
       expect(wide.hudLensLabel, '1x');
       expect(ultra.hudLensLabel, '0.5x');
-    });
-
-    test('bufferSeconds: 15 / 30', () {
-      expect(BufferDuration.fifteenSec.seconds, 15);
-      expect(BufferDuration.thirtySec.seconds, 30);
     });
   });
 }

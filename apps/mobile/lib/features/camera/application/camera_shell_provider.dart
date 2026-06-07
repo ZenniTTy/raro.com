@@ -7,11 +7,8 @@ part 'camera_shell_provider.g.dart';
 @riverpod
 class CameraShell extends _$CameraShell {
   @override
-  CameraShellState build() => const CameraShellState(
-    recording: false,
-    lens: LensType.wide,
-    bufferDuration: BufferDuration.fifteenSec,
-  );
+  CameraShellState build() =>
+      const CameraShellState(recording: false, lens: LensType.wide);
 
   void toggleRecording() {
     state = state.copyWith(recording: !state.recording);
@@ -19,13 +16,5 @@ class CameraShell extends _$CameraShell {
 
   void selectLens(LensType lens) {
     state = state.copyWith(lens: lens);
-  }
-
-  void toggleBufferDuration() {
-    state = state.copyWith(
-      bufferDuration: state.bufferDuration == BufferDuration.fifteenSec
-          ? BufferDuration.thirtySec
-          : BufferDuration.fifteenSec,
-    );
   }
 }

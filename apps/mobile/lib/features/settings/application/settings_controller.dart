@@ -27,6 +27,14 @@ class SettingsController extends _$SettingsController {
   Future<void> setBufferDuration(BufferDuration bufferDuration) =>
       _update((s) => s.copyWith(bufferDuration: bufferDuration));
 
+  Future<void> toggleBufferDuration() => _update(
+    (s) => s.copyWith(
+      bufferDuration: s.bufferDuration == BufferDuration.seconds30
+          ? BufferDuration.seconds15
+          : BufferDuration.seconds30,
+    ),
+  );
+
   Future<void> setControlMode(ControlMode controlMode) =>
       _update((s) => s.copyWith(controlMode: controlMode));
 

@@ -134,5 +134,28 @@ void main() {
       expect(stored.bufferDuration, BufferDuration.seconds15);
       expect(stored.fps, Fps.fps30);
     });
+
+    test('toggleBufferDuration alterna 30↔15 e persiste cada troca', () async {
+      final store = _FakeSettingsStore(
+        const RecordingSettings(bufferDuration: BufferDuration.seconds30),
+      );
+      final container = makeContainer(store);
+      await container.read(settingsControllerProvider.future);
+      final notifier = container.read(settingsControllerProvider.notifier);
+
+      await notifier.toggleBufferDuration();
+      expect(
+        container.read(settingsControllerProvider).requireValue.bufferDuration,
+        BufferDuration.seconds15,
+      );
+      expect((await store.load()).bufferDuration, BufferDuration.seconds15);
+
+      await notifier.toggleBufferDuration();
+      expect(
+        container.read(settingsControllerProvider).requireValue.bufferDuration,
+        BufferDuration.seconds30,
+      );
+      expect((await store.load()).bufferDuration, BufferDuration.seconds30);
+    });
   });
 }

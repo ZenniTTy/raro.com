@@ -15,7 +15,6 @@ import 'package:raro_mobile/features/camera/application/camera_flutter_api_provi
 import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
 import 'package:raro_mobile/features/camera/application/recording_controller.dart';
 import 'package:raro_mobile/features/camera/domain/camera_settings.dart';
-import 'package:raro_mobile/features/camera/domain/camera_shell_state.dart';
 import 'package:raro_mobile/features/camera/domain/camera_state.dart';
 import 'package:raro_mobile/features/camera/domain/recording_options_mapper.dart';
 import 'package:raro_mobile/features/camera/domain/recording_phase.dart';
@@ -34,7 +33,8 @@ import 'package:raro_mobile/features/replay/application/replay_buffer_controller
 import 'package:raro_mobile/features/replay/application/replay_vault_sink.dart';
 import 'package:raro_mobile/features/replay/domain/replay_buffer_state.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
-import 'package:raro_shared/raro_shared.dart' show Codec;
+import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
+import 'package:raro_shared/raro_shared.dart' show BufferDuration, Codec;
 
 class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({
@@ -224,11 +224,14 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         recordingPhase is RecordingStarting;
     ref.watch(recordingVaultSinkProvider);
     ref.watch(replayVaultSinkProvider);
+    final bufferDuration =
+        ref.watch(settingsControllerProvider).value?.bufferDuration ??
+        const RecordingSettings().bufferDuration;
     final replayState = ref.watch(replayBufferControllerProvider);
     final replayArmed = replayState is ReplayBuffering;
     final replayWindowSeconds = replayState is ReplayBuffering
         ? replayState.seconds
-        : shell.bufferDuration.seconds;
+        : bufferDuration.value;
 
     ref.listen(recordingControllerProvider, (prev, next) {
       if (next is RecordingIdle) {
@@ -240,25 +243,32 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       }
     });
 
-    ref.listen(settingsControllerProvider, (_, next) {
+    ref.listen(settingsControllerProvider, (prev, next) {
       final value = next.value;
       if (value == null) return;
+
       final fmt = mapToPigeonFormat(
         resolution: value.resolution,
         fps: value.fps,
       );
-      if (fmt.resolution == _format.resolution && fmt.fps == _format.fps) {
-        return;
+      if (fmt.resolution != _format.resolution || fmt.fps != _format.fps) {
+        if (mounted) setState(() => _format = fmt);
+        _applyFormatToSession(fmt);
       }
-      if (mounted) setState(() => _format = fmt);
-      _applyFormatToSession(fmt);
+
+      final prevDuration = prev?.value?.bufferDuration;
+      if (value.bufferDuration != prevDuration) {
+        ref
+            .read(replayBufferControllerProvider.notifier)
+            .setWindow(value.bufferDuration.value);
+      }
     });
 
     ref.listen(cameraControllerProvider, (_, next) {
       if (next.value is CameraStateReady) {
         ref
             .read(replayBufferControllerProvider.notifier)
-            .setWindow(shell.bufferDuration.seconds);
+            .setWindow(bufferDuration.value);
       }
     });
 
@@ -297,23 +307,15 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                       cameraReady: cameraReady,
                       recording: recording,
                       elapsed: _elapsed,
-                      bufferDuration: shell.bufferDuration,
+                      bufferDuration: bufferDuration,
                       lens: shell.lens,
                       lensLabel: shell.hudLensLabel,
                       resolutionLabel: resolutionLabel(_format.resolution),
                       fpsLabel: fpsLabel(_format.fps),
                       ultraWideEnabled: !_is4k60,
-                      onToggleBuffer: () {
-                        ref
-                            .read(cameraShellProvider.notifier)
-                            .toggleBufferDuration();
-                        final next = ref
-                            .read(cameraShellProvider)
-                            .bufferDuration;
-                        ref
-                            .read(replayBufferControllerProvider.notifier)
-                            .setWindow(next.seconds);
-                      },
+                      onToggleBuffer: () => ref
+                          .read(settingsControllerProvider.notifier)
+                          .toggleBufferDuration(),
                       onSelectLens: _onSelectLens,
                       onTapHud: widget.onSettings,
                     ),
