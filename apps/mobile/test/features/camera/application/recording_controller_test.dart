@@ -33,6 +33,12 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
+    final keepAlive = container.listen(
+      recordingControllerProvider,
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(keepAlive.close);
     return container;
   }
 
@@ -42,31 +48,58 @@ void main() {
 
   tearDown(() => events.close());
 
+  test('start: calls repo.startRecording but does NOT promote active on await '
+      '(state is starting until native callback)', () async {
+    final repo = _MockRepo();
+    when(() => repo.startRecording(any())).thenAnswer((_) async => 's-1');
+    final container = makeContainer(repo);
+
+    await container
+        .read(recordingControllerProvider.notifier)
+        .start(
+          RecordingOptions(
+            resolution: Resolution.fhd1080,
+            fps: Fps.fps60,
+            codec: 'h265',
+          ),
+        );
+
+    final phase = container.read(recordingControllerProvider);
+    expect(
+      phase,
+      isA<RecordingStarting>(),
+      reason:
+          'await return must not promote active — only native callback does',
+    );
+    final opts =
+        verify(() => repo.startRecording(captureAny())).captured.single
+            as RecordingOptions;
+    expect(opts.fps, Fps.fps60);
+    expect(opts.codec, 'h265');
+  });
+
   test(
-    'start: idle → active with sessionId, calls repo.startRecording',
+    'native RecordingStarted event promotes starting → active with sessionId',
     () async {
       final repo = _MockRepo();
       when(() => repo.startRecording(any())).thenAnswer((_) async => 's-1');
       final container = makeContainer(repo);
+      final notifier = container.read(recordingControllerProvider.notifier);
 
-      await container
-          .read(recordingControllerProvider.notifier)
-          .start(
-            RecordingOptions(
-              resolution: Resolution.fhd1080,
-              fps: Fps.fps60,
-              codec: 'h265',
-            ),
-          );
+      await notifier.start(
+        RecordingOptions(
+          resolution: Resolution.fhd1080,
+          fps: Fps.fps60,
+          codec: 'h265',
+        ),
+      );
+
+      events.add(const RecordingResult.started(sessionId: 's-1'));
+      await Future<void>.delayed(Duration.zero);
 
       final phase = container.read(recordingControllerProvider);
       expect(phase, isA<RecordingActive>());
       expect((phase as RecordingActive).sessionId, 's-1');
-      final opts =
-          verify(() => repo.startRecording(captureAny())).captured.single
-              as RecordingOptions;
-      expect(opts.fps, Fps.fps60);
-      expect(opts.codec, 'h265');
     },
   );
 
@@ -127,6 +160,8 @@ void main() {
           codec: 'h265',
         ),
       );
+      events.add(const RecordingResult.started(sessionId: 's-4'));
+      await Future<void>.delayed(Duration.zero);
       await notifier.start(
         RecordingOptions(
           resolution: Resolution.fhd1080,
@@ -141,6 +176,59 @@ void main() {
             .sessionId,
         's-4',
       );
+    },
+  );
+
+  test('start: when already starting is a no-op (debounces double tap before '
+      'native callback)', () async {
+    final repo = _MockRepo();
+    when(() => repo.startRecording(any())).thenAnswer((_) async => 's-7');
+    final container = makeContainer(repo);
+    final notifier = container.read(recordingControllerProvider.notifier);
+
+    await notifier.start(
+      RecordingOptions(
+        resolution: Resolution.fhd1080,
+        fps: Fps.fps30,
+        codec: 'h265',
+      ),
+    );
+    await notifier.start(
+      RecordingOptions(
+        resolution: Resolution.fhd1080,
+        fps: Fps.fps30,
+        codec: 'h265',
+      ),
+    );
+
+    verify(() => repo.startRecording(any())).called(1);
+    expect(
+      container.read(recordingControllerProvider),
+      isA<RecordingStarting>(),
+    );
+  });
+
+  test(
+    'start: when repo.startRecording throws, state resets to idle and rethrows',
+    () async {
+      final repo = _MockRepo();
+      when(
+        () => repo.startRecording(any()),
+      ).thenThrow(StateError('notRunning'));
+      final container = makeContainer(repo);
+      final notifier = container.read(recordingControllerProvider.notifier);
+
+      await expectLater(
+        notifier.start(
+          RecordingOptions(
+            resolution: Resolution.fhd1080,
+            fps: Fps.fps30,
+            codec: 'h265',
+          ),
+        ),
+        throwsA(isA<StateError>()),
+      );
+      expect(container.read(recordingControllerProvider), isA<RecordingIdle>());
     },
   );
 
@@ -170,6 +258,8 @@ void main() {
           codec: 'h265',
         ),
       );
+      events.add(const RecordingResult.started(sessionId: 's-5'));
+      await Future<void>.delayed(Duration.zero);
       expect(
         container.read(recordingControllerProvider),
         isA<RecordingActive>(),
@@ -200,6 +290,8 @@ void main() {
         codec: 'h265',
       ),
     );
+    events.add(const RecordingResult.started(sessionId: 's-6'));
+    await Future<void>.delayed(Duration.zero);
     expect(container.read(recordingControllerProvider), isA<RecordingActive>());
 
     events.add(

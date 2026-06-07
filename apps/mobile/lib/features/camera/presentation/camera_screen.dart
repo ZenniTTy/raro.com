@@ -141,7 +141,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
   Future<void> _onRecTap() async {
     final notifier = ref.read(recordingControllerProvider.notifier);
-    final wasActive = ref.read(recordingControllerProvider) is RecordingActive;
+    final phase = ref.read(recordingControllerProvider);
+    final wasActive = phase is RecordingActive || phase is RecordingStarting;
     try {
       if (wasActive) {
         await notifier.stop();
@@ -194,7 +195,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     final shell = ref.watch(cameraShellProvider);
     final camAsync = ref.watch(cameraControllerProvider);
     final cameraReady = camAsync.value is CameraStateReady;
-    final recording = ref.watch(recordingControllerProvider) is RecordingActive;
+    final recordingPhase = ref.watch(recordingControllerProvider);
+    final recording =
+        recordingPhase is RecordingActive ||
+        recordingPhase is RecordingStarting;
     ref.watch(recordingVaultSinkProvider);
     ref.watch(replayVaultSinkProvider);
     ref.watch(replayBufferControllerProvider);

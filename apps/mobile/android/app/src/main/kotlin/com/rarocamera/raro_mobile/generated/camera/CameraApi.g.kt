@@ -410,7 +410,8 @@ data class FocusPoint (
 data class RecordingOptions (
   val resolution: Resolution,
   val fps: Fps,
-  val codec: String
+  val codec: String,
+  val includeReplayPreroll: Boolean
 )
  {
   companion object {
@@ -418,7 +419,8 @@ data class RecordingOptions (
       val resolution = pigeonVar_list[0] as Resolution
       val fps = pigeonVar_list[1] as Fps
       val codec = pigeonVar_list[2] as String
-      return RecordingOptions(resolution, fps, codec)
+      val includeReplayPreroll = pigeonVar_list[3] as Boolean
+      return RecordingOptions(resolution, fps, codec, includeReplayPreroll)
     }
   }
   fun toList(): List<Any?> {
@@ -426,6 +428,7 @@ data class RecordingOptions (
       resolution,
       fps,
       codec,
+      includeReplayPreroll,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -436,7 +439,7 @@ data class RecordingOptions (
       return true
     }
     val other = other as RecordingOptions
-    return CameraApiPigeonUtils.deepEquals(this.resolution, other.resolution) && CameraApiPigeonUtils.deepEquals(this.fps, other.fps) && CameraApiPigeonUtils.deepEquals(this.codec, other.codec)
+    return CameraApiPigeonUtils.deepEquals(this.resolution, other.resolution) && CameraApiPigeonUtils.deepEquals(this.fps, other.fps) && CameraApiPigeonUtils.deepEquals(this.codec, other.codec) && CameraApiPigeonUtils.deepEquals(this.includeReplayPreroll, other.includeReplayPreroll)
   }
 
   override fun hashCode(): Int {
@@ -444,6 +447,7 @@ data class RecordingOptions (
     result = 31 * result + CameraApiPigeonUtils.deepHash(this.resolution)
     result = 31 * result + CameraApiPigeonUtils.deepHash(this.fps)
     result = 31 * result + CameraApiPigeonUtils.deepHash(this.codec)
+    result = 31 * result + CameraApiPigeonUtils.deepHash(this.includeReplayPreroll)
     return result
   }
 }
@@ -550,11 +554,17 @@ interface CameraHostApi {
   fun switchLens(lens: LensType, callback: (Result<Unit>) -> Unit)
   fun setFormat(resolution: Resolution, fps: Fps, callback: (Result<Unit>) -> Unit)
   fun focusAt(point: FocusPoint, callback: (Result<Unit>) -> Unit)
-  /** Starts recording on the running session. Returns a session id. */
+  /**
+   * Starts recording on the running session. Returns a session id.
+   * Recording state is promoted by [CameraFlutterApi.onRecordingStarted]
+   * once the native writer is actually writing, not on this return.
+   */
   fun startRecording(options: RecordingOptions): String
   /**
    * Stops recording. The saved file path arrives via
-   * [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
+   * [CameraFlutterApi.onRecordingFinished]. When [RecordingOptions.includeReplayPreroll]
+   * was set, the finished path is the combined [preroll + recording] `.mp4`
+   * (composed async; see ADR-0003 Addendum 2026-06-07).
    */
   fun stopRecording()
   /**
@@ -862,6 +872,23 @@ class CameraFlutterApi(private val binaryMessenger: BinaryMessenger, private val
     val channelName = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onError$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(codeArg, messageArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(CameraApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  fun onRecordingStarted(sessionIdArg: String, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onRecordingStarted$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(sessionIdArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))

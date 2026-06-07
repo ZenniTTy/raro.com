@@ -364,6 +364,7 @@ struct RecordingOptions: Hashable {
   var resolution: Resolution
   var fps: Fps
   var codec: String
+  var includeReplayPreroll: Bool
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -371,11 +372,13 @@ struct RecordingOptions: Hashable {
     let resolution = pigeonVar_list[0] as! Resolution
     let fps = pigeonVar_list[1] as! Fps
     let codec = pigeonVar_list[2] as! String
+    let includeReplayPreroll = pigeonVar_list[3] as! Bool
 
     return RecordingOptions(
       resolution: resolution,
       fps: fps,
-      codec: codec
+      codec: codec,
+      includeReplayPreroll: includeReplayPreroll
     )
   }
   func toList() -> [Any?] {
@@ -383,13 +386,14 @@ struct RecordingOptions: Hashable {
       resolution,
       fps,
       codec,
+      includeReplayPreroll,
     ]
   }
   static func == (lhs: RecordingOptions, rhs: RecordingOptions) -> Bool {
     if Swift.type(of: lhs) != Swift.type(of: rhs) {
       return false
     }
-    return deepEqualsCameraApi(lhs.resolution, rhs.resolution) && deepEqualsCameraApi(lhs.fps, rhs.fps) && deepEqualsCameraApi(lhs.codec, rhs.codec)
+    return deepEqualsCameraApi(lhs.resolution, rhs.resolution) && deepEqualsCameraApi(lhs.fps, rhs.fps) && deepEqualsCameraApi(lhs.codec, rhs.codec) && deepEqualsCameraApi(lhs.includeReplayPreroll, rhs.includeReplayPreroll)
   }
 
   func hash(into hasher: inout Hasher) {
@@ -397,6 +401,7 @@ struct RecordingOptions: Hashable {
     deepHashCameraApi(value: resolution, hasher: &hasher)
     deepHashCameraApi(value: fps, hasher: &hasher)
     deepHashCameraApi(value: codec, hasher: &hasher)
+    deepHashCameraApi(value: includeReplayPreroll, hasher: &hasher)
   }
 }
 
@@ -502,9 +507,13 @@ protocol CameraHostApi {
   func setFormat(resolution: Resolution, fps: Fps, completion: @escaping (Result<Void, Error>) -> Void)
   func focusAt(point: FocusPoint, completion: @escaping (Result<Void, Error>) -> Void)
   /// Starts recording on the running session. Returns a session id.
+  /// Recording state is promoted by [CameraFlutterApi.onRecordingStarted]
+  /// once the native writer is actually writing, not on this return.
   func startRecording(options: RecordingOptions) throws -> String
   /// Stops recording. The saved file path arrives via
-  /// [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
+  /// [CameraFlutterApi.onRecordingFinished]. When [RecordingOptions.includeReplayPreroll]
+  /// was set, the finished path is the combined [preroll + recording] `.mp4`
+  /// (composed async; see ADR-0003 Addendum 2026-06-07).
   func stopRecording() throws
   /// Extracts the first frame of [videoPath] as a JPEG and returns the path of
   /// the generated `.jpg`. iOS uses AVAssetImageGenerator (ADR-0019); Android is
@@ -621,6 +630,8 @@ class CameraHostApiSetup {
       focusAtChannel.setMessageHandler(nil)
     }
     /// Starts recording on the running session. Returns a session id.
+    /// Recording state is promoted by [CameraFlutterApi.onRecordingStarted]
+    /// once the native writer is actually writing, not on this return.
     let startRecordingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.startRecording\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       startRecordingChannel.setMessageHandler { message, reply in
@@ -637,7 +648,9 @@ class CameraHostApiSetup {
       startRecordingChannel.setMessageHandler(nil)
     }
     /// Stops recording. The saved file path arrives via
-    /// [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
+    /// [CameraFlutterApi.onRecordingFinished]. When [RecordingOptions.includeReplayPreroll]
+    /// was set, the finished path is the combined [preroll + recording] `.mp4`
+    /// (composed async; see ADR-0003 Addendum 2026-06-07).
     let stopRecordingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.CameraHostApi.stopRecording\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       stopRecordingChannel.setMessageHandler { _, reply in
@@ -710,6 +723,7 @@ protocol CameraFlutterApiProtocol {
   func onLensSwitched(lens lensArg: LensType, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
   func onFocusChanged(point pointArg: FocusPoint, locked lockedArg: Bool, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
   func onError(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
+  func onRecordingStarted(sessionId sessionIdArg: String, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
   func onRecordingFinished(path pathArg: String, durationMs durationMsArg: Int64, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
   func onRecordingFailed(code codeArg: CameraErrorCode, message messageArg: String?, completion: @escaping (Result<Void, CameraPigeonError>) -> Void)
 }
@@ -799,6 +813,24 @@ class CameraFlutterApi: CameraFlutterApiProtocol {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onError\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([codeArg, messageArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(CameraPigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
+      }
+    }
+  }
+  func onRecordingStarted(sessionId sessionIdArg: String, completion: @escaping (Result<Void, CameraPigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.CameraFlutterApi.onRecordingStarted\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([sessionIdArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {
         completion(.failure(createConnectionError(withChannelName: channelName)))
         return
