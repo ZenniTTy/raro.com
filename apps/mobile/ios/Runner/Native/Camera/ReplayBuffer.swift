@@ -105,9 +105,8 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
 
   func start(videoSettings: [String: Any], audioSettings: [String: Any]?) {
     queue.async {
-      guard ProcessInfo.processInfo.thermalState != .serious,
-            ProcessInfo.processInfo.thermalState != .critical else {
-        os_log("replay start refused — thermalState=%d", log: replayLog, type: .error,
+      guard ProcessInfo.processInfo.thermalState != .critical else {
+        os_log("replay start refused — thermalState=critical(%d)", log: replayLog, type: .error,
                ProcessInfo.processInfo.thermalState.rawValue)
         DispatchQueue.main.async { self.onFailed?(.thermalThrottled) }
         return

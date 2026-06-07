@@ -178,3 +178,17 @@ A forma do contrato já estava antecipada por este ADR (linha 78: callback `onRe
 - IMG.LY / Scott Logic — concat de `.mp4` via `AVMutableComposition` + `AVAssetExportSession`
 - ADR-0020 (pipeline unificado), ADR-0021 (4K60 / gate §10 prova de formato)
 - Veredito adr-guardian (S2.B design): `ADR_AMEND_REQUIRED 0003` — este Addendum atende
+
+---
+
+## Addendum 2026-06-06 — Gate térmico: bloquear só em `.critical`, não em `.serious`
+
+- **Status:** Accepted — retifica o gate térmico do Addendum 2026-06-05 (linha "sob `.serious`/`.critical`, recusa habilitar e emite `onReplayFailed`").
+- **Contexto:** Gate de device da S2.B (sessão de implementação). Bug device-validated: o replay emitia `thermalThrottled` ("Replay pausado: o aparelho está aquecido") **a cada cold-start da sessão** (reabrir app, voltar de Settings — ambos recriam a `CameraController` autoDispose → `startSession` nativo → `replayBuffer.start()`), com o iPhone 12 **frio**. Pelo pill na câmera não dava erro porque o pill só chama `setWindow` (não recria a sessão, não re-executa o gate).
+- **Causa-raiz:** o gate tratava `.serious` como bloqueio. No iPhone 12 (A14), `.serious` é um estado **comum e transitório** sob câmera + carga moderada (e o build profile de ~19min imediatamente anterior deixou o device sob gestão térmica ativa — confirmado no `idevicesyslog`: `thermalmonitord`/`ApplePPMCPMS` ajustando "Thermal Budget" continuamente). `.serious` **não é perigo** — a recomendação Apple para `.serious` é *degradar carga*, e só `.critical` justifica *pausar + avisar o usuário*. Bloquear o replay inteiro + erro alarmante em `.serious` é agressivo e mostra um susto falso a cada abertura.
+- **Decisão:** O gate térmico do `ReplayBuffer.start()` bloqueia **apenas em `.critical`**. Em `.serious`, `.fair`, `.nominal` o buffer roda normalmente. (Degradar fps/resolução do buffer sob `.serious` — o ideal do Addendum 2026-06-05 — fica como melhoria futura, NÃO bloqueante; a janela de N segundos já limita o footprint.) Mantém `onReplayFailed(thermalThrottled)` só para `.critical` (perigo real).
+- **Consequências:**
+  - Remove o erro falso recorrente a cada cold-start no device frio/morno.
+  - `.critical` (raro, perigo real) ainda suspende o replay + avisa — comportamento correto preservado.
+  - Re-validar em iPhone 12: cold-start (reabrir app + voltar de Settings) NÃO mostra mais o erro térmico com o device em uso normal.
+- **Referências:** Apple `ProcessInfo.ThermalState` (`.serious` = reduzir carga; `.critical` = pausar/avisar); WWDC19 422 "Designing for Adverse Network and Temperature Conditions"; gate de device S2.B (este bug).
