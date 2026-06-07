@@ -1,7 +1,7 @@
 # 0003 — Replay Buffer 100% nativo (sem plugin Flutter)
 
-- **Data:** 2026-05-25 (decisão original) · **Addendum de implementação:** 2026-06-04
-- **Status:** Accepted — **seção de implementação iOS revisada em 2026-06-04** (ver Addendum). A decisão estratégica (replay 100% nativo, sem plugin) permanece; a implementação iOS original era tecnicamente inviável e foi corrigida.
+- **Data:** 2026-05-25 (decisão original) · **Addenda:** 2026-06-04 (impl iOS), 2026-06-05 (chunked disk-ring), 2026-06-06 (gate térmico), 2026-06-07 (pré-roll no REC)
+- **Status:** Accepted — **seção de implementação iOS revisada em 2026-06-04** (ver Addendum). A decisão estratégica (replay 100% nativo, sem plugin) permanece; a implementação iOS original era tecnicamente inviável e foi corrigida. **Addendum 2026-06-07** adiciona o modo de export combinado pré-roll-no-REC (`includeReplayPreroll`, não-default).
 - **Decisores:** Eduardo Rodrigues, Vitor Lopes
 - **Contexto:** Briefing Seção 6.2 + 7.4, Blueprint Seção 2.2 + 3.3. **Revisão 2026-06-04:** pré-flight da S2.B (sessão 0018) + ADR-0020 (pipeline de captura unificado).
 
@@ -192,3 +192,52 @@ A forma do contrato já estava antecipada por este ADR (linha 78: callback `onRe
   - `.critical` (raro, perigo real) ainda suspende o replay + avisa — comportamento correto preservado.
   - Re-validar em iPhone 12: cold-start (reabrir app + voltar de Settings) NÃO mostra mais o erro térmico com o device em uso normal.
 - **Referências:** Apple `ProcessInfo.ThermalState` (`.serious` = reduzir carga; `.critical` = pausar/avisar); WWDC19 422 "Designing for Adverse Network and Temperature Conditions"; gate de device S2.B (este bug).
+
+---
+
+## Addendum 2026-06-07 — Pré-roll embutido no REC (`includeReplayPreroll`, modo não-default)
+
+- **Status:** Accepted — adiciona um **modo de export combinado** que reusa toda a mecânica do replay (chunked disk-ring + composition + export passthrough das Addenda 2026-06-05/06). Não altera a mecânica existente do `saveReplay()` isolado; adiciona um caminho paralelo atrás de uma flag default-`false`.
+- **Decisores:** Eduardo Rodrigues
+- **Contexto:** Fatia seguinte da S2.B (sessão de implementação do gatilho de produto). A mecânica do buffer fechou (validada no iPhone 12), mas nenhum gatilho de UI consome o replay — o pill só troca a janela. Esta cláusula liga o primeiro gatilho real: **apertar REC embute os últimos N segundos do buffer no início do arquivo gravado**, copiando a mecânica do concorrente "Ok Câmera" (memória `raro-competitor-okcamera-replay-model`) e consertando o feedback silencioso que o tornou confuso. Decisão de produto travada pelo dono; estratégia técnica validada por websearch (modelo dashcam/GoPro HindSight de pré-buffer) + Context7 + o dump ADB real do concorrente, **não** por memória de treino.
+
+### Decisão
+
+Um novo modo de gravação combina o pré-roll do buffer de replay com o clipe de gravação contínua (G1) num **único `.mp4` progressivo**, atrás da flag `RecordingOptions.includeReplayPreroll` (**default `false`** — Simplicity First; o caminho de gravação puro não muda quando a flag está desligada).
+
+**Semântica do pré-roll = N segundos ANTES do trigger (modelo de pré-buffer da indústria), sequencial com a gravação — sem overlap.**
+
+> **Correção da estratégia que a memória `raro-preroll-rec-design-s2c` registrou.** O desenho inicial dizia "snapshot dos chunks no STOP + append da G1". Ao cruzar com o código real, isso produz **trecho duplicado**: o fan-out (`RecordingPipeline.swift:205`) alimenta o ring **e** o writer da G1 com os mesmos `CMSampleBuffer` durante a gravação, então `windowChunks()` no STOP cobre os últimos N s *antes do stop* — que já estão dentro da G1. Websearch (DashCamTalk, GoPro HindSight, "Video Buffer" iOS) confirma a semântica canônica de pré-buffer: *"the camera records all the time but does not write to memory; if something happens it releases what it has buffered (up to ~N seconds before the event) and continues to record."* Pré-roll = pré-trigger; gravação = pós-trigger; **concatenados em sequência, não sobrepostos.**
+
+**Fluxo correto:**
+
+1. **REC tap (trigger):** `recordingPipeline.start()` (G1 grava, igual hoje) **+** o `CameraManager` captura **AGORA** `replayBuffer.snapshotChunks()` (cópia thread-safe dos paths dos chunks da janela atual = os N s *antes* do REC) e **pausa o append do ring** durante a gravação. Pausar (não continuar enchendo) é deliberado: a G1 já cobre o tempo gravado, manter o ring rodando só duplicaria footage e gastaria disco/energia — coerente com o concorrente (embute o pré-roll e segue gravando um stream só) e com o "não dreno escondido" da memória de design.
+2. **STOP:** a G1 finaliza `raro_<id>.mp4` (assíncrono, via `finishWriting`); o `CameraManager` espera os chunks do snapshot **e** a G1 finalizarem, então — se `includeReplayPreroll` — compõe `[snapshot chunks..., G1]` via o `export()` já existente do `ReplayBuffer` (`AVMutableComposition.insertTimeRange` com cursor + `AVAssetExportSession` passthrough), produzindo o `.mp4` único. O append do ring volta a rodar. `onRecordingFinished` emite o path do arquivo **combinado**.
+3. **Sem `includeReplayPreroll`:** nada disso roda; `onRecordingFinished` emite o G1 puro (comportamento atual intacto).
+
+### Coordenação no `CameraManager` (não no `RecordingPipeline`)
+
+A composição vive no `CameraManager.swift`, onde `recordingPipeline` e `replayBuffer` coexistem (são independentes; a única ponte é `replayConsumer`). O `RecordingPipeline` device-validated da G1 **não** ganha referência ao replay — fica cirúrgico (Surgical Changes). Reusa-se:
+- `ReplayBuffer.snapshotChunks() -> [Chunk]` (novo) — `queue.sync`, finaliza o chunk corrente p/ não perder o frame mais recente, copia os paths da janela, **não** esvazia o ring (o snapshot é uma cópia; o ring é pausado à parte). Pausa via flag interna que faz `append(_:)` virar no-op até `resumeAppending()`.
+- `ReplayBuffer.export(chunks:)` (já existe, `ReplayBuffer.swift:246`) — aceita `[Chunk]`; o chunk da G1 entra como um `Chunk(url: g1URL, durationMs:)` ao fim da lista.
+
+### Formato divergente = descarta o pré-roll (coerente ADR-0021)
+
+Trocar resolução/fps/lente física durante o estado "armado" muda as dimensões dos `CMSampleBuffer` → os chunks do snapshot ficam incompatíveis com a G1 na composition. A mitigação **já existe**: `setFormat` e `switchLens` físico chamam `replayBuffer.reset()` (`CameraManager.swift:469`/`402`), e `setFormat` é bloqueado durante a gravação (`CameraManager.swift:409`). **Decisão de produto:** se o snapshot ficar vazio/incompatível no STOP, o export combinado é abortado e o `onRecordingFinished` entrega a **G1 pura** (degradação graciosa, nunca arquivo corrompido). Coerente com ADR-0021 (UI nunca entrega o impossível; falhar para o caminho honesto, não para o silencioso).
+
+### Contrato (toca Pigeon — por isso este addendum vem ANTES do codegen)
+
+- `apps/mobile/pigeons/camera_api.dart` — `RecordingOptions` ganha `bool includeReplayPreroll` (default `false` no construtor Dart). Tocar `RecordingOptions` dispara o hook `warn-adr-drift` (cobre `pigeons/`) → este addendum é o ADR que o satisfaz.
+- `CameraFlutterApi` ganha `onRecordingStarted(String sessionId)` — **fix do bug catalogado** `raro-pattern-flutter-async-native-state-needs-notifier`: hoje `RecordingController.start` promove `RecordingActive` no retorno do `await` (estado otimista, pode dessincronizar do nativo). Com o callback, o nativo emite quando o writer **de fato** começou e o controller promove o estado por ele. É mudança de natureza separada do pré-roll, mas compartilha o mesmo codegen (Simplicity First — um regen, não dois).
+
+### Gate §10 (obrigatório — pré-roll é "caminho que decide formato gravado")
+
+`ffprobe` no `.mp4` **combinado** puxado do vault (`devicectl copy from appDataContainer`) provando **dimensões + fps reais do REC** (não do buffer) — o passthrough não re-encoda, então o combinado tem que bater com o format da G1. Validar também no device: emenda sem glitch no 1º frame da junção + áudio sincronizado na junção (priming AAC ~48ms, Addendum 2026-06-04). XCTest/Simulator não basta (memória `feedback_device_debug_use_real_logs_not_assumptions`).
+
+### Referências do addendum 2026-06-07
+
+- Websearch (semântica de pré-buffer da indústria): DashCamTalk (pre-buffering "releases what it has buffered up to ~N s before the event, continues recording"); GoPro HERO9 HindSight (pre-record automático); "Video Buffer Cam" (App Store, buffer retroativo iOS); confirma pré-roll = pré-trigger sequencial, não overlap.
+- Modelo do concorrente: memória `raro-competitor-okcamera-replay-model` (dump ADB real — "grava 15/30s antes do comando/botão", embutido implícito sem feedback).
+- Desenho da fatia (corrigido por este addendum): memória `raro-preroll-rec-design-s2c`.
+- Mecânica reusada: Addendum 2026-06-05 (chunked disk-ring + composition + export passthrough), `ReplayBuffer.swift:246` (`export(chunks:)`).
+- ADR-0020 (pipeline unificado), ADR-0021 (4K60 / gate §10 prova de formato), ADR-0013 (Pigeon `errorClassName` por contrato).
