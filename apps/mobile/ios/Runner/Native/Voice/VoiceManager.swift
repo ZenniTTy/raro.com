@@ -90,7 +90,7 @@ final class VoiceManager: NSObject {
     }
     do {
       let session = AVAudioSession.sharedInstance()
-      try session.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
+      try session.setCategory(.playAndRecord, mode: .default, options: [.duckOthers, .defaultToSpeaker])
       try session.setActive(true, options: .notifyOthersOnDeactivation)
 
       let request = SFSpeechAudioBufferRecognitionRequest()
@@ -100,11 +100,29 @@ final class VoiceManager: NSObject {
 
       let input = audioEngine.inputNode
       let format = input.outputFormat(forBus: 0)
-      input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-        self?.request?.append(buffer)
+      guard format.sampleRate > 0, format.channelCount > 0 else {
+        os_log("voice tap skipped — invalid input format sr=%f ch=%d",
+               log: voiceLog, type: .error, format.sampleRate, Double(format.channelCount))
+        DispatchQueue.main.async { self.onStateChanged?(.paused) }
+        teardown()
+        scheduleRestart()
+        return
       }
-      audioEngine.prepare()
-      try audioEngine.start()
+      let installed = ObjCExceptionCatcher.catchException {
+        input.installTap(onBus: 0, bufferSize: 1024, format: nil) { [weak self] buffer, _ in
+          self?.request?.append(buffer)
+        }
+        self.audioEngine.prepare()
+        try? self.audioEngine.start()
+      }
+      guard installed == nil else {
+        os_log("voice tap/start raised: %{public}@", log: voiceLog, type: .error,
+               installed?.localizedDescription ?? "nsexception")
+        DispatchQueue.main.async { self.onStateChanged?(.paused) }
+        teardown()
+        scheduleRestart()
+        return
+      }
 
       self.task = recognizer.recognitionTask(with: request) { [weak self] result, error in
         guard let self = self else { return }
@@ -148,5 +166,6 @@ final class VoiceManager: NSObject {
     request?.endAudio(); request = nil
     if audioEngine.isRunning { audioEngine.stop() }
     audioEngine.inputNode.removeTap(onBus: 0)
+    audioEngine.reset()
   }
 }
