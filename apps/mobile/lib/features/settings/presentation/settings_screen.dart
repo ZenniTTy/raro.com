@@ -362,6 +362,7 @@ class _ControlMode extends StatelessWidget {
                 subtitle: '+ ou −',
                 active: selected == ControlMode.volume,
                 onTap: () => onSelected(ControlMode.volume),
+                enabled: false,
               ),
             ),
             const SizedBox(width: 8),
