@@ -81,27 +81,28 @@ final class VoiceManager: NSObject {
   private func startListeningInternal() {
     guard wantsListening else { return }
     if isRecordingActive?() == true {
+      backoff = 0
       teardownRecognition()
       teardownEngine()
       DispatchQueue.main.async { self.onStateChanged?(.paused) }
-      scheduleRetry()
+      scheduleRecordingPoll()
       return
     }
     guard let recognizer = recognizer, recognizer.isAvailable else {
       DispatchQueue.main.async { self.onStateChanged?(.unavailable) }
-      scheduleRetry()
+      scheduleErrorRetry()
       return
     }
     if !engineRunning {
       guard ensureEngineRunning() else {
         DispatchQueue.main.async { self.onStateChanged?(.paused) }
-        scheduleRetry()
+        scheduleErrorRetry()
         return
       }
     }
     guard beginRecognitionCycle(recognizer) else {
       DispatchQueue.main.async { self.onStateChanged?(.paused) }
-      scheduleRetry()
+      scheduleErrorRetry()
       return
     }
     backoff = 0
@@ -159,7 +160,17 @@ final class VoiceManager: NSObject {
          let cmd = VoiceCommandParser.parse(result.bestTranscription.formattedString, wakeWord: self.wakeWord) {
         os_log("wake matched: %{public}@", log: voiceLog, type: .info, "\(cmd)")
         DispatchQueue.main.async { self.onCommand?(cmd) }
-        self.queue.async { self.cycleRecognition() }
+        self.queue.async {
+          if cmd == .start {
+            self.backoff = 0
+            self.teardownRecognition()
+            self.teardownEngine()
+            DispatchQueue.main.async { self.onStateChanged?(.paused) }
+            self.scheduleRecordingPoll()
+          } else {
+            self.cycleRecognition()
+          }
+        }
         return
       }
       if error != nil || (result?.isFinal ?? false) {
@@ -172,10 +183,11 @@ final class VoiceManager: NSObject {
   private func cycleRecognition() {
     guard wantsListening else { return }
     if isRecordingActive?() == true {
+      backoff = 0
       teardownRecognition()
       teardownEngine()
       DispatchQueue.main.async { self.onStateChanged?(.paused) }
-      scheduleRetry()
+      scheduleRecordingPoll()
       return
     }
     guard engineRunning, let recognizer = recognizer else {
@@ -187,14 +199,21 @@ final class VoiceManager: NSObject {
     } else {
       teardownRecognition(); teardownEngine()
       DispatchQueue.main.async { self.onStateChanged?(.paused) }
-      scheduleRetry()
+      scheduleErrorRetry()
     }
   }
 
-  private func scheduleRetry() {
+  private func scheduleErrorRetry() {
     guard wantsListening else { return }
     backoff = min(max(backoff * 2, 1), 60)
     queue.asyncAfter(deadline: .now() + backoff) { [weak self] in
+      self?.startListeningInternal()
+    }
+  }
+
+  private func scheduleRecordingPoll() {
+    guard wantsListening else { return }
+    queue.asyncAfter(deadline: .now() + 0.5) { [weak self] in
       self?.startListeningInternal()
     }
   }
