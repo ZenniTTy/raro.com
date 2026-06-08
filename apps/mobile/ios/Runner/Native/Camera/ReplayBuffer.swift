@@ -327,7 +327,7 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
       return
     }
     let outURL = FileManager.default.temporaryDirectory
-      .appendingPathComponent("raro_replay_\(UUID().uuidString).mp4")
+      .appendingPathComponent("raro_\(UUID().uuidString).mp4")
     guard let export = AVAssetExportSession(
       asset: composition, presetName: AVAssetExportPresetPassthrough) else {
       report(.failure(.exportFailed("no export session")))

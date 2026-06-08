@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
@@ -119,6 +120,9 @@ String _idFromPath(String path) {
   final stem = dot == -1 ? fileName : fileName.substring(0, dot);
   return stem.startsWith('raro_') ? stem.substring(5) : stem;
 }
+
+@visibleForTesting
+String idFromPathForTest(String path) => _idFromPath(path);
 
 String _nameFor(DateTime at) {
   final hh = at.hour.toString().padLeft(2, '0');
