@@ -24,6 +24,7 @@ final class RecordingPipeline: NSObject, @unchecked Sendable {
   private var startedAt: CFTimeInterval = 0
   private var requestedCodec: String = "h265"
   private var recording = false
+  var replayFps: Int = 60
 
   var onFinished: ((URL, Int) -> Void)?
   var onFailed: ((String) -> Void)?
@@ -34,7 +35,20 @@ final class RecordingPipeline: NSObject, @unchecked Sendable {
     var settings = videoOutput.recommendedVideoSettingsForAssetWriter(writingTo: .mp4) ?? [:]
     settings[AVVideoCodecKey] = Self.selectCodec(
       requested: requestedCodec, available: videoOutput.availableVideoCodecTypes)
-    return settings
+    return Self.injectKeyframeInterval(into: settings, chunkSeconds: 1, fps: replayFps)
+  }
+
+  static func injectKeyframeInterval(
+    into settings: [String: Any],
+    chunkSeconds: Int,
+    fps: Int
+  ) -> [String: Any] {
+    var result = settings
+    var compression = (result[AVVideoCompressionPropertiesKey] as? [String: Any]) ?? [:]
+    compression[AVVideoMaxKeyFrameIntervalKey as String] = max(1, fps * chunkSeconds)
+    compression[AVVideoMaxKeyFrameIntervalDurationKey as String] = Double(chunkSeconds)
+    result[AVVideoCompressionPropertiesKey] = compression
+    return result
   }
 
   func makeReplayAudioSettings() -> [String: Any]? {
