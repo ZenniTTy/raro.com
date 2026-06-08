@@ -14,12 +14,20 @@ import 'package:pigeon/pigeon.dart';
     dartPackageName: 'raro_mobile',
   ),
 )
+enum WakeCommand { start, stop }
+
+enum VoiceListeningState { idle, listening, paused, unavailable }
+
 @HostApi()
 abstract class VoiceHostApi {
-  void voicePing();
+  @async
+  bool isAvailable();
+  void startListening();
+  void stopListening();
 }
 
 @FlutterApi()
 abstract class VoiceFlutterApi {
-  void voiceReady();
+  void onWakeDetected(WakeCommand command);
+  void onListeningStateChanged(VoiceListeningState state);
 }

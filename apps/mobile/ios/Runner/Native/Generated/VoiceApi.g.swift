@@ -69,10 +69,51 @@ private func nilOrValue<T>(_ value: Any?) -> T? {
 }
 
 
+enum WakeCommand: Int {
+  case start = 0
+  case stop = 1
+}
+
+enum VoiceListeningState: Int {
+  case idle = 0
+  case listening = 1
+  case paused = 2
+  case unavailable = 3
+}
+
 private class VoiceApiPigeonCodecReader: FlutterStandardReader {
+  override func readValue(ofType type: UInt8) -> Any? {
+    switch type {
+    case 129:
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return WakeCommand(rawValue: enumResultAsInt)
+      }
+      return nil
+    case 130:
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return VoiceListeningState(rawValue: enumResultAsInt)
+      }
+      return nil
+    default:
+      return super.readValue(ofType: type)
+    }
+  }
 }
 
 private class VoiceApiPigeonCodecWriter: FlutterStandardWriter {
+  override func writeValue(_ value: Any) {
+    if let value = value as? WakeCommand {
+      super.writeByte(129)
+      super.writeValue(value.rawValue)
+    } else if let value = value as? VoiceListeningState {
+      super.writeByte(130)
+      super.writeValue(value.rawValue)
+    } else {
+      super.writeValue(value)
+    }
+  }
 }
 
 private class VoiceApiPigeonCodecReaderWriter: FlutterStandardReaderWriter {
@@ -89,9 +130,12 @@ class VoiceApiPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
   static let shared = VoiceApiPigeonCodec(readerWriter: VoiceApiPigeonCodecReaderWriter())
 }
 
+
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol VoiceHostApi {
-  func voicePing() throws
+  func isAvailable(completion: @escaping (Result<Bool, Error>) -> Void)
+  func startListening() throws
+  func stopListening() throws
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -100,24 +144,53 @@ class VoiceHostApiSetup {
   /// Sets up an instance of `VoiceHostApi` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: VoiceHostApi?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    let voicePingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.VoiceHostApi.voicePing\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let isAvailableChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.VoiceHostApi.isAvailable\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      voicePingChannel.setMessageHandler { _, reply in
+      isAvailableChannel.setMessageHandler { _, reply in
+        api.isAvailable { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      isAvailableChannel.setMessageHandler(nil)
+    }
+    let startListeningChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.VoiceHostApi.startListening\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      startListeningChannel.setMessageHandler { _, reply in
         do {
-          try api.voicePing()
+          try api.startListening()
           reply(wrapResult(nil))
         } catch {
           reply(wrapError(error))
         }
       }
     } else {
-      voicePingChannel.setMessageHandler(nil)
+      startListeningChannel.setMessageHandler(nil)
+    }
+    let stopListeningChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.VoiceHostApi.stopListening\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      stopListeningChannel.setMessageHandler { _, reply in
+        do {
+          try api.stopListening()
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      stopListeningChannel.setMessageHandler(nil)
     }
   }
 }
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol VoiceFlutterApiProtocol {
-  func voiceReady(completion: @escaping (Result<Void, VoicePigeonError>) -> Void)
+  func onWakeDetected(command commandArg: WakeCommand, completion: @escaping (Result<Void, VoicePigeonError>) -> Void)
+  func onListeningStateChanged(state stateArg: VoiceListeningState, completion: @escaping (Result<Void, VoicePigeonError>) -> Void)
 }
 class VoiceFlutterApi: VoiceFlutterApiProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -129,10 +202,28 @@ class VoiceFlutterApi: VoiceFlutterApiProtocol {
   var codec: VoiceApiPigeonCodec {
     return VoiceApiPigeonCodec.shared
   }
-  func voiceReady(completion: @escaping (Result<Void, VoicePigeonError>) -> Void) {
-    let channelName: String = "dev.flutter.pigeon.raro_mobile.VoiceFlutterApi.voiceReady\(messageChannelSuffix)"
+  func onWakeDetected(command commandArg: WakeCommand, completion: @escaping (Result<Void, VoicePigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.VoiceFlutterApi.onWakeDetected\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
-    channel.sendMessage(nil) { response in
+    channel.sendMessage([commandArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(VoicePigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(()))
+      }
+    }
+  }
+  func onListeningStateChanged(state stateArg: VoiceListeningState, completion: @escaping (Result<Void, VoicePigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.VoiceFlutterApi.onListeningStateChanged\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([stateArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {
         completion(.failure(createConnectionError(withChannelName: channelName)))
         return
