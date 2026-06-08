@@ -37,6 +37,7 @@ final class VoiceManager: NSObject {
   private var wantsListening = false
   private var engineRunning = false
   private var backoff: TimeInterval = 0
+  private var tapBufferCount: Int = 0
   private let queue = DispatchQueue(label: "com.rarocamera.voice")
 
   init(wakeWord: String, locale: Locale = Locale(identifier: "pt-BR")) {
@@ -134,7 +135,9 @@ final class VoiceManager: NSObject {
     let raised = ObjCExceptionCatcher.catchException {
       input.removeTap(onBus: 0)
       input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-        self?.request?.append(buffer)
+        guard let self = self else { return }
+        self.tapBufferCount += 1
+        self.request?.append(buffer)
       }
       self.audioEngine.prepare()
     }
@@ -180,14 +183,23 @@ final class VoiceManager: NSObject {
         return
       }
       if let error = error {
-        os_log("DBG recognitionTask error: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
-        self.queue.async { self.cycleRecognition() }
+        let ns = error as NSError
+        os_log("DBG recognitionTask error domain=%{public}@ code=%d taps=%d",
+               log: voiceLog, type: .error, ns.domain, ns.code, self.tapBufferCount)
+        self.queue.async { self.scheduleSilenceRecycle() }
       } else if result?.isFinal ?? false {
-        os_log("DBG recognitionTask isFinal", log: voiceLog, type: .info)
-        self.queue.async { self.cycleRecognition() }
+        os_log("DBG recognitionTask isFinal taps=%d", log: voiceLog, type: .info, self.tapBufferCount)
+        self.queue.async { self.scheduleSilenceRecycle() }
       }
     }
     return true
+  }
+
+  private func scheduleSilenceRecycle() {
+    guard wantsListening else { return }
+    queue.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+      self?.cycleRecognition()
+    }
   }
 
   private func cycleRecognition() {
