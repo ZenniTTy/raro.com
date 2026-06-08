@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
+import 'package:raro_mobile/core/native_bridges/generated/voice_api.g.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
 import 'package:raro_mobile/features/camera/application/camera_flutter_api_provider.dart';
@@ -24,6 +25,9 @@ import 'package:raro_mobile/features/paywall/presentation/widgets/subscription_p
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/data/settings_store.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
+import 'package:raro_mobile/features/voice/application/voice_flutter_api_provider.dart';
+import 'package:raro_mobile/features/voice/data/voice_repository.dart';
+import 'package:raro_mobile/features/voice/data/voice_repository_provider.dart';
 import 'package:raro_shared/raro_shared.dart' show BufferDuration;
 
 class _FakeSubscriptionStore implements SubscriptionStore {
@@ -57,6 +61,17 @@ class _FakeSettingsStore implements SettingsStore {
 class _MockCameraRepository extends Mock implements CameraRepository {}
 
 class _MockReplayRepository extends Mock implements ReplayBufferRepository {}
+
+class _StubVoiceRepository implements VoiceRepository {
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<void> startListening() async {}
+
+  @override
+  Future<void> stopListening() async {}
+}
 
 void main() {
   setUpAll(() {
@@ -118,12 +133,18 @@ void main() {
     Stream<ReplayResult>? replayEvents,
     Stream<RecordingResult>? recordingEvents,
     SettingsStore? settingsStore,
+    Stream<VoiceListeningState>? voiceStateEvents,
   }) {
     return ProviderScope(
       overrides: [
         cameraRepositoryProvider.overrideWithValue(repository ?? buildRepo()),
         settingsStoreProvider.overrideWithValue(
           settingsStore ?? _FakeSettingsStore(),
+        ),
+        voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+        voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
+        voiceStateEventsProvider.overrideWithValue(
+          voiceStateEvents ?? const Stream.empty(),
         ),
         if (replayRepository != null)
           replayBufferRepositoryProvider.overrideWithValue(replayRepository),
@@ -155,9 +176,18 @@ void main() {
       expect(find.byType(RecButton), findsOneWidget);
     });
 
-    testWidgets('mostra hint central quando idle', (tester) async {
-      await tester.pumpWidget(harness());
+    testWidgets('em modo voz escutando mostra o indicador DIGA RARO', (
+      tester,
+    ) async {
+      final voiceEvents = StreamController<VoiceListeningState>.broadcast();
+      addTearDown(voiceEvents.close);
+      await tester.pumpWidget(harness(voiceStateEvents: voiceEvents.stream));
       await tester.pump();
+
+      voiceEvents.add(VoiceListeningState.listening);
+      await tester.pump();
+      await tester.pump();
+
       expect(find.text('DIGA “RARO” PARA GRAVAR'), findsOneWidget);
     });
 
@@ -280,6 +310,9 @@ void main() {
               cameraRepositoryProvider.overrideWithValue(repo),
               settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
               replayBufferRepositoryProvider.overrideWithValue(replayRepo),
+              voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+              voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
+              voiceStateEventsProvider.overrideWithValue(const Stream.empty()),
             ],
             child: MaterialApp(
               theme: buildRaroDarkTheme(),
@@ -358,6 +391,9 @@ void main() {
           overrides: [
             cameraRepositoryProvider.overrideWithValue(buildRepo()),
             settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
+            voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+            voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
+            voiceStateEventsProvider.overrideWithValue(const Stream.empty()),
           ],
           child: MaterialApp(
             theme: buildRaroDarkTheme(),

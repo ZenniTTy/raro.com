@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
+import 'package:raro_mobile/core/native_bridges/generated/voice_api.g.dart';
 import 'package:raro_mobile/features/camera/domain/camera_error_message.dart';
 import 'package:raro_mobile/features/camera/domain/format_catalog.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
@@ -34,7 +35,11 @@ import 'package:raro_mobile/features/replay/application/replay_vault_sink.dart';
 import 'package:raro_mobile/features/replay/domain/replay_buffer_state.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
-import 'package:raro_shared/raro_shared.dart' show BufferDuration, Codec;
+import 'package:raro_mobile/features/voice/application/voice_controller.dart';
+import 'package:raro_mobile/features/voice/domain/voice_state.dart';
+import 'package:raro_mobile/features/voice/presentation/voice_listening_indicator.dart';
+import 'package:raro_shared/raro_shared.dart'
+    show BufferDuration, Codec, ControlMode;
 
 class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({
@@ -72,7 +77,21 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startSession());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _startSession();
+      ref
+          .read(voiceRecordingTriggerProvider.notifier)
+          .register(_onVoiceCommand);
+    });
+  }
+
+  void _onVoiceCommand(WakeCommand command) {
+    final phase = ref.read(recordingControllerProvider);
+    final isActive = phase is RecordingActive || phase is RecordingStarting;
+    if (command == WakeCommand.start && isActive) return;
+    if (command == WakeCommand.stop && !isActive) return;
+    unawaited(_onRecTap());
   }
 
   Future<void> _startSession() async {
@@ -230,6 +249,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         recordingPhase is RecordingStarting;
     ref.watch(recordingVaultSinkProvider);
     ref.watch(replayVaultSinkProvider);
+    final voiceState = ref.watch(voiceControllerProvider);
+    final controlMode =
+        ref.watch(settingsControllerProvider).value?.controlMode ??
+        const RecordingSettings().controlMode;
     final bufferDuration =
         ref.watch(settingsControllerProvider).value?.bufferDuration ??
         const RecordingSettings().bufferDuration;
@@ -313,6 +336,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                       cameraReady: cameraReady,
                       recording: recording,
                       elapsed: _elapsed,
+                      voiceState: voiceState,
+                      controlMode: controlMode,
                       bufferDuration: bufferDuration,
                       lens: shell.lens,
                       lensLabel: shell.hudLensLabel,
@@ -385,6 +410,8 @@ class _Viewport extends StatelessWidget {
     required this.cameraReady,
     required this.recording,
     required this.elapsed,
+    required this.voiceState,
+    required this.controlMode,
     required this.bufferDuration,
     required this.lens,
     required this.lensLabel,
@@ -399,6 +426,8 @@ class _Viewport extends StatelessWidget {
   final bool cameraReady;
   final bool recording;
   final Duration elapsed;
+  final VoiceState voiceState;
+  final ControlMode controlMode;
   final BufferDuration bufferDuration;
   final LensType lens;
   final String lensLabel;
@@ -429,10 +458,12 @@ class _Viewport extends StatelessWidget {
             child: CustomPaint(painter: RuleOfThirdsPainter()),
           ),
         ),
-        if (!recording)
-          const Center(child: CameraCenterHint())
+        if (recording)
+          Positioned(top: 12, left: 12, child: RecIndicator(elapsed: elapsed))
+        else if (controlMode == ControlMode.voice)
+          Center(child: VoiceListeningIndicator(state: voiceState))
         else
-          Positioned(top: 12, left: 12, child: RecIndicator(elapsed: elapsed)),
+          const Center(child: CameraCenterHint()),
         Positioned(
           top: 12,
           right: 12,
