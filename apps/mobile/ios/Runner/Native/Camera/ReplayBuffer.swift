@@ -308,13 +308,17 @@ final class ReplayBuffer: NSObject, @unchecked Sendable {
                log: replayLog, type: .error, chunk.url.lastPathComponent)
         continue
       }
-      let range = CMTimeRange(start: .zero, duration: asset.duration)
+      let videoDuration = assetVideo.timeRange.duration
+      let videoRange = CMTimeRange(start: assetVideo.timeRange.start, duration: videoDuration)
       do {
-        try videoTrack?.insertTimeRange(range, of: assetVideo, at: cursor)
+        try videoTrack?.insertTimeRange(videoRange, of: assetVideo, at: cursor)
         if let assetAudio = asset.tracks(withMediaType: .audio).first {
-          try audioTrack?.insertTimeRange(range, of: assetAudio, at: cursor)
+          let audioAvailable = assetAudio.timeRange
+          let clampedDuration = CMTimeMinimum(videoDuration, audioAvailable.duration)
+          let audioRange = CMTimeRange(start: audioAvailable.start, duration: clampedDuration)
+          try audioTrack?.insertTimeRange(audioRange, of: assetAudio, at: cursor)
         }
-        cursor = CMTimeAdd(cursor, asset.duration)
+        cursor = CMTimeAdd(cursor, videoDuration)
       } catch {
         os_log("replay export insert failed for chunk %{public}@: %{public}@",
                log: replayLog, type: .error,
