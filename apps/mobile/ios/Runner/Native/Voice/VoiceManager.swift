@@ -132,6 +132,7 @@ final class VoiceManager: NSObject {
              log: voiceLog, type: .error, format.sampleRate, Double(format.channelCount))
       return false
     }
+    tapBufferCount = 0
     let raised = ObjCExceptionCatcher.catchException {
       input.removeTap(onBus: 0)
       input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
@@ -197,35 +198,17 @@ final class VoiceManager: NSObject {
 
   private func scheduleSilenceRecycle() {
     guard wantsListening else { return }
-    queue.asyncAfter(deadline: .now() + 0.6) { [weak self] in
-      self?.cycleRecognition()
+    teardownRecognition()
+    teardownEngine()
+    queue.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+      self?.startListeningInternal()
     }
   }
 
   private func cycleRecognition() {
-    let rec = isRecordingActive?() ?? false
-    os_log("DBG cycleRecognition wants=%d recording=%d engineRunning=%d",
-           log: voiceLog, type: .info, wantsListening ? 1 : 0, rec ? 1 : 0, engineRunning ? 1 : 0)
-    guard wantsListening else { return }
-    if rec {
-      backoff = 0
-      teardownRecognition()
-      teardownEngine()
-      DispatchQueue.main.async { self.onStateChanged?(.paused) }
-      scheduleRecordingPoll()
-      return
-    }
-    guard engineRunning, let recognizer = recognizer else {
-      startListeningInternal()
-      return
-    }
-    if beginRecognitionCycle(recognizer) {
-      DispatchQueue.main.async { self.onStateChanged?(.listening) }
-    } else {
-      teardownRecognition(); teardownEngine()
-      DispatchQueue.main.async { self.onStateChanged?(.paused) }
-      scheduleErrorRetry()
-    }
+    teardownRecognition()
+    teardownEngine()
+    startListeningInternal()
   }
 
   private func scheduleErrorRetry() {
