@@ -89,6 +89,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   void _onVoiceCommand(WakeCommand command) {
     final phase = ref.read(recordingControllerProvider);
     final isActive = phase is RecordingActive || phase is RecordingStarting;
+    ref
+        .read(appLoggerProvider)
+        .i('DBG voiceCommand=$command isActive=$isActive phase=$phase');
     if (command == WakeCommand.start && isActive) return;
     if (command == WakeCommand.stop && !isActive) return;
     unawaited(_onRecTap());

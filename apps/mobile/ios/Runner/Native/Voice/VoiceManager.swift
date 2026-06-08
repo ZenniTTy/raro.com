@@ -79,8 +79,11 @@ final class VoiceManager: NSObject {
   }
 
   private func startListeningInternal() {
+    let rec = isRecordingActive?() ?? false
+    os_log("DBG startListeningInternal wants=%d recording=%d engineRunning=%d backoff=%.1f",
+           log: voiceLog, type: .info, wantsListening ? 1 : 0, rec ? 1 : 0, engineRunning ? 1 : 0, backoff)
     guard wantsListening else { return }
-    if isRecordingActive?() == true {
+    if rec {
       backoff = 0
       teardownRecognition()
       teardownEngine()
@@ -89,12 +92,14 @@ final class VoiceManager: NSObject {
       return
     }
     guard let recognizer = recognizer, recognizer.isAvailable else {
+      os_log("DBG -> unavailable (recognizer nil or unavailable)", log: voiceLog, type: .error)
       DispatchQueue.main.async { self.onStateChanged?(.unavailable) }
       scheduleErrorRetry()
       return
     }
     if !engineRunning {
       guard ensureEngineRunning() else {
+        os_log("DBG -> ensureEngineRunning FAILED", log: voiceLog, type: .error)
         DispatchQueue.main.async { self.onStateChanged?(.paused) }
         scheduleErrorRetry()
         return
@@ -106,6 +111,7 @@ final class VoiceManager: NSObject {
       return
     }
     backoff = 0
+    os_log("DBG -> listening (cycle started)", log: voiceLog, type: .info)
     DispatchQueue.main.async { self.onStateChanged?(.listening) }
   }
 
@@ -173,7 +179,11 @@ final class VoiceManager: NSObject {
         }
         return
       }
-      if error != nil || (result?.isFinal ?? false) {
+      if let error = error {
+        os_log("DBG recognitionTask error: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
+        self.queue.async { self.cycleRecognition() }
+      } else if result?.isFinal ?? false {
+        os_log("DBG recognitionTask isFinal", log: voiceLog, type: .info)
         self.queue.async { self.cycleRecognition() }
       }
     }
@@ -181,8 +191,11 @@ final class VoiceManager: NSObject {
   }
 
   private func cycleRecognition() {
+    let rec = isRecordingActive?() ?? false
+    os_log("DBG cycleRecognition wants=%d recording=%d engineRunning=%d",
+           log: voiceLog, type: .info, wantsListening ? 1 : 0, rec ? 1 : 0, engineRunning ? 1 : 0)
     guard wantsListening else { return }
-    if isRecordingActive?() == true {
+    if rec {
       backoff = 0
       teardownRecognition()
       teardownEngine()
@@ -206,6 +219,7 @@ final class VoiceManager: NSObject {
   private func scheduleErrorRetry() {
     guard wantsListening else { return }
     backoff = min(max(backoff * 2, 1), 60)
+    os_log("DBG scheduleErrorRetry in %.1fs", log: voiceLog, type: .error, backoff)
     queue.asyncAfter(deadline: .now() + backoff) { [weak self] in
       self?.startListeningInternal()
     }
