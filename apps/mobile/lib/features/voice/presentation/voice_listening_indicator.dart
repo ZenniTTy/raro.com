@@ -15,7 +15,7 @@ class VoiceListeningIndicator extends StatelessWidget {
         VoiceListening() => const _VoiceHint(
           dotColor: RaroAccents.teal,
           label: 'DIGA “RARO” PARA GRAVAR',
-          textAlpha: 0.6,
+          textAlpha: 0.35,
         ),
         VoicePaused() => const _VoiceHint(
           dotColor: RaroAccents.dotIdle,
