@@ -144,27 +144,33 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     _elapsed = Duration.zero;
   }
 
+  RecordingOptions _buildRecordingOptions() {
+    final replayState = ref.read(replayBufferControllerProvider);
+    final replayArmed = replayState is ReplayBuffering;
+    return RecordingOptions(
+      resolution: _format.resolution,
+      fps: _format.fps,
+      codec: Codec.h265.label,
+      includeReplayPreroll: replayArmed,
+    );
+  }
+
   Future<void> _onRecTap() async {
     final notifier = ref.read(recordingControllerProvider.notifier);
     final phase = ref.read(recordingControllerProvider);
     final wasActive = phase is RecordingActive || phase is RecordingStarting;
     try {
+      if (!wasActive) {
+        final replayState = ref.read(replayBufferControllerProvider);
+        _recordingHadPreroll = replayState is ReplayBuffering;
+        _recordingPrerollSeconds = replayState is ReplayBuffering
+            ? replayState.seconds
+            : null;
+      }
+      await notifier.toggle(options: _buildRecordingOptions());
       if (wasActive) {
-        await notifier.stop();
         _stopElapsedTimer();
       } else {
-        final replayState = ref.read(replayBufferControllerProvider);
-        final replayArmed = replayState is ReplayBuffering;
-        _recordingHadPreroll = replayArmed;
-        _recordingPrerollSeconds = replayArmed ? replayState.seconds : null;
-        await notifier.start(
-          RecordingOptions(
-            resolution: _format.resolution,
-            fps: _format.fps,
-            codec: Codec.h265.label,
-            includeReplayPreroll: replayArmed,
-          ),
-        );
         _elapsed = Duration.zero;
         _timer = Timer.periodic(const Duration(seconds: 1), (_) {
           setState(() => _elapsed += const Duration(seconds: 1));

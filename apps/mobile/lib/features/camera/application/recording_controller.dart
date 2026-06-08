@@ -48,4 +48,13 @@ class RecordingController extends _$RecordingController {
       state = const RecordingIdle();
     }
   }
+
+  Future<void> toggle({required RecordingOptions options}) async {
+    final current = state;
+    if (current is RecordingActive || current is RecordingStarting) {
+      await stop();
+    } else {
+      await start(options);
+    }
+  }
 }
