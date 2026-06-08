@@ -324,6 +324,7 @@ final class CameraManager {
     recordingPipeline.replayConsumer = { [weak self] buffer, isVideo in
       self?.replayBuffer.append(buffer, isVideo: isVideo)
     }
+    recordingPipeline.replayFps = config.fps == .fps60 ? 60 : 30
     replayBuffer.start(
       videoSettings: recordingPipeline.makeReplayVideoSettings(),
       audioSettings: recordingPipeline.makeReplayAudioSettings()
@@ -521,6 +522,7 @@ final class CameraManager {
       Int(dims.width), Int(dims.height)
     )
 
+    recordingPipeline.replayFps = fps == .fps60 ? 60 : 30
     replayBuffer.reset()
   }
 
