@@ -48,6 +48,8 @@
 
 **Files:**
 - Modify: `apps/mobile/ios/Runner/Native/Camera/ReplayBuffer.swift:329-330`
+- Modify: `apps/mobile/lib/features/camera/application/camera_flutter_api_provider.dart` (wrapper `@visibleForTesting idFromPathForTest`)
+- Test: `apps/mobile/test/features/camera/id_from_path_test.dart` (novo — pin do id derivado)
 
 **Contexto:** hoje `export()` gera `raro_replay_<UUID>.mp4`; o `_idFromPath` Dart strip `raro_` → id `replay_<UUID>` → vault salva `replay_<UUID>.mp4`. O G1 recording já usa o padrão `raro_<sessionId>.mp4` (`RecordingPipeline.makeOutputURL`). Alinhar o combinado a esse padrão = remover o infixo `replay_`. Os chunks intermediários (linha 185, `raro_replay_<index>.mp4`) ficam intactos (são `tmp/` descartáveis e devem permanecer reconhecíveis).
 
@@ -67,10 +69,35 @@ por:
       .appendingPathComponent("raro_\(UUID().uuidString).mp4")
 ```
 
-- [ ] **Step 2: Verificar que `_idFromPath` continua correto (sem mudança Dart)**
+- [ ] **Step 2: Teste unit Dart que pina o id derivado (TDD micro-test)**
 
-Run: `cd apps/mobile && grep -n "startsWith('raro_')" lib/features/camera/application/camera_flutter_api_provider.dart`
-Expected: a linha `return stem.startsWith('raro_') ? stem.substring(5) : stem;` — com o novo nome `raro_<UUID>.mp4` o stem vira `raro_<UUID>`, strip de `raro_` → id `<UUID>` puro. Correto, sem edição.
+`_idFromPath` já é uma função top-level privada em `camera_flutter_api_provider.dart:116` (`String _idFromPath(String path)`). Por ser privada (underscore), expor um wrapper público anotado `@visibleForTesting` no mesmo arquivo:
+
+```dart
+@visibleForTesting
+String idFromPathForTest(String path) => _idFromPath(path);
+```
+
+Criar `apps/mobile/test/features/camera/id_from_path_test.dart`:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:raro_mobile/features/camera/application/camera_flutter_api_provider.dart';
+
+void main() {
+  test('idFromPath extrai uuid puro do novo nome raro_<uuid>.mp4', () {
+    expect(idFromPathForTest('/x/raro_ABC123.mp4'), 'ABC123');
+  });
+  test('idFromPath sem prefixo retorna o stem', () {
+    expect(idFromPathForTest('/x/ABC123.mp4'), 'ABC123');
+  });
+}
+```
+
+Run: `cd apps/mobile && flutter test test/features/camera/id_from_path_test.dart`
+Expected: PASS (com o novo nome `raro_<UUID>.mp4` o stem vira `raro_<UUID>`, strip de `raro_` → id `<UUID>` puro).
+
+> Sanity opcional (não é o entregável): `grep -n "startsWith('raro_')" lib/features/camera/application/camera_flutter_api_provider.dart` deve mostrar `return stem.startsWith('raro_') ? stem.substring(5) : stem;`. O entregável real é o unit test acima.
 
 - [ ] **Step 3: Compilar para simulator (smoke nativo)**
 
@@ -83,7 +110,7 @@ Expected: `Xcode build done` sem erro de compilação no `ReplayBuffer.swift`.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add apps/mobile/ios/Runner/Native/Camera/ReplayBuffer.swift
+git add apps/mobile/ios/Runner/Native/Camera/ReplayBuffer.swift apps/mobile/lib/features/camera/application/camera_flutter_api_provider.dart apps/mobile/test/features/camera/id_from_path_test.dart
 git commit -m "fix(replay): combinado salva como raro_<uuid>.mp4 (sem infixo replay_)"
 ```
 
@@ -112,10 +139,14 @@ final class ReplayExportSettingsTests: XCTestCase {
   func testReplayVideoSettingsForcesKeyframePerChunk() throws {
     let props = RecordingPipeline.injectKeyframeInterval(
       into: [AVVideoCodecKey: AVVideoCodecType.hevc],
-      chunkSeconds: 1
+      chunkSeconds: 1,
+      fps: 60
     )
     let compression = props[AVVideoCompressionPropertiesKey] as? [String: Any]
     XCTAssertNotNil(compression, "compression properties must exist")
+    let maxKeyFrameCount =
+      compression?[AVVideoMaxKeyFrameIntervalKey as String] as? Int
+    XCTAssertEqual(maxKeyFrameCount, 60, "must force ≥1 IDR per fps*chunkSeconds frames")
     let maxKeyFrameDuration =
       compression?[AVVideoMaxKeyFrameIntervalDurationKey as String] as? Double
     XCTAssertEqual(maxKeyFrameDuration, 1.0, "must force ≥1 IDR per 1s chunk")
@@ -137,10 +168,12 @@ Em `RecordingPipeline.swift`, adicionar o helper estático e usá-lo no `makeRep
 ```swift
   static func injectKeyframeInterval(
     into settings: [String: Any],
-    chunkSeconds: Int
+    chunkSeconds: Int,
+    fps: Int
   ) -> [String: Any] {
     var result = settings
     var compression = (result[AVVideoCompressionPropertiesKey] as? [String: Any]) ?? [:]
+    compression[AVVideoMaxKeyFrameIntervalKey as String] = max(1, fps * chunkSeconds)
     compression[AVVideoMaxKeyFrameIntervalDurationKey as String] = Double(chunkSeconds)
     result[AVVideoCompressionPropertiesKey] = compression
     return result
@@ -150,11 +183,15 @@ Em `RecordingPipeline.swift`, adicionar o helper estático e usá-lo no `makeRep
     var settings = videoOutput.recommendedVideoSettingsForAssetWriter(writingTo: .mp4) ?? [:]
     settings[AVVideoCodecKey] = Self.selectCodec(
       requested: requestedCodec, available: videoOutput.availableVideoCodecTypes)
-    return Self.injectKeyframeInterval(into: settings, chunkSeconds: 1)
+    return Self.injectKeyframeInterval(into: settings, chunkSeconds: 1, fps: replayFps)
   }
 ```
 
-> Nota: `1` casa com o `chunkSeconds` do ring. Se o ring mudar o tamanho do chunk no futuro, esse `1` deve acompanhar — deixar comentário NÃO (produção sem comentário); o acoplamento fica documentado aqui no plan/ADR.
+> Apple recomenda setar AMBAS as chaves de keyframe: `AVVideoMaxKeyFrameIntervalKey` (contagem de frames) E `AVVideoMaxKeyFrameIntervalDurationKey` (duração) — o encoder honra a que disparar primeiro; contagem sozinha é dependente de fps.
+>
+> Nota: `1` casa com o `chunkSeconds` do ring. Se o ring mudar o tamanho do chunk no futuro, esse `1` deve acompanhar — o acoplamento fica documentado aqui no plan/ADR (produção sem comentário).
+>
+> passar o fps real do replay writer; se não houver um campo direto, usar o fps do format configurado.
 
 - [ ] **Step 4: Rodar o teste e ver passar**
 
@@ -178,6 +215,8 @@ git commit -m "fix(replay): força idr por chunk (maxkeyframeintervalduration) p
 **Contexto:** mesmo com IDR por chunk, o `insertTimeRange` usa `asset.duration` por chunk; se um chunk tiver áudio mais curto que o vídeo (priming AAC ~350ms no 1º chunk), o cursor de áudio e vídeo divergem na emenda → DTS warning + o gap inicial de áudio (A2). Mitigação combinada: (1) inserir vídeo e áudio com o MESMO range derivado da trilha de vídeo (fonte de verdade do tempo), e (2) no 1º chunk, alinhar o início do áudio descartando o priming (`CMTimeRange` começando após o priming OU deixar o vídeo mandar e o áudio entrar a partir do seu 1º sample real). A abordagem mínima e robusta: usar a duração da trilha de VÍDEO como range canônico para ambos, evitando o desalinhamento que gera o DTS não-monotônico.
 
 > **Por que isso resolve A2 e A3 juntos:** o áudio-priming e o DTS não-monotônico têm a mesma raiz — trilhas de áudio e vídeo com durações ligeiramente diferentes por chunk, inseridas com ranges independentes. Ancorar ambos no tempo da trilha de vídeo (e clampar o range de áudio ao que existe) elimina o desalinhamento progressivo. O gap de ~350ms no 1º chunk vira no máximo um silêncio curtíssimo no exato início, sem propagar.
+
+> **⚠️ Limitação honesta do passthrough (CRÍTICO):** `AVAssetExportPresetPassthrough` copia os frames SEM re-encodar, então NÃO consegue reescrever DTS. A2+A3 ATACAM o problema de DTS/priming na FONTE (IDR por chunk + retiming ancorado no vídeo): cada chunk começa num keyframe → a fronteira da concatenação fica limpa na origem, e o retiming corrige o skew áudio/vídeo. MAS se o export passthrough final produz DTS monotônico através dos chunks concatenados NÃO é garantido — tem que ser PROVADO pelo gate de device. Portanto o gate §10 (A3 Step 4) é quem DECIDE: se o ffmpeg ainda acusar `non monotonically increasing dts` após A2+A3, o fallback é trocar `AVAssetExportPresetPassthrough` por `AVAssetExportPresetHighestQuality` (re-encoda, corrige DTS, custo maior) — decisão registrada no gate, não assumida agora.
 
 - [ ] **Step 1: Reescrever o loop de inserção do `export()` ancorando no tempo do vídeo**
 
@@ -246,7 +285,11 @@ ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_r
 ffmpeg -v warning -i /tmp/a3.mp4 -f null - 2>&1 | grep -i "non monotonically" || echo "DTS OK (sem warning)"
 ffprobe -v error -select_streams a:0 -show_entries stream=start_time,duration /tmp/a3.mp4
 ```
-Expected: dims/fps reais do REC; **sem** warning de DTS não-monotônico (A3 fechado); `start_time` do áudio ~0 (A2 mitigado). Anexar saídas ao PR (gate §10/ADR-0021).
+Expected: dims/fps reais do REC; `start_time` do áudio ~0 (A2 mitigado). Anexar saídas ao PR (gate §10/ADR-0021).
+
+Branch de decisão do DTS (passthrough não reescreve DTS):
+- **Sem** warning `non monotonically increasing dts` → A3 fechado com passthrough (caminho feliz). Registrar a evidência.
+- **Com** warning persistente após A2+A3 → aplicar o fallback: trocar `AVAssetExportPresetPassthrough` por `AVAssetExportPresetHighestQuality` (re-encoda, corrige DTS, custo maior), rebuildar, re-rodar o gate e confirmar `DTS OK`. Documentar a escolha (passthrough vs re-encode) no gate/ADR-0021 — não assumir antes da evidência do device.
 
 ---
 
@@ -462,7 +505,7 @@ git commit -m "feat(voice): domain voicestate + porta voicerepository"
 - Modify: `apps/mobile/ios/Runner/AppDelegate.swift`
 - Create: `apps/mobile/ios/RunnerTests/VoiceManagerTests.swift` (+ 4 inserções pbxproj)
 
-**Contexto:** SFSpeechRecognizer com `requiresOnDeviceRecognition=true`, `AVAudioEngine` para o tap de áudio, partial results comparados com os comandos. O parsing do comando é puro (testável sem device); a sessão de reconhecimento não. Separar o parser do recognizer para testar o parser em XCTest.
+**Contexto:** SFSpeechRecognizer com `requiresOnDeviceRecognition=true`, `AVAudioEngine` para o tap de áudio, partial results comparados com os comandos. O parsing do comando é puro (testável sem device); a sessão de reconhecimento não. Separar o parser do recognizer para testar o parser em XCTest. O `VoiceManager` ganha `isRecordingActive` (closure injetada pelo AppDelegate lendo o pipeline de gravação): enquanto a gravação está ativa, `beginSession` recusa abrir a sessão de mic → o conflito de mic durante REC é uma GARANTIA programática (estado `paused` visível), não só o gate de UI do B8. Por default, "Raro parar" durante REC fica BLOQUEADO; o B8 Step 3 testa se dá pra relaxar essa guarda com segurança.
 
 - [ ] **Step 1: Escrever o XCTest do parser de comando (puro, testável)**
 
@@ -527,7 +570,7 @@ enum VoiceCommandParser {
 
 final class VoiceManager: NSObject {
   var onCommand: ((VoiceCommand) -> Void)?
-  var onStateChanged: ((VoiceListeningStateValue) -> Void)?
+  var onStateChanged: ((VoiceListeningState) -> Void)?
 
   private let wakeWord: String
   private let recognizer: SFSpeechRecognizer?
@@ -537,6 +580,7 @@ final class VoiceManager: NSObject {
   private var wantsListening = false
   private var backoff: TimeInterval = 0
   private let queue = DispatchQueue(label: "com.rarocamera.voice")
+  var isRecordingActive: (() -> Bool)?
 
   init(wakeWord: String, locale: Locale = Locale(identifier: "pt-BR")) {
     self.wakeWord = wakeWord
@@ -548,7 +592,14 @@ final class VoiceManager: NSObject {
     SFSpeechRecognizer.requestAuthorization { status in
       let speechOk = status == .authorized
       let onDevice = self.recognizer?.supportsOnDeviceRecognition ?? false
-      AVAudioApplication.requestRecordPermission { micOk in
+      let requestMic: (@escaping (Bool) -> Void) -> Void = { done in
+        if #available(iOS 17.0, *) {
+          AVAudioApplication.requestRecordPermission(completionHandler: done)
+        } else {
+          AVAudioSession.sharedInstance().requestRecordPermission(done)
+        }
+      }
+      requestMic { micOk in
         completion(speechOk && onDevice && micOk)
       }
     }
@@ -571,6 +622,11 @@ final class VoiceManager: NSObject {
 
   private func beginSession() {
     guard wantsListening else { return }
+    if isRecordingActive?() == true {
+      DispatchQueue.main.async { self.onStateChanged?(.paused) }
+      scheduleRestart()
+      return
+    }
     guard let recognizer = recognizer, recognizer.isAvailable else {
       DispatchQueue.main.async { self.onStateChanged?(.unavailable) }
       scheduleRestart()
@@ -634,15 +690,19 @@ final class VoiceManager: NSObject {
   private func teardown() {
     task?.cancel(); task = nil
     request?.endAudio(); request = nil
-    if audioEngine.isRunning {
-      audioEngine.stop()
-      audioEngine.inputNode.removeTap(onBus: 0)
-    }
+    if audioEngine.isRunning { audioEngine.stop() }
+    audioEngine.inputNode.removeTap(onBus: 0)
   }
 }
 ```
 
-> `VoiceListeningStateValue` é o enum gerado pelo Pigeon (`VoiceListeningState`). Se o nome gerado divergir, ajustar o typealias. A categoria `.playAndRecord` é o ponto de risco do conflito de mic durante REC — o gate B-mic decide.
+> `VoiceListeningState` é o enum gerado diretamente pelo Pigeon (sem sufixo — confirmado: `enum Resolution: Int` etc). Usar exatamente esse nome.
+>
+> iOS 15 target: `AVAudioApplication` é iOS 17+ → guard `#available`; fallback `AVAudioSession.requestRecordPermission` (deprecado mas funciona em 15/16).
+>
+> `removeTap` é idempotente (seguro sem tap); chamar sempre evita o crash 'already installed tap' no restart loop.
+>
+> `isRecordingActive` torna o conflito de mic uma GARANTIA programática: `beginSession` recusa abrir a sessão enquanto a gravação estiver ativa (estado `paused` visível + restart agendado). A categoria `.playAndRecord` é o ponto de risco do conflito de mic durante REC — essa guarda + o gate B-mic decidem.
 
 - [ ] **Step 4: Implementar o HostApi impl que liga VoiceManager ao Flutter**
 
@@ -684,11 +744,14 @@ Em `AppDelegate.swift`, no setup dos channels (seguir o padrão do registro do `
 ```swift
     let voiceFlutterApi = VoiceFlutterApi(binaryMessenger: controller.binaryMessenger)
     let voiceManager = VoiceManager(wakeWord: "Raro")
+    voiceManager.isRecordingActive = { [weak cameraManager] in cameraManager?.isRecording ?? false }
     let voiceHost = VoiceHostApiImpl(manager: voiceManager, flutterApi: voiceFlutterApi)
     VoiceHostApiSetup.setUp(binaryMessenger: controller.binaryMessenger, api: voiceHost)
 ```
 
 > Conferir o nome exato do setup gerado (`VoiceHostApiSetup.setUp` vs `setUpVoiceHostApi`) no `VoiceApi.g.swift`. Manter `voiceManager`/`voiceHost` retidos (property do AppDelegate) p/ não serem desalocados.
+>
+> O nome exato do acessor de estado de gravação deve ser confirmado no CameraManager/RecordingPipeline (`recordingPipeline.isRecording` existe — RecordingPipeline.swift). Ligar VoiceManager a ele torna o conflito de mic uma GARANTIA programática, não só o gate de UI.
 
 - [ ] **Step 6: Rodar XCTest do parser + build simulator**
 
@@ -850,9 +913,11 @@ git commit -m "refactor(camera): extrai recordingcontroller.toggle como fonte ú
 
 - [ ] **Step 1: Provider do stream do FlutterApi (espelhar `camera_flutter_api_provider`)**
 
-Criar `apps/mobile/lib/features/voice/application/voice_flutter_api_provider.dart` com um `StreamController` que recebe `onWakeDetected`/`onListeningStateChanged` do `VoiceFlutterApi` gerado e expõe dois streams (ou um stream de eventos selados). Seguir EXATAMENTE o padrão de `camera_flutter_api_provider.dart` (classe `_VoiceFlutterApi implements VoiceFlutterApi`, registro via `VoiceFlutterApi.setUp`... — conferir o gerado; no iOS o setUp é nativo, então no Dart o app é o **host** do FlutterApi: o Dart implementa `VoiceFlutterApi` e registra via `VoiceFlutterApi.setUp(binaryMessenger, ...)`).
+Criar `apps/mobile/lib/features/voice/application/voice_flutter_api_provider.dart` com um `StreamController` que recebe `onWakeDetected`/`onListeningStateChanged` do `VoiceFlutterApi` gerado e expõe dois streams. Os dois providers — `voiceWakeEventsProvider` (retorna `Raw<Stream<WakeCommand>>`) e `voiceStateEventsProvider` (retorna `Raw<Stream<VoiceListeningState>>`) — DEVEM ser declarados `@Riverpod(keepAlive: true)` e retornar `Raw<Stream<...>>` EXATAMENTE como `recordingEventsProvider` (camera_flutter_api_provider.dart:54-55). A classe Dart implementa o `VoiceFlutterApi` gerado e registra via `VoiceFlutterApi.setUp(implObject)` (NÃO passar `binaryMessenger` — espelhar camera_flutter_api_provider.dart:57, que usa `CameraFlutterApi.setUp(_RecordingFlutterApi(controller))`). No iOS o setUp é nativo (o Swift CHAMA o Dart); no Dart o app É a implementação do FlutterApi.
 
-> Definir um tipo de evento selado `VoiceEvent` = `WakeEvent(WakeCommand)` | `StateEvent(VoiceListeningState)` para um único stream, OU dois providers. Escolha: dois providers (`voiceWakeEventsProvider`, `voiceStateEventsProvider`) — mais simples de testar. O implementer espelha o `recordingEventsProvider`.
+> Dois providers (`voiceWakeEventsProvider`, `voiceStateEventsProvider`) — mais simples de testar que um único stream de eventos selados. O implementer espelha o `recordingEventsProvider`.
+>
+> Pigeon FlutterApi: a classe gerada `VoiceFlutterApi` exige `binaryMessenger` no init no lado NATIVO (Swift) — é o Swift que constrói o `VoiceFlutterApi(binaryMessenger:)` para chamar o Dart. No lado DART, o app IMPLEMENTA `VoiceFlutterApi` e registra a impl via `VoiceFlutterApi.setUp(impl)`. Não confundir os dois lados.
 
 - [ ] **Step 2: Escrever o teste do `VoiceController`**
 
@@ -885,26 +950,24 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'voice_controller.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class VoiceController extends _$VoiceController {
   @override
   VoiceState build() {
     final repo = ref.watch(voiceRepositoryProvider);
 
-    final wakeSub = ref.watch(voiceWakeEventsProvider.stream).listen((command) {
-      _handleWake(command);
-    });
+    final wakeSub = ref.watch(voiceWakeEventsProvider).listen(_handleWake);
     ref.onDispose(wakeSub.cancel);
 
-    final stateSub = ref.watch(voiceStateEventsProvider.stream).listen((s) {
+    final stateSub = ref.watch(voiceStateEventsProvider).listen((s) {
       state = _mapState(s);
     });
     ref.onDispose(stateSub.cancel);
 
-    final mode = ref.watch(
-      settingsControllerProvider.select((s) => s.value?.controlMode),
-    );
-    _syncListening(repo, mode);
+    ref.listen(settingsControllerProvider, (prev, next) {
+      final mode = next.value?.controlMode;
+      _syncListening(repo, mode);
+    }, fireImmediately: true);
 
     return const VoiceIdle();
   }
@@ -925,8 +988,8 @@ class VoiceController extends _$VoiceController {
   }
 
   void _handleWake(WakeCommand command) {
-    ref.read(recordingControllerProvider.notifier);
-    // o caller real precisa montar options; ver Step 5 (plug na câmera)
+    final trigger = ref.read(voiceRecordingTriggerProvider);
+    trigger?.call(command);
   }
 
   VoiceState _mapState(VoiceListeningState s) => switch (s) {
@@ -938,6 +1001,8 @@ class VoiceController extends _$VoiceController {
 }
 ```
 
+> **Mudanças-chave nesta versão (Riverpod correto):** (1) `@Riverpod(keepAlive: true)` — o controller precisa sobreviver ao lifecycle da `camera_screen`, igual aos controllers de recording/settings; (2) SEM sufixo `.stream` — os event providers JÁ são streams (igual `recordingEventsProvider`, observados direto com `ref.watch(xEventsProvider)`); (3) o `_syncListening` async NÃO é chamado inline no caminho de retorno do `build()` (build é síncrono); é disparado por `ref.listen(settingsControllerProvider, ..., fireImmediately: true)` — forma correta de reagir a mudanças de modo incluindo o primeiro valor; (4) `_handleWake` agora realmente despacha via `voiceRecordingTriggerProvider` (não é mais no-op).
+
 > **Decisão de arquitetura do wake→toggle:** o `RecordingController.toggle` precisa de `RecordingOptions` (que dependem de `_format`/`replayArmed` da câmera). O `VoiceController` não conhece isso. Duas saídas: (i) expor um provider `recordingOptionsProvider` que o VoiceController lê e passa ao toggle; (ii) o VoiceController emite um `wakeCommandProvider` que a `camera_screen` escuta e chama `_onRecTap`-equivalente. **Escolha (i)** é mais limpa e mantém a voz funcionando sem a tela montada — mas `_format` vive em `setState` da câmera. **Portanto escolha (i')**: mover `_format` para um provider (`selectedFormatProvider`) OU manter o builder de options num provider que lê replayBuffer + um format provider. Ver Step 5 — esta decisão é resolvida lá com o mínimo de mudança.
 
 - [ ] **Step 5: Plug wake→toggle via provider de options (resolve a dependência de `_format`)**
@@ -947,7 +1012,7 @@ Como `_format` está em `setState` local da câmera, a opção de menor cirurgia
 ```dart
 typedef RecordingTrigger = void Function(WakeCommand command);
 
-@riverpod
+@Riverpod(keepAlive: true)
 class VoiceRecordingTrigger extends _$VoiceRecordingTrigger {
   @override
   RecordingTrigger? build() => null;
@@ -963,12 +1028,15 @@ E no `_handleWake`:
   }
 ```
 
-Na `camera_screen` (Task B6), registrar o trigger no `initState`/`build`:
+Na `camera_screen` (Task B6), registrar o trigger UMA vez no `initState` (não no `build`, p/ não re-registrar a cada rebuild):
 ```dart
     ref.read(voiceRecordingTriggerProvider.notifier).register((command) {
       _onVoiceCommand(command);
     });
 ```
+
+> Registrar UMA vez (em initState ou com guarda), não a cada build.
+
 com:
 ```dart
   Future<void> _onVoiceCommand(WakeCommand command) async {
@@ -1069,7 +1137,7 @@ Expected: PASS.
 
 - [ ] **Step 5: Montar o indicador na câmera + ativar o VoiceController + registrar trigger**
 
-Em `camera_screen.dart`: (a) no `build`, `final voiceState = ref.watch(voiceControllerProvider);` (ativa o Notifier → liga o listener conforme setting); (b) registrar o trigger (Task B5 Step 5) uma vez; (c) posicionar `VoiceListeningIndicator(state: voiceState)` na HUD quando `controlMode==voice` e não-gravando (esconder durante REC — o indicador de gravação assume). Surgical: adicionar ao `Stack` da HUD existente, sem reestruturar.
+Em `camera_screen.dart`: (a) no `build`, `final voiceState = ref.watch(voiceControllerProvider);` ativa o Notifier (build roda, listeners sobem); como é `keepAlive:true`, sobrevive ao dispose da câmera; (b) registrar o trigger (Task B5 Step 5) uma vez no `initState`; (c) posicionar `VoiceListeningIndicator(state: voiceState)` na HUD quando `controlMode==voice` e não-gravando (esconder durante REC — o indicador de gravação assume). Surgical: adicionar ao `Stack` da HUD existente, sem reestruturar.
 
 - [ ] **Step 6: Rodar suite Dart completa (sem regressão) + analyze**
 
@@ -1168,18 +1236,19 @@ Abrir o app, conceder mic+speech. Com Console.app filtrando `subsystem:com.raroc
 - Dizer **"Raro gravar"** → `wake matched start` → gravação inicia (com pré-roll se armado).
 - Negar permissão (Settings) → indicador `unavailable`, sem crash.
 
-- [ ] **Step 3: GATE B-mic (decide Q8) — "Raro parar" durante REC**
+- [ ] **Step 3: GATE B-mic (decide Q8) — relaxar OU manter a guarda programática durante REC**
 
-Gravar, e durante a gravação dizer **"Raro parar"**:
-- Se parar E o áudio do `.mp4` ficar limpo → "parar" por voz FICA.
-- Puxar o vault e checar áudio:
+Por default a guarda `isRecordingActive` BLOQUEIA o listener durante REC (estado `paused` visível), então "Raro parar" por voz NÃO funciona enquanto grava — parar é por botão. Este gate decide se podemos relaxar essa guarda com segurança (deixar o listener RESUMIR durante REC, o que exige compartilhar a sessão de mic com a gravação) sem degradar o áudio gravado.
+
+Procedimento: relaxar temporariamente a guarda (ou instrumentar um build que permita o listener durante REC), gravar, e durante a gravação dizer **"Raro parar"**. Puxar o vault e checar o áudio:
 ```bash
 xcrun devicectl device copy from --device <udid> --domain-type appDataContainer \
   --domain-identifier com.rarocamera --source Documents/vault/<id>.mp4 --destination /tmp/voice.mp4
 ffprobe -v error -select_streams a:0 -show_entries stream=codec_name,duration /tmp/voice.mp4
 # + ouvir o áudio: deve ter voz/ambiente limpos, não mudo/picotado
 ```
-- Se o áudio degradar/mutar → "Raro parar" durante REC vira **Sprint 3**; v1.0 entrega "Raro gravar" + parar por botão (o recognizer pausa no REC). Registrar a decisão.
+- Se o áudio degradar/mutar/picotar → **MANTER a guarda** (parar só por botão); "Raro parar" durante REC vira **Sprint 3**. v1.0 entrega "Raro gravar" + parar por botão (o recognizer fica `paused` durante REC). Registrar a decisão.
+- Se o áudio ficar limpo → **relaxar a guarda** (permitir o listener resumir durante REC compartilhando a sessão); "Raro parar" por voz FICA. Registrar a decisão.
 
 - [ ] **Step 4: Registrar resultado do gate (memória + session log)**
 
@@ -1202,3 +1271,5 @@ Documentar no session log da S2.C o veredito do B-mic (parar-por-voz fica ou Spr
 - **Cobertura da spec:** A1/A2/A3 → Tasks A1/A2/A3. Q1 ordem (A antes de B) ✓. Q2 modo selecionável → B7 + controlMode existente ✓. Q3 engine → B0 ADR + B3 ✓. Q4 toggle → B4 ✓. Q5 default voz → já existe (`@Default(ControlMode.voice)`) ✓. Q6 volume Sprint 3 → B7 ✓. Q7 dois comandos → B1 enum + B3 parser ✓. Q8 mic gate → B8 Step 3 ✓. Q9 feedback → B6 ✓. Q10 pausar device → A3 Step 4 + B8 ✓.
 - **Riscos da spec → mitigações no plano:** mic durante REC → B8 gate; rate limit → B3 backoff + on-device; falso+ → parser exige wake+verbo; mover toggle → B4 pin antes; A2/A3 encode → A3 Step 4 ffprobe; modo efêmero → usa settingsController persistido; XCTest some → 4 inserções pbxproj notadas em A2/B3.
 - **Pontos a confirmar pelo implementer contra o gerado:** nomes exatos do Pigeon Swift (`VoiceHostApiSetup.setUp` vs `setUpVoiceHostApi`; labels `command:`/`state:`; `throws` vs `completion`); direção do FlutterApi no Dart (app é host do FlutterApi → implementa + setUp). Esses são ajustes de assinatura, não de design.
+- **Por que A2 vem antes de A3:** A2 (IDR por chunk na captura) é PRÉ-REQUISITO do A3 — não dá pra retimar a concatenação em torno de keyframes que não existem; a ordem A3→A2 da spec estava invertida, a ordem A2→A3 do plano é a correta.
+- **Verificação adversarial (workflow verify-voice-plan) rodada 2026-06-07:** 6 blockers + correções major aplicadas (enum sem sufixo, iOS15 mic API guard, tap idempotente, guarda programática de mic durante REC, Riverpod async-em-build via ref.listen, keepAlive nos controllers/providers, set both keyframe keys, passthrough-DTS honesto com fallback re-encode).
