@@ -9,6 +9,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'voice_controller.g.dart';
 
+const bool _voiceEngineAvailable = false;
+
 typedef RecordingTrigger = void Function(WakeCommand command);
 
 @Riverpod(keepAlive: true)
@@ -42,6 +44,11 @@ class VoiceController extends _$VoiceController {
 
   Future<void> _syncListening(VoiceRepository repo, ControlMode? mode) async {
     if (mode == null) return;
+    if (!_voiceEngineAvailable) {
+      await repo.stopListening();
+      if (ref.mounted) state = const VoiceIdle();
+      return;
+    }
     if (mode != ControlMode.voice) {
       await repo.stopListening();
       if (ref.mounted) state = const VoiceIdle();

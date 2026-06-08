@@ -37,7 +37,6 @@ final class VoiceManager: NSObject {
   private var wantsListening = false
   private var engineRunning = false
   private var backoff: TimeInterval = 0
-  private var tapBufferCount: Int = 0
   private let queue = DispatchQueue(label: "com.rarocamera.voice")
 
   init(wakeWord: String, locale: Locale = Locale(identifier: "pt-BR")) {
@@ -81,8 +80,6 @@ final class VoiceManager: NSObject {
 
   private func startListeningInternal() {
     let rec = isRecordingActive?() ?? false
-    os_log("DBG startListeningInternal wants=%d recording=%d engineRunning=%d backoff=%.1f",
-           log: voiceLog, type: .info, wantsListening ? 1 : 0, rec ? 1 : 0, engineRunning ? 1 : 0, backoff)
     guard wantsListening else { return }
     if rec {
       backoff = 0
@@ -93,14 +90,12 @@ final class VoiceManager: NSObject {
       return
     }
     guard let recognizer = recognizer, recognizer.isAvailable else {
-      os_log("DBG -> unavailable (recognizer nil or unavailable)", log: voiceLog, type: .error)
       DispatchQueue.main.async { self.onStateChanged?(.unavailable) }
       scheduleErrorRetry()
       return
     }
     if !engineRunning {
       guard ensureEngineRunning() else {
-        os_log("DBG -> ensureEngineRunning FAILED", log: voiceLog, type: .error)
         DispatchQueue.main.async { self.onStateChanged?(.paused) }
         scheduleErrorRetry()
         return
@@ -112,7 +107,6 @@ final class VoiceManager: NSObject {
       return
     }
     backoff = 0
-    os_log("DBG -> listening (cycle started)", log: voiceLog, type: .info)
     DispatchQueue.main.async { self.onStateChanged?(.listening) }
   }
 
@@ -132,12 +126,10 @@ final class VoiceManager: NSObject {
              log: voiceLog, type: .error, format.sampleRate, Double(format.channelCount))
       return false
     }
-    tapBufferCount = 0
     let raised = ObjCExceptionCatcher.catchException {
       input.removeTap(onBus: 0)
       input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
         guard let self = self else { return }
-        self.tapBufferCount += 1
         self.request?.append(buffer)
       }
       self.audioEngine.prepare()
@@ -183,13 +175,9 @@ final class VoiceManager: NSObject {
         }
         return
       }
-      if let error = error {
-        let ns = error as NSError
-        os_log("DBG recognitionTask error domain=%{public}@ code=%d taps=%d",
-               log: voiceLog, type: .error, ns.domain, ns.code, self.tapBufferCount)
+      if error != nil {
         self.queue.async { self.scheduleSilenceRecycle() }
       } else if result?.isFinal ?? false {
-        os_log("DBG recognitionTask isFinal taps=%d", log: voiceLog, type: .info, self.tapBufferCount)
         self.queue.async { self.scheduleSilenceRecycle() }
       }
     }
@@ -214,7 +202,6 @@ final class VoiceManager: NSObject {
   private func scheduleErrorRetry() {
     guard wantsListening else { return }
     backoff = min(max(backoff * 2, 1), 60)
-    os_log("DBG scheduleErrorRetry in %.1fs", log: voiceLog, type: .error, backoff)
     queue.asyncAfter(deadline: .now() + backoff) { [weak self] in
       self?.startListeningInternal()
     }
