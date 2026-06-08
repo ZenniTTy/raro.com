@@ -35,6 +35,7 @@ final class VoiceManager: NSObject {
   private var request: SFSpeechAudioBufferRecognitionRequest?
   private var task: SFSpeechRecognitionTask?
   private var wantsListening = false
+  private var engineRunning = false
   private var backoff: TimeInterval = 0
   private let queue = DispatchQueue(label: "com.rarocamera.voice")
 
@@ -64,108 +65,148 @@ final class VoiceManager: NSObject {
   func start() {
     queue.async {
       self.wantsListening = true
-      self.beginSession()
+      self.startListeningInternal()
     }
   }
 
   func stop() {
     queue.async {
       self.wantsListening = false
-      self.teardown()
+      self.teardownRecognition()
+      self.teardownEngine()
       DispatchQueue.main.async { self.onStateChanged?(.idle) }
     }
   }
 
-  private func beginSession() {
+  private func startListeningInternal() {
     guard wantsListening else { return }
     if isRecordingActive?() == true {
+      teardownRecognition()
+      teardownEngine()
       DispatchQueue.main.async { self.onStateChanged?(.paused) }
-      scheduleRestart()
+      scheduleRetry()
       return
     }
     guard let recognizer = recognizer, recognizer.isAvailable else {
       DispatchQueue.main.async { self.onStateChanged?(.unavailable) }
-      scheduleRestart()
+      scheduleRetry()
       return
     }
+    if !engineRunning {
+      guard ensureEngineRunning() else {
+        DispatchQueue.main.async { self.onStateChanged?(.paused) }
+        scheduleRetry()
+        return
+      }
+    }
+    guard beginRecognitionCycle(recognizer) else {
+      DispatchQueue.main.async { self.onStateChanged?(.paused) }
+      scheduleRetry()
+      return
+    }
+    backoff = 0
+    DispatchQueue.main.async { self.onStateChanged?(.listening) }
+  }
+
+  private func ensureEngineRunning() -> Bool {
+    let session = AVAudioSession.sharedInstance()
     do {
-      let session = AVAudioSession.sharedInstance()
       try session.setCategory(.playAndRecord, mode: .default, options: [.duckOthers, .defaultToSpeaker])
       try session.setActive(true, options: .notifyOthersOnDeactivation)
-
-      let request = SFSpeechAudioBufferRecognitionRequest()
-      request.requiresOnDeviceRecognition = true
-      request.shouldReportPartialResults = true
-      self.request = request
-
-      let input = audioEngine.inputNode
-      let format = input.outputFormat(forBus: 0)
-      guard format.sampleRate > 0, format.channelCount > 0 else {
-        os_log("voice tap skipped — invalid input format sr=%f ch=%d",
-               log: voiceLog, type: .error, format.sampleRate, Double(format.channelCount))
-        DispatchQueue.main.async { self.onStateChanged?(.paused) }
-        teardown()
-        scheduleRestart()
-        return
-      }
-      let installed = ObjCExceptionCatcher.catchException {
-        input.installTap(onBus: 0, bufferSize: 1024, format: nil) { [weak self] buffer, _ in
-          self?.request?.append(buffer)
-        }
-        self.audioEngine.prepare()
-        try? self.audioEngine.start()
-      }
-      guard installed == nil else {
-        os_log("voice tap/start raised: %{public}@", log: voiceLog, type: .error,
-               installed?.localizedDescription ?? "nsexception")
-        DispatchQueue.main.async { self.onStateChanged?(.paused) }
-        teardown()
-        scheduleRestart()
-        return
-      }
-
-      self.task = recognizer.recognitionTask(with: request) { [weak self] result, error in
-        guard let self = self else { return }
-        if let result = result,
-           let cmd = VoiceCommandParser.parse(result.bestTranscription.formattedString, wakeWord: self.wakeWord) {
-          os_log("wake matched: %{public}@", log: voiceLog, type: .info, "\(cmd)")
-          DispatchQueue.main.async { self.onCommand?(cmd) }
-          self.queue.async { self.restartSession() }
-          return
-        }
-        if error != nil || (result?.isFinal ?? false) {
-          self.queue.async { self.restartSession() }
-        }
-      }
-      backoff = 0
-      DispatchQueue.main.async { self.onStateChanged?(.listening) }
     } catch {
-      os_log("voice session error: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
+      os_log("voice session config failed: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
+      return false
+    }
+    let input = audioEngine.inputNode
+    let format = input.outputFormat(forBus: 0)
+    guard format.sampleRate > 0, format.channelCount > 0 else {
+      os_log("voice engine — invalid input format sr=%f ch=%d",
+             log: voiceLog, type: .error, format.sampleRate, Double(format.channelCount))
+      return false
+    }
+    let raised = ObjCExceptionCatcher.catchException {
+      input.removeTap(onBus: 0)
+      input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+        self?.request?.append(buffer)
+      }
+      self.audioEngine.prepare()
+    }
+    if let raised = raised {
+      os_log("voice tap install raised: %{public}@", log: voiceLog, type: .error, raised.localizedDescription)
+      return false
+    }
+    do {
+      try audioEngine.start()
+    } catch {
+      os_log("voice engine start failed: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
+      input.removeTap(onBus: 0)
+      return false
+    }
+    engineRunning = true
+    return true
+  }
+
+  private func beginRecognitionCycle(_ recognizer: SFSpeechRecognizer) -> Bool {
+    task?.cancel(); task = nil
+    request?.endAudio(); request = nil
+    let request = SFSpeechAudioBufferRecognitionRequest()
+    request.requiresOnDeviceRecognition = true
+    request.shouldReportPartialResults = true
+    self.request = request
+    self.task = recognizer.recognitionTask(with: request) { [weak self] result, error in
+      guard let self = self else { return }
+      if let result = result,
+         let cmd = VoiceCommandParser.parse(result.bestTranscription.formattedString, wakeWord: self.wakeWord) {
+        os_log("wake matched: %{public}@", log: voiceLog, type: .info, "\(cmd)")
+        DispatchQueue.main.async { self.onCommand?(cmd) }
+        self.queue.async { self.cycleRecognition() }
+        return
+      }
+      if error != nil || (result?.isFinal ?? false) {
+        self.queue.async { self.cycleRecognition() }
+      }
+    }
+    return true
+  }
+
+  private func cycleRecognition() {
+    guard wantsListening else { return }
+    if isRecordingActive?() == true {
+      teardownRecognition()
+      teardownEngine()
       DispatchQueue.main.async { self.onStateChanged?(.paused) }
-      teardown()
-      scheduleRestart()
+      scheduleRetry()
+      return
+    }
+    guard engineRunning, let recognizer = recognizer else {
+      startListeningInternal()
+      return
+    }
+    if beginRecognitionCycle(recognizer) {
+      DispatchQueue.main.async { self.onStateChanged?(.listening) }
+    } else {
+      teardownRecognition(); teardownEngine()
+      DispatchQueue.main.async { self.onStateChanged?(.paused) }
+      scheduleRetry()
     }
   }
 
-  private func restartSession() {
-    teardown()
-    guard wantsListening else { return }
-    beginSession()
-  }
-
-  private func scheduleRestart() {
+  private func scheduleRetry() {
     guard wantsListening else { return }
     backoff = min(max(backoff * 2, 1), 60)
     queue.asyncAfter(deadline: .now() + backoff) { [weak self] in
-      self?.beginSession()
+      self?.startListeningInternal()
     }
   }
 
-  private func teardown() {
+  private func teardownRecognition() {
     task?.cancel(); task = nil
     request?.endAudio(); request = nil
+  }
+
+  private func teardownEngine() {
     if audioEngine.isRunning { audioEngine.stop() }
     audioEngine.inputNode.removeTap(onBus: 0)
-    audioEngine.reset()
+    engineRunning = false
   }
 }
