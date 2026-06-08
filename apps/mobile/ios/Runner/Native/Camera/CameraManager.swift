@@ -38,6 +38,8 @@ final class CameraManager {
 
   private var pendingPrerollChunks: [Chunk]?
 
+  var isRecording: Bool { recordingPipeline.isRecording }
+
   init() {
     recordingPipeline.onFinished = { [weak self] url, durationMs in
       self?.handleRecordingFinished(url: url, durationMs: durationMs)

@@ -38,6 +38,10 @@
 		CA00000000000000000000C2 /* ReplayBufferHostApiImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000D2 /* ReplayBufferHostApiImpl.swift */; };
 		CA00000000000000000000C3 /* ReplayBufferApi.g.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000D3 /* ReplayBufferApi.g.swift */; };
 		CA00000000000000000000C4 /* ReplayExportSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000D4 /* ReplayExportSettingsTests.swift */; };
+		CA00000000000000000000E1 /* VoiceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E0 /* VoiceManager.swift */; };
+		CA00000000000000000000E3 /* VoiceHostApiImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E2 /* VoiceHostApiImpl.swift */; };
+		CA00000000000000000000E5 /* VoiceApi.g.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E4 /* VoiceApi.g.swift */; };
+		CA00000000000000000000E7 /* VoiceManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E6 /* VoiceManagerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -107,6 +111,10 @@
 		CA00000000000000000000D2 /* ReplayBufferHostApiImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Camera/ReplayBufferHostApiImpl.swift; sourceTree = "<group>"; };
 		CA00000000000000000000D3 /* ReplayBufferApi.g.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Generated/ReplayBufferApi.g.swift; sourceTree = "<group>"; };
 		CA00000000000000000000D4 /* ReplayExportSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayExportSettingsTests.swift; sourceTree = "<group>"; };
+		CA00000000000000000000E0 /* VoiceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Voice/VoiceManager.swift; sourceTree = "<group>"; };
+		CA00000000000000000000E2 /* VoiceHostApiImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Voice/VoiceHostApiImpl.swift; sourceTree = "<group>"; };
+		CA00000000000000000000E4 /* VoiceApi.g.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Generated/VoiceApi.g.swift; sourceTree = "<group>"; };
+		CA00000000000000000000E6 /* VoiceManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceManagerTests.swift; sourceTree = "<group>"; };
 		DEA69524B3E9912E3431748D /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		E0E272C120536D714518903C /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -166,6 +174,7 @@
 				CA00000000000000000000BF /* CameraManagerCapabilitiesTests.swift */,
 				CA00000000000000000000D0 /* ReplayRingTests.swift */,
 				CA00000000000000000000D4 /* ReplayExportSettingsTests.swift */,
+				CA00000000000000000000E6 /* VoiceManagerTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -227,6 +236,9 @@
 				CA00000000000000000000D1 /* ReplayBuffer.swift */,
 				CA00000000000000000000D2 /* ReplayBufferHostApiImpl.swift */,
 				CA00000000000000000000D3 /* ReplayBufferApi.g.swift */,
+				CA00000000000000000000E0 /* VoiceManager.swift */,
+				CA00000000000000000000E2 /* VoiceHostApiImpl.swift */,
+				CA00000000000000000000E4 /* VoiceApi.g.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -450,6 +462,7 @@
 				CA00000000000000000000AF /* CameraManagerCapabilitiesTests.swift in Sources */,
 				CA00000000000000000000C0 /* ReplayRingTests.swift in Sources */,
 				CA00000000000000000000C4 /* ReplayExportSettingsTests.swift in Sources */,
+				CA00000000000000000000E7 /* VoiceManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,6 +485,9 @@
 				CA00000000000000000000C1 /* ReplayBuffer.swift in Sources */,
 				CA00000000000000000000C2 /* ReplayBufferHostApiImpl.swift in Sources */,
 				CA00000000000000000000C3 /* ReplayBufferApi.g.swift in Sources */,
+				CA00000000000000000000E1 /* VoiceManager.swift in Sources */,
+				CA00000000000000000000E3 /* VoiceHostApiImpl.swift in Sources */,
+				CA00000000000000000000E5 /* VoiceApi.g.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

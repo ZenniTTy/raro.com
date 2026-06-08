@@ -5,6 +5,7 @@ import UIKit
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var cameraHostApi: CameraHostApiImpl?
   private var replayBufferHostApi: ReplayBufferHostApiImpl?
+  private var voiceHostApi: VoiceHostApiImpl?
 
   override func application(
     _ application: UIApplication,
@@ -30,5 +31,12 @@ import UIKit
     let replayApi = ReplayBufferHostApiImpl(manager: hostApi.cameraManager, messenger: messenger)
     self.replayBufferHostApi = replayApi
     ReplayBufferHostApiSetup.setUp(binaryMessenger: messenger, api: replayApi)
+
+    let voiceFlutterApi = VoiceFlutterApi(binaryMessenger: messenger)
+    let voiceManager = VoiceManager(wakeWord: "Raro")
+    voiceManager.isRecordingActive = { [weak hostApi] in hostApi?.cameraManager.isRecording ?? false }
+    let voiceApi = VoiceHostApiImpl(manager: voiceManager, flutterApi: voiceFlutterApi)
+    self.voiceHostApi = voiceApi
+    VoiceHostApiSetup.setUp(binaryMessenger: messenger, api: voiceApi)
   }
 }
