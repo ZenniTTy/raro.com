@@ -70,6 +70,14 @@ A voz precisa acionar o MESMO save do botão REC (gravação com pré-roll), com
 - `Info.plist`: `NSMicrophoneUsageDescription` + `NSSpeechRecognitionUsageDescription` (já presentes).
 - Mic permission: `AVAudioApplication.requestRecordPermission` (iOS 17+) com guard `#available`, fallback `AVAudioSession.requestRecordPermission` (iOS 15/16). Deployment target = iOS 15.0.
 
+## Evolução de design (2026-06-08, validada com o dono)
+
+O protótipo modelou apenas o estado "escutando" (hint estático `DIGA "RARO" PARA GRAVAR` com ícone de câmera de 42px). Como a voz tem estados que o protótipo não previu (pausado, indisponível), o indicador de escuta evoluiu — decisão explícita do dono no design-fidelity gate da S2.C:
+
+- **Ponto de estado em vez do ícone estático.** No modo voz, o `VoiceListeningIndicator` mostra um ponto colorido (teal=escutando, cinza=pausado/indisponível) em vez do ícone de câmera de 42px do protótipo. Justificativa: o ponto comunica o ESTADO da escuta — exatamente o conserto da "escuta escondida" do concorrente que motivou a feature. O ícone estático não comunicaria pausado/indisponível. Divergência consciente do protótipo, com propósito.
+- **Copy nova oficial:** `VOZ PAUSADA` (estado paused) e `ATIVAR VOZ NAS CONFIGURAÇÕES` (estado unavailable) — sem contraparte no protótipo (que assumia voz sempre funcional). Cumprem o requisito "estado sempre visível, nunca silencioso". Aprovadas como copy oficial da feature. (Migração para i18n/.arb é backlog do projeto inteiro, não bloqueia.)
+- **Fidelidade preservada onde existe:** o estado "escutando" mantém o texto exato do protótipo (`DIGA "RARO" PARA GRAVAR`, aspas curvas, alpha 0.35) e a tela de Settings "Controle de Gravação" bate com o protótipo no card Voz (o card Volume está desabilitado "em breve" — Volume = Sprint 3, ADR-0011).
+
 ## Referências
 
 - [Briefing Seção 5.4](../briefing/original-briefing.md)
