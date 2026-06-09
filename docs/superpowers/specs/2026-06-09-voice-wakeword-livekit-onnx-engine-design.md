@@ -80,8 +80,8 @@ Camadas (topo Dart → base CoreAudio):
    - `VoiceHostApiImpl` — ponte Pigeon fina (existe, ajustar)
    - ⭐ `VoiceManager` — orquestra tap → detector → emite `WakeCommand` (reescrito, sem SFSpeech)
    - ⭐ `AudioSessionCoordinator` — DONO ÚNICO da `AVAudioSession`; resolve handoff mic↔gravação; observa interrupções e `AVAudioEngineConfigurationChange` e religa o engine
-   - ⭐ `WakeWordDetector` — 3 ONNX sessions (melspectrogram → embedding → classificador); buffer 16kHz mono → score "Raro"
-   - ⭐ `Raro.onnx` (asset no bundle, ~200KB-1MB)
+   - ⭐ `WakeWordDetector` — pipeline ONNX **stateful** (melspectrogram → embedding → **DOIS classificadores**); buffer 16kHz mono → `WakeScores{start, stop}`. Decisão 5a (ver §Decisões): wake-word puro só detecta presença de UMA frase, então treinamos dois classificadores de frase inteira — `raro_gravar.onnx` (→ `WakeCommand.start`) e `raro_parar.onnx` (→ `WakeCommand.stop`) — compartilhando os estágios mel+embedding.
+   - ⭐ Assets no bundle (4 arquivos `.onnx`, ~200KB-1MB cada): estágios genéricos `melspectrogram.onnx` + `embedding_model.onnx` (vêm do pacote livekit-wakeword, compartilhados) + classificadores treinados `raro_gravar.onnx` + `raro_parar.onnx`.
 4. **Câmera (TOQUE CIRÚRGICO):** `CameraManager`/`RecordingPipeline` — gravar sem monopolizar o mic via AVAudioSession (replicar `isUsingBuiltInMicForRecording: NO`).
 5. **iOS/CoreAudio:** `AVAudioSession .playAndRecord` persistente, mic tap, `UIBackgroundModes: audio`, ONNX Runtime + CoreML EP.
 
@@ -174,9 +174,9 @@ Nunca engolir erro (logar via os_log + tratar). Qualquer falha da voz NUNCA derr
 
 ## Build sequence (alto nível; detalhe no plan)
 
-1. Treinar/obter modelo "Raro" (LiveKit pipeline, TTS sintético + gravações reais se preciso) → `Raro.onnx`
+1. Treinar/obter os modelos "Raro" (LiveKit pipeline, VoxCPM PT-BR + gravações reais se preciso) → `raro_gravar.onnx` + `raro_parar.onnx` (+ estágios genéricos `melspectrogram.onnx`/`embedding_model.onnx` do pacote) — Decisão 5a
 2. Integrar ONNX Runtime via SPM no Runner + registrar no Blueprint §2 (confirmar com adr-guardian)
-3. `WakeWordDetector` (3 ONNX sessions, buffer 16kHz, score) + XCTest de carga do modelo
+3. `WakeWordDetector` (pipeline ONNX stateful, buffer 16kHz, `WakeScores{start, stop}`) + XCTest de carga dos modelos
 4. `AudioSessionCoordinator` (dono da sessão, interrupções, ConfigurationChange) + 1 das 2 estratégias de handoff
 5. Reescrever `VoiceManager` (tap → detector → WakeCommand), remover SFSpeech + DBG residual
 6. Toque cirúrgico na câmera (não monopolizar mic)
