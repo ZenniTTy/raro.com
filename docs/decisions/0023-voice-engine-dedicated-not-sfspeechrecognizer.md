@@ -72,6 +72,12 @@ O concorrente capta voz com **tela bloqueada e app em background** (observado no
 - Resolver o handoff mic↔gravação (coexistência).
 - Remover a instrumentação DBG temporária do `VoiceManager`/`camera_screen`.
 
+## Addendum 2026-06-09 — engine do concorrente identificada (Sensory) via teardown Android
+
+O teardown do APK Android do concorrente (`br.com.okcamera.goldgravar` v71.1, via `adb pull` + `jadx` + `apktool`) identificou a engine de wake-word que o syslog iOS não revelava (FairPlay): **Sensory TrulyNatural 7.5** — lib nativa `libSnsr.so` + modelo `assets/ok_camera.snsr` ("licensed to OK Camera PL"). Isso explica retroativamente o "zero ONNX/CoreML/ANE atribuível ao app" visto no iOS (Sensory é engine proprietária autossuficiente).
+
+**Impacto na decisão (reforça, não muda):** Sensory é SDK comercial pago (sem preço público, contrato enterprise) → mesma categoria de rejeição do Porcupine (conflita com R$ 9,90/mês). Confirma documentalmente por que RARO copia só a **arquitetura de áudio** do concorrente (sessão persistente, gravação que não monopoliza o mic, background audio — provados por log iOS), e usa engine própria **grátis** (LiveKit-wakeword, citada na Decisão como par válido de "OpenWakeWord/LiveKit-wakeword"). OpenWakeWord puro foi enfraquecido como opção (notebook oficial quebrado desde nov/2025 — issue #296; English-only). Detalhe completo: memória `raro-competitor-okcamera-android-apk-teardown`.
+
 ## Referências
 
 - [ADR-0022](0022-voice-on-device-sfspeechrecognizer.md) (engine superseded; resto válido), [ADR-0009](0009-wake-word-raro.md) (wake word "Raro")
