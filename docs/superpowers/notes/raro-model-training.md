@@ -1,7 +1,7 @@
 # Notas de treino — modelo wake-word "Raro"
 
 > Registro vivo do treino dos classificadores de voz do RARO. Preencher a seção **Métricas medidas**
-> depois de rodar o notebook no Colab. Suporta o gate de viabilidade do iPhone 12 (ADR-0023).
+> depois de rodar o notebook no Kaggle. Suporta o gate de viabilidade do iPhone 12 (ADR-0023).
 
 ## Engine e decisões
 
@@ -20,7 +20,8 @@
   features), vêm bundlados no pacote pip e são os mesmos para os dois comandos.
 - **Wake word = "Raro"** (ADR-0009, hard rule em `raro_shared`). Nunca outra palavra.
 - **Notebook de treino:** [`../notebooks/raro-wakeword-training.ipynb`](../notebooks/raro-wakeword-training.ipynb)
-  (rodar no Google Colab com GPU T4).
+  (rodar no **Kaggle** com GPU T4/P100 — Colab grátis foi descartado porque desconecta no meio do treino;
+  Kaggle dá 9h/sessão estáveis. Ver memória `raro-pattern-wakeword-train-cpu-piper-no-colab`).
 - **Spec da feature:** [`../specs/2026-06-09-voice-wakeword-livekit-onnx-engine-design.md`](../specs/2026-06-09-voice-wakeword-livekit-onnx-engine-design.md).
 - **ADR de engine:** `docs/decisions/0023-voice-engine-dedicated-not-sfspeechrecognizer.md`.
 
@@ -68,7 +69,7 @@ não exigências do treino:
 
 ## Métricas medidas (preencher após rodar)
 
-> **PREENCHER APÓS COLAB.** Valores saem do Passo 7 (tamanhos) e Passo 8 (recall/FP) do notebook.
+> **PREENCHER APÓS KAGGLE.** Valores saem do Passo 7 (tamanhos) e Passo 8 (recall/FP) do notebook.
 
 | Modelo | Recall (eval offline) | FP/hora (eval) | Tamanho `.onnx` | `n_samples` | `steps` | `model_size` | Data do treino |
 |---|---|---|---|---|---|---|---|
