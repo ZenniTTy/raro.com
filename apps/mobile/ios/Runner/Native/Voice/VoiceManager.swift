@@ -28,16 +28,17 @@ final class VoiceManager: NSObject {
   var onCommand: ((VoiceCommand) -> Void)?
   var onStateChanged: ((VoiceListeningState) -> Void)?
   var isRecordingActive: (() -> Bool)?
+  var isCameraAudioActive: (() -> Bool)?
 
   private let wakeWord: String
   private let recognizer: SFSpeechRecognizer?
-  private let audioEngine = AVAudioEngine()
   private var request: SFSpeechAudioBufferRecognitionRequest?
   private var task: SFSpeechRecognitionTask?
   private var wantsListening = false
-  private var engineRunning = false
   private var backoff: TimeInterval = 0
   private let queue = DispatchQueue(label: "com.rarocamera.voice")
+  private let ownAudioEngine = AVAudioEngine()
+  private var ownEngineRunning = false
 
   init(wakeWord: String, locale: Locale = Locale(identifier: "pt-BR")) {
     self.wakeWord = wakeWord
@@ -73,34 +74,30 @@ final class VoiceManager: NSObject {
     queue.async {
       self.wantsListening = false
       self.teardownRecognition()
-      self.teardownEngine()
+      self.stopOwnAudioSource()
       DispatchQueue.main.async { self.onStateChanged?(.idle) }
     }
   }
 
-  private func startListeningInternal() {
-    let rec = isRecordingActive?() ?? false
-    guard wantsListening else { return }
-    if rec {
-      backoff = 0
-      teardownRecognition()
-      teardownEngine()
-      DispatchQueue.main.async { self.onStateChanged?(.paused) }
-      scheduleRecordingPoll()
-      return
+  func appendCaptureAudio(_ sampleBuffer: CMSampleBuffer) {
+    queue.async {
+      guard self.wantsListening, let request = self.request else { return }
+      request.appendAudioSampleBuffer(sampleBuffer)
     }
+  }
+
+  func cameraAudioStateChanged() {
+    queue.async { self.ensureAudioSource() }
+  }
+
+  private func startListeningInternal() {
+    guard wantsListening else { return }
     guard let recognizer = recognizer, recognizer.isAvailable else {
       DispatchQueue.main.async { self.onStateChanged?(.unavailable) }
       scheduleErrorRetry()
       return
     }
-    if !engineRunning {
-      guard ensureEngineRunning() else {
-        DispatchQueue.main.async { self.onStateChanged?(.paused) }
-        scheduleErrorRetry()
-        return
-      }
-    }
+    ensureAudioSource()
     guard beginRecognitionCycle(recognizer) else {
       DispatchQueue.main.async { self.onStateChanged?(.paused) }
       scheduleErrorRetry()
@@ -108,45 +105,6 @@ final class VoiceManager: NSObject {
     }
     backoff = 0
     DispatchQueue.main.async { self.onStateChanged?(.listening) }
-  }
-
-  private func ensureEngineRunning() -> Bool {
-    let session = AVAudioSession.sharedInstance()
-    do {
-      try session.setCategory(.playAndRecord, mode: .default, options: [.duckOthers, .defaultToSpeaker])
-      try session.setActive(true, options: .notifyOthersOnDeactivation)
-    } catch {
-      os_log("voice session config failed: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
-      return false
-    }
-    let input = audioEngine.inputNode
-    let format = input.outputFormat(forBus: 0)
-    guard format.sampleRate > 0, format.channelCount > 0 else {
-      os_log("voice engine — invalid input format sr=%f ch=%d",
-             log: voiceLog, type: .error, format.sampleRate, Double(format.channelCount))
-      return false
-    }
-    let raised = ObjCExceptionCatcher.catchException {
-      input.removeTap(onBus: 0)
-      input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-        guard let self = self else { return }
-        self.request?.append(buffer)
-      }
-      self.audioEngine.prepare()
-    }
-    if let raised = raised {
-      os_log("voice tap install raised: %{public}@", log: voiceLog, type: .error, raised.localizedDescription)
-      return false
-    }
-    do {
-      try audioEngine.start()
-    } catch {
-      os_log("voice engine start failed: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
-      input.removeTap(onBus: 0)
-      return false
-    }
-    engineRunning = true
-    return true
   }
 
   private func beginRecognitionCycle(_ recognizer: SFSpeechRecognizer) -> Bool {
@@ -163,15 +121,8 @@ final class VoiceManager: NSObject {
         os_log("wake matched: %{public}@", log: voiceLog, type: .info, "\(cmd)")
         DispatchQueue.main.async { self.onCommand?(cmd) }
         self.queue.async {
-          if cmd == .start {
-            self.backoff = 0
-            self.teardownRecognition()
-            self.teardownEngine()
-            DispatchQueue.main.async { self.onStateChanged?(.paused) }
-            self.scheduleRecordingPoll()
-          } else {
-            self.cycleRecognition()
-          }
+          self.backoff = 0
+          self.cycleRecognition()
         }
         return
       }
@@ -213,21 +164,76 @@ final class VoiceManager: NSObject {
     }
   }
 
-  private func scheduleRecordingPoll() {
-    guard wantsListening else { return }
-    queue.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-      self?.startListeningInternal()
-    }
-  }
-
   private func teardownRecognition() {
     task?.cancel(); task = nil
     request?.endAudio(); request = nil
   }
 
-  private func teardownEngine() {
-    if audioEngine.isRunning { audioEngine.stop() }
-    audioEngine.inputNode.removeTap(onBus: 0)
-    engineRunning = false
+  private func ensureAudioSource() {
+    let cameraActive = isCameraAudioActive?() ?? false
+    if cameraActive {
+      if ownEngineRunning {
+        os_log("audio source -> camera capture", log: voiceLog, type: .info)
+        stopOwnAudioSource()
+      }
+    } else {
+      if !ownEngineRunning {
+        os_log("audio source -> own engine (camera stopped)", log: voiceLog, type: .info)
+        _ = startOwnAudioSource()
+      }
+    }
+  }
+
+  private func configureSharedAudioSessionIfNeeded() {
+    let session = AVAudioSession.sharedInstance()
+    guard session.category != .playAndRecord else { return }
+    do {
+      try session.setCategory(
+        .playAndRecord,
+        mode: .default,
+        options: [.mixWithOthers, .defaultToSpeaker]
+      )
+      try session.setActive(true)
+      os_log("shared audio session configured (.playAndRecord/.mixWithOthers)", log: voiceLog, type: .info)
+    } catch {
+      os_log("shared audio session setup failed: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
+    }
+  }
+
+  private func startOwnAudioSource() -> Bool {
+    configureSharedAudioSessionIfNeeded()
+    let input = ownAudioEngine.inputNode
+    let format = input.outputFormat(forBus: 0)
+    let raised = ObjCExceptionCatcher.catchException {
+      input.removeTap(onBus: 0)
+      input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+        guard let self = self else { return }
+        self.queue.async {
+          guard self.wantsListening, let request = self.request else { return }
+          request.append(buffer)
+        }
+      }
+      self.ownAudioEngine.prepare()
+    }
+    if let raised = raised {
+      os_log("own installTap raised: %{public}@", log: voiceLog, type: .error, raised.localizedDescription)
+      input.removeTap(onBus: 0)
+      return false
+    }
+    do {
+      try ownAudioEngine.start()
+    } catch {
+      os_log("own engine start failed: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
+      input.removeTap(onBus: 0)
+      return false
+    }
+    ownEngineRunning = true
+    return true
+  }
+
+  private func stopOwnAudioSource() {
+    if ownAudioEngine.isRunning { ownAudioEngine.stop() }
+    ownAudioEngine.inputNode.removeTap(onBus: 0)
+    ownEngineRunning = false
   }
 }

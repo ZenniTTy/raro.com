@@ -35,10 +35,13 @@ final class CameraManager {
   var onRecordingStarted: ((String) -> Void)?
   var onRecordingFinished: ((URL, Int) -> Void)?
   var onRecordingFailed: ((String) -> Void)?
+  var onCaptureAudioSample: ((CMSampleBuffer) -> Void)?
+  var onSessionStateChanged: (() -> Void)?
 
   private var pendingPrerollChunks: [Chunk]?
 
   var isRecording: Bool { recordingPipeline.isRecording }
+  var isSessionRunning: Bool { session?.isRunning ?? false }
 
   init() {
     recordingPipeline.onFinished = { [weak self] url, durationMs in
@@ -78,7 +81,9 @@ final class CameraManager {
         self?.isInterrupted = false
         self?.sessionQueue.async { [weak self] in
           guard let self = self, let s = self.session, !s.isRunning else { return }
+          self.ensureAudioSessionConfigured()
           s.startRunning()
+          DispatchQueue.main.async { self.onSessionStateChanged?() }
         }
       }
     )
@@ -97,7 +102,9 @@ final class CameraManager {
         if err?.code == AVError.mediaServicesWereReset.rawValue {
           self?.sessionQueue.async { [weak self] in
             guard let self = self, let s = self.session, !s.isRunning else { return }
+            self.ensureAudioSessionConfigured()
             s.startRunning()
+            DispatchQueue.main.async { self.onSessionStateChanged?() }
           }
         } else {
           self?.onError?(.sessionFailed(err?.localizedDescription ?? "runtime error"))
@@ -111,6 +118,22 @@ final class CameraManager {
       NotificationCenter.default.removeObserver(token)
     }
     notificationTokens.removeAll()
+  }
+
+  private func ensureAudioSessionConfigured() {
+    let session = AVAudioSession.sharedInstance()
+    guard session.category != .playAndRecord else { return }
+    do {
+      try session.setCategory(
+        .playAndRecord,
+        mode: .default,
+        options: [.mixWithOthers, .defaultToSpeaker]
+      )
+      try session.setActive(true)
+      os_log("audio session configured for capture (.playAndRecord/.mixWithOthers)", log: cameraLog, type: .info)
+    } catch {
+      os_log("audio session configure failed: %{public}@", log: cameraLog, type: .error, error.localizedDescription)
+    }
   }
 
   func hasPermission() -> Bool {
@@ -270,6 +293,8 @@ final class CameraManager {
     )
 
     let session = AVCaptureSession()
+    session.automaticallyConfiguresApplicationAudioSession = false
+    ensureAudioSessionConfigured()
     session.beginConfiguration()
     session.sessionPreset = .inputPriority
     let input = try AVCaptureDeviceInput(device: device)
@@ -318,13 +343,18 @@ final class CameraManager {
           os_log("recording attach failed: %{public}@", log: cameraLog, type: .error, error.localizedDescription)
         }
         capturedSession.commitConfiguration()
+        self.ensureAudioSessionConfigured()
         capturedSession.startRunning()
+        DispatchQueue.main.async { self.onSessionStateChanged?() }
         continuation.resume()
       }
     }
 
     recordingPipeline.replayConsumer = { [weak self] buffer, isVideo in
       self?.replayBuffer.append(buffer, isVideo: isVideo)
+    }
+    recordingPipeline.audioSampleConsumer = { [weak self] buffer in
+      self?.onCaptureAudioSample?(buffer)
     }
     recordingPipeline.replayFps = config.fps == .fps60 ? 60 : 30
     replayBuffer.start(
@@ -352,6 +382,7 @@ final class CameraManager {
       self?.session = nil
       self?.device = nil
       self?.input = nil
+      DispatchQueue.main.async { self?.onSessionStateChanged?() }
     }
   }
 

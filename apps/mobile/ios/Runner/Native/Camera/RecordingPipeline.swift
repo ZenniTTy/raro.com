@@ -29,6 +29,7 @@ final class RecordingPipeline: NSObject, @unchecked Sendable {
   var onFinished: ((URL, Int) -> Void)?
   var onFailed: ((String) -> Void)?
   var replayConsumer: ((CMSampleBuffer, Bool) -> Void)?
+  var audioSampleConsumer: ((CMSampleBuffer) -> Void)?
   var sharedQueue: DispatchQueue { outputQueue }
 
   func makeReplayVideoSettings() -> [String: Any] {
@@ -217,6 +218,7 @@ extension RecordingPipeline: AVCaptureVideoDataOutputSampleBufferDelegate,
     guard CMSampleBufferDataIsReady(sampleBuffer) else { return }
     let isVideo = output === videoOutput
     replayConsumer?(sampleBuffer, isVideo)
+    if !isVideo { audioSampleConsumer?(sampleBuffer) }
 
     guard recording, let writer = writer, writer.status == .writing else { return }
 

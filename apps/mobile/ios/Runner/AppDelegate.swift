@@ -35,6 +35,13 @@ import UIKit
     let voiceFlutterApi = VoiceFlutterApi(binaryMessenger: messenger)
     let voiceManager = VoiceManager(wakeWord: "Raro")
     voiceManager.isRecordingActive = { [weak hostApi] in hostApi?.cameraManager.isRecording ?? false }
+    voiceManager.isCameraAudioActive = { [weak hostApi] in hostApi?.cameraManager.isSessionRunning ?? false }
+    hostApi.cameraManager.onCaptureAudioSample = { [weak voiceManager] buffer in
+      voiceManager?.appendCaptureAudio(buffer)
+    }
+    hostApi.cameraManager.onSessionStateChanged = { [weak voiceManager] in
+      voiceManager?.cameraAudioStateChanged()
+    }
     let voiceApi = VoiceHostApiImpl(manager: voiceManager, flutterApi: voiceFlutterApi)
     self.voiceHostApi = voiceApi
     VoiceHostApiSetup.setUp(binaryMessenger: messenger, api: voiceApi)
