@@ -9,7 +9,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'voice_controller.g.dart';
 
-const bool _voiceEngineAvailable = false;
+const bool _voiceEngineAvailable = true;
 
 typedef RecordingTrigger = void Function(WakeCommand command);
 

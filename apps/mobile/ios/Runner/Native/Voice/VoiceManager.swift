@@ -175,7 +175,15 @@ final class VoiceManager: NSObject {
         }
         return
       }
-      if error != nil {
+      if let error = error as NSError? {
+        let code = error.code
+        if code == 1101 || code == 1107 {
+          os_log("speech service error (XPC) code=%d: %{public}@",
+                 log: voiceLog, type: .error, code, error.localizedDescription)
+        } else {
+          os_log("recognition cycle ended code=%d (benign, recycling)",
+                 log: voiceLog, type: .info, code)
+        }
         self.queue.async { self.scheduleSilenceRecycle() }
       } else if result?.isFinal ?? false {
         self.queue.async { self.scheduleSilenceRecycle() }
@@ -187,7 +195,6 @@ final class VoiceManager: NSObject {
   private func scheduleSilenceRecycle() {
     guard wantsListening else { return }
     teardownRecognition()
-    teardownEngine()
     queue.asyncAfter(deadline: .now() + 0.4) { [weak self] in
       self?.startListeningInternal()
     }
@@ -195,7 +202,6 @@ final class VoiceManager: NSObject {
 
   private func cycleRecognition() {
     teardownRecognition()
-    teardownEngine()
     startListeningInternal()
   }
 
