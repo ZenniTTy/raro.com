@@ -42,6 +42,12 @@ final class VoiceManager: NSObject {
   private var lastCommand: VoiceCommand?
   private var lastCommandTime: Date?
   private let commandDebounceInterval: TimeInterval = 1.5
+  private var refreshWorkItem: DispatchWorkItem?
+  private let proactiveRefreshInterval: TimeInterval = 50
+  private var activeCycle: UUID?
+  private var recentAudio: [CMSampleBuffer] = []
+  private let recentAudioMaxCount = 24
+  private static let terminalErrorCodes: Set<Int> = [1101, 1107, 7, 4, 203, 1700]
 
   init(wakeWord: String, locale: Locale = Locale(identifier: "pt-BR")) {
     self.wakeWord = wakeWord
@@ -86,7 +92,9 @@ final class VoiceManager: NSObject {
 
   func appendCaptureAudio(_ sampleBuffer: CMSampleBuffer) {
     queue.async {
-      guard self.wantsListening, let request = self.request else { return }
+      guard self.wantsListening else { return }
+      self.retainRecentAudio(sampleBuffer)
+      guard let request = self.request else { return }
       request.appendAudioSampleBuffer(sampleBuffer)
     }
   }
@@ -119,6 +127,11 @@ final class VoiceManager: NSObject {
     request.requiresOnDeviceRecognition = true
     request.shouldReportPartialResults = true
     self.request = request
+    for buffer in recentAudio {
+      request.appendAudioSampleBuffer(buffer)
+    }
+    let cycleToken = UUID()
+    self.activeCycle = cycleToken
     self.task = recognizer.recognitionTask(with: request) { [weak self] result, error in
       guard let self = self else { return }
       if let result = result,
@@ -128,27 +141,48 @@ final class VoiceManager: NSObject {
       }
       if let error = error as NSError? {
         let code = error.code
-        if code == 1101 || code == 1107 {
-          os_log("speech service error (XPC) code=%d: %{public}@",
+        if Self.terminalErrorCodes.contains(code) {
+          os_log("speech service error (terminal) code=%d: %{public}@",
                  log: voiceLog, type: .error, code, error.localizedDescription)
-          self.queue.async { self.recycleWithBackoff() }
+          self.queue.async { self.refreshCycle(after: 0.4, token: cycleToken) }
         } else {
-          os_log("recognition cycle ended code=%d (benign, recycling)",
+          os_log("recognition cycle ended code=%d (benign, refreshing)",
                  log: voiceLog, type: .info, code)
-          self.queue.async { self.scheduleMinimalRecycle() }
+          self.queue.async { self.refreshCycle(after: 0, token: cycleToken) }
         }
       } else if result?.isFinal ?? false {
-        self.queue.async { self.scheduleMinimalRecycle() }
+        self.queue.async { self.refreshCycle(after: 0, token: cycleToken) }
       }
     }
+    scheduleProactiveRefresh(token: cycleToken)
     return true
   }
 
-  private func scheduleMinimalRecycle() {
-    guard wantsListening else { return }
-    teardownRecognition()
-    queue.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-      self?.startListeningInternal()
+  private func refreshCycle(after delay: TimeInterval, token: UUID) {
+    guard wantsListening, activeCycle == token else { return }
+    activeCycle = nil
+    refreshWorkItem?.cancel()
+    let work = DispatchWorkItem { [weak self] in self?.startListeningInternal() }
+    refreshWorkItem = work
+    if delay <= 0 {
+      queue.async(execute: work)
+    } else {
+      queue.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+  }
+
+  private func retainRecentAudio(_ sampleBuffer: CMSampleBuffer) {
+    recentAudio.append(sampleBuffer)
+    if recentAudio.count > recentAudioMaxCount {
+      recentAudio.removeFirst(recentAudio.count - recentAudioMaxCount)
+    }
+  }
+
+  private func scheduleProactiveRefresh(token: UUID) {
+    queue.asyncAfter(deadline: .now() + proactiveRefreshInterval) { [weak self] in
+      guard let self = self, self.wantsListening, self.activeCycle == token else { return }
+      os_log("proactive refresh (avoid resource decay)", log: voiceLog, type: .info)
+      self.refreshCycle(after: 0, token: token)
     }
   }
 
@@ -164,23 +198,12 @@ final class VoiceManager: NSObject {
     lastCommand = cmd
     lastCommandTime = now
     backoff = 0
+    recentAudio.removeAll()
     os_log("wake matched: %{public}@", log: voiceLog, type: .info, "\(cmd)")
     DispatchQueue.main.async { self.onCommand?(cmd) }
-    cycleRecognition()
-  }
-
-  private func recycleWithBackoff() {
-    guard wantsListening else { return }
-    teardownRecognition()
-    queue.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-      self?.startListeningInternal()
-    }
-  }
-
-  private func cycleRecognition() {
-    guard wantsListening else { return }
-    teardownRecognition()
-    startListeningInternal()
+    let token = activeCycle ?? UUID()
+    activeCycle = token
+    refreshCycle(after: 0, token: token)
   }
 
   private func scheduleErrorRetry() {
@@ -192,6 +215,9 @@ final class VoiceManager: NSObject {
   }
 
   private func teardownRecognition() {
+    activeCycle = nil
+    refreshWorkItem?.cancel(); refreshWorkItem = nil
+    recentAudio.removeAll()
     task?.cancel(); task = nil
     request?.endAudio(); request = nil
   }
