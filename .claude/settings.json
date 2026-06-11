@@ -57,6 +57,10 @@
           {
             "type": "command",
             "command": ".claude/hooks/warn-gesturedetector-over-platformview.sh"
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/warn-sfspeech-recycle-per-error.sh"
           }
         ]
       }
