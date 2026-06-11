@@ -4,7 +4,7 @@ import os.log
 
 private let voiceLog = OSLog(subsystem: "com.rarocamera/voice", category: "wake")
 
-enum VoiceCommand {
+enum VoiceCommand: Equatable {
   case start
   case stop
 }
@@ -39,6 +39,9 @@ final class VoiceManager: NSObject {
   private let queue = DispatchQueue(label: "com.rarocamera.voice")
   private let ownAudioEngine = AVAudioEngine()
   private var ownEngineRunning = false
+  private var lastCommand: VoiceCommand?
+  private var lastCommandTime: Date?
+  private let commandDebounceInterval: TimeInterval = 1.5
 
   init(wakeWord: String, locale: Locale = Locale(identifier: "pt-BR")) {
     self.wakeWord = wakeWord
@@ -73,6 +76,8 @@ final class VoiceManager: NSObject {
   func stop() {
     queue.async {
       self.wantsListening = false
+      self.lastCommand = nil
+      self.lastCommandTime = nil
       self.teardownRecognition()
       self.stopOwnAudioSource()
       DispatchQueue.main.async { self.onStateChanged?(.idle) }
@@ -118,12 +123,7 @@ final class VoiceManager: NSObject {
       guard let self = self else { return }
       if let result = result,
          let cmd = VoiceCommandParser.parse(result.bestTranscription.formattedString, wakeWord: self.wakeWord) {
-        os_log("wake matched: %{public}@", log: voiceLog, type: .info, "\(cmd)")
-        DispatchQueue.main.async { self.onCommand?(cmd) }
-        self.queue.async {
-          self.backoff = 0
-          self.cycleRecognition()
-        }
+        self.queue.async { self.handleDetectedCommand(cmd) }
         return
       }
       if let error = error as NSError? {
@@ -131,19 +131,45 @@ final class VoiceManager: NSObject {
         if code == 1101 || code == 1107 {
           os_log("speech service error (XPC) code=%d: %{public}@",
                  log: voiceLog, type: .error, code, error.localizedDescription)
+          self.queue.async { self.recycleWithBackoff() }
         } else {
           os_log("recognition cycle ended code=%d (benign, recycling)",
                  log: voiceLog, type: .info, code)
+          self.queue.async { self.scheduleMinimalRecycle() }
         }
-        self.queue.async { self.scheduleSilenceRecycle() }
       } else if result?.isFinal ?? false {
-        self.queue.async { self.scheduleSilenceRecycle() }
+        self.queue.async { self.scheduleMinimalRecycle() }
       }
     }
     return true
   }
 
-  private func scheduleSilenceRecycle() {
+  private func scheduleMinimalRecycle() {
+    guard wantsListening else { return }
+    teardownRecognition()
+    queue.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+      self?.startListeningInternal()
+    }
+  }
+
+  private func handleDetectedCommand(_ cmd: VoiceCommand) {
+    let now = Date()
+    if let lastCommand = lastCommand,
+       let lastCommandTime = lastCommandTime,
+       lastCommand == cmd,
+       now.timeIntervalSince(lastCommandTime) < commandDebounceInterval {
+      os_log("command debounced: %{public}@", log: voiceLog, type: .info, "\(cmd)")
+      return
+    }
+    lastCommand = cmd
+    lastCommandTime = now
+    backoff = 0
+    os_log("wake matched: %{public}@", log: voiceLog, type: .info, "\(cmd)")
+    DispatchQueue.main.async { self.onCommand?(cmd) }
+    cycleRecognition()
+  }
+
+  private func recycleWithBackoff() {
     guard wantsListening else { return }
     teardownRecognition()
     queue.asyncAfter(deadline: .now() + 0.4) { [weak self] in
@@ -152,6 +178,7 @@ final class VoiceManager: NSObject {
   }
 
   private func cycleRecognition() {
+    guard wantsListening else { return }
     teardownRecognition()
     startListeningInternal()
   }
