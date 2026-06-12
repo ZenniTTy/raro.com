@@ -16,7 +16,12 @@
 # Uso:
 #   bash train-raro.sh            # treino completo (n_samples dos YAMLs = 15000)
 #   QUICK=1 bash train-raro.sh    # prova RÁPIDA (n_samples=2000) p/ validar pipeline + recall cedo
-#   WORK=/kaggle/working bash train-raro.sh   # define onde ficam caches/saídas (disco com espaço)
+#   WORK=/tmp bash train-raro.sh  # define onde ficam caches/dados/saídas (disco com espaço)
+#
+# ⚠️ Kaggle (lição da 1ª rodada real, 2026-06-12): use WORK=/tmp, NUNCA /kaggle/working —
+#   /kaggle/working tem cota de ~20GB e o setup baixa ~17GB de dados (ACAV+RIRs) → "No space
+#   left on device". O /tmp fica no overlay raiz (~1.1TB livre). O script roda TUDO (dados,
+#   cwd, output) dentro de $WORK. Saídas finais: copie os .onnx/.json p/ /kaggle/working no fim.
 # =============================================================================
 set -euo pipefail
 
@@ -57,6 +62,12 @@ if [ "${QUICK:-0}" = "1" ]; then
   echo "[info] QUICK=1 → n_samples=2000 (prova de pipeline + sinal precoce; recall menor que o treino cheio)"
   sed -i 's/^n_samples: .*/n_samples: 2000/; s/^n_samples_val: .*/n_samples_val: 500/' "$RUN_DIR"/configs/*.yaml
 fi
+# data_dir explícito no disco grande (sem isso o setup baixa ~17GB no cwd → estourou /kaggle/working)
+for f in "$RUN_DIR"/configs/*.yaml; do
+  grep -q '^data_dir:' "$f" || printf '\ndata_dir: %s/raro_data\n' "$WORK" >> "$f"
+done
+mkdir -p "$WORK/raro_data"
+# cd para o run dir: o output/ do treino é relativo ao cwd — precisa estar no disco grande também
 cd "$RUN_DIR"
 
 # --- 5. baixa modelos/dados base (mel/embedding/negativos) — uma vez (compartilhado) -------------

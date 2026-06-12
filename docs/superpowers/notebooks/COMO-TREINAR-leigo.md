@@ -34,16 +34,21 @@ Faça a RÁPIDA primeiro. Se ela rodar limpa, faça a CHEIA.
 ```bash
 %%bash
 set -e
-export WORK=/kaggle/working
-export HF_HOME=$WORK/.cache/hf
-mkdir -p $HF_HOME configs
+# limpa restos de tentativas antigas + usa o DISCO GRANDE (/tmp ~1.1TB);
+# /kaggle/working tem so 20GB e o treino baixa ~17GB (estourou na 1a rodada real, 2026-06-12)
+rm -rf /kaggle/working/data /kaggle/working/output
+export HF_HOME=/tmp/hf
+mkdir -p /tmp/raro_run/configs /tmp/hf /tmp/raro_data
+cd /tmp/raro_run
 
-# instala o necessário
+# instala o necessário (SEMPRE primeiro — sem isso da "livekit-wakeword: command not found")
 apt-get update -qq && apt-get install -y -qq espeak-ng libsndfile1 ffmpeg sox portaudio19-dev
 pip install -q "livekit-wakeword[train,eval,export,voxcpm]==0.2.1"
+export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 
-# confere a GPU (sem ela, VoxCPM/PT-BR nao roda)
+# confere a GPU (sem ela, VoxCPM/PT-BR nao roda) e o comando instalado
 python -c "import torch; assert torch.cuda.is_available(), 'SEM GPU — ligue o Accelerator GPU T4 nas Session options'; print('GPU OK:', torch.cuda.get_device_name(0))"
+command -v livekit-wakeword || { echo 'ERRO: livekit-wakeword nao instalou'; exit 1; }
 
 # vozes sinteticas (descricoes em ingles; a frase sai em portugues)
 PROMPTS='  voice_design_prompts:
@@ -62,6 +67,7 @@ model_name: raro_gravar
 target_phrases:
   - "raro gravar"
 tts_backend: voxcpm
+data_dir: /tmp/raro_data
 voxcpm_tts:
 $PROMPTS
 n_samples: 2000
@@ -85,8 +91,12 @@ for c in raro_gravar raro_parar; do
   livekit-wakeword eval configs/$c.yaml
 done
 
-echo "===== ARQUIVOS GERADOS ====="
-find $WORK -name "*.onnx" -printf "%p (%s bytes)\n" || true
+# copia os resultados pro painel de Output do Kaggle (pra voce baixar)
+mkdir -p /kaggle/working/saidas
+find /tmp/raro_run -name "*.onnx" -exec cp {} /kaggle/working/saidas/ \; 2>/dev/null || true
+find /tmp/raro_run -name "*.json"  -exec cp {} /kaggle/working/saidas/ \; 2>/dev/null || true
+echo "===== RESULTADOS (baixe em: painel direito > Output > saidas) ====="
+ls -la /kaggle/working/saidas/ || true
 echo "FIM."
 ```
 
