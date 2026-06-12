@@ -71,3 +71,26 @@ iPhone 12, build profile, install confirmado via `devicectl` (`App installed:` c
 - **Memórias:** `raro-pattern-sfspeech-continuous-no-recycle-per-error` (nova), `raro-pattern-ios-wake-word-no-native-api` (corrigida), `feedback_many_native_fixes_means_reread_logs_not_abandon_framework` (nova), `feedback_verify_device_install_before_test` (nova).
 - **ADRs:** ADR-0022 (voz SFSpeech — engine validada nesta sessão), ADR-0023 (OpenWakeWord — premissa refutada p/ escopo on-screen, decisão pendente).
 - **PRs:** nenhum novo (PR #2 segue draft).
+
+---
+
+## Atualização (continuação da sessão) — investigação de background + CRUX PROVADO + decisão de modelo próprio
+
+Depois do foreground entregue, o dono confirmou que **background É necessário** e pediu para seguir boas práticas **validando tudo em fonte primária** (Context7/WebSearch) para não repetir o desperdício da voz.
+
+### Validações de fonte primária (Apple docs/forums, 2026-06-11)
+- **SFSpeech é foreground-only por restrição FUNDAMENTAL do iOS** (erro 1700 em background). Não adianta tentar — comprovado. Background exige detector próprio sobre `AVAudioSession` de background.
+- **Câmera não roda em background** (política de privacidade); desde iOS 7 a `AVCaptureSession` compartilha a `AVAudioSession` do app → áudio acoplado à câmera morre junto no background → app suspenso (`BackgroundTaskSuspended`, observado no device).
+- **Mic-only em background É viável** (`UIBackgroundModes:audio` + `playAndRecord` + restart pós-interrupção). Tudo gravado na memória `raro-pattern-ios-wake-word-no-native-api`.
+
+### CRUX PROVADO no iPhone 12 (de-risca a feature inteira)
+Experimento `BackgroundAudioProbe` (sonda descartável no AppDelegate, depois revertida): ligou o `AudioSessionCoordinator` (mic-only, já no projeto) + heartbeat de frames, com SFSpeech gated off. **Resultado:** com a tela bloqueada (21:04:33→21:05:06), o heartbeat continuou firme (frames 50→600, cadência ~5s, 7 batimentos em background), **zero suspensão, zero interrupção**. O mic próprio sobrevive ao background. Prova completa em `docs/superpowers/notes/voice-background-crux-proof-iphone12.md`. A sonda foi revertida (foreground SFSpeech restaurado); a fundação `AudioSessionCoordinator` permanece commitada (37c863c).
+
+### Decisão de engine de background (validada por custo)
+- **Picovoice Porcupine** (validado 2026-06-11): cria "Raro" em minutos, SDK Flutter, PT-BR, leve p/ background — MAS free tier = 1 device com marca d'água; custom keyword + produção = **~US$6.000/ano (Enterprise)**. Inviável p/ app de R$9,90/mês (~280 assinantes/ano só p/ pagar). **Dono recusou o custo.**
+- **DECISÃO: modelo próprio (ONNX/openWakeWord), grátis e vendável.** Treino via GPU alugada (~US$0,34/h, RunPod/Vast, <1h, <US$1) em vez do Colab/Kaggle instável. Próximo passo: análise de pontas soltas/incompatibilidades/breaking changes do caminho ONNX (Context7/WebSearch) ANTES de codar, depois executar o plano `2026-06-09-voice-wakeword-livekit-onnx`.
+
+### Estado pós-continuação
+- Foreground SFSpeech: funcionando e commitado (a43421a). Sonda revertida.
+- **App no iPhone 12 ainda tem a sonda instalada (voz off)** — precisa de rebuild p/ restaurar a voz foreground no aparelho.
+- Background: crux provado; falta detector ONNX + modelo "Raro" treinado (gate). É a próxima fatia.
