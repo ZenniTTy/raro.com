@@ -76,17 +76,17 @@ void main() {
     return container;
   }
 
-  test('engine gated off: controlMode=voice + isAvailable=true settles to '
-      'VoiceIdle, startListening NOT called', () async {
+  test('engine on: controlMode=voice + isAvailable=true → isAvailable + '
+      'startListening called', () async {
     final repo = buildRepo();
     final container = makeContainer(repo);
 
     await container.read(settingsControllerProvider.future);
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
 
-    verifyNever(repo.startListening);
-    verify(repo.stopListening).called(1);
-    expect(container.read(voiceControllerProvider), const VoiceIdle());
+    verify(repo.isAvailable).called(1);
+    verify(repo.startListening).called(1);
+    verifyNever(repo.stopListening);
   });
 
   test('controlMode=volume: stopListening called, state VoiceIdle, '
@@ -102,16 +102,17 @@ void main() {
     expect(container.read(voiceControllerProvider), const VoiceIdle());
   });
 
-  test('engine gated off: controlMode=voice + isAvailable=false settles to '
-      'VoiceIdle, startListening NOT called', () async {
+  test('engine on: controlMode=voice + isAvailable=false → state '
+      'VoiceUnavailable, startListening NOT called', () async {
     final repo = buildRepo(available: false);
     final container = makeContainer(repo);
 
     await container.read(settingsControllerProvider.future);
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
 
+    verify(repo.isAvailable).called(1);
     verifyNever(repo.startListening);
-    expect(container.read(voiceControllerProvider), const VoiceIdle());
+    expect(container.read(voiceControllerProvider), const VoiceUnavailable());
   });
 
   test('onWakeDetected(start) dispatches WakeCommand.start to the registered '
