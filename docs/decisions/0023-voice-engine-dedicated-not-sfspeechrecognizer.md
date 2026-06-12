@@ -1,10 +1,16 @@
 # 0023 — Engine de voz: wake-word dedicada on-device (NÃO SFSpeechRecognizer)
 
 - **Data:** 2026-06-08
-- **Status:** Accepted
+- **Status:** Accepted — **CONDICIONAL/BACKGROUND-ONLY a partir de 2026-06-11 (ver Atualização 0024 abaixo)**
 - **Relaciona:** **Supersede a escolha de engine do [ADR-0022](0022-voice-on-device-sfspeechrecognizer.md)** (que escolheu SFSpeechRecognizer). Demais decisões do ADR-0022 (modo selecionável, foreground, dois comandos, contrato Pigeon, indicador sempre-visível) permanecem válidas.
 - **Decisores:** Eduardo Rodrigues
 - **Contexto:** Sessão S2.C, validação no iPhone 12 físico (iOS 26.5) + investigação device-validated do app concorrente no iOS.
+
+> ## ⚠️ ATUALIZAÇÃO 2026-06-11 (sessão 0024) — premissa FOREGROUND refutada; escopo deste ADR reduzido a BACKGROUND
+>
+> A premissa central deste ADR (que o SFSpeechRecognizer é **beco-sem-saída** para wake-word, baseada no sintoma "funciona EXATAMENTE 1×" da seção Contexto abaixo) **foi REFUTADA por log limpo + device na sessão 0024.** O "funciona 1×" NÃO era limitação do endpointer/onset da Apple — era um **bug de arquitetura no nosso código**: reciclar a `recognitionTask` a cada erro benigno `1110` (no-speech). Corrigido sem trocar de engine (token de ciclo + ring buffer, commit `a43421a`); SFSpeech foreground agora **funciona** (8 wake matched no iPhone 12). Memória `raro-pattern-sfspeech-continuous-no-recycle-per-error`.
+>
+> **Escopo válido deste ADR agora = SÓ background/tela-bloqueada**, onde o SFSpeech realmente NÃO serve (foreground-only por restrição fundamental do iOS — erro 1700 em background; validado em fonte primária Apple). O dono decidiu **manter** este ADR para a feature de background (necessária), implementada com livekit-wakeword/ONNX. **Para foreground, vale o ADR-0022 (SFSpeechRecognizer, validado).** A seção "Contexto" abaixo é mantida como registro histórico do diagnóstico da época (parcialmente refutado).
 
 ## Contexto
 

@@ -6,6 +6,8 @@
 
 `Approved` — brainstorming concluído 2026-06-09; pré-condição de implementação é o gate de viabilidade no iPhone 12.
 
+> **⚠️ CORREÇÕES 2026-06-11 (sessão 0024) — ler antes de executar:** (1) "SFSpeech beco-sem-saída" acima vale SÓ para background; **foreground SFSpeech FUNCIONA** (premissa refutada — ver ADR-0023 Atualização 0024 + log 0024). Este spec aplica-se a **background**. (2) onnxruntime = **1.24.2** (não 1.16.0). (3) CoreML EP existe via `appendCoreMLExecutionProviderWithOptions:` (não `(with:)`); mel roda em CPU/XNNPACK. (4) Treino = `livekit-wakeword` + Piper + **GPU Linux alugada** (não Mac/VoxCPM/Kaggle). O bloco "VALIDAÇÕES E CORREÇÕES" do plano `2026-06-09-voice-wakeword-livekit-onnx.md` é autoritativo.
+
 ## Owner / Implementer
 
 - **Spec owner:** Eduardo Rodrigues (assina o WHAT)

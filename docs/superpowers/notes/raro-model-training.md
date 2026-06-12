@@ -1,7 +1,12 @@
 # Notas de treino — modelo wake-word "Raro"
 
-> Registro vivo do treino dos classificadores de voz do RARO. Preencher a seção **Métricas medidas**
-> depois de rodar o notebook no Kaggle. Suporta o gate de viabilidade do iPhone 12 (ADR-0023).
+> Registro vivo do treino dos classificadores de voz do RARO. Suporta o gate de viabilidade do iPhone 12 (ADR-0023).
+>
+> ## ⚠️ CORREÇÃO 2026-06-11 (sessão 0024) — supersede VoxCPM/Kaggle abaixo
+> - **TTS = Piper** (não VoxCPM): VoxCPM exige CUDA pesado e é proibitivo; o caminho prático é Piper PT-BR. `livekit-wakeword` usa Piper.
+> - **Venue = GPU Linux alugada (RunPod/Vast ~US$1-4)**, NÃO Kaggle nem Mac. O treino exige Linux+CUDA (Piper synthetic-gen + trainers Linux/WSL2); Kaggle funciona mas é mais lento e tem cap semanal. Memória `raro-pattern-wakeword-train-cpu-piper-no-colab` (corrigida).
+> - **Pinar deps** do livekit-wakeword/openWakeWord (~fev/2026 — breaking changes torchaudio 2.10+/Piper/speechbrain). Não usar `main` cru.
+> - **Lado iOS:** onnxruntime 1.24.2; CoreML EP via `appendCoreMLExecutionProviderWithOptions:`; mel roda em CPU/XNNPACK.
 
 ## Engine e decisões
 

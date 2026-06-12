@@ -6,7 +6,7 @@
 
 **Architecture:** Abordagem A — `AudioSessionCoordinator` (dono único da AVAudioSession) + `WakeWordDetector` (3 ONNX sessions sobre buffer 16kHz mono) + `VoiceManager` reescrito (orquestra tap→detector→WakeCommand) + toque cirúrgico na câmera para não monopolizar o mic. O contrato Pigeon (`voice_api.dart`) e toda a camada Dart NÃO mudam; o único toque Dart é flipar `_voiceEngineAvailable=true` após o gate de viabilidade passar no iPhone 12.
 
-**Tech Stack:** Swift 6 (@preconcurrency AVFoundation), ONNX Runtime Swift Package Manager (`from: "1.16.0"`, produto `onnxruntime`, API `ORTEnv`/`ORTSessionOptions`/`ORTSession`), CoreML Execution Provider, AVAudioEngine tap, Pigeon v26.3.2 (contrato inalterado), Riverpod 3 codegen (Dart, inalterado).
+**Tech Stack:** Swift 6 (@preconcurrency AVFoundation), ONNX Runtime Swift Package Manager (`from: "1.24.2"` — resolvido no projeto, NÃO 1.16.0, produto `onnxruntime`, API `ORTEnv`/`ORTSessionOptions`/`ORTSession`), CoreML Execution Provider, AVAudioEngine tap, Pigeon v26.3.2 (contrato inalterado), Riverpod 3 codegen (Dart, inalterado).
 
 **Estado já existente (NÃO recriar):**
 - Camada Dart 100% cabeada e testada (312 testes verdes): `voice_controller.dart`, `voice_repository.dart`, `voice_flutter_api_provider.dart`, `voice_state.dart`, `voice_listening_indicator.dart`. Desligada por `const bool _voiceEngineAvailable = false;` (voice_controller.dart:12).
@@ -81,7 +81,7 @@ Expected: GO (cobertura confirmada) OU instrução de addendum.
 
 Adicionar linha na tabela de stack do `docs/Blueprint.md` (§2), seguindo o formato das libs existentes:
 ```
-| onnxruntime (SPM) | `1.16.0+` | engine de wake-word on-device (ADR-0023) — CoreML EP |
+| onnxruntime (SPM) | `1.24.2+` | engine de wake-word on-device (ADR-0023) — CoreML EP |
 ```
 
 - [ ] **Step 3: Commit**
@@ -145,11 +145,11 @@ git commit -m "feat(voice): adiciona modelo wake-word raro (onnx) + notas de tre
 - [ ] **Step 1: Adicionar a referência SPM ao project.pbxproj (terminal-first)**
 
 Editar `apps/mobile/ios/Runner.xcodeproj/project.pbxproj`, seguindo o formato EXATO dos blocos existentes:
-- `XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager"` com `repositoryURL = "https://github.com/microsoft/onnxruntime-swift-package-manager"` + `requirement { kind = upToNextMajorVersion; minimumVersion = 1.16.0; }`
+- `XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager"` com `repositoryURL = "https://github.com/microsoft/onnxruntime-swift-package-manager"` + `requirement { kind = upToNextMajorVersion; minimumVersion = 1.24.2; }`
 - `XCSwiftPackageProductDependency` com `productName = onnxruntime` referenciando o package acima
 - adicionar esse product dependency ao `packageProductDependencies` do target Runner e à lista `packageReferences` do PBXProject
 
-> Fallback (conveniência): Xcode UI File > Add Package Dependencies > URL acima > Up to Next Major `1.16.0` > target Runner. Após usar a UI, fechar o Xcode e seguir o resto pelo terminal (§13).
+> Fallback (conveniência): Xcode UI File > Add Package Dependencies > URL acima > Up to Next Major `1.24.2` > target Runner. Após usar a UI, fechar o Xcode e seguir o resto pelo terminal (§13).
 
 - [ ] **Step 2: Resolver dependências (terminal, com os 2 git overrides)**
 
@@ -292,7 +292,9 @@ final class WakeWordDetector {
   // se NÃO existir, retorna false (roda em CPU) — sem mascarar com try? silencioso.
   private static func tryEnableCoreML(_ options: ORTSessionOptions, log: OSLog) -> Bool {
     do {
-      try options.appendCoreMLExecutionProvider(with: ORTCoreMLExecutionProviderOptions())
+      // API real 1.24.2 (selector ObjC appendCoreMLExecutionProviderWithOptions:, header ort_coreml_execution_provider.h);
+      // checar ORTIsCoreMLExecutionProviderAvailable() antes. O appendCoreMLExecutionProvider(with:) NÃO existe.
+      try options.appendCoreMLExecutionProvider(withOptions: ORTCoreMLExecutionProviderOptions())
       return true
     } catch {
       os_log("CoreML EP unavailable, running on CPU: %{public}@", log: log, type: .error,
