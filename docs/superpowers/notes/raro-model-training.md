@@ -2,11 +2,29 @@
 
 > Registro vivo do treino dos classificadores de voz do RARO. Suporta o gate de viabilidade do iPhone 12 (ADR-0023).
 >
-> ## ⚠️ CORREÇÃO 2026-06-11 (sessão 0024) — supersede VoxCPM/Kaggle abaixo
-> - **TTS = Piper** (não VoxCPM): VoxCPM exige CUDA pesado e é proibitivo; o caminho prático é Piper PT-BR. `livekit-wakeword` usa Piper.
-> - **Venue = GPU Linux alugada (RunPod/Vast ~US$1-4)**, NÃO Kaggle nem Mac. O treino exige Linux+CUDA (Piper synthetic-gen + trainers Linux/WSL2); Kaggle funciona mas é mais lento e tem cap semanal. Memória `raro-pattern-wakeword-train-cpu-piper-no-colab` (corrigida).
-> - **Pinar deps** do livekit-wakeword/openWakeWord (~fev/2026 — breaking changes torchaudio 2.10+/Piper/speechbrain). Não usar `main` cru.
+> ## ✅ FATOS VALIDADOS 2026-06-11 (sessão 0024, fonte primária livekit-wakeword 0.2.1)
+> - **TTS = VoxCPM (NÃO Piper).** Confirmado na doc oficial: **Piper é english-only**; PT-BR EXIGE `tts_backend: voxcpm`. (Correção de um erro intermediário desta sessão que dizia "use Piper" — Piper não gera português aqui.) Aviso oficial: *acurácia multilíngue é menor → subir `voice_design_prompts` p/ 50-100 + `n_samples` alto.*
+> - **Venue:** VoxCPM exige **CUDA (~8GB VRAM)**. Vale **Kaggle (T4/P100 16GB, grátis — mas VoxCPM é lento, cuidar do cap de 9h/sessão + 30h/sem)** OU **RunPod/Vast 4090 (mais rápido, ~US$1-4, você opera)**. **Não roda no Mac.** Mitigar disco-cheio (erro anterior): caches em `/kaggle/working` ou `/workspace` via `HF_HOME`.
+> - **Versão pinada:** `pip install "livekit-wakeword[train,eval,export,voxcpm]==0.2.1"` (Python ≥3.11). System deps: `espeak-ng libsndfile1 ffmpeg sox portaudio19-dev`.
+> - **Kit turnkey pronto:** `configs/raro_gravar.yaml` + `configs/raro_parar.yaml` + `train-raro.sh` (ver Runbook abaixo).
 > - **Lado iOS:** onnxruntime 1.24.2; CoreML EP via `appendCoreMLExecutionProviderWithOptions:`; mel roda em CPU/XNNPACK.
+
+## Runbook turnkey (como rodar o treino)
+
+**Arquivos do kit** (em `docs/superpowers/notebooks/`): `configs/raro_gravar.yaml`, `configs/raro_parar.yaml`, `train-raro.sh`. API/config validados em fonte primária (não testados por execução — sem GPU no ambiente de autoria; confira saídas na 1ª rodada).
+
+**Opção A — Kaggle (grátis, familiar):**
+1. Novo Notebook → Settings → Accelerator = **GPU T4 x2** (ou P100); Internet = **On**.
+2. Upload da pasta `notebooks/` (os 2 YAML + o `.sh`) como Dataset, ou cole o conteúdo em células.
+3. Numa célula: `!WORK=/kaggle/working bash train-raro.sh` (full) ou `!QUICK=1 WORK=/kaggle/working bash train-raro.sh` (prova rápida primeiro).
+4. ⚠️ VoxCPM é lento — se passar de ~8h, reduza `n_samples` ou rode 1 comando por sessão. Baixe os `.onnx` + metrics do Output.
+
+**Opção B — RunPod/Vast (rápido, ~US$1-4):**
+1. Alugue uma instância **RTX 4090** com template PyTorch/CUDA (Ubuntu).
+2. No terminal: `git clone` (ou upload) → `cd .../notebooks` → `WORK=/workspace bash train-raro.sh`.
+3. Baixe `raro_gravar.onnx` + `raro_parar.onnx` + metrics JSON.
+
+**Sempre:** comece com `QUICK=1` (prova de pipeline + sinal precoce de recall barato) ANTES do treino cheio. Se o QUICK já vier com recall horrível, pare e ajuste antes de gastar o treino completo.
 
 ## Engine e decisões
 

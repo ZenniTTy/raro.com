@@ -22,7 +22,7 @@ Sessão S2.D — **implementar a voz em BACKGROUND** (tela bloqueada) com detect
 **Fatos validados em fonte primária (0024) — usar, não re-descobrir:**
 - SFSpeech é **foreground-only** (erro 1700 em background, restrição fundamental iOS) → background EXIGE detector próprio. Câmera não roda em background → mic deve ser desacoplado da câmera (o Coordinator já é).
 - onnxruntime **1.24.2**; **CoreML EP existe**: `ORTIsCoreMLExecutionProviderAvailable()` + `appendCoreMLExecutionProviderWithOptions:` (o `appendCoreMLExecutionProvider(with:)` NÃO existe). O **melspectrogram roda em CPU/XNNPACK** no iOS (incompatibilidade de operadores), só o classifier no CoreML.
-- Ferramenta = **`livekit-wakeword`** (melhor que openWakeWord cru: 100× menos FP/h). Treino exige **Linux + CUDA** (Piper) → **GPU Linux alugada (RunPod/Vast ~US$1-4)**, NÃO Mac. Pinar deps (~fev/2026, breaking changes torchaudio/Piper/speechbrain).
+- Ferramenta = **`livekit-wakeword` 0.2.1** (melhor que openWakeWord: 100× menos FP/h). **PT-BR EXIGE VoxCPM** (Piper é english-only) → GPU CUDA: Kaggle T4 (grátis, lento) ou RunPod/Vast 4090 (~US$1-4), NÃO Mac. Acurácia multilíngue menor → `voice_design_prompts` 50-100. **Kit turnkey pronto em `docs/superpowers/notebooks/`** (2 configs + `train-raro.sh` + runbook).
 - **NÃO remover `NSSpeechRecognitionUsageDescription`** do Info.plist enquanto o SFSpeech foreground existir (a Task 6 Step 2 do plano manda remover — só quando o ONNX superseder DE FATO o foreground).
 - **Picovoice recusado** pelo dono (custom keyword = Enterprise ~US$6k/ano).
 

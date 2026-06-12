@@ -1,0 +1,42 @@
+# Config livekit-wakeword 0.2.1 — comando STOP ("Raro parar") → raro_parar.onnx
+# Campos validados na fonte primária (github.com/livekit/livekit-wakeword + docs.livekit.io, 2026-06-11).
+# Piper gera só INGLÊS por padrão → qualquer outro idioma usa voxcpm (doc oficial).
+# PT-BR não é listado explicitamente nos "30 idiomas" do VoxCPM — validar no 1º run que "raro
+# parar" sai inteligível; se VoxCPM não cobrir PT-BR bem, é gatilho de Plano B.
+# Decisão 5a: 1 modelo por frase (este detecta SÓ "raro parar"); o START está em raro_gravar.yaml.
+
+model_name: raro_parar
+target_phrases:
+  - "raro parar"
+
+tts_backend: voxcpm
+# voice_design_prompts: mesmo conjunto do raro_gravar (paridade de diversidade entre os 2 comandos).
+# Inglês por convenção (a doc não exige idioma p/ os prompts). Aviso oficial: subir p/ 50-100 se recall baixo.
+voxcpm_tts:
+  voice_design_prompts:
+    - "A young adult woman, clear mid-pitch voice, moderate pace, calm and neutral"
+    - "A young adult man, warm baritone, steady pace, friendly and articulate"
+    - "A middle-aged woman, slightly low voice, relaxed pace, confident"
+    - "A middle-aged man, deep voice, slow deliberate pace, authoritative"
+    - "A teenage girl, bright high-pitched voice, quick pace, energetic"
+    - "A teenage boy, light voice still maturing, fast pace, casual"
+    - "An elderly woman, soft thin voice, slow pace, gentle"
+    - "An elderly man, gravelly low voice, slow pace, measured"
+    - "A young woman, soft breathy voice, moderate pace, shy"
+    - "A young man, nasal mid voice, brisk pace, upbeat"
+    - "A woman speaking from a distance in a room with light reverb"
+    - "A man speaking close to the mic, slightly muffled, intimate"
+    - "A woman with a fast excited delivery, higher pitch, expressive"
+    - "A man with a calm slow delivery, lower pitch, monotone"
+
+n_samples: 15000
+n_samples_val: 3000
+
+model:
+  model_type: conv_attention
+  model_size: small
+
+steps: 50000
+target_fp_per_hour: 0.2
+
+# (output_format omitido — ONNX é o default; a doc só documenta `output_format: tflite` p/ trocar.)

@@ -1,0 +1,48 @@
+# Config livekit-wakeword 0.2.1 — comando START ("Raro gravar") → raro_gravar.onnx
+# Campos validados na fonte primária (github.com/livekit/livekit-wakeword + docs.livekit.io, 2026-06-11).
+# Piper gera só INGLÊS por padrão → qualquer outro idioma usa voxcpm (doc oficial).
+# PT-BR não é listado explicitamente nos "30 idiomas" do VoxCPM — validar no 1º run que "raro
+# gravar" sai inteligível; se VoxCPM não cobrir PT-BR bem, é gatilho de Plano B.
+# Decisão 5a: 1 modelo por frase (este detecta SÓ "raro gravar"); o STOP está em raro_parar.yaml.
+
+model_name: raro_gravar
+target_phrases:
+  - "raro gravar"
+
+tts_backend: voxcpm
+# voice_design_prompts: descrições de vozes (VoxCPM desenha a voz a partir do prompt). A doc NÃO diz
+# que precisam ser em inglês — usei inglês por convenção (plausível, não exigido). A frase-alvo
+# (target_phrases) é que sai em PT-BR. Aviso oficial: acurácia multilíngue menor → recomenda 50-100
+# prompts; comece com estes ~14 e EXPANDA p/ 50-100 se o recall do gate ficar baixo (Plano B).
+voxcpm_tts:
+  voice_design_prompts:
+    - "A young adult woman, clear mid-pitch voice, moderate pace, calm and neutral"
+    - "A young adult man, warm baritone, steady pace, friendly and articulate"
+    - "A middle-aged woman, slightly low voice, relaxed pace, confident"
+    - "A middle-aged man, deep voice, slow deliberate pace, authoritative"
+    - "A teenage girl, bright high-pitched voice, quick pace, energetic"
+    - "A teenage boy, light voice still maturing, fast pace, casual"
+    - "An elderly woman, soft thin voice, slow pace, gentle"
+    - "An elderly man, gravelly low voice, slow pace, measured"
+    - "A young woman, soft breathy voice, moderate pace, shy"
+    - "A young man, nasal mid voice, brisk pace, upbeat"
+    - "A woman speaking from a distance in a room with light reverb"
+    - "A man speaking close to the mic, slightly muffled, intimate"
+    - "A woman with a fast excited delivery, higher pitch, expressive"
+    - "A man with a calm slow delivery, lower pitch, monotone"
+
+# n_samples por classe. VoxCPM é lento → para 1ª prova de viabilidade barata use 3000 (override
+# via linha de comando ou edite aqui); para treino "de verdade" suba para 15000-30000 (a doc pede
+# n_samples alto p/ multilíngue). n_samples_val ~20% de n_samples.
+n_samples: 15000
+n_samples_val: 3000
+
+model:
+  model_type: conv_attention   # conv_attention (melhor FP) | dnn | rnn
+  model_size: small            # tiny | small | medium | large — suba p/ medium se recall baixo
+
+steps: 50000
+target_fp_per_hour: 0.2        # limiar de falso-positivo usado no eval/DET
+
+# (output_format omitido — ONNX é o default; a doc só documenta `output_format: tflite` p/ trocar.
+#  O export gera <model_name>.onnx por padrão.)
