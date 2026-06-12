@@ -17,6 +17,23 @@
 
 ---
 
+## ⚠️ VALIDAÇÕES E CORREÇÕES (sessão 0024, 2026-06-11 — fonte primária + device)
+
+Due-diligence antes de executar. **Estes fatos supersedem detalhes inline desatualizados nas Tasks abaixo:**
+
+1. **CRUX DE BACKGROUND JÁ PROVADO no iPhone 12.** O `AudioSessionCoordinator` (mic-only, já commitado 37c863c) mantém o app vivo e recebendo áudio com a **tela bloqueada** (heartbeat contínuo, frames 50→600, zero `BackgroundTaskSuspended`). Prova em `docs/superpowers/notes/voice-background-crux-proof-iphone12.md`. A Task 4 (Coordinator) está essencialmente FEITA; o gate de background da Task 7 (4b) já tem evidência da fundação.
+2. **onnxruntime resolvido = `1.24.2`** (NÃO `1.16.0` da spec/Task 2). Atualizar refs.
+3. **CoreML EP EXISTE em 1.24.2** (o "spike" da Task 3 Step 0 está RESOLVIDO — existe). API REAL: `ORTIsCoreMLExecutionProviderAvailable()` (checar antes) + `appendCoreMLExecutionProviderWithOptions:` / `...WithOptionsV2:`. **O `appendCoreMLExecutionProvider(with:)` do código da Task 3 NÃO existe — corrigir.**
+4. **melspectrogram tem incompatibilidade de operadores** conhecida entre plataformas → no iOS rodar o **mel em CPU/XNNPACK**, só o classifier no CoreML (seleção de EP POR modelo, não global). Smoke-test de carga dos 3-4 modelos no device é obrigatório antes de confiar.
+5. **Ferramenta = `livekit-wakeword`** (real, melhor que openWakeWord: 100× menos FP/h, 60× menos falso-aceite, 17% mais detecção; exporta ONNX compatível com openWakeWord). A Task 1 deve usá-la.
+6. **Treino exige Linux + CUDA** (Piper synthetic-gen + trainers são Linux/WSL2). **NÃO Mac.** Caminho prático = GPU Linux alugada (RunPod/Vast ~US$0,34/h, treino ~US$1-4). A memória `raro-pattern-wakeword-train-cpu-piper-no-colab` foi corrigida (o "CPU no Mac" briga com o tooling).
+7. **Dependency hell:** pinar `livekit-wakeword`/openWakeWord em commit conhecido (~fev/2026) ou fork com patches (torchaudio 2.10+/Piper/speechbrain). Não usar `main` cru.
+8. **Risco residual concentrado SÓ no modelo:** infraestrutura toda (background, ONNX, CoreML, integração) provada/disponível; o único não-garantido é a **qualidade do "Raro" PT-BR always-on** (recall >80% + FP baixo no iPhone — Task 7 gate). "Raro" é palavra comum → risco de FP. Só se prova treinando+testando. Plano B se reprovar = mais dados / frase distinta / aceitar custo.
+9. **Picovoice recusado** pelo dono (custom keyword = Enterprise ~US$6k/ano; free tier = 1 device com marca d'água). Modelo próprio confirmado.
+10. **NSSpeechRecognitionUsageDescription** foi restaurado no Info.plist (sessão 0024, d494179) porque o SFSpeech foreground segue ativo. **NÃO remover** enquanto o foreground SFSpeech existir (a Task 6 Step 2 manda remover — só remover quando o ONNX superseder DE FATO o foreground).
+
+---
+
 ## File Structure
 
 **Modelo + dep nativa**

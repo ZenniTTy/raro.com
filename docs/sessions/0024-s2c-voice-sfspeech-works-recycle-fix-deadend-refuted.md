@@ -88,7 +88,10 @@ Experimento `BackgroundAudioProbe` (sonda descartável no AppDelegate, depois re
 
 ### Decisão de engine de background (validada por custo)
 - **Picovoice Porcupine** (validado 2026-06-11): cria "Raro" em minutos, SDK Flutter, PT-BR, leve p/ background — MAS free tier = 1 device com marca d'água; custom keyword + produção = **~US$6.000/ano (Enterprise)**. Inviável p/ app de R$9,90/mês (~280 assinantes/ano só p/ pagar). **Dono recusou o custo.**
-- **DECISÃO: modelo próprio (ONNX/openWakeWord), grátis e vendável.** Treino via GPU alugada (~US$0,34/h, RunPod/Vast, <1h, <US$1) em vez do Colab/Kaggle instável. Próximo passo: análise de pontas soltas/incompatibilidades/breaking changes do caminho ONNX (Context7/WebSearch) ANTES de codar, depois executar o plano `2026-06-09-voice-wakeword-livekit-onnx`.
+- **DECISÃO: modelo próprio (ONNX/livekit-wakeword), grátis e vendável.** Treino via GPU Linux alugada (~US$0,34/h, RunPod/Vast, <1h, <US$1) em vez do Colab/Kaggle instável.
+
+### Due-diligence do caminho ONNX (fonte primária, antes de codar)
+Validado p/ não repetir o desperdício: **nenhum bloqueador fatal.** ✅ CoreML EP EXISTE no onnxruntime **1.24.2** (`ORTIsCoreMLExecutionProviderAvailable`+`appendCoreMLExecutionProviderWithOptions:`; o `(with:)` do plano não existe); ✅ `livekit-wakeword` é real e superior ao openWakeWord (100× menos FP/h, ONNX compatível), PT-BR ok. ⚠️ Pontas soltas tratáveis: versão 1.16.0→1.24.2; treino exige Linux+CUDA (GPU alugada, NÃO Mac); mel roda em CPU/XNNPACK no iOS (op-compat); pinar deps (~fev/2026); NSSpeechRecognitionUsageDescription NÃO remover enquanto SFSpeech foreground existir. 🔴 Risco residual concentrado SÓ no modelo (qualidade "Raro" PT-BR always-on, gate recall>80%+FP baixo no device — só prova treinando). **Plano `2026-06-09-voice-wakeword-livekit-onnx` atualizado com bloco "VALIDAÇÕES E CORREÇÕES (0024)"; memória `raro-pattern-wakeword-train-cpu-piper-no-colab` corrigida (GPU Linux, não Mac CPU).**
 
 ### Estado pós-continuação
 - Foreground SFSpeech: funcionando e commitado (a43421a). Sonda revertida.
