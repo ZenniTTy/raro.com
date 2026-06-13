@@ -24,19 +24,29 @@
 
 - [ ] 9. Cole o bloco inteiro abaixo e aperte Enter. (Prova rápida; ~20-40 min.)
 
+> ⚠️ **Antes:** gere um token grátis do HuggingFace (huggingface.co/settings/tokens → Read) e troque `COLE_SEU_HF_TOKEN` abaixo. SEM ele, o download de ~22GB de ruído PENDURA (rate-limit anônimo → estimou 76h, GPU ociosa). Com token: baixa em segundos. (Validado 2026-06-13: foi a causa do único travamento real.)
+
 ```bash
 set -e
 export ROOT=/workspace/raro_run
 export HF_HOME=/workspace/hf
+export PIP_BREAK_SYSTEM_PACKAGES=1
+# >>> destrava download HuggingFace (rate-limit anonimo + conexao pendurada) <<<
+export HF_TOKEN="COLE_SEU_HF_TOKEN"
+export HUGGING_FACE_HUB_TOKEN="$HF_TOKEN"
+export HF_HUB_DOWNLOAD_TIMEOUT=30
+export HF_HUB_ETAG_TIMEOUT=30
 mkdir -p "$ROOT/configs" "$HF_HOME" "$ROOT/raro_data"
 cd "$ROOT"
 
-# >>> INSTALAÇÃO <<<
+# >>> INSTALAÇÃO (template RunPod bloqueia pip sem --break-system-packages) <<<
 apt-get update -qq && apt-get install -y -qq espeak-ng libsndfile1 ffmpeg sox portaudio19-dev
-pip install -q "livekit-wakeword[train,eval,export,voxcpm]==0.2.1"
+pip install -q --break-system-packages "livekit-wakeword[train,eval,export,voxcpm]==0.2.1"
 python -c "import torch; assert torch.cuda.is_available(); cap=torch.cuda.get_device_capability(); print('GPU OK:', torch.cuda.get_device_name(0), 'cap', cap); assert cap[0]>=7, 'GPU velha (precisa sm_70+)'"
+python -c "from huggingface_hub import whoami; import os; print('HF logado:', whoami(token=os.environ['HF_TOKEN'])['name'])" 2>&1 | head -1 || echo "(token so no env)"
 command -v livekit-wakeword || { echo 'ERRO: livekit-wakeword nao instalou'; exit 1; }
 # >>> fim da instalação <<<
+# NAO usar HF_HUB_ENABLE_HF_TRANSFER/hf_transfer (deprecado, hang silencioso).
 
 PROMPTS='  voice_design_prompts:
     - "A young adult woman, clear mid-pitch voice, moderate pace, calm"

@@ -1,0 +1,3 @@
+# Modelos de PROVA (n_samples=2000) ficam fora do git — backup local apenas.
+# Os DEFINITIVOS (n_samples=15000) serao commitados conscientemente quando prontos.
+*.onnx
