@@ -45,8 +45,16 @@ final class WakeWordPipeline {
     while audioBuffer.count >= Self.audioStep {
       let chunk = Array(audioBuffer.prefix(Self.audioStep))
       audioBuffer.removeFirst(Self.audioStep)
-      let frames = mel.extract(chunk)
-      melBuffer.append(contentsOf: frames)
+      melBuffer.append(contentsOf: mel.extract(chunk))
+      runEmbeddingsIfReady()
+    }
+  }
+
+  private func runEmbeddingsIfReady() {
+    while melBuffer.count >= Self.melWindow {
+      let window = Array(melBuffer.prefix(Self.melWindow))
+      embeddingBuffer.append(embedding.embed(window))
+      melBuffer.removeFirst(Self.melStep)
     }
   }
 }
