@@ -1,16 +1,19 @@
 # Prompt — Próxima sessão: integração iOS do wake-word ONNX (S2.D parte 2)
 
-> **ATUALIZADO na sessão 0025 (2026-06-13).** Os 2 modelos ONNX JÁ FORAM TREINADOS e passaram o gate (~92%) — ver `docs/superpowers/notebooks/modelos-treinados/` (com README de proveniência) + sessão 0025. O treino NÃO é mais o próximo passo; a **integração iOS** é.
+> **ATUALIZADO na sessão 0026 (2026-06-14).** Os 4 modelos ONNX (pipeline de 3 estágios) JÁ ESTÃO versionados em `apps/mobile/ios/Runner/Resources/`, com contrato de I/O VALIDADO por inspeção direta dos `.onnx`. O treino e a obtenção dos modelos NÃO são mais o próximo passo; escrever o **`WakeWordDetector.swift`** é. **A Sprint 2 inteira foi mergeada em `develop` (PR #2); a branch `feat/camera-native-bridge` segue viva e idêntica à develop — continue nela.**
 
-## ESTADO REAL (0025): modelos prontos, falta a peça nativa
+## ESTADO REAL (0026): modelos bundlados + contrato provado, falta a peça nativa
 
-- ✅ **`raro_gravar.onnx` (recall 91,4%, FP-h 0,18, limiar ótimo 0,34)** + **`raro_parar.onnx` (92,2%, FP-h 0,18, limiar ótimo 0,23)** em `docs/superpowers/notebooks/modelos-treinados/`. São de PROVA (n_samples=2000) — suficientes p/ 1ª validação no device; lote cheio é Plano B se reprovar. **Usar o limiar ótimo de cada `*_eval.json`, não o 0.5 default.**
-- ✅ **onnxruntime já no projeto** (SPM). **`AudioSessionCoordinator.swift` existe** (mic 16kHz, provado sobreviver à tela bloqueada na 0024).
+- ✅ **O wake-word é um PIPELINE DE 3 ESTÁGIOS ONNX em cadeia (NÃO 1 arquivo):** `melspectrogram.onnx` → `embedding_model.onnx` → `<classifier>.onnx`. Os 2 `.onnx` treinados na 0025 são **só o classifier** (estágio 3). A 0026 obteve os 2 feature-extractors genéricos que faltavam (do pacote `livekit-wakeword==0.2.1`, mesma versão do treino) — sem eles o detector não vai de áudio→embeddings.
+- ✅ **Os 4 `.onnx` estão em `apps/mobile/ios/Runner/Resources/`** (versionados, ~2,6 MB): `melspectrogram.onnx`, `embedding_model.onnx`, `raro_gravar.onnx`, `raro_parar.onnx`. (Os de `docs/superpowers/notebooks/modelos-treinados/` são as cópias-fonte dos classifiers; usar os de `Resources/`.)
+- ✅ **CONTRATO DE I/O VALIDADO** em `docs/superpowers/notes/raro-model-training.md` (seção "Contrato de I/O") — shapes/nomes/dtypes/opsets reais + sha256 de proveniência + algoritmo de streaming. **LER DAQUI, não inventar shapes.** Cadeia: áudio`[1,N]` → mel`[T,1,?,32]` (32 bins) → embedding`[?,1,1,96]` (janela 76×32, step 8) → classifier`[1,16,96]` → `score[1,1]`. Limiares ótimos: **gravar 0,34 / parar 0,23** (não 0.5). Memória `raro-pattern-wakeword-onnx-3stage-pipeline-shapes`.
+- ✅ **onnxruntime já no projeto** (SPM, 1.24.2). **`AudioSessionCoordinator.swift` existe** (mic 16kHz, provado sobreviver à tela bloqueada na 0024).
 - ❌ **`WakeWordDetector.swift` NÃO existe** — é o trabalho desta sessão.
+- ⚠️ **DÉBITO ABERTO (não esquecer):** os 4 `.onnx` estão no git mas **NÃO no `project.pbxproj`** (projeto não é file-system-synchronized) → ainda **não entram no bundle**; `Bundle.main.url(forResource:)` retorna `nil` até inseri-los. Fazer as inserções no pbxproj NO MESMO toque do detector (PBXFileReference + PBXBuildFile + Copy Bundle Resources `97C146EC...`) + smoke-test `Bundle.main` no device. Ver memória `raro-pattern-ios-xctest-pbxproj-4-insertions`.
 
 ## Tarefa: `WakeWordDetector.swift` (brainstorm → plano → TDD)
 
-Pipeline: carregar `.onnx` → `AudioSessionCoordinator` (mic 16kHz mono) → mel em CPU/XNNPACK + classifier em CoreML EP (`appendCoreMLExecutionProviderWithOptions:`) → ring-buffer de features → limiar ótimo → disparar gravar/parar. **Gate:** detecção "Raro" >80% no iPhone 12 físico + coexistência voz↔gravação. Reprovou → Plano B (lote cheio 15000 / +voice_design_prompts 50-100), NÃO Picovoice.
+Pipeline **STATEFUL de 3 sessões ONNX**: `AudioSessionCoordinator` (mic 16kHz mono, 1280 samples/80ms) → **melspectrogram** (CPU/XNNPACK — operadores incompatíveis com CoreML) → ring-buffer de mel frames (≥76) → **embedding_model** (janela 76×32, step 8) → ring-buffer de embeddings (≥16) → **2 classifiers** gravar+parar (CoreML EP, `appendCoreMLExecutionProviderWithOptions:`) compartilhando mel+embedding → limiar ótimo por classe → disparar gravar/parar. **Gate:** detecção "Raro" >80% no iPhone 12 físico + coexistência voz↔gravação. Reprovou → Plano B (lote cheio 15000 / +voice_design_prompts 50-100), NÃO Picovoice.
 
 ---
 ## (Contexto histórico — voz BACKGROUND/foreground SFSpeech, mantido abaixo)
