@@ -46,8 +46,13 @@ void main() {
     when(repo.discoverCapabilities).thenAnswer(
       (_) async => CameraCapabilities(
         availableLenses: [LensType.wide],
-        supportedResolutions: [Resolution.fhd1080],
-        supportedFps: [Fps.fps30],
+        supportedFormats: [
+          FormatCapability(
+            resolution: Resolution.fhd1080,
+            fps: Fps.fps30,
+            requiresPhysicalLens: false,
+          ),
+        ],
       ),
     );
     when(repo.stopSession).thenAnswer((_) async {});
@@ -92,8 +97,13 @@ void main() {
       when(repo.discoverCapabilities).thenAnswer(
         (_) async => CameraCapabilities(
           availableLenses: [LensType.wide],
-          supportedResolutions: [Resolution.fhd1080],
-          supportedFps: [Fps.fps30],
+          supportedFormats: [
+            FormatCapability(
+              resolution: Resolution.fhd1080,
+              fps: Fps.fps30,
+              requiresPhysicalLens: false,
+            ),
+          ],
         ),
       );
       when(repo.stopSession).thenAnswer((_) async {});

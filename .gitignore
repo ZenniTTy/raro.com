@@ -76,3 +76,6 @@ coverage/
 
 # ───────────────────────── Turborepo cache ────────────
 .turbo/
+
+# Superpowers brainstorm (visual companion, local only)
+.superpowers/

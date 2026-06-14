@@ -50,18 +50,67 @@ class FlutterError (
   override val message: String? = null,
   val details: Any? = null
 ) : Throwable()
-private open class VoiceApiPigeonCodec : StandardMessageCodec() {
-  override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
-    return     super.readValueOfType(type, buffer)
-  }
-  override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
-    super.writeValue(stream, value)
+
+enum class WakeCommand(val raw: Int) {
+  START(0),
+  STOP(1);
+
+  companion object {
+    fun ofRaw(raw: Int): WakeCommand? {
+      return values().firstOrNull { it.raw == raw }
+    }
   }
 }
 
+enum class VoiceListeningState(val raw: Int) {
+  IDLE(0),
+  LISTENING(1),
+  PAUSED(2),
+  UNAVAILABLE(3);
+
+  companion object {
+    fun ofRaw(raw: Int): VoiceListeningState? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+private open class VoiceApiPigeonCodec : StandardMessageCodec() {
+  override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
+    return when (type) {
+      129.toByte() -> {
+        return (readValue(buffer) as Long?)?.let {
+          WakeCommand.ofRaw(it.toInt())
+        }
+      }
+      130.toByte() -> {
+        return (readValue(buffer) as Long?)?.let {
+          VoiceListeningState.ofRaw(it.toInt())
+        }
+      }
+      else -> super.readValueOfType(type, buffer)
+    }
+  }
+  override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
+    when (value) {
+      is WakeCommand -> {
+        stream.write(129)
+        writeValue(stream, value.raw.toLong())
+      }
+      is VoiceListeningState -> {
+        stream.write(130)
+        writeValue(stream, value.raw.toLong())
+      }
+      else -> super.writeValue(stream, value)
+    }
+  }
+}
+
+
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface VoiceHostApi {
-  fun voicePing()
+  fun isAvailable(callback: (Result<Boolean>) -> Unit)
+  fun startListening()
+  fun stopListening()
 
   companion object {
     /** The codec used by VoiceHostApi. */
@@ -73,11 +122,45 @@ interface VoiceHostApi {
     fun setUp(binaryMessenger: BinaryMessenger, api: VoiceHostApi?, messageChannelSuffix: String = "") {
       val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.VoiceHostApi.voicePing$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.VoiceHostApi.isAvailable$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            api.isAvailable{ result: Result<Boolean> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(VoiceApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(VoiceApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.VoiceHostApi.startListening$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
-              api.voicePing()
+              api.startListening()
+              listOf(null)
+            } catch (exception: Throwable) {
+              VoiceApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.VoiceHostApi.stopListening$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              api.stopListening()
               listOf(null)
             } catch (exception: Throwable) {
               VoiceApiPigeonUtils.wrapError(exception)
@@ -99,12 +182,29 @@ class VoiceFlutterApi(private val binaryMessenger: BinaryMessenger, private val 
       VoiceApiPigeonCodec()
     }
   }
-  fun voiceReady(callback: (Result<Unit>) -> Unit)
+  fun onWakeDetected(commandArg: WakeCommand, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    val channelName = "dev.flutter.pigeon.raro_mobile.VoiceFlutterApi.voiceReady$separatedMessageChannelSuffix"
+    val channelName = "dev.flutter.pigeon.raro_mobile.VoiceFlutterApi.onWakeDetected$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
-    channel.send(null) {
+    channel.send(listOf(commandArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(VoiceApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  fun onListeningStateChanged(stateArg: VoiceListeningState, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.raro_mobile.VoiceFlutterApi.onListeningStateChanged$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(stateArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))

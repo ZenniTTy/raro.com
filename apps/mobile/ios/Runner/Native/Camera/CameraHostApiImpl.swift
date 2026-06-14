@@ -29,6 +29,11 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
         self?.flutterApi.onFocusChanged(point: point, locked: success) { _ in }
       }
     }
+    manager.onRecordingStarted = { [weak self] sessionId in
+      DispatchQueue.main.async {
+        self?.flutterApi.onRecordingStarted(sessionId: sessionId) { _ in }
+      }
+    }
     manager.onRecordingFinished = { [weak self] url, durationMs in
       DispatchQueue.main.async {
         self?.flutterApi.onRecordingFinished(path: url.path, durationMs: Int64(durationMs)) { _ in }
@@ -87,7 +92,11 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
   func startRecording(options: RecordingOptions) throws -> String {
     let sessionId = UUID().uuidString
     do {
-      try manager.startRecording(sessionId: sessionId, codec: options.codec)
+      try manager.startRecording(
+        sessionId: sessionId,
+        codec: options.codec,
+        includePreroll: options.includeReplayPreroll
+      )
       return sessionId
     } catch let error as CameraNativeError {
       throw pigeonError(from: error)
@@ -210,11 +219,11 @@ final class CameraHostApiImpl: NSObject, CameraHostApi, @unchecked Sendable {
     completion(.success(manager.hasPermission()))
   }
 
-  private func pigeonError(from error: CameraNativeError) -> PigeonError {
+  private func pigeonError(from error: CameraNativeError) -> CameraPigeonError {
     return pigeonError(code: error.code, message: error.message)
   }
 
-  private func pigeonError(code: CameraErrorCode, message: String?) -> PigeonError {
-    return PigeonError(code: "\(code)", message: message, details: nil)
+  private func pigeonError(code: CameraErrorCode, message: String?) -> CameraPigeonError {
+    return CameraPigeonError(code: "\(code)", message: message, details: nil)
   }
 }

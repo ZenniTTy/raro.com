@@ -6,27 +6,49 @@ class LensSwitcher extends StatelessWidget {
     super.key,
     required this.selected,
     required this.onSelected,
+    this.ultraWideEnabled = true,
   });
 
   final LensType selected;
   final ValueChanged<LensType> onSelected;
+  final bool ultraWideEnabled;
 
   static const List<LensType> _lenses = [LensType.ultraWide, LensType.wide];
 
   String _labelFor(LensType lens) => lens == LensType.ultraWide ? '0.5×' : '1×';
 
+  bool _isDisabled(LensType lens) =>
+      lens == LensType.ultraWide && !ultraWideEnabled;
+
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final lens in _lenses) ...[
-          _LensChip(
-            label: _labelFor(lens),
-            active: lens == selected,
-            onTap: () => onSelected(lens),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final lens in _lenses) ...[
+              _LensChip(
+                label: _labelFor(lens),
+                active: lens == selected && !_isDisabled(lens),
+                disabled: _isDisabled(lens),
+                onTap: _isDisabled(lens) ? null : () => onSelected(lens),
+              ),
+              if (lens != _lenses.last) const SizedBox(width: 6),
+            ],
+          ],
+        ),
+        if (!ultraWideEnabled) ...[
+          const SizedBox(height: 4),
+          Text(
+            'indisponível em 4K60',
+            style: TextStyle(
+              fontSize: 9,
+              color: Colors.white.withValues(alpha: 0.5),
+            ),
           ),
-          if (lens != _lenses.last) const SizedBox(width: 6),
         ],
       ],
     );
@@ -38,14 +60,19 @@ class _LensChip extends StatelessWidget {
     required this.label,
     required this.active,
     required this.onTap,
+    this.disabled = false,
   });
 
   final String label;
   final bool active;
-  final VoidCallback onTap;
+  final bool disabled;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final foreground = disabled
+        ? Colors.white.withValues(alpha: 0.3)
+        : (active ? Colors.black : Colors.white);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -56,14 +83,14 @@ class _LensChip extends StatelessWidget {
             side: BorderSide(
               color: active
                   ? Colors.white
-                  : Colors.white.withValues(alpha: 0.2),
+                  : Colors.white.withValues(alpha: disabled ? 0.1 : 0.2),
             ),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: active ? Colors.black : Colors.white,
+            color: foreground,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),

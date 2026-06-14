@@ -133,16 +133,17 @@ Configurados em `.claude/agents/` (a serem criados na Fase 4). Lista canônica:
 
 ## 8. Hooks (Fase 4)
 
-Em `.claude/hooks/`. 9 hooks registrados em eventos + 1 utilitário invocável manualmente:
+Em `.claude/hooks/`. 10 hooks registrados em eventos + 1 utilitário invocável manualmente:
 
 | Hook | Evento | Comportamento |
 |---|---|---|
 | `block-env.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia escrita em `.env`, `key.properties`, `keystore.jks`, `GoogleService-Info.plist`, `google-services.json` |
 | `block-secrets.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia content com api_key, private_key, BEGIN PEM, etc. |
-| `warn-adr-drift.sh` | PreToolUse Write/Edit/MultiEdit | Avisa (não bloqueia) se mudança toca pubspec/Blueprint/native_bridges sem ADR novo no branch |
+| `warn-adr-drift.sh` | PreToolUse Write/Edit/MultiEdit | Avisa (não bloqueia) se mudança toca pubspec/Blueprint/native_bridges OU contrato Pigeon source (`apps/mobile/pigeons/*.dart`) sem ADR novo no branch |
 | `block-forbidden-terms.sh` | PreToolUse Write/Edit/MultiEdit | Bloqueia termos de marca proibidos (`OkCamera`, `Ok Camera`, `hey OkCamera`, `okCamera`, `ok_camera`); wake word é `"Raro"` (ADR-0009). Lista espelha `packages/shared/lib/src/contract/forbidden_terms.dart` |
 | `block-pigeon-error-rawvalue.sh` | PreToolUse Write/Edit/MultiEdit (`.swift`/`.kt`) | Bloqueia `String(<enum>.rawValue)` / `.rawValue.toString()` dentro de `PigeonError()`/`FlutterError()` — preserva semântica do enum na fronteira Pigeon |
 | `warn-gesturedetector-over-platformview.sh` | PreToolUse Write/Edit/MultiEdit (`.dart`) | Avisa (não bloqueia) se `GestureDetector` envolve `UiKitView`/`AndroidView` com `EagerGestureRecognizer` — tap vai pro nativo, `onTapDown` do pai não dispara (causou focus ring sumir). Detectar tap no nativo. Memória `raro-pattern-flutter-platformview-tap-must-be-native` |
+| `warn-sfspeech-recycle-per-error.sh` | PreToolUse Write/Edit/MultiEdit (`.swift`) | Avisa (não bloqueia) se edit mexe no ciclo de `SFSpeechRecognitionTask` perto de erro/cancel — NÃO reciclar a cada `1110` benigno (no-speech); on-device finaliza em silêncio por design, reciclo agressivo deixa o request nil na janela morta e o comando some ("raro parar" caía no vão; quase custou migração p/ OpenWakeWord na S2.C). Padrão: token de ciclo + ring buffer + refresh proativo 50s. Memória `raro-pattern-sfspeech-continuous-no-recycle-per-error` |
 | `format-dart.sh` | PostToolUse Write/Edit/MultiEdit | Roda `dart format` em `*.dart` editado (ignora `*.g.dart`, `*.freezed.dart`) |
 | `run-riverpod-codegen.sh` | PostToolUse Write/Edit/MultiEdit | Detecta `@riverpod` e sinaliza necessidade de codegen (não roda inline) |
 | `reinject-roadmap.sh` | SessionStart | Ecoa locked invariants + estado de sessions/0001-INDEX.md |
@@ -178,6 +179,9 @@ Antes de declarar feature pronta:
 | Mudou dep ou stack | ADR aberto e mergeado antes |
 | Tocou hot path de focus/zoom/exposure (CameraPlatformView, AVCaptureDevice config, Method Channel de câmera) | Perceived latency validation manual em iPhone físico (não Simulator): rodar `bun run --filter '@raro/mobile' dev:ios -- -d <udid>` e validar tap→ring visível <50ms, tap→focus locked <300ms; instrumentar `os_log` com subsystem dedicado (ex: `com.rarocamera/focus`) em entry/exit dos handlers e anexar trecho do Xcode Console no PR. Em Sessão 2+ substituído por `integration_test --machine` + Pigeon `CameraDebugHostApi` lendo `AVCaptureDevice.focusPointOfInterest` (ADR-0016, harness E2E híbrido) |
 | Tocou animação `CALayer`/`CATransaction` em `PlatformView` | Smoke test em device físico: ring visível em sub-frame (<16ms); XCTest com expectation valida que `layer.animation(forKey:)` retorna não-nil após `showFocusRing`; opcionalmente gravar tela 240fps para validar percepção real |
+| Tocou caminho que decide resolução/fps/codec gravado (`selectDevice`, `applyFormat`/`setFormat`, `discoverCapabilities`, `AVAssetWriter` settings, `FormatCapability`/`CameraCapabilities` no Pigeon) | Prova objetiva de formato em iPhone físico (não Simulator): gravar 1 clipe por formato afetado, puxar o `.mp4` do vault via `xcrun devicectl device copy from --domain-type appDataContainer ...` e rodar `ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate` — anexar a saída no PR comprovando dimensões+fps reais (ex: `3840×2160 @ 60`). Teste Dart/widget não detecta fallback silencioso de formato (ADR-0021, bug 4K60 sessão 0020) |
+| Tocou reconhecimento de voz contínuo (`VoiceManager.swift`, ciclo `SFSpeechRecognitionTask`/`recognitionTask`, handling de `kAFAssistantErrorDomain`) | **(1) Confirmar install ANTES de pedir teste:** `flutter build ios --profile` + `xcrun devicectl device install app` e ler `App installed:` + container UUID novo (debug não roda standalone — memória `feedback_verify_device_install_before_test`). **(2) Prova de log do device** via `pymobiledevice3 syslog live --match Runner`: contar reciclos (`benign, refreshing`) « N e múltiplos `wake matched` (start E stop) — métrica idêntica ao teste anterior = binário velho. NÃO reciclar a recognitionTask a cada erro `1110` benigno (no-speech); usar token de ciclo + ring buffer de áudio (ADR-0022, memória `raro-pattern-sfspeech-continuous-no-recycle-per-error`, sessão 0024) |
+| Vai concluir "framework/lib X é incapaz" e abrir ADR de troca de stack | Provar a incapacidade com **log LIMPO do device + fonte primária** ANTES do ADR — não com "N análises convergiram" sobre a mesma suposição. N fixes empilhados = questionar o NOSSO uso da API, não a capacidade dela. S2.C declarou SFSpeech beco-sem-saída e quase migrou p/ OpenWakeWord (semanas); a 0024 achou a causa real (reciclo surdo) em minutos e resolveu sem trocar de engine (memória `feedback_many_native_fixes_means_reread_logs_not_abandon_framework`) |
 
 ---
 

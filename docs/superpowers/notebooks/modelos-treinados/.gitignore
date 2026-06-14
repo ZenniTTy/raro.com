@@ -1,0 +1,4 @@
+# (vazio de proposito) Os .onnx aqui SAO versionados.
+# Contexto: o lote cheio (15000) foi cancelado por custo/tempo; estes modelos de PROVA (2000,
+# recall ~92%) sao os modelos vigentes e a entrada da integracao iOS (WakeWordDetector.swift).
+# Se um dia treinar o lote cheio, sobrescrever estes arquivos e atualizar o README ao lado.

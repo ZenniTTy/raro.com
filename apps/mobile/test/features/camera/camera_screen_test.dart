@@ -1,16 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
+import 'package:raro_mobile/core/native_bridges/generated/voice_api.g.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
+import 'package:raro_mobile/features/camera/application/camera_flutter_api_provider.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/presentation/camera_screen.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/hud_overlay.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/lens_switcher.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/rec_button.dart';
+import 'package:raro_mobile/features/replay/application/replay_flutter_api_provider.dart';
+import 'package:raro_mobile/features/replay/data/replay_buffer_repository.dart';
+import 'package:raro_mobile/features/replay/data/replay_buffer_repository_provider.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/data/subscription_store.dart';
 import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
@@ -18,6 +25,10 @@ import 'package:raro_mobile/features/paywall/presentation/widgets/subscription_p
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/data/settings_store.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
+import 'package:raro_mobile/features/voice/application/voice_flutter_api_provider.dart';
+import 'package:raro_mobile/features/voice/data/voice_repository.dart';
+import 'package:raro_mobile/features/voice/data/voice_repository_provider.dart';
+import 'package:raro_shared/raro_shared.dart' show BufferDuration;
 
 class _FakeSubscriptionStore implements SubscriptionStore {
   _FakeSubscriptionStore(this._stored);
@@ -32,7 +43,11 @@ class _FakeSubscriptionStore implements SubscriptionStore {
 }
 
 class _FakeSettingsStore implements SettingsStore {
-  RecordingSettings _stored = const RecordingSettings();
+  _FakeSettingsStore([this._stored = const RecordingSettings()]);
+
+  RecordingSettings _stored;
+
+  RecordingSettings get stored => _stored;
 
   @override
   Future<RecordingSettings> load() async => _stored;
@@ -44,6 +59,19 @@ class _FakeSettingsStore implements SettingsStore {
 }
 
 class _MockCameraRepository extends Mock implements CameraRepository {}
+
+class _MockReplayRepository extends Mock implements ReplayBufferRepository {}
+
+class _StubVoiceRepository implements VoiceRepository {
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<void> startListening() async {}
+
+  @override
+  Future<void> stopListening() async {}
+}
 
 void main() {
   setUpAll(() {
@@ -72,8 +100,18 @@ void main() {
     when(repo.discoverCapabilities).thenAnswer(
       (_) async => CameraCapabilities(
         availableLenses: [LensType.ultraWide, LensType.wide],
-        supportedResolutions: [Resolution.fhd1080],
-        supportedFps: [Fps.fps30, Fps.fps60],
+        supportedFormats: [
+          FormatCapability(
+            resolution: Resolution.fhd1080,
+            fps: Fps.fps30,
+            requiresPhysicalLens: false,
+          ),
+          FormatCapability(
+            resolution: Resolution.fhd1080,
+            fps: Fps.fps60,
+            requiresPhysicalLens: false,
+          ),
+        ],
       ),
     );
     when(repo.hasPermission).thenAnswer((_) async => hasPermission);
@@ -91,11 +129,29 @@ void main() {
     VoidCallback? onSeePlans,
     SubscriptionState? subscription,
     CameraRepository? repository,
+    ReplayBufferRepository? replayRepository,
+    Stream<ReplayResult>? replayEvents,
+    Stream<RecordingResult>? recordingEvents,
+    SettingsStore? settingsStore,
+    Stream<VoiceListeningState>? voiceStateEvents,
   }) {
     return ProviderScope(
       overrides: [
         cameraRepositoryProvider.overrideWithValue(repository ?? buildRepo()),
-        settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
+        settingsStoreProvider.overrideWithValue(
+          settingsStore ?? _FakeSettingsStore(),
+        ),
+        voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+        voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
+        voiceStateEventsProvider.overrideWithValue(
+          voiceStateEvents ?? const Stream.empty(),
+        ),
+        if (replayRepository != null)
+          replayBufferRepositoryProvider.overrideWithValue(replayRepository),
+        if (replayEvents != null)
+          replayEventsProvider.overrideWithValue(replayEvents),
+        if (recordingEvents != null)
+          recordingEventsProvider.overrideWithValue(recordingEvents),
         if (subscription != null)
           subscriptionStoreProvider.overrideWithValue(
             _FakeSubscriptionStore(subscription),
@@ -120,9 +176,18 @@ void main() {
       expect(find.byType(RecButton), findsOneWidget);
     });
 
-    testWidgets('mostra hint central quando idle', (tester) async {
-      await tester.pumpWidget(harness());
+    testWidgets('em modo voz escutando mostra o indicador DIGA RARO', (
+      tester,
+    ) async {
+      final voiceEvents = StreamController<VoiceListeningState>.broadcast();
+      addTearDown(voiceEvents.close);
+      await tester.pumpWidget(harness(voiceStateEvents: voiceEvents.stream));
       await tester.pump();
+
+      voiceEvents.add(VoiceListeningState.listening);
+      await tester.pump();
+      await tester.pump();
+
       expect(find.text('DIGA “RARO” PARA GRAVAR'), findsOneWidget);
     });
 
@@ -134,10 +199,12 @@ void main() {
       expect(find.text('1080p · 60FPS · 1x'), findsOneWidget);
     });
 
-    testWidgets('mostra a buffer pill Raro Replay 15s', (tester) async {
+    testWidgets('mostra a buffer pill com a janela persistida (default 30s)', (
+      tester,
+    ) async {
       await tester.pumpWidget(harness());
       await tester.pump();
-      expect(find.text('Raro Replay 15s'), findsOneWidget);
+      expect(find.text('Raro Replay 30s'), findsOneWidget);
     });
 
     testWidgets('tap no REC exibe o indicador de gravação', (tester) async {
@@ -154,6 +221,169 @@ void main() {
       verify(() => repo.startRecording(any())).called(1);
     });
 
+    testWidgets('tap no REC inclui o pré-roll quando o buffer está armado', (
+      tester,
+    ) async {
+      final repo = buildRepo(hasPermission: true);
+      when(() => repo.startSession(any(), any())).thenAnswer((_) async {});
+      final replayRepo = _MockReplayRepository();
+      when(() => replayRepo.enable(any())).thenAnswer((_) async {});
+      await tester.pumpWidget(
+        harness(repository: repo, replayRepository: replayRepo),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.byType(RecButton));
+      await tester.pump();
+
+      final opts =
+          verify(() => repo.startRecording(captureAny())).captured.single
+              as RecordingOptions;
+      expect(opts.includeReplayPreroll, isTrue);
+    });
+
+    testWidgets(
+      'tap no REC NÃO inclui pré-roll quando o buffer não está armado',
+      (tester) async {
+        final repo = buildRepo(hasPermission: false);
+        await tester.pumpWidget(harness(repository: repo));
+        await tester.pump();
+
+        await tester.tap(find.byType(RecButton));
+        await tester.pump();
+
+        final opts =
+            verify(() => repo.startRecording(captureAny())).captured.single
+                as RecordingOptions;
+        expect(opts.includeReplayPreroll, isFalse);
+      },
+    );
+
+    testWidgets(
+      'tap no pill persiste a janela em Settings e atualiza o buffer nativo '
+      '(regressão: pill não persistia nem sincronizava)',
+      (tester) async {
+        final repo = buildRepo(hasPermission: true);
+        when(() => repo.startSession(any(), any())).thenAnswer((_) async {});
+        final replayRepo = _MockReplayRepository();
+        when(() => replayRepo.enable(any())).thenAnswer((_) async {});
+        final store = _FakeSettingsStore(
+          const RecordingSettings(bufferDuration: BufferDuration.seconds30),
+        );
+
+        await tester.pumpWidget(
+          harness(
+            repository: repo,
+            replayRepository: replayRepo,
+            settingsStore: store,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('Raro Replay 30s'), findsOneWidget);
+
+        await tester.tap(find.text('Raro Replay 30s'));
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('Raro Replay 15s'), findsOneWidget);
+        expect(store.stored.bufferDuration, BufferDuration.seconds15);
+        verify(() => replayRepo.enable(15)).called(1);
+      },
+    );
+
+    testWidgets(
+      'janela alterada em Settings reflete no buffer nativo da câmera '
+      '(regressão: câmera não via mudança de Settings)',
+      (tester) async {
+        final repo = buildRepo(hasPermission: true);
+        when(() => repo.startSession(any(), any())).thenAnswer((_) async {});
+        final replayRepo = _MockReplayRepository();
+        when(() => replayRepo.enable(any())).thenAnswer((_) async {});
+        late WidgetRef capturedRef;
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              cameraRepositoryProvider.overrideWithValue(repo),
+              settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
+              replayBufferRepositoryProvider.overrideWithValue(replayRepo),
+              voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+              voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
+              voiceStateEventsProvider.overrideWithValue(const Stream.empty()),
+            ],
+            child: MaterialApp(
+              theme: buildRaroDarkTheme(),
+              home: Consumer(
+                builder: (context, ref, _) {
+                  capturedRef = ref;
+                  return CameraScreen(
+                    onGallery: () {},
+                    onSettings: () {},
+                    onSeePlans: () {},
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        await capturedRef
+            .read(settingsControllerProvider.notifier)
+            .setBufferDuration(BufferDuration.seconds15);
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('Raro Replay 15s'), findsOneWidget);
+        verify(() => replayRepo.enable(15)).called(1);
+      },
+    );
+
+    testWidgets(
+      'micro-confirmação "últimos Ns incluídos" aparece ao terminar gravação '
+      'com pré-roll',
+      (tester) async {
+        final repo = buildRepo(hasPermission: true);
+        when(() => repo.startSession(any(), any())).thenAnswer((_) async {});
+        final replayRepo = _MockReplayRepository();
+        when(() => replayRepo.enable(any())).thenAnswer((_) async {});
+        final recEvents = StreamController<RecordingResult>.broadcast();
+        addTearDown(recEvents.close);
+
+        await tester.pumpWidget(
+          harness(
+            repository: repo,
+            replayRepository: replayRepo,
+            recordingEvents: recEvents.stream,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        await tester.tap(find.byType(RecButton));
+        await tester.pump();
+        recEvents.add(const RecordingResult.started(sessionId: 'sess-1'));
+        await tester.pump();
+
+        expect(find.textContaining('incluídos'), findsNothing);
+
+        recEvents.add(
+          const RecordingResult.finished(
+            path: '/tmp/raro_sess-1.mp4',
+            durationMs: 5000,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('últimos 30s incluídos'), findsOneWidget);
+      },
+    );
+
     testWidgets('tap na lente 0.5× atualiza o provider', (tester) async {
       late WidgetRef capturedRef;
       await tester.pumpWidget(
@@ -161,6 +391,9 @@ void main() {
           overrides: [
             cameraRepositoryProvider.overrideWithValue(buildRepo()),
             settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
+            voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+            voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
+            voiceStateEventsProvider.overrideWithValue(const Stream.empty()),
           ],
           child: MaterialApp(
             theme: buildRaroDarkTheme(),

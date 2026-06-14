@@ -17,7 +17,7 @@ O Blueprint 2026-05-25 listou 4 Method Channels (`com.rarocamera/{camera,replay_
 
 Adotamos três mecanismos complementares:
 
-1. **Pigeon ^26.3.2** para Method Channels — schemas Dart únicos em `apps/mobile/pigeons/*.dart` geram código tipado em Dart + Swift + Kotlin sincronizado. Elimina por construção o drift de namespace e assinaturas. Versão fixada em `26.3.2` (não `26.3.4`) por conflito de `analyzer` constraint com `riverpod_lint 3.1.3`; pigeon 26.3.3+ exige `analyzer >=10.0.0`. Cada bridge usa **sub-package Kotlin distinto** (`com.rarocamera.raro_mobile.generated.{camera,replay_buffer,voice,volume}`) — Pigeon gera `class FlutterError` em cada `.g.kt` e pacote comum causa redeclaration. iOS side: cada `.g.swift` declara `PigeonError` `final` mas Pigeon usa `fileprivate`-like scoping via diferentes nomes prefixados; sem conflito em Swift module.
+1. **Pigeon ^26.3.2** para Method Channels — schemas Dart únicos em `apps/mobile/pigeons/*.dart` geram código tipado em Dart + Swift + Kotlin sincronizado. Elimina por construção o drift de namespace e assinaturas. Versão fixada em `26.3.2` (não `26.3.4`) por conflito de `analyzer` constraint com `riverpod_lint 3.1.3`; pigeon 26.3.3+ exige `analyzer >=10.0.0`. Cada bridge usa **sub-package Kotlin distinto** (`com.rarocamera.raro_mobile.generated.{camera,replay_buffer,voice,volume}`) — Pigeon gera `class FlutterError` em cada `.g.kt` e pacote comum causa redeclaration. iOS side: ~~cada `.g.swift` declara `PigeonError` `final` mas Pigeon usa `fileprivate`-like scoping via diferentes nomes prefixados; sem conflito em Swift module.~~ **[Retificado 2026-06-06 — ver Addendum:** esta afirmação estava factualmente incorreta. Pigeon 26.3.2 gera `final class PigeonError: Error` com nome **idêntico e internal** (sem prefixo, sem `fileprivate`) em cada `.g.swift`; dois `.g.swift` no mesmo módulo Swift colidem ("invalid redeclaration of 'PigeonError'"). Resolvido via `SwiftOptions(errorClassName:)` único por contrato.**]**
 2. **Theme Tailor ^3.1.3** (+ `theme_tailor_annotation ^3.1.3`) para design tokens — classes `@TailorMixin` em `apps/mobile/lib/core/theme/raro_theme.dart` geram `ThemeExtension` tipadas. Consumo via `Theme.of(context).extension<RaroColors>()!`. `Color(0xFF...)` fora de `core/theme/` vira erro de teste.
 3. **Triple-gate anti-drift** para invariantes de marca e identificadores:
    - (a) Hook PreToolUse `.claude/hooks/block-forbidden-terms.sh` bloqueia `OkCamera`, `Ok Camera`, `hey OkCamera` em qualquer Write/Edit/MultiEdit.
@@ -57,3 +57,24 @@ Versões fixadas via pub.dev API consulta em 2026-05-26.
 - https://pub.dev/packages/pigeon
 - https://pub.dev/packages/theme_tailor
 - https://api.flutter.dev/flutter/material/ThemeExtension-class.html
+
+---
+
+## Addendum 2026-06-06 — `errorClassName` único por contrato Pigeon (iOS)
+
+- **Status:** Accepted
+- **Contexto:** Task 5 da sessão S2.B (registrar o `ReplayBufferHostApi`). Trazer o `ReplayBufferApi.g.swift` para o target Runner — necessário para compilar `ReplayBufferHostApiSetup`/`ReplayBufferFlutterApi` — colide com o `CameraApi.g.swift` já no target: **ambos** declaram `final class PigeonError: Error` (linha 15 de cada `.g.swift`), nome idêntico e escopo internal de módulo. O compilador Swift falha com "invalid redeclaration of 'PigeonError'". A afirmação original (Decisão item 1, retificada acima) de que o Pigeon usaria scoping `fileprivate`-like prefixado estava **factualmente incorreta** — foi a premissa que mascarou esta colisão até o build da Task 5.
+
+- **Decisão:** Adicionar `SwiftOptions(errorClassName: '<Bridge>PigeonError')` aos **4** contratos Pigeon de uma vez (não só o replay), evitando reintroduzir a colisão quando Voice/Volume forem wirados em S2.C/S2.D:
+  - `camera_api.dart` → `CameraPigeonError`
+  - `replay_buffer_api.dart` → `ReplayBufferPigeonError`
+  - `voice_api.dart` → `VoicePigeonError`
+  - `volume_api.dart` → `VolumePigeonError`
+  Regenerar os 4. `errorClassName` é **Swift-only**: a fronteira do contrato é byte-idêntica (Dart e Kotlin inalterados; só `code`/`message`/`details` cruzam o canal). Não muda a FORMA do contrato (métodos, tipos, enums) — só resolve a colisão de símbolo no módulo Swift. Análogo ao sub-package Kotlin distinto já adotado para o `FlutterError`.
+
+- **Consequências:**
+  - Impls Swift que referenciam `PigeonError` bare passam ao nome prefixado: `CameraHostApiImpl.swift` (helper `pigeonError`), `ReplayBufferHostApiImpl.swift` (catch do `saveReplay`). Voice/Volume idem quando implementados.
+  - O hook `block-pigeon-error-rawvalue.sh` casa o literal `PigeonError(` — `CameraPigeonError(`/`ReplayBufferPigeonError(` contêm essa substring, então o hook continua vigiando (sem falso-negativo). As impls usam `"\(code)"` (nome simbólico), nunca `.rawValue` — conformes.
+  - Gate §10 (contract test do bridge em ambas plataformas) e build iOS real continuam obrigatórios: colisão de símbolo Swift só é pega por `flutter build ios`/`test:ios`, não por teste Dart.
+
+- **Referências:** sessão S2.B (plan `2026-06-05-replay-buffer-s2b.md`), `SwiftOptions.errorClassName` (Pigeon 26.3.2), veredito adr-guardian `ADR_AMEND_REQUIRED 0013`.

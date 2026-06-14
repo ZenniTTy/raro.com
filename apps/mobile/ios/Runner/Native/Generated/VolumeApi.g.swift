@@ -12,7 +12,7 @@ import Foundation
 #endif
 
 /// Error class for passing custom error details to Dart side.
-final class PigeonError: Error {
+final class VolumePigeonError: Error {
   let code: String
   let message: String?
   let details: Sendable?
@@ -25,7 +25,7 @@ final class PigeonError: Error {
 
   var localizedDescription: String {
     return
-      "PigeonError(code: \(code), message: \(message ?? "<nil>"), details: \(details ?? "<nil>")"
+      "VolumePigeonError(code: \(code), message: \(message ?? "<nil>"), details: \(details ?? "<nil>")"
   }
 }
 
@@ -34,7 +34,7 @@ private func wrapResult(_ result: Any?) -> [Any?] {
 }
 
 private func wrapError(_ error: Any) -> [Any?] {
-  if let pigeonError = error as? PigeonError {
+  if let pigeonError = error as? VolumePigeonError {
     return [
       pigeonError.code,
       pigeonError.message,
@@ -55,8 +55,8 @@ private func wrapError(_ error: Any) -> [Any?] {
   ]
 }
 
-private func createConnectionError(withChannelName channelName: String) -> PigeonError {
-  return PigeonError(code: "channel-error", message: "Unable to establish connection on channel: '\(channelName)'.", details: "")
+private func createConnectionError(withChannelName channelName: String) -> VolumePigeonError {
+  return VolumePigeonError(code: "channel-error", message: "Unable to establish connection on channel: '\(channelName)'.", details: "")
 }
 
 private func isNullish(_ value: Any?) -> Bool {
@@ -117,7 +117,7 @@ class VolumeHostApiSetup {
 }
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol VolumeFlutterApiProtocol {
-  func volumeReady(completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func volumeReady(completion: @escaping (Result<Void, VolumePigeonError>) -> Void)
 }
 class VolumeFlutterApi: VolumeFlutterApiProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -129,7 +129,7 @@ class VolumeFlutterApi: VolumeFlutterApiProtocol {
   var codec: VolumeApiPigeonCodec {
     return VolumeApiPigeonCodec.shared
   }
-  func volumeReady(completion: @escaping (Result<Void, PigeonError>) -> Void) {
+  func volumeReady(completion: @escaping (Result<Void, VolumePigeonError>) -> Void) {
     let channelName: String = "dev.flutter.pigeon.raro_mobile.VolumeFlutterApi.volumeReady\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage(nil) { response in
@@ -141,7 +141,7 @@ class VolumeFlutterApi: VolumeFlutterApiProtocol {
         let code: String = listResponse[0] as! String
         let message: String? = nilOrValue(listResponse[1])
         let details: String? = nilOrValue(listResponse[2])
-        completion(.failure(PigeonError(code: code, message: message, details: details)))
+        completion(.failure(VolumePigeonError(code: code, message: message, details: details)))
       } else {
         completion(.success(()))
       }

@@ -61,7 +61,9 @@ private open class ReplayBufferApiPigeonCodec : StandardMessageCodec() {
 
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface ReplayBufferHostApi {
-  fun replayBufferPing()
+  fun enableReplayBuffer(seconds: Long)
+  fun disableReplayBuffer()
+  fun saveReplay()
 
   companion object {
     /** The codec used by ReplayBufferHostApi. */
@@ -73,11 +75,45 @@ interface ReplayBufferHostApi {
     fun setUp(binaryMessenger: BinaryMessenger, api: ReplayBufferHostApi?, messageChannelSuffix: String = "") {
       val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.ReplayBufferHostApi.replayBufferPing$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.ReplayBufferHostApi.enableReplayBuffer$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val secondsArg = args[0] as Long
+            val wrapped: List<Any?> = try {
+              api.enableReplayBuffer(secondsArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              ReplayBufferApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.ReplayBufferHostApi.disableReplayBuffer$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
-              api.replayBufferPing()
+              api.disableReplayBuffer()
+              listOf(null)
+            } catch (exception: Throwable) {
+              ReplayBufferApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.ReplayBufferHostApi.saveReplay$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              api.saveReplay()
               listOf(null)
             } catch (exception: Throwable) {
               ReplayBufferApiPigeonUtils.wrapError(exception)
@@ -99,12 +135,29 @@ class ReplayBufferFlutterApi(private val binaryMessenger: BinaryMessenger, priva
       ReplayBufferApiPigeonCodec()
     }
   }
-  fun replayBufferReady(callback: (Result<Unit>) -> Unit)
+  fun onReplaySaved(pathArg: String, durationMsArg: Long, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    val channelName = "dev.flutter.pigeon.raro_mobile.ReplayBufferFlutterApi.replayBufferReady$separatedMessageChannelSuffix"
+    val channelName = "dev.flutter.pigeon.raro_mobile.ReplayBufferFlutterApi.onReplaySaved$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
-    channel.send(null) {
+    channel.send(listOf(pathArg, durationMsArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(ReplayBufferApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  fun onReplayFailed(codeArg: String, messageArg: String?, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.raro_mobile.ReplayBufferFlutterApi.onReplayFailed$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(codeArg, messageArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))

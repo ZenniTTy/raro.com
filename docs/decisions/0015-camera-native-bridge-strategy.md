@@ -13,7 +13,7 @@ Briefing Seção 6.2 e Blueprint Seção 2.2 exigem implementação 100% nativa 
 ## Decisão
 
 1. **Pigeon-first contract**. Todas as ops `@async`. Enums tipados (`LensType`, `Resolution`, `Fps`). FlutterApi para callbacks. Sub-package Kotlin `com.rarocamera.raro_mobile.generated.camera` (ADR-0013 anti-redeclaration).
-2. **iOS — VirtualCameraStrategy única.** `builtInTripleCamera` → `builtInDualWideCamera` + `videoZoomFactor` (smooth zoom). YAGNI: iPhones com 0.5× sempre expõem virtual camera. `SwapInputStrategy` documentada como rollback acionável via ADR-update se device test futuro revelar exceção.
+2. **iOS — VirtualCameraStrategy única.** `builtInTripleCamera` → `builtInDualWideCamera` + `videoZoomFactor` (smooth zoom). YAGNI: iPhones com 0.5× sempre expõem virtual camera. `SwapInputStrategy` documentada como rollback acionável via ADR-update se device test futuro revelar exceção. **→ Refinado por [ADR-0021](0021-4k60-physical-lens-vs-virtual-zoom.md) (sessão 0019):** o device test revelou a exceção prevista — 4K@60 só existe na lente física (`builtInWideAngleCamera`), não no device virtual. A VirtualCameraStrategy segue o **default** (zoom contínuo); 4K60 é opt-in que aciona a lente física (a `SwapInputStrategy` aqui prevista).
 3. **Android — CameraX 1.6.1** pinado (latest stable em 2026-05-26, novo motor CameraPipe). Device test obrigatório em Xiaomi/Samsung antes de RC.
 4. **Android PlatformView — hybrid composition.** Necessário para HUD Flutter sobre preview. Custo GPU 5-10% aceito.
 5. **iOS format control via `activeFormat`** + `activeVideoMinFrameDuration`/`MaxFrameDuration`. `sessionPreset` insuficiente para garantir 4K@60.

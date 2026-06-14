@@ -12,8 +12,15 @@ class RecordingController extends _$RecordingController {
   RecordingPhase build() {
     final events = ref.watch(recordingEventsProvider);
     final subscription = events.listen((result) {
-      if (result is RecordingFinished || result is RecordingFailed) {
-        state = const RecordingIdle();
+      switch (result) {
+        case RecordingStarted(:final sessionId):
+          state = RecordingActive(
+            sessionId: sessionId,
+            startedAt: DateTime.now(),
+          );
+        case RecordingFinished():
+        case RecordingFailed():
+          state = const RecordingIdle();
       }
     });
     ref.onDispose(subscription.cancel);
@@ -21,19 +28,33 @@ class RecordingController extends _$RecordingController {
   }
 
   Future<void> start(RecordingOptions options) async {
-    if (state is RecordingActive) return;
+    if (state is RecordingStarting || state is RecordingActive) return;
+    state = const RecordingStarting();
     final repo = ref.read(cameraRepositoryProvider);
-    final sessionId = await repo.startRecording(options);
-    state = RecordingActive(sessionId: sessionId, startedAt: DateTime.now());
+    try {
+      await repo.startRecording(options);
+    } on Object {
+      state = const RecordingIdle();
+      rethrow;
+    }
   }
 
   Future<void> stop() async {
-    if (state is! RecordingActive) return;
+    if (state is! RecordingActive && state is! RecordingStarting) return;
     final repo = ref.read(cameraRepositoryProvider);
     try {
       await repo.stopRecording();
     } finally {
       state = const RecordingIdle();
+    }
+  }
+
+  Future<void> toggle({required RecordingOptions options}) async {
+    final current = state;
+    if (current is RecordingActive || current is RecordingStarting) {
+      await stop();
+    } else {
+      await start(options);
     }
   }
 }

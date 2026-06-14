@@ -58,6 +58,41 @@ void main() {
       expect((await store.load()).resolution, Resolution.hd720);
     });
 
+    test(
+      'setResolution(uhd4k60) coage fps para 60 (estado consistente)',
+      () async {
+        final store = _FakeSettingsStore(
+          const RecordingSettings(fps: Fps.fps30),
+        );
+        final container = makeContainer(store);
+        await container.read(settingsControllerProvider.future);
+
+        await container
+            .read(settingsControllerProvider.notifier)
+            .setResolution(Resolution.uhd4k60);
+
+        final state = container.read(settingsControllerProvider).requireValue;
+        expect(state.resolution, Resolution.uhd4k60);
+        expect(state.fps, Fps.fps60);
+        expect((await store.load()).fps, Fps.fps60);
+      },
+    );
+
+    test('setResolution não-4K60 preserva o fps escolhido', () async {
+      final store = _FakeSettingsStore(const RecordingSettings(fps: Fps.fps30));
+      final container = makeContainer(store);
+      await container.read(settingsControllerProvider.future);
+
+      await container
+          .read(settingsControllerProvider.notifier)
+          .setResolution(Resolution.uhd4k);
+
+      expect(
+        container.read(settingsControllerProvider).requireValue.fps,
+        Fps.fps30,
+      );
+    });
+
     test('setControlMode persiste o modo de controle', () async {
       final store = _FakeSettingsStore();
       final container = makeContainer(store);
@@ -98,6 +133,29 @@ void main() {
       final stored = await store.load();
       expect(stored.bufferDuration, BufferDuration.seconds15);
       expect(stored.fps, Fps.fps30);
+    });
+
+    test('toggleBufferDuration alterna 30↔15 e persiste cada troca', () async {
+      final store = _FakeSettingsStore(
+        const RecordingSettings(bufferDuration: BufferDuration.seconds30),
+      );
+      final container = makeContainer(store);
+      await container.read(settingsControllerProvider.future);
+      final notifier = container.read(settingsControllerProvider.notifier);
+
+      await notifier.toggleBufferDuration();
+      expect(
+        container.read(settingsControllerProvider).requireValue.bufferDuration,
+        BufferDuration.seconds15,
+      );
+      expect((await store.load()).bufferDuration, BufferDuration.seconds15);
+
+      await notifier.toggleBufferDuration();
+      expect(
+        container.read(settingsControllerProvider).requireValue.bufferDuration,
+        BufferDuration.seconds30,
+      );
+      expect((await store.load()).bufferDuration, BufferDuration.seconds30);
     });
   });
 }

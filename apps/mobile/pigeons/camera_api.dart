@@ -5,7 +5,7 @@ import 'package:pigeon/pigeon.dart';
     dartOut: 'lib/core/native_bridges/generated/camera_api.g.dart',
     dartOptions: DartOptions(),
     swiftOut: 'ios/Runner/Native/Generated/CameraApi.g.swift',
-    swiftOptions: SwiftOptions(),
+    swiftOptions: SwiftOptions(errorClassName: 'CameraPigeonError'),
     kotlinOut:
         'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/camera/CameraApi.g.kt',
     kotlinOptions: KotlinOptions(
@@ -28,18 +28,29 @@ enum CameraErrorCode {
   sessionFailed,
   alreadyRunning,
   notRunning,
+  sessionInterrupted,
+}
+
+class FormatCapability {
+  FormatCapability({
+    required this.resolution,
+    required this.fps,
+    required this.requiresPhysicalLens,
+  });
+
+  final Resolution resolution;
+  final Fps fps;
+  final bool requiresPhysicalLens;
 }
 
 class CameraCapabilities {
   CameraCapabilities({
     required this.availableLenses,
-    required this.supportedResolutions,
-    required this.supportedFps,
+    required this.supportedFormats,
   });
 
   final List<LensType> availableLenses;
-  final List<Resolution> supportedResolutions;
-  final List<Fps> supportedFps;
+  final List<FormatCapability> supportedFormats;
 }
 
 class CameraConfig {
@@ -66,11 +77,13 @@ class RecordingOptions {
     required this.resolution,
     required this.fps,
     required this.codec,
+    this.includeReplayPreroll = false,
   });
 
   Resolution resolution;
   Fps fps;
   String codec;
+  bool includeReplayPreroll;
 }
 
 @HostApi()
@@ -94,10 +107,14 @@ abstract class CameraHostApi {
   void focusAt(FocusPoint point);
 
   /// Starts recording on the running session. Returns a session id.
+  /// Recording state is promoted by [CameraFlutterApi.onRecordingStarted]
+  /// once the native writer is actually writing, not on this return.
   String startRecording(RecordingOptions options);
 
   /// Stops recording. The saved file path arrives via
-  /// [CameraFlutterApi.onRecordingFinished] (MovieFileOutput finalizes async).
+  /// [CameraFlutterApi.onRecordingFinished]. When [RecordingOptions.includeReplayPreroll]
+  /// was set, the finished path is the combined [preroll + recording] `.mp4`
+  /// (composed async; see ADR-0003 Addendum 2026-06-07).
   void stopRecording();
 
   /// Extracts the first frame of [videoPath] as a JPEG and returns the path of
@@ -120,6 +137,7 @@ abstract class CameraFlutterApi {
   void onLensSwitched(LensType lens);
   void onFocusChanged(FocusPoint point, bool locked);
   void onError(CameraErrorCode code, String? message);
+  void onRecordingStarted(String sessionId);
   void onRecordingFinished(String path, int durationMs);
   void onRecordingFailed(CameraErrorCode code, String? message);
 }

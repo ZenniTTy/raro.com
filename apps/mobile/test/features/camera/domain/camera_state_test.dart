@@ -34,8 +34,13 @@ void main() {
     test('idle has capabilities, no error', () {
       final caps = CameraCapabilities(
         availableLenses: [LensType.wide],
-        supportedResolutions: [Resolution.fhd1080],
-        supportedFps: [Fps.fps30],
+        supportedFormats: [
+          FormatCapability(
+            resolution: Resolution.fhd1080,
+            fps: Fps.fps30,
+            requiresPhysicalLens: false,
+          ),
+        ],
       );
       final s = CameraState.idle(capabilities: caps);
       final lenses = switch (s) {

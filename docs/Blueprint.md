@@ -69,10 +69,12 @@ A Seção 3.2 do briefing define o protótipo como fonte de verdade inegociável
 
 | Plataforma | Tecnologia | Notas |
 |---|---|---|
-| iOS | **Speech Framework** — `SFSpeechRecognizer` | On-device. Limite ~1 min/sessão, reinício automático. |
-| Android | **SpeechRecognizer** (`android.speech`) | API 31+ com `EXTRA_PREFER_OFFLINE` força on-device. |
+| iOS | **Wake-word dedicada on-device** — modelo "Raro" (LiveKit) via **ONNX Runtime + CoreML EP** (SPM) | ADR-0023. Superseded `SFSpeechRecognizer` (1110-loop, limite 1 min/sessão). Sessão `PlayAndRecord` persistente + background. |
+| Android | **SpeechRecognizer** (`android.speech`) | API 31+ com `EXTRA_PREFER_OFFLINE` força on-device. (Migração para a mesma engine ONNX no Sprint 3.) |
 
-**Privacidade:** áudio processado exclusivamente local. Declarado em `Info.plist` (`NSSpeechRecognitionUsageDescription`) e Privacy Manifest iOS.
+**Dependência nativa (iOS):** `onnxruntime` via Swift Package Manager (`github.com/microsoft/onnxruntime-swift-package-manager`, `~1.16.0+`) no target Runner — runtime de inferência do modelo wake-word. CoreML Execution Provider a confirmar na versão resolvida (fallback CPU). Coberto pelo ADR-0023; atualizar dep = abrir ADR.
+
+**Privacidade:** áudio processado exclusivamente local (inferência on-device, sem rede). Declarado em `Info.plist` (`NSMicrophoneUsageDescription`) e Privacy Manifest iOS.
 
 ### 2.4 Assinaturas e billing
 
@@ -254,8 +256,8 @@ apps/mobile/
 ### 3.3 Restrições de plataforma conhecidas
 
 **iOS:**
-- Captura contínua em background não é permitida. Replay Buffer e voz operam apenas em foreground (tela pode estar escurecida via modo lock).
-- `SFSpeechRecognizer` tem limite ~1 min/sessão → reinício automático.
+- Voz wake-word opera em background (tela bloqueada) via `UIBackgroundModes: audio` + `AVAudioSession .playAndRecord` persistente (ADR-0023, espelha o concorrente). Escuta morre se o app for encerrado à força no app-switcher (regra iOS inescapável). Replay Buffer continua foreground.
+- Engine de voz = wake-word dedicada on-device (ONNX Runtime), não mais `SFSpeechRecognizer` (que tinha limite ~1 min/sessão + 1110-loop — superseded pelo ADR-0023).
 - Botões de volume capturáveis via `AVAudioSession` + observer no `outputVolume`; não há API direta para volume buttons.
 
 **Android:**

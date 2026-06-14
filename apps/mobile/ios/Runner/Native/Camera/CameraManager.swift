@@ -15,12 +15,43 @@ final class CameraManager {
   private var focusTimeoutWorkItem: DispatchWorkItem?
   private var focusWasAdjusting = false
   private var pendingFocusPoint: FocusPoint?
+  private var isInterrupted = false
   var onFocusResult: ((FocusPoint, Bool) -> Void)?
 
   var onLensSwitched: ((LensType) -> Void)?
   var onError: ((CameraNativeError) -> Void)?
+  var onReplaySaved: ((URL, Int) -> Void)? {
+    get { replayBuffer.onSaved }
+    set { replayBuffer.onSaved = newValue }
+  }
+  var onReplayFailed: ((ReplayBufferError) -> Void)? {
+    get { replayBuffer.onFailed }
+    set { replayBuffer.onFailed = newValue }
+  }
 
   private let recordingPipeline = RecordingPipeline()
+  private lazy var replayBuffer = ReplayBuffer(queue: recordingPipeline.sharedQueue)
+
+  var onRecordingStarted: ((String) -> Void)?
+  var onRecordingFinished: ((URL, Int) -> Void)?
+  var onRecordingFailed: ((String) -> Void)?
+  var onCaptureAudioSample: ((CMSampleBuffer) -> Void)?
+  var onSessionStateChanged: (() -> Void)?
+
+  private var pendingPrerollChunks: [Chunk]?
+
+  var isRecording: Bool { recordingPipeline.isRecording }
+  var isSessionRunning: Bool { session?.isRunning ?? false }
+
+  init() {
+    recordingPipeline.onFinished = { [weak self] url, durationMs in
+      self?.handleRecordingFinished(url: url, durationMs: durationMs)
+    }
+    recordingPipeline.onFailed = { [weak self] message in
+      self?.resumeReplayAfterRecording()
+      self?.onRecordingFailed?(message)
+    }
+  }
 
   deinit {
     removeObservers()
@@ -37,7 +68,7 @@ final class CameraManager {
       ) { [weak self] note in
         let reason = note.userInfo?[AVCaptureSessionInterruptionReasonKey] as? Int ?? -1
         os_log("session interrupted reason=%d", log: cameraLog, type: .info, reason)
-        self?.onError?(.sessionFailed("session interrupted"))
+        self?.isInterrupted = true
       }
     )
     notificationTokens.append(
@@ -47,9 +78,12 @@ final class CameraManager {
         queue: .main
       ) { [weak self] _ in
         os_log("session interruption ended — resuming", log: cameraLog, type: .info)
+        self?.isInterrupted = false
         self?.sessionQueue.async { [weak self] in
           guard let self = self, let s = self.session, !s.isRunning else { return }
+          self.ensureAudioSessionConfigured()
           s.startRunning()
+          DispatchQueue.main.async { self.onSessionStateChanged?() }
         }
       }
     )
@@ -68,7 +102,9 @@ final class CameraManager {
         if err?.code == AVError.mediaServicesWereReset.rawValue {
           self?.sessionQueue.async { [weak self] in
             guard let self = self, let s = self.session, !s.isRunning else { return }
+            self.ensureAudioSessionConfigured()
             s.startRunning()
+            DispatchQueue.main.async { self.onSessionStateChanged?() }
           }
         } else {
           self?.onError?(.sessionFailed(err?.localizedDescription ?? "runtime error"))
@@ -82,6 +118,22 @@ final class CameraManager {
       NotificationCenter.default.removeObserver(token)
     }
     notificationTokens.removeAll()
+  }
+
+  private func ensureAudioSessionConfigured() {
+    let session = AVAudioSession.sharedInstance()
+    guard session.category != .playAndRecord else { return }
+    do {
+      try session.setCategory(
+        .playAndRecord,
+        mode: .default,
+        options: [.mixWithOthers, .defaultToSpeaker]
+      )
+      try session.setActive(true)
+      os_log("audio session configured for capture (.playAndRecord/.mixWithOthers)", log: cameraLog, type: .info)
+    } catch {
+      os_log("audio session configure failed: %{public}@", log: cameraLog, type: .error, error.localizedDescription)
+    }
   }
 
   func hasPermission() -> Bool {
@@ -100,6 +152,73 @@ final class CameraManager {
     @unknown default:
       return false
     }
+  }
+
+  struct RawFormat: Hashable {
+    let resolution: Resolution
+    let fps: Fps
+  }
+
+  static func resolutionForDimensions(width: Int32, height: Int32) -> Resolution? {
+    let longer = max(width, height)
+    let shorter = min(width, height)
+    switch (longer, shorter) {
+    case (3840, 2160): return .uhd4k
+    case (1920, 1080): return .fhd1080
+    case (1280, 720): return .hd720
+    default: return nil
+    }
+  }
+
+  static func mergeFormatCapabilities(
+    virtual: Set<RawFormat>,
+    physical: Set<RawFormat>
+  ) -> [FormatCapability] {
+    var result: [FormatCapability] = []
+    var seen: Set<RawFormat> = []
+    let order: [(Resolution, Fps)] = [
+      (.hd720, .fps30), (.hd720, .fps60),
+      (.fhd1080, .fps30), (.fhd1080, .fps60),
+      (.uhd4k, .fps30), (.uhd4k, .fps60),
+    ]
+    for (resolution, fps) in order {
+      let raw = RawFormat(resolution: resolution, fps: fps)
+      if virtual.contains(raw) {
+        seen.insert(raw)
+        result.append(
+          FormatCapability(resolution: resolution, fps: fps, requiresPhysicalLens: false)
+        )
+      }
+    }
+    for (resolution, fps) in order {
+      let raw = RawFormat(resolution: resolution, fps: fps)
+      if seen.contains(raw) { continue }
+      if physical.contains(raw) {
+        result.append(
+          FormatCapability(resolution: resolution, fps: fps, requiresPhysicalLens: true)
+        )
+      }
+    }
+    return result
+  }
+
+  private static func rawFormats(of device: AVCaptureDevice) -> Set<RawFormat> {
+    var formats: Set<RawFormat> = []
+    for format in device.formats {
+      let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+      guard
+        let resolution = resolutionForDimensions(width: dims.width, height: dims.height)
+      else { continue }
+      let supports30 = format.videoSupportedFrameRateRanges.contains {
+        $0.minFrameRate <= 30 && $0.maxFrameRate >= 30
+      }
+      let supports60 = format.videoSupportedFrameRateRanges.contains {
+        $0.minFrameRate <= 60 && $0.maxFrameRate >= 60
+      }
+      if supports30 { formats.insert(RawFormat(resolution: resolution, fps: .fps30)) }
+      if supports60 { formats.insert(RawFormat(resolution: resolution, fps: .fps60)) }
+    }
+    return formats
   }
 
   func discoverCapabilities() throws -> CameraCapabilities {
@@ -132,10 +251,21 @@ final class CameraManager {
       lenses.append(.wide)
     }
 
+    let virtualDevice = devices.first {
+      $0.deviceType == .builtInTripleCamera || $0.deviceType == .builtInDualWideCamera
+    }
+    let physicalDevice = devices.first { $0.deviceType == .builtInWideAngleCamera }
+
+    let virtualFormats = virtualDevice.map(Self.rawFormats) ?? []
+    let physicalFormats = physicalDevice.map(Self.rawFormats) ?? []
+    let supportedFormats = Self.mergeFormatCapabilities(
+      virtual: virtualFormats,
+      physical: physicalFormats
+    )
+
     return CameraCapabilities(
       availableLenses: lenses,
-      supportedResolutions: [.hd720, .fhd1080, .uhd4k],
-      supportedFps: [.fps30, .fps60]
+      supportedFormats: supportedFormats
     )
   }
 
@@ -148,9 +278,14 @@ final class CameraManager {
       device = nil
       input = nil
     }
+    isInterrupted = false
     guard hasPermission() else { throw CameraNativeError.permissionDenied }
 
-    let device = try selectDevice(for: config.lens)
+    let device = try selectDevice(
+      for: config.lens,
+      resolution: config.resolution,
+      fps: config.fps
+    )
     os_log(
       "startSession lens=%{public}@ device=%{public}@",
       log: cameraLog, type: .info,
@@ -158,6 +293,8 @@ final class CameraManager {
     )
 
     let session = AVCaptureSession()
+    session.automaticallyConfiguresApplicationAudioSession = false
+    ensureAudioSessionConfigured()
     session.beginConfiguration()
     session.sessionPreset = .inputPriority
     let input = try AVCaptureDeviceInput(device: device)
@@ -206,10 +343,24 @@ final class CameraManager {
           os_log("recording attach failed: %{public}@", log: cameraLog, type: .error, error.localizedDescription)
         }
         capturedSession.commitConfiguration()
+        self.ensureAudioSessionConfigured()
         capturedSession.startRunning()
+        DispatchQueue.main.async { self.onSessionStateChanged?() }
         continuation.resume()
       }
     }
+
+    recordingPipeline.replayConsumer = { [weak self] buffer, isVideo in
+      self?.replayBuffer.append(buffer, isVideo: isVideo)
+    }
+    recordingPipeline.audioSampleConsumer = { [weak self] buffer in
+      self?.onCaptureAudioSample?(buffer)
+    }
+    recordingPipeline.replayFps = config.fps == .fps60 ? 60 : 30
+    replayBuffer.start(
+      videoSettings: recordingPipeline.makeReplayVideoSettings(),
+      audioSettings: recordingPipeline.makeReplayAudioSettings()
+    )
   }
 
   func stopSession() {
@@ -227,29 +378,78 @@ final class CameraManager {
       if let inputs = self?.session?.inputs {
         for input in inputs { self?.session?.removeInput(input) }
       }
+      self?.replayBuffer.stop()
       self?.session = nil
       self?.device = nil
       self?.input = nil
+      DispatchQueue.main.async { self?.onSessionStateChanged?() }
     }
   }
 
-  func startRecording(sessionId: String, codec: String) throws {
+  func startRecording(sessionId: String, codec: String, includePreroll: Bool) throws {
     guard session != nil else { throw CameraNativeError.notRunning }
-    try recordingPipeline.start(sessionId: sessionId, requestedCodec: codec)
+    guard !isInterrupted else { throw CameraNativeError.sessionInterrupted }
+
+    if includePreroll {
+      let snapshot = replayBuffer.snapshotChunks()
+      pendingPrerollChunks = snapshot.isEmpty ? nil : snapshot
+      replayBuffer.pauseAppending()
+    } else {
+      pendingPrerollChunks = nil
+    }
+
+    do {
+      try recordingPipeline.start(sessionId: sessionId, requestedCodec: codec)
+    } catch {
+      resumeReplayAfterRecording()
+      throw error
+    }
+    DispatchQueue.main.async { self.onRecordingStarted?(sessionId) }
   }
 
   func stopRecording() throws {
-    try recordingPipeline.stop()
+    do {
+      try recordingPipeline.stop()
+    } catch {
+      resumeReplayAfterRecording()
+      throw error
+    }
   }
 
-  var onRecordingFinished: ((URL, Int) -> Void)? {
-    get { recordingPipeline.onFinished }
-    set { recordingPipeline.onFinished = newValue }
+  private func handleRecordingFinished(url: URL, durationMs: Int) {
+    guard let preroll = pendingPrerollChunks else {
+      resumeReplayAfterRecording()
+      DispatchQueue.main.async { self.onRecordingFinished?(url, durationMs) }
+      return
+    }
+    pendingPrerollChunks = nil
+    let g1Chunk = Chunk(url: url, durationMs: durationMs)
+    replayBuffer.exportCombined(prerollChunks: preroll, recording: g1Chunk) { [weak self] result in
+      guard let self = self else { return }
+      self.resumeReplayAfterRecording()
+      switch result {
+      case let .success((combinedURL, combinedMs)):
+        self.onRecordingFinished?(combinedURL, combinedMs)
+      case .failure:
+        os_log("preroll export failed — falling back to recording-only clip", log: cameraLog, type: .error)
+        self.onRecordingFinished?(url, durationMs)
+      }
+    }
   }
 
-  var onRecordingFailed: ((String) -> Void)? {
-    get { recordingPipeline.onFailed }
-    set { recordingPipeline.onFailed = newValue }
+  private func resumeReplayAfterRecording() {
+    pendingPrerollChunks = nil
+    replayBuffer.resumeAppending()
+  }
+
+  func setReplayWindow(seconds: Int) {
+    replayBuffer.setWindow(seconds: seconds)
+  }
+
+  func saveReplay() throws {
+    guard session != nil else { throw CameraNativeError.notRunning }
+    guard !isInterrupted else { throw CameraNativeError.sessionInterrupted }
+    replayBuffer.save()
   }
 
   func switchLens(_ lens: LensType) throws {
@@ -271,6 +471,9 @@ final class CameraManager {
       onLensSwitched?(lens)
       return
     }
+    guard !recordingPipeline.isRecording else {
+      throw CameraNativeError.sessionFailed("cannot switch physical lens while recording")
+    }
     os_log(
       "switchLens lens=%{public}@ %{public}@->%{public}@",
       log: cameraLog, type: .info,
@@ -285,23 +488,79 @@ final class CameraManager {
     self.device = newDevice
     self.input = newInput
     onLensSwitched?(lens)
+    replayBuffer.reset()
   }
 
   func setFormat(resolution: Resolution, fps: Fps) throws {
-    guard let device = device else { throw CameraNativeError.notRunning }
+    guard let currentDevice = device else { throw CameraNativeError.notRunning }
     guard let session = session else { throw CameraNativeError.notRunning }
+    guard !isInterrupted else { throw CameraNativeError.sessionInterrupted }
+    guard !recordingPipeline.isRecording else {
+      throw CameraNativeError.sessionFailed("cannot change format while recording")
+    }
+
+    let targetDevice = try selectDevice(
+      for: lensFor(device: currentDevice),
+      resolution: resolution,
+      fps: fps
+    )
+
     session.beginConfiguration()
     session.sessionPreset = .inputPriority
-    try device.lockForConfiguration()
-    try applyFormat(device: device, resolution: resolution, fps: fps)
-    let dims = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
-    device.unlockForConfiguration()
+    let activeDevice: AVCaptureDevice
+    if targetDevice.uniqueID != currentDevice.uniqueID {
+      if let oldInput = input { session.removeInput(oldInput) }
+      let newInput = try AVCaptureDeviceInput(device: targetDevice)
+      if session.canAddInput(newInput) {
+        session.addInput(newInput)
+      } else {
+        session.commitConfiguration()
+        throw CameraNativeError.formatUnsupported
+      }
+      self.device = targetDevice
+      self.input = newInput
+      activeDevice = targetDevice
+    } else {
+      activeDevice = currentDevice
+    }
+
+    do {
+      try activeDevice.lockForConfiguration()
+      defer { activeDevice.unlockForConfiguration() }
+      try applyFormat(device: activeDevice, resolution: resolution, fps: fps)
+    } catch {
+      session.commitConfiguration()
+      throw error
+    }
+    let dims = CMVideoFormatDescriptionGetDimensions(activeDevice.activeFormat.formatDescription)
     session.commitConfiguration()
+
+    let switchedDevice = activeDevice.uniqueID != currentDevice.uniqueID
+    if switchedDevice {
+      installFocusKVO(on: activeDevice)
+    }
+
+    let activeIsVirtual =
+      activeDevice.deviceType == .builtInTripleCamera
+      || activeDevice.deviceType == .builtInDualWideCamera
+    if switchedDevice && activeIsVirtual {
+      applyVirtualLensZoom(device: activeDevice, lens: .wide)
+      onLensSwitched?(.wide)
+    }
+
     os_log(
-      "setFormat %{public}@@%{public}@ -> %dx%d",
+      "setFormat %{public}@@%{public}@ device=%{public}@ -> %dx%d",
       log: cameraLog, type: .info,
-      "\(resolution)", "\(fps)", Int(dims.width), Int(dims.height)
+      "\(resolution)", "\(fps)", "\(activeDevice.deviceType.rawValue)",
+      Int(dims.width), Int(dims.height)
     )
+
+    recordingPipeline.replayFps = fps == .fps60 ? 60 : 30
+    replayBuffer.reset()
+  }
+
+  private func lensFor(device: AVCaptureDevice) -> LensType {
+    return device.deviceType == .builtInUltraWideCamera ? .ultraWide : .wide
   }
 
   func focusAt(sensorPoint: CGPoint, normalizedPoint: FocusPoint) throws {
@@ -405,7 +664,15 @@ final class CameraManager {
     DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: timeout)
   }
 
-  private func selectDevice(for lens: LensType) throws -> AVCaptureDevice {
+  static func requiresPhysicalLens(resolution: Resolution?, fps: Fps?) -> Bool {
+    return resolution == .uhd4k && fps == .fps60
+  }
+
+  private func selectDevice(
+    for lens: LensType,
+    resolution: Resolution? = nil,
+    fps: Fps? = nil
+  ) throws -> AVCaptureDevice {
     let discovery = AVCaptureDevice.DiscoverySession(
       deviceTypes: [
         .builtInTripleCamera, .builtInDualWideCamera,
@@ -414,6 +681,13 @@ final class CameraManager {
       mediaType: .video,
       position: .back
     )
+
+    if Self.requiresPhysicalLens(resolution: resolution, fps: fps) {
+      if let wide = discovery.devices.first(where: { $0.deviceType == .builtInWideAngleCamera }) {
+        return wide
+      }
+      throw CameraNativeError.formatUnsupported
+    }
 
     if let virtual = discovery.devices.first(where: {
       $0.deviceType == .builtInTripleCamera || $0.deviceType == .builtInDualWideCamera
@@ -480,31 +754,14 @@ final class CameraManager {
       return supportsRes && supportsFps
     }
 
-    let chosen: AVCaptureDevice.Format
-    if let match = exactMatches.first {
-      chosen = match
-    } else {
-      let withFps = device.formats.filter { format in
-        format.videoSupportedFrameRateRanges.contains { range in
-          range.minFrameRate <= targetFps && range.maxFrameRate >= targetFps
-        }
-      }
-      let candidates = withFps.isEmpty ? device.formats : withFps
-      guard
-        let best = candidates.min(by: { a, b in
-          let da = CMVideoFormatDescriptionGetDimensions(a.formatDescription)
-          let db = CMVideoFormatDescriptionGetDimensions(b.formatDescription)
-          return abs(Int(da.width) - Int(targetWidth)) < abs(Int(db.width) - Int(targetWidth))
-        })
-      else { throw CameraNativeError.formatUnsupported }
-      chosen = best
-      let dims = CMVideoFormatDescriptionGetDimensions(best.formatDescription)
+    guard let chosen = exactMatches.first else {
       os_log(
-        "applyFormat fallback target=%dx%d@%.0f chose=%dx%d",
-        log: cameraLog, type: .info,
+        "applyFormat unsupported target=%dx%d@%.0f device=%{public}@",
+        log: cameraLog, type: .error,
         Int(targetWidth), Int(targetHeight), targetFps,
-        Int(dims.width), Int(dims.height)
+        "\(device.deviceType.rawValue)"
       )
+      throw CameraNativeError.formatUnsupported
     }
     device.activeFormat = chosen
     let duration = CMTime(value: 1, timescale: Int32(targetFps))

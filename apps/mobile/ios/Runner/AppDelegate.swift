@@ -4,6 +4,8 @@ import UIKit
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var cameraHostApi: CameraHostApiImpl?
+  private var replayBufferHostApi: ReplayBufferHostApiImpl?
+  private var voiceHostApi: VoiceHostApiImpl?
 
   override func application(
     _ application: UIApplication,
@@ -25,5 +27,23 @@ import UIKit
     let factory = CameraPlatformViewFactory(hostApi: hostApi)
     hostApi.platformViewFactory = factory
     registrar.register(factory, withId: "com.rarocamera/camera_preview")
+
+    let replayApi = ReplayBufferHostApiImpl(manager: hostApi.cameraManager, messenger: messenger)
+    self.replayBufferHostApi = replayApi
+    ReplayBufferHostApiSetup.setUp(binaryMessenger: messenger, api: replayApi)
+
+    let voiceFlutterApi = VoiceFlutterApi(binaryMessenger: messenger)
+    let voiceManager = VoiceManager(wakeWord: "Raro")
+    voiceManager.isRecordingActive = { [weak hostApi] in hostApi?.cameraManager.isRecording ?? false }
+    voiceManager.isCameraAudioActive = { [weak hostApi] in hostApi?.cameraManager.isSessionRunning ?? false }
+    hostApi.cameraManager.onCaptureAudioSample = { [weak voiceManager] buffer in
+      voiceManager?.appendCaptureAudio(buffer)
+    }
+    hostApi.cameraManager.onSessionStateChanged = { [weak voiceManager] in
+      voiceManager?.cameraAudioStateChanged()
+    }
+    let voiceApi = VoiceHostApiImpl(manager: voiceManager, flutterApi: voiceFlutterApi)
+    self.voiceHostApi = voiceApi
+    VoiceHostApiSetup.setUp(binaryMessenger: messenger, api: voiceApi)
   }
 }

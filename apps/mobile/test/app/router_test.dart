@@ -11,6 +11,7 @@ import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/data/vault_service.dart';
 import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
+import 'package:raro_mobile/features/camera/presentation/widgets/rec_button.dart';
 import 'package:raro_mobile/features/gallery/application/video_list_provider.dart';
 import 'package:raro_mobile/features/gallery/domain/video_entity.dart';
 import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
@@ -24,10 +25,25 @@ import 'package:raro_mobile/features/permissions/data/permission_gateway.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/data/settings_store.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
+import 'package:raro_mobile/core/native_bridges/generated/voice_api.g.dart';
+import 'package:raro_mobile/features/voice/application/voice_flutter_api_provider.dart';
+import 'package:raro_mobile/features/voice/data/voice_repository.dart';
+import 'package:raro_mobile/features/voice/data/voice_repository_provider.dart';
 
 class _MockPermissionGateway extends Mock implements PermissionGateway {}
 
 class _MockCameraRepository extends Mock implements CameraRepository {}
+
+class _StubVoiceRepository implements VoiceRepository {
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<void> startListening() async {}
+
+  @override
+  Future<void> stopListening() async {}
+}
 
 class _FakeSettingsStore implements SettingsStore {
   RecordingSettings stored = const RecordingSettings();
@@ -93,8 +109,18 @@ void main() {
     when(cameraRepository.discoverCapabilities).thenAnswer(
       (_) async => CameraCapabilities(
         availableLenses: [LensType.ultraWide, LensType.wide],
-        supportedResolutions: [Resolution.fhd1080],
-        supportedFps: [Fps.fps30, Fps.fps60],
+        supportedFormats: [
+          FormatCapability(
+            resolution: Resolution.fhd1080,
+            fps: Fps.fps30,
+            requiresPhysicalLens: false,
+          ),
+          FormatCapability(
+            resolution: Resolution.fhd1080,
+            fps: Fps.fps60,
+            requiresPhysicalLens: false,
+          ),
+        ],
       ),
     );
     when(cameraRepository.hasPermission).thenAnswer((_) async => false);
@@ -115,6 +141,13 @@ void main() {
         subscriptionStoreProvider.overrideWithValue(subscriptionStore),
         onboardingStoreProvider.overrideWithValue(onboardingStore),
         cameraRepositoryProvider.overrideWithValue(cameraRepository),
+        voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+        voiceWakeEventsProvider.overrideWithValue(
+          const Stream<WakeCommand>.empty(),
+        ),
+        voiceStateEventsProvider.overrideWithValue(
+          const Stream<VoiceListeningState>.empty(),
+        ),
         vaultServiceProvider.overrideWith(
           (ref) async => VaultService(documentsDir: vaultRoot),
         ),
@@ -153,7 +186,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1900));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('DIGA “RARO” PARA GRAVAR'), findsOneWidget);
+      expect(find.byType(RecButton), findsOneWidget);
     });
 
     testWidgets('onboarding 1 → Avançar → onboarding 2', (tester) async {
@@ -211,7 +244,7 @@ void main() {
       tester,
     ) async {
       await goToCamera(tester);
-      expect(find.text('DIGA “RARO” PARA GRAVAR'), findsOneWidget);
+      expect(find.byType(RecButton), findsOneWidget);
     });
 
     testWidgets('camera → settings (P06) abre a tela real', (tester) async {
@@ -279,7 +312,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      expect(find.text('DIGA “RARO” PARA GRAVAR'), findsOneWidget);
+      expect(find.byType(RecButton), findsOneWidget);
       expect(subscriptionStore.stored.isSubscribed, isTrue);
     });
   });

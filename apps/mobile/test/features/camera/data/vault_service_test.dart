@@ -34,7 +34,7 @@ void main() {
       final service = VaultService(documentsDir: tempRoot);
       final entity = await service.save(source, metadata: meta('a1'));
       expect(entity.id, 'a1');
-      expect(entity.filePath, endsWith('vault/a1.mov'));
+      expect(entity.filePath, endsWith('vault/a1.mp4'));
       expect(File(entity.filePath!).existsSync(), isTrue);
       expect(File(entity.filePath!).lengthSync(), 2048);
     },
@@ -62,18 +62,19 @@ void main() {
   });
 
   test(
-    'attachThumbnail persists thumbnailPath and preserves other fields',
+    'thumbnailPath resolves to the real .jpg in the vault and preserves other fields',
     () async {
       final service = VaultService(documentsDir: tempRoot);
       await service.save(
         source,
         metadata: meta('t1', at: DateTime(2026, 5, 20), replay: true),
       );
-
-      await service.attachThumbnail('t1', '/vault/t1.jpg');
+      final thumb = File('${tempRoot.path}/vault/t1.jpg')
+        ..writeAsBytesSync([0, 1, 2]);
+      await service.attachThumbnail('t1', thumb.path);
 
       final entity = (await service.listAll()).single;
-      expect(entity.thumbnailPath, '/vault/t1.jpg');
+      expect(entity.thumbnailPath, endsWith('vault/t1.jpg'));
       expect(entity.id, 't1');
       expect(entity.name, 'Vídeo t1');
       expect(entity.isReplay, isTrue);
@@ -81,6 +82,30 @@ void main() {
       expect(entity.recordedAt, DateTime(2026, 5, 20));
     },
   );
+
+  test('thumbnailPath is recomputed from current vault dir, ignoring a stale '
+      'absolute path in the sidecar (survives app reinstall)', () async {
+    final service = VaultService(documentsDir: tempRoot);
+    await service.save(source, metadata: meta('r1'));
+    await service.attachThumbnail(
+      'r1',
+      '/var/mobile/Containers/Data/Application/OLD-UUID/Documents/vault/r1.jpg',
+    );
+    File('${tempRoot.path}/vault/r1.jpg').writeAsBytesSync([9, 9, 9]);
+
+    final entity = (await service.listAll()).single;
+    expect(entity.thumbnailPath, '${tempRoot.path}/vault/r1.jpg');
+    expect(entity.thumbnailPath, isNot(contains('OLD-UUID')));
+  });
+
+  test('thumbnailPath is null when the .jpg is absent even if the sidecar '
+      'stored a path (stale reference does not survive)', () async {
+    final service = VaultService(documentsDir: tempRoot);
+    await service.save(source, metadata: meta('s1'));
+    await service.attachThumbnail('s1', '/old/container/vault/s1.jpg');
+
+    expect((await service.listAll()).single.thumbnailPath, isNull);
+  });
 
   test('attachThumbnail on missing metadata is a no-op (no throw)', () async {
     final service = VaultService(documentsDir: tempRoot);

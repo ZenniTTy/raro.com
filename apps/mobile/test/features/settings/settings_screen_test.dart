@@ -114,14 +114,16 @@ void main() {
     expect(store.stored.resolution, Resolution.hd720);
   });
 
-  testWidgets('tap em Volume persiste o modo de controle', (tester) async {
+  testWidgets('card Volume desabilitado não altera o modo de controle', (
+    tester,
+  ) async {
     await pumpReady(tester);
 
     await scrollTo(tester, find.text('Volume'));
     await tester.tap(find.text('Volume'));
     await tester.pump();
 
-    expect(store.stored.controlMode, ControlMode.volume);
+    expect(store.stored.controlMode, isNot(ControlMode.volume));
   });
 
   testWidgets('Ver Planos dispara o callback onSeePlans', (tester) async {

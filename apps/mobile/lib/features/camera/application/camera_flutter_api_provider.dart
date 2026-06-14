@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
@@ -17,6 +18,9 @@ part 'camera_flutter_api_provider.g.dart';
 sealed class RecordingResult {
   const RecordingResult();
 
+  const factory RecordingResult.started({required String sessionId}) =
+      RecordingStarted;
+
   const factory RecordingResult.finished({
     required String path,
     required int durationMs,
@@ -26,6 +30,12 @@ sealed class RecordingResult {
     required CameraErrorCode code,
     String? message,
   }) = RecordingFailed;
+}
+
+class RecordingStarted extends RecordingResult {
+  const RecordingStarted({required this.sessionId});
+
+  final String sessionId;
 }
 
 class RecordingFinished extends RecordingResult {
@@ -111,6 +121,9 @@ String _idFromPath(String path) {
   return stem.startsWith('raro_') ? stem.substring(5) : stem;
 }
 
+@visibleForTesting
+String idFromPathForTest(String path) => _idFromPath(path);
+
 String _nameFor(DateTime at) {
   final hh = at.hour.toString().padLeft(2, '0');
   final mm = at.minute.toString().padLeft(2, '0');
@@ -123,6 +136,10 @@ class _RecordingFlutterApi implements CameraFlutterApi {
   _RecordingFlutterApi(this._sink);
 
   final StreamController<RecordingResult> _sink;
+
+  @override
+  void onRecordingStarted(String sessionId) =>
+      _sink.add(RecordingResult.started(sessionId: sessionId));
 
   @override
   void onRecordingFinished(String path, int durationMs) =>

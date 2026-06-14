@@ -15,13 +15,25 @@ class SettingsController extends _$SettingsController {
     return ref.read(settingsStoreProvider).load();
   }
 
-  Future<void> setResolution(Resolution resolution) =>
-      _update((s) => s.copyWith(resolution: resolution));
+  Future<void> setResolution(Resolution resolution) => _update(
+    (s) => s.copyWith(
+      resolution: resolution,
+      fps: resolution == Resolution.uhd4k60 ? Fps.fps60 : s.fps,
+    ),
+  );
 
   Future<void> setFps(Fps fps) => _update((s) => s.copyWith(fps: fps));
 
   Future<void> setBufferDuration(BufferDuration bufferDuration) =>
       _update((s) => s.copyWith(bufferDuration: bufferDuration));
+
+  Future<void> toggleBufferDuration() => _update(
+    (s) => s.copyWith(
+      bufferDuration: s.bufferDuration == BufferDuration.seconds30
+          ? BufferDuration.seconds15
+          : BufferDuration.seconds30,
+    ),
+  );
 
   Future<void> setControlMode(ControlMode controlMode) =>
       _update((s) => s.copyWith(controlMode: controlMode));

@@ -27,9 +27,9 @@ final class CameraManagerRecordingTests: XCTestCase {
     XCTAssertEqual(chosen, .h264)
   }
 
-  func testOutputUrlUsesMovExtensionInVaultDir() {
+  func testOutputUrlUsesMp4ExtensionInVaultDir() {
     let url = RecordingPipeline.makeOutputURL(sessionId: "abc123")
-    XCTAssertEqual(url.pathExtension, "mov")
+    XCTAssertEqual(url.pathExtension, "mp4")
     XCTAssertTrue(url.lastPathComponent.contains("abc123"))
   }
 

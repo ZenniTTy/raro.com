@@ -5,7 +5,7 @@ import 'package:pigeon/pigeon.dart';
     dartOut: 'lib/core/native_bridges/generated/voice_api.g.dart',
     dartOptions: DartOptions(),
     swiftOut: 'ios/Runner/Native/Generated/VoiceApi.g.swift',
-    swiftOptions: SwiftOptions(),
+    swiftOptions: SwiftOptions(errorClassName: 'VoicePigeonError'),
     kotlinOut:
         'android/app/src/main/kotlin/com/rarocamera/raro_mobile/generated/voice/VoiceApi.g.kt',
     kotlinOptions: KotlinOptions(
@@ -14,12 +14,20 @@ import 'package:pigeon/pigeon.dart';
     dartPackageName: 'raro_mobile',
   ),
 )
+enum WakeCommand { start, stop }
+
+enum VoiceListeningState { idle, listening, paused, unavailable }
+
 @HostApi()
 abstract class VoiceHostApi {
-  void voicePing();
+  @async
+  bool isAvailable();
+  void startListening();
+  void stopListening();
 }
 
 @FlutterApi()
 abstract class VoiceFlutterApi {
-  void voiceReady();
+  void onWakeDetected(WakeCommand command);
+  void onListeningStateChanged(VoiceListeningState state);
 }

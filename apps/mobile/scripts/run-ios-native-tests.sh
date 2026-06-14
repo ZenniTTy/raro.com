@@ -52,9 +52,15 @@ echo "[run-ios-native-tests] Using destination: $DESTINATION"
 echo "[run-ios-native-tests] Filter: $FILTER"
 
 cd "$IOS_DIR"
+set -o pipefail
 xcodebuild test \
   -workspace Runner.xcworkspace \
   -scheme Runner \
   -destination "platform=iOS Simulator,name=$DESTINATION" \
   -only-testing:"$FILTER" \
-  -quiet 2>&1 | tail -30
+  2>&1 | grep -iE "test (suite|case) .*(started|passed|failed)|executed [0-9]+ test|\*\* test (succeeded|failed) \*\*|testing failed:|error:|build failed"
+status=${PIPESTATUS[0]}
+if [ "$status" -ne 0 ]; then
+  echo "[run-ios-native-tests] xcodebuild exited with status $status (FAILED)"
+fi
+exit "$status"

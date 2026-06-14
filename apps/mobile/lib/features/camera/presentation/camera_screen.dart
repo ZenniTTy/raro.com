@@ -1,9 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
+import 'package:raro_mobile/core/native_bridges/generated/voice_api.g.dart';
+import 'package:raro_mobile/features/camera/domain/camera_error_message.dart';
+import 'package:raro_mobile/features/camera/domain/format_catalog.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
@@ -12,7 +16,6 @@ import 'package:raro_mobile/features/camera/application/camera_flutter_api_provi
 import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
 import 'package:raro_mobile/features/camera/application/recording_controller.dart';
 import 'package:raro_mobile/features/camera/domain/camera_settings.dart';
-import 'package:raro_mobile/features/camera/domain/camera_shell_state.dart';
 import 'package:raro_mobile/features/camera/domain/camera_state.dart';
 import 'package:raro_mobile/features/camera/domain/recording_options_mapper.dart';
 import 'package:raro_mobile/features/camera/domain/recording_phase.dart';
@@ -22,11 +25,21 @@ import 'package:raro_mobile/features/camera/presentation/viewport_grain_painter.
 import 'package:raro_mobile/features/camera/presentation/widgets/buffer_pill.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/hud_overlay.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/lens_switcher.dart';
+import 'package:raro_mobile/features/camera/presentation/widgets/preroll_confirmation.dart';
 import 'package:raro_mobile/features/camera/presentation/widgets/rec_button.dart';
+import 'package:raro_mobile/features/camera/presentation/widgets/replay_arm_ring.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/presentation/widgets/subscription_popup.dart';
+import 'package:raro_mobile/features/replay/application/replay_buffer_controller.dart';
+import 'package:raro_mobile/features/replay/application/replay_vault_sink.dart';
+import 'package:raro_mobile/features/replay/domain/replay_buffer_state.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
-import 'package:raro_shared/raro_shared.dart' show Codec;
+import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
+import 'package:raro_mobile/features/voice/application/voice_controller.dart';
+import 'package:raro_mobile/features/voice/domain/voice_state.dart';
+import 'package:raro_mobile/features/voice/presentation/voice_listening_indicator.dart';
+import 'package:raro_shared/raro_shared.dart'
+    show BufferDuration, Codec, ControlMode;
 
 class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({
@@ -50,15 +63,35 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   Duration _elapsed = Duration.zero;
   bool _popupShown = false;
   bool _popupVisible = false;
+  bool _recordingHadPreroll = false;
+  int? _recordingPrerollSeconds;
+  int? _prerollConfirmationSeconds;
   PigeonFormat _format = const PigeonFormat(
     resolution: Resolution.fhd1080,
     fps: Fps.fps60,
   );
 
+  bool get _is4k60 =>
+      _format.resolution == Resolution.uhd4k && _format.fps == Fps.fps60;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startSession());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _startSession();
+      ref
+          .read(voiceRecordingTriggerProvider.notifier)
+          .register(_onVoiceCommand);
+    });
+  }
+
+  void _onVoiceCommand(WakeCommand command) {
+    final phase = ref.read(recordingControllerProvider);
+    final isActive = phase is RecordingActive || phase is RecordingStarting;
+    if (command == WakeCommand.start && isActive) return;
+    if (command == WakeCommand.stop && !isActive) return;
+    unawaited(_onRecTap());
   }
 
   Future<void> _startSession() async {
@@ -109,32 +142,65 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     }
   }
 
+  Future<void> _applyFormatToSession(PigeonFormat fmt) async {
+    final isReady =
+        ref.read(cameraControllerProvider).value is CameraStateReady;
+    if (!isReady) return;
+    try {
+      await ref
+          .read(cameraControllerProvider.notifier)
+          .setFormat(fmt.resolution, fmt.fps);
+    } on Object catch (error, stackTrace) {
+      ref
+          .read(appLoggerProvider)
+          .w('setFormat failed', error: error, stackTrace: stackTrace);
+    }
+  }
+
   void _stopElapsedTimer() {
     _timer?.cancel();
     _timer = null;
     _elapsed = Duration.zero;
   }
 
+  RecordingOptions _buildRecordingOptions() {
+    final replayState = ref.read(replayBufferControllerProvider);
+    final replayArmed = replayState is ReplayBuffering;
+    return RecordingOptions(
+      resolution: _format.resolution,
+      fps: _format.fps,
+      codec: Codec.h265.label,
+      includeReplayPreroll: replayArmed,
+    );
+  }
+
   Future<void> _onRecTap() async {
     final notifier = ref.read(recordingControllerProvider.notifier);
-    final wasActive = ref.read(recordingControllerProvider) is RecordingActive;
+    final phase = ref.read(recordingControllerProvider);
+    final wasActive = phase is RecordingActive || phase is RecordingStarting;
     try {
+      if (!wasActive) {
+        final replayState = ref.read(replayBufferControllerProvider);
+        _recordingHadPreroll = replayState is ReplayBuffering;
+        _recordingPrerollSeconds = replayState is ReplayBuffering
+            ? replayState.seconds
+            : null;
+      }
+      await notifier.toggle(options: _buildRecordingOptions());
       if (wasActive) {
-        await notifier.stop();
         _stopElapsedTimer();
       } else {
-        await notifier.start(
-          RecordingOptions(
-            resolution: _format.resolution,
-            fps: _format.fps,
-            codec: Codec.h265.label,
-          ),
-        );
         _elapsed = Duration.zero;
         _timer = Timer.periodic(const Duration(seconds: 1), (_) {
           setState(() => _elapsed += const Duration(seconds: 1));
         });
       }
+    } on PlatformException catch (e) {
+      _stopElapsedTimer();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(cameraErrorMessage(mapPigeonErrorCode(e.code)))),
+      );
     } on Object catch (_) {
       _stopElapsedTimer();
       if (!mounted) return;
@@ -144,10 +210,30 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     }
   }
 
+  Timer? _confirmationTimer;
+
+  void _showPrerollConfirmation() {
+    final seconds = _recordingPrerollSeconds;
+    if (seconds == null || !mounted) return;
+    setState(() => _prerollConfirmationSeconds = seconds);
+    _confirmationTimer?.cancel();
+    _confirmationTimer = Timer(const Duration(milliseconds: 1900), () {
+      if (mounted) setState(() => _prerollConfirmationSeconds = null);
+    });
+  }
+
+  String _replayErrorMessage(String code) {
+    if (code == 'thermalThrottled') {
+      return 'Replay pausado: o aparelho está aquecido.';
+    }
+    return 'Não foi possível salvar o replay.';
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
     _popupTimer?.cancel();
+    _confirmationTimer?.cancel();
     super.dispose();
   }
 
@@ -157,21 +243,70 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     final shell = ref.watch(cameraShellProvider);
     final camAsync = ref.watch(cameraControllerProvider);
     final cameraReady = camAsync.value is CameraStateReady;
-    final recording = ref.watch(recordingControllerProvider) is RecordingActive;
+    final recordingPhase = ref.watch(recordingControllerProvider);
+    final recording =
+        recordingPhase is RecordingActive ||
+        recordingPhase is RecordingStarting;
     ref.watch(recordingVaultSinkProvider);
+    ref.watch(replayVaultSinkProvider);
+    final voiceState = ref.watch(voiceControllerProvider);
+    final controlMode =
+        ref.watch(settingsControllerProvider).value?.controlMode ??
+        const RecordingSettings().controlMode;
+    final bufferDuration =
+        ref.watch(settingsControllerProvider).value?.bufferDuration ??
+        const RecordingSettings().bufferDuration;
+    final replayState = ref.watch(replayBufferControllerProvider);
+    final replayArmed = replayState is ReplayBuffering;
+    final replayWindowSeconds = replayState is ReplayBuffering
+        ? replayState.seconds
+        : bufferDuration.value;
 
-    ref.listen(recordingControllerProvider, (_, next) {
-      if (next is RecordingIdle) _stopElapsedTimer();
+    ref.listen(recordingControllerProvider, (prev, next) {
+      if (next is RecordingIdle) {
+        _stopElapsedTimer();
+        if (prev is RecordingActive && _recordingHadPreroll) {
+          _showPrerollConfirmation();
+          _recordingHadPreroll = false;
+        }
+      }
     });
 
-    ref.listen(settingsControllerProvider, (_, next) {
+    ref.listen(settingsControllerProvider, (prev, next) {
       final value = next.value;
       if (value == null) return;
+
       final fmt = mapToPigeonFormat(
         resolution: value.resolution,
         fps: value.fps,
       );
-      if (mounted) setState(() => _format = fmt);
+      if (fmt.resolution != _format.resolution || fmt.fps != _format.fps) {
+        if (mounted) setState(() => _format = fmt);
+        _applyFormatToSession(fmt);
+      }
+
+      final prevDuration = prev?.value?.bufferDuration;
+      if (value.bufferDuration != prevDuration) {
+        ref
+            .read(replayBufferControllerProvider.notifier)
+            .setWindow(value.bufferDuration.value);
+      }
+    });
+
+    ref.listen(cameraControllerProvider, (_, next) {
+      if (next.value is CameraStateReady) {
+        ref
+            .read(replayBufferControllerProvider.notifier)
+            .setWindow(bufferDuration.value);
+      }
+    });
+
+    ref.listen(replayBufferControllerProvider, (_, next) {
+      if (next is ReplayFailedState && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_replayErrorMessage(next.message))),
+        );
+      }
     });
 
     ref.listen(subscriptionControllerProvider, (_, next) {
@@ -201,11 +336,16 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                       cameraReady: cameraReady,
                       recording: recording,
                       elapsed: _elapsed,
-                      bufferDuration: shell.bufferDuration,
+                      voiceState: voiceState,
+                      controlMode: controlMode,
+                      bufferDuration: bufferDuration,
                       lens: shell.lens,
                       lensLabel: shell.hudLensLabel,
+                      resolutionLabel: resolutionLabel(_format.resolution),
+                      fpsLabel: fpsLabel(_format.fps),
+                      ultraWideEnabled: !_is4k60,
                       onToggleBuffer: () => ref
-                          .read(cameraShellProvider.notifier)
+                          .read(settingsControllerProvider.notifier)
                           .toggleBufferDuration(),
                       onSelectLens: _onSelectLens,
                       onTapHud: widget.onSettings,
@@ -215,12 +355,19 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
               ),
               _BottomControls(
                 recording: recording,
+                replayArmed: replayArmed,
+                replayWindowSeconds: replayWindowSeconds,
                 onGallery: widget.onGallery,
                 onSettings: widget.onSettings,
                 onRecTap: _onRecTap,
               ),
             ],
           ),
+          if (_prerollConfirmationSeconds != null)
+            PrerollConfirmation(
+              key: ValueKey('preroll-confirm-$_prerollConfirmationSeconds'),
+              seconds: _prerollConfirmationSeconds!,
+            ),
           if (_popupVisible)
             SubscriptionPopup(
               onSubscribe: () {
@@ -263,9 +410,14 @@ class _Viewport extends StatelessWidget {
     required this.cameraReady,
     required this.recording,
     required this.elapsed,
+    required this.voiceState,
+    required this.controlMode,
     required this.bufferDuration,
     required this.lens,
     required this.lensLabel,
+    required this.resolutionLabel,
+    required this.fpsLabel,
+    required this.ultraWideEnabled,
     required this.onToggleBuffer,
     required this.onSelectLens,
     required this.onTapHud,
@@ -274,9 +426,14 @@ class _Viewport extends StatelessWidget {
   final bool cameraReady;
   final bool recording;
   final Duration elapsed;
+  final VoiceState voiceState;
+  final ControlMode controlMode;
   final BufferDuration bufferDuration;
   final LensType lens;
   final String lensLabel;
+  final String resolutionLabel;
+  final String fpsLabel;
+  final bool ultraWideEnabled;
   final VoidCallback onToggleBuffer;
   final ValueChanged<LensType> onSelectLens;
   final VoidCallback onTapHud;
@@ -301,10 +458,12 @@ class _Viewport extends StatelessWidget {
             child: CustomPaint(painter: RuleOfThirdsPainter()),
           ),
         ),
-        if (!recording)
-          const Center(child: CameraCenterHint())
+        if (recording)
+          Positioned(top: 12, left: 12, child: RecIndicator(elapsed: elapsed))
+        else if (controlMode == ControlMode.voice)
+          Center(child: VoiceListeningIndicator(state: voiceState))
         else
-          Positioned(top: 12, left: 12, child: RecIndicator(elapsed: elapsed)),
+          const Center(child: CameraCenterHint()),
         Positioned(
           top: 12,
           right: 12,
@@ -319,12 +478,16 @@ class _Viewport extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               HudInfoBar(
-                resolutionLabel: '1080p',
-                fpsLabel: '60FPS',
+                resolutionLabel: resolutionLabel,
+                fpsLabel: fpsLabel,
                 lensLabel: lensLabel,
                 onTap: onTapHud,
               ),
-              LensSwitcher(selected: lens, onSelected: onSelectLens),
+              LensSwitcher(
+                selected: lens,
+                onSelected: onSelectLens,
+                ultraWideEnabled: ultraWideEnabled,
+              ),
             ],
           ),
         ),
@@ -336,12 +499,16 @@ class _Viewport extends StatelessWidget {
 class _BottomControls extends StatelessWidget {
   const _BottomControls({
     required this.recording,
+    required this.replayArmed,
+    required this.replayWindowSeconds,
     required this.onGallery,
     required this.onSettings,
     required this.onRecTap,
   });
 
   final bool recording;
+  final bool replayArmed;
+  final int replayWindowSeconds;
   final VoidCallback onGallery;
   final VoidCallback onSettings;
   final VoidCallback onRecTap;
@@ -360,7 +527,12 @@ class _BottomControls extends StatelessWidget {
             onTap: onGallery,
             colors: colors,
           ),
-          RecButton(recording: recording, onTap: onRecTap),
+          ReplayArmRing(
+            armed: replayArmed,
+            windowSeconds: replayWindowSeconds,
+            recording: recording,
+            child: RecButton(recording: recording, onTap: onRecTap),
+          ),
           _RoundButton(
             key: const Key('camera_settings_button'),
             icon: Icons.settings_outlined,

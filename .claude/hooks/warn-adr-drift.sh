@@ -2,8 +2,9 @@
 # warn-adr-drift.sh — avisa quando mudança toca arquivos sensíveis sem ADR aberto
 # Disparado em: PreToolUse (Write, Edit, MultiEdit)
 # Saída em stderr — não bloqueia (exit 0), mas o agente vê o aviso.
-# Critério: mudança em pubspec.yaml, package.json deps, schema do Blueprint
-# OU em /lib/core/* + nenhum ADR novo em docs/decisions/ aberto neste branch.
+# Critério: mudança em pubspec.yaml, package.json deps, schema do Blueprint,
+# native_bridges gerado, OU contrato Pigeon source (apps/mobile/pigeons/*.dart)
+# + nenhum ADR novo em docs/decisions/ aberto neste branch.
 set -euo pipefail
 
 input="$(cat)"
@@ -27,6 +28,7 @@ case "$rel" in
   apps/mobile/pubspec.yaml|packages/shared/pubspec.yaml|package.json) sensitive=1 ;;
   docs/Blueprint.md) sensitive=1 ;;
   apps/mobile/lib/core/native_bridges/*) sensitive=1 ;;
+  apps/mobile/pigeons/*.dart) sensitive=1 ;;
 esac
 
 if [ "$sensitive" -eq 1 ]; then
