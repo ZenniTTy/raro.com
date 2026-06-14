@@ -59,6 +59,16 @@
 O detector roda **3 sessões ONNX em cadeia**: áudio -> `melspectrogram` -> `embedding_model` ->
 `<classifier>`. Os 4 arquivos estão em `apps/mobile/ios/Runner/Resources/`.
 
+> ⚠️ **DÉBITO ABERTO p/ a Task 3 (não esquecer):** os 4 `.onnx` estão no disco + git, mas **NÃO estão
+> referenciados no `project.pbxproj`** (projeto NÃO é file-system-synchronized — confirmado:
+> 0 `PBXFileSystemSynchronizedRootGroup`). **Sem as inserções no pbxproj eles NÃO entram no bundle** e
+> `Bundle.main.url(forResource:)` retorna `nil` em runtime (bug silencioso). Adiar foi decisão consciente:
+> o pbxproj será tocado UMA vez junto com o `WakeWordDetector.swift` + seu XCTest (cada arquivo de
+> produção/teste novo exige 4 inserções — PBXBuildFile, PBXFileReference, PBXGroup, build phase; para os
+> modelos: PBXFileReference + PBXBuildFile + entrada no `97C146EC...` PBXResourcesBuildPhase / Copy Bundle
+> Resources). Ver memória `raro-pattern-ios-xctest-pbxproj-4-insertions`. **Validar no device que os 4
+> carregam (smoke-test de `Bundle.main`) antes de confiar no detector.**
+
 | Arquivo | Papel | Input (nome, shape, dtype) | Output (nome, shape, dtype) | Opset | Stateful? |
 |---|---|---|---|---|---|
 | `melspectrogram.onnx` | Áudio 16 kHz mono -> mel spectrogram | `input`, `[batch_size, samples]`, FLOAT | `output`, `[time, 1, ?, 32]`, FLOAT (**32 mel bins**) | 13 | Não (transform puro) |
