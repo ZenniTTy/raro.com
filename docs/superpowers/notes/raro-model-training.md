@@ -50,27 +50,60 @@
 
 ## Contrato de I/O dos modelos ONNX (o que a Task 3 implementa)
 
-O detector roda **3 sessões ONNX em cadeia**: áudio -> `melspectrogram` -> `embedding_model` ->
-`<classifier>`. Os 4 arquivos vão para `apps/mobile/ios/Runner/Resources/`.
+> **✅ VALIDADO POR INSPEÇÃO DIRETA DOS .onnx (sessão 2026-06-14).** Os shapes/nomes/dtypes abaixo
+> NÃO são mais "a confirmar" — foram extraídos com `onnx.load(...).graph` dos 4 arquivos reais já
+> versionados em `apps/mobile/ios/Runner/Resources/`. A Task 3 (Swift) lê DAQUI e não inventa shapes.
+> Fonte primária corroborante: openWakeWord `utils.py` (streaming) + livekit docs `export-and-inference.md`.
+> Memória: `raro-pattern-wakeword-onnx-3stage-pipeline-shapes`.
 
-| Arquivo | Papel | Input (nome, shape, dtype) | Output (nome, shape) | Stateful? |
-|---|---|---|---|---|
-| `melspectrogram.onnx` | Áudio 16 kHz mono -> mel spectrogram | áudio PCM 16 kHz mono (nome/shape **a confirmar via Passo 6/18 do notebook**) | mel features (**a confirmar via Passo 6/18**) | Não (transform puro) |
-| `embedding_model.onnx` | Mel -> embeddings (Google speech embedding, frozen) | mel features (**a confirmar via Passo 6/18**) | embeddings (**a confirmar via Passo 6/18**) | Não (transform puro) |
-| `raro_gravar.onnx` | Classificador do comando **START** | `embeddings`, `(1, 16, 96)`, float32 (batch dinâmico) | `score`, `(1, 1)` | Não (a sessão ONNX é stateless) |
-| `raro_parar.onnx` | Classificador do comando **STOP** | `embeddings`, `(1, 16, 96)`, float32 (batch dinâmico) | `score`, `(1, 1)` | Não (a sessão ONNX é stateless) |
+O detector roda **3 sessões ONNX em cadeia**: áudio -> `melspectrogram` -> `embedding_model` ->
+`<classifier>`. Os 4 arquivos estão em `apps/mobile/ios/Runner/Resources/`.
+
+| Arquivo | Papel | Input (nome, shape, dtype) | Output (nome, shape, dtype) | Opset | Stateful? |
+|---|---|---|---|---|---|
+| `melspectrogram.onnx` | Áudio 16 kHz mono -> mel spectrogram | `input`, `[batch_size, samples]`, FLOAT | `output`, `[time, 1, ?, 32]`, FLOAT (**32 mel bins**) | 13 | Não (transform puro) |
+| `embedding_model.onnx` | Mel -> embeddings (frozen, Google speech embedding) | `input_1`, `[?, 76, 32, 1]`, FLOAT (**janela de 76 mel frames × 32 bins**) | `conv2d_19`, `[?, 1, 1, 96]`, FLOAT (**embedding 96-dim**) | 13 | Não (transform puro) |
+| `raro_gravar.onnx` | Classificador do comando **START** | `embeddings`, `[batch, 16, 96]`, FLOAT | `score`, `[batch, 1]`, FLOAT | 18 | Não (a sessão ONNX é stateless) |
+| `raro_parar.onnx` | Classificador do comando **STOP** | `embeddings`, `[batch, 16, 96]`, FLOAT | `score`, `[batch, 1]`, FLOAT | 18 | Não (a sessão ONNX é stateless) |
+
+Encadeamento provado (a saída de um estágio é o input do próximo):
+`áudio[1, N]` → mel `[T, 1, ?, 32]` → (janela 76×32) → embedding `[?,1,1,96]` → (ring buffer 16) → classifier `[1, 16, 96]` → `score[1,1]`.
+
+Algoritmo de streaming (validado no `utils.py` do openWakeWord, que o livekit 0.2.1 reusa):
+- **Passo de áudio: 1280 samples (80 ms @ 16 kHz).** O mel processa a cada 1280 samples acumulados.
+- **Janela do embedding: 76 mel frames × 32 bins**, deslizando com **step_size = 8** mel frames.
+- **Classifier lê os ÚLTIMOS 16 embeddings** -> `(1, 16, 96)`. (~2 s = 32.000 samples = 16 embeddings.)
+- **Normalização do mel:** `x/10 + 2` (default openWakeWord). Áudio float32; a doc aceita int16 ou float32 [-1,1].
 
 Observações:
-- **Opset 18** nos classificadores (confirmado na doc oficial de export). Quantização INT8 opcional
-  geraria `<model_name>.int8.onnx` (não usada por padrão neste fluxo).
-- O **contrato dos classificadores** (`embeddings (1,16,96)` float32 -> `score (1,1)`) é fixo e
-  confirmado na doc oficial; é o que a Task 3 (Swift) assume. Os shapes dos dois estágios genéricos
-  (`melspectrogram`/`embedding_model`) saem na saída do **Passo 6/18 do notebook** — registrar aqui
-  quando rodar.
-- **O DETECTOR (camada Swift) é STATEFUL**, mesmo as sessões ONNX sendo stateless: ele mantém um
-  **ring buffer de embeddings de 16 frames** (janela ~2 s = 32.000 samples a 16 kHz produz 16
-  embeddings) e desliza essa janela a cada chunk de áudio antes de chamar o classificador. O estado
-  (buffer + cooldown/debounce) vive no `WakeWordDetector`, não no grafo ONNX.
+- **Opset 13** nos genéricos, **opset 18** nos classificadores. Sem quantização INT8 (fluxo default).
+- **Limiares ótimos (usar estes, NÃO 0.5):** `raro_gravar` = **0.34**, `raro_parar` = **0.23**
+  (de `*_eval.json`; ver tabela de métricas abaixo).
+- **iOS — seleção de EP POR modelo:** `melspectrogram` roda em **CPU/XNNPACK** (operadores incompatíveis
+  com CoreML, confirmado 0024); o classifier (e provavelmente o embedding) no **CoreML EP**
+  (`appendCoreMLExecutionProviderWithOptions:`). Smoke-test de carga dos 3-4 modelos no device é
+  obrigatório antes de confiar.
+- **O DETECTOR (camada Swift) é STATEFUL**, mesmo as sessões ONNX sendo stateless: mantém um ring
+  buffer de mel frames (≥76) E um ring buffer de embeddings (≥16). O estado (buffers + cooldown/debounce)
+  vive no `WakeWordDetector`, não no grafo ONNX. Os 2 classificadores compartilham mel+embedding (rodam
+  1×, alimentam os dois scores).
+
+## Proveniência dos arquivos (sha256 — anti bug silencioso)
+
+Os 4 `.onnx` em `Runner/Resources/`, com origem auditável:
+
+| Arquivo | sha256 | Origem |
+|---|---|---|
+| `melspectrogram.onnx` | `ba2b0e0f8b7b875369a2c89cb13360ff53bac436f2895cced9f479fa65eb176f` | pacote pip `livekit-wakeword==0.2.1` (`livekit/wakeword/resources/`) — MESMA versão do treino |
+| `embedding_model.onnx` | `70d164290c1d095d1d4ee149bc5e00543250a7316b59f31d056cff7bd3075c1f` | idem (genérico, frozen) |
+| `raro_gravar.onnx` | `3d5f5ec715ce224bd9cdb768fbe461c03b72bc56c8cdf5f64283d24036416267` | treino RunPod 5090 (sessão 0025) — classificador START |
+| `raro_parar.onnx` | `e96fce98c0135b47928e1f5caef545f397b482274da544dde62126c6272ad016` | treino RunPod 5090 (sessão 0025) — classificador STOP |
+
+> **Por que os genéricos vieram do pacote 0.2.1 e não do openWakeWord:** garantir que mel+embedding
+> sejam EXATAMENTE os que a engine usou no treino dos classificadores — proveniência idêntica elimina
+> risco de incompatibilidade silenciosa de variante/versão (que só apareceria como recall ruim no
+> device). A sessão 0025 baixou só os 2 classificadores do RunPod e terminou o pod; os 2 genéricos
+> ficaram para trás (bug latente) — resolvido aqui extraindo-os da mesma versão pinada.
 
 ## Parâmetros de referência do concorrente (calibração)
 
@@ -90,21 +123,27 @@ não exigências do treino:
 | RMS gate (stop) | 0.012 | Histerese da porta de energia |
 | Beep no wake | sim | Confirmação sonora ao detectar (copiar comportamento) |
 
-## Métricas medidas (preencher após rodar)
+## Métricas medidas (eval offline — rodada de PROVA, sessão 0025)
 
-> **PREENCHER APÓS KAGGLE.** Valores saem do Passo 7 (tamanhos) e Passo 8 (recall/FP) do notebook.
+> Valores reais do eval da própria ferramenta (`*_eval.json`). São de **prova** (`n_samples=2000`),
+> não do lote cheio (cancelado por custo — ver sessão 0025). Suficientes p/ a 1ª validação no iPhone.
 
-| Modelo | Recall (eval offline) | FP/hora (eval) | Tamanho `.onnx` | `n_samples` | `steps` | `model_size` | Data do treino |
+| Modelo | Recall @ ótimo | Recall @ 0.5 | FP/hora | Limiar ótimo | Accuracy | Tamanho `.onnx` | Data |
 |---|---|---|---|---|---|---|---|
-| `raro_gravar.onnx` | _(preencher)_ | _(preencher)_ | _(preencher)_ | _(preencher)_ | _(preencher)_ | _(preencher)_ | _(preencher)_ |
-| `raro_parar.onnx` | _(preencher)_ | _(preencher)_ | _(preencher)_ | _(preencher)_ | _(preencher)_ | _(preencher)_ | _(preencher)_ |
+| `raro_gravar.onnx` | **91,4%** | 88% | 0,18 | **0,34** | 94,0% | 99.190 B | 2026-06-13 |
+| `raro_parar.onnx` | **92,2%** | 88% | 0,18 | **0,23** | 94,0% | 99.190 B | 2026-06-13 |
 
-Tamanho dos genéricos (registrar uma vez): `melspectrogram.onnx` = _(preencher)_ ·
-`embedding_model.onnx` = _(preencher)_.
+Validação: ~17h de áudio negativo, 500 positivos / 30.584 negativos por classe. Hardware: RunPod RTX 5090.
+Arquitetura: conv_attention/small. TTS: VoxCPM (PT-BR). `n_samples=2000` (prova).
 
-Notas livres do treino (o que variou, voz que falhou, ajuste de `n_samples`, etc.):
+Tamanho dos genéricos: `melspectrogram.onnx` = 1.087.958 B (~1,0 MB) ·
+`embedding_model.onnx` = 1.326.578 B (~1,3 MB). Total dos 4 no bundle ≈ **2,6 MB**.
 
-- _(preencher)_
+Notas livres do treino:
+
+- Lote cheio (`n_samples=15000`) tentado e **cancelado aos 60%** (VoxCPM desacelerou ~3-4 s/clip,
+  saldo da GPU acabaria antes do fim). Plano B se o iPhone reprovar: lote cheio OU +`voice_design_prompts`
+  (50-100). Detalhes: sessão 0025 + `COMO-TREINAR-runpod-4090.md`.
 
 ## Gate de aceite
 
