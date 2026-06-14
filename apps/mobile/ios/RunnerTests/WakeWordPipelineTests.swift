@@ -34,4 +34,15 @@ final class WakeWordPipelineTests: XCTestCase {
     XCTAssertEqual(mel.callCount, 1, "1280th sample triggers mel")
     XCTAssertEqual(mel.lastInputCount, 1280)
   }
+
+  func testMultipleChunksDrainInOneCall() {
+    let mel = FakeMel()
+    let pipeline = WakeWordPipeline(
+      mel: mel, embedding: FakeEmbedding(),
+      gravar: FakeClassifier(), parar: FakeClassifier(),
+      gravarThreshold: 0.34, pararThreshold: 0.23
+    )
+    pipeline.process([Float](repeating: 0.1, count: 1280 * 2 + 100))
+    XCTAssertEqual(mel.callCount, 2, "2560+100 samples drain to exactly 2 mel calls, 100 residual")
+  }
 }
