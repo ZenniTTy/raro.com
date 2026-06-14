@@ -31,7 +31,7 @@ final class WakeWordPipeline {
 
   var onCommand: ((WakeCommand) -> Void)?
   private var firedFramesAgo = Int.max
-  private static let debounceEmbeddings = 25
+  private static let debounceEmbeddings = 20
 
   var embeddingBufferCountForTesting: Int { embeddingBuffer.count }
 

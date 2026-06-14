@@ -106,12 +106,20 @@ extension WakeWordPipelineTests {
     XCTAssertEqual(cmds, [.stop], "0.24 >= 0.23 fires stop")
   }
 
-  func testDebounceCollapsesRepeatWithinWindow() {
+  func testDebounceBlocksRefireWithinWindow() {
     var cmds: [WakeCommand] = []
     let pipeline = filledPipeline(gravarScore: 0.9, pararScore: 0.0) { cmds.append($0) }
     pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
-    pipeline.process([Float](repeating: 0.1, count: 1280 * 8))
-    XCTAssertEqual(cmds, [.start], "repeated crossings within debounce collapse to one")
+    for _ in 0..<19 { pipeline.process([Float](repeating: 0.1, count: 1280 * 8)) }
+    XCTAssertEqual(cmds, [.start], "19 embeddings after fire: still debounced")
+  }
+
+  func testDebounceAllowsRefireAfterWindow() {
+    var cmds: [WakeCommand] = []
+    let pipeline = filledPipeline(gravarScore: 0.9, pararScore: 0.0) { cmds.append($0) }
+    pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
+    for _ in 0..<20 { pipeline.process([Float](repeating: 0.1, count: 1280 * 8)) }
+    XCTAssertEqual(cmds, [.start, .start], "20th embedding after fire: debounce lifts, refires")
   }
 
   func testEmbeddingBufferStaysBounded() {
