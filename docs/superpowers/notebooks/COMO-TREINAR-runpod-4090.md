@@ -34,6 +34,7 @@ export PIP_BREAK_SYSTEM_PACKAGES=1
 # >>> destrava download HuggingFace (rate-limit anonimo + conexao pendurada) <<<
 export HF_TOKEN="COLE_SEU_HF_TOKEN"
 export HUGGING_FACE_HUB_TOKEN="$HF_TOKEN"
+export HF_HUB_DISABLE_XET=1
 export HF_HUB_DOWNLOAD_TIMEOUT=30
 export HF_HUB_ETAG_TIMEOUT=30
 mkdir -p "$ROOT/configs" "$HF_HOME" "$ROOT/raro_data"
@@ -42,6 +43,10 @@ cd "$ROOT"
 # >>> INSTALAÇÃO (template RunPod bloqueia pip sem --break-system-packages) <<<
 apt-get update -qq && apt-get install -y -qq espeak-ng libsndfile1 ffmpeg sox portaudio19-dev
 pip install -q --break-system-packages "livekit-wakeword[train,eval,export,voxcpm]==0.2.1"
+# CRITICO: remover o backend "Xet" do HuggingFace — ele PENDURA o download de muitos
+# arquivos pequenos (trava sempre em ~35%, conexoes CLOSE-WAIT, GPU ociosa), MESMO com token.
+# Sem ele, o download HTTP classico voa (validado: 1h30 travado -> <1s). Ver HF_HUB_DISABLE_XET acima.
+pip uninstall -y hf-xet hf_xet 2>/dev/null || true
 python -c "import torch; assert torch.cuda.is_available(); cap=torch.cuda.get_device_capability(); print('GPU OK:', torch.cuda.get_device_name(0), 'cap', cap); assert cap[0]>=7, 'GPU velha (precisa sm_70+)'"
 python -c "from huggingface_hub import whoami; import os; print('HF logado:', whoami(token=os.environ['HF_TOKEN'])['name'])" 2>&1 | head -1 || echo "(token so no env)"
 command -v livekit-wakeword || { echo 'ERRO: livekit-wakeword nao instalou'; exit 1; }
