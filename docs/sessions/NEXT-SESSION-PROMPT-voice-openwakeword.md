@@ -1,8 +1,19 @@
-# Prompt — Próxima sessão: voz em BACKGROUND com livekit-wakeword/ONNX (S2.D)
+# Prompt — Próxima sessão: integração iOS do wake-word ONNX (S2.D parte 2)
 
-> **ATUALIZADO na sessão 0024 (2026-06-11).** A versão anterior deste prompt estava DESATUALIZADA (mandava "migrar do SFSpeech beco-sem-saída" e dizia `_voiceEngineAvailable=false`) — refutada pela 0024. Cole o bloco abaixo como primeira mensagem da nova sessão.
+> **ATUALIZADO na sessão 0025 (2026-06-13).** Os 2 modelos ONNX JÁ FORAM TREINADOS e passaram o gate (~92%) — ver `docs/superpowers/notebooks/modelos-treinados/` (com README de proveniência) + sessão 0025. O treino NÃO é mais o próximo passo; a **integração iOS** é.
+
+## ESTADO REAL (0025): modelos prontos, falta a peça nativa
+
+- ✅ **`raro_gravar.onnx` (recall 91,4%, FP-h 0,18, limiar ótimo 0,34)** + **`raro_parar.onnx` (92,2%, FP-h 0,18, limiar ótimo 0,23)** em `docs/superpowers/notebooks/modelos-treinados/`. São de PROVA (n_samples=2000) — suficientes p/ 1ª validação no device; lote cheio é Plano B se reprovar. **Usar o limiar ótimo de cada `*_eval.json`, não o 0.5 default.**
+- ✅ **onnxruntime já no projeto** (SPM). **`AudioSessionCoordinator.swift` existe** (mic 16kHz, provado sobreviver à tela bloqueada na 0024).
+- ❌ **`WakeWordDetector.swift` NÃO existe** — é o trabalho desta sessão.
+
+## Tarefa: `WakeWordDetector.swift` (brainstorm → plano → TDD)
+
+Pipeline: carregar `.onnx` → `AudioSessionCoordinator` (mic 16kHz mono) → mel em CPU/XNNPACK + classifier em CoreML EP (`appendCoreMLExecutionProviderWithOptions:`) → ring-buffer de features → limiar ótimo → disparar gravar/parar. **Gate:** detecção "Raro" >80% no iPhone 12 físico + coexistência voz↔gravação. Reprovou → Plano B (lote cheio 15000 / +voice_design_prompts 50-100), NÃO Picovoice.
 
 ---
+## (Contexto histórico — voz BACKGROUND/foreground SFSpeech, mantido abaixo)
 
 Sessão S2.D — **implementar a voz em BACKGROUND** (tela bloqueada) com detector próprio on-device (livekit-wakeword/ONNX). **A voz FOREGROUND (app aberto) já está pronta e funcionando — NÃO refazer.**
 
