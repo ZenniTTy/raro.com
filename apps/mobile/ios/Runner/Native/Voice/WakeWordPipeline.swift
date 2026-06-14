@@ -29,6 +29,12 @@ final class WakeWordPipeline {
   private var melBuffer: [[Float]] = []
   private var embeddingBuffer: [[Float]] = []
 
+  var onCommand: ((WakeCommand) -> Void)?
+  private var firedFramesAgo = Int.max
+  private static let debounceEmbeddings = 25
+
+  var embeddingBufferCountForTesting: Int { embeddingBuffer.count }
+
   init(mel: MelExtracting, embedding: Embedding,
        gravar: Classifying, parar: Classifying,
        gravarThreshold: Float, pararThreshold: Float) {
@@ -55,6 +61,25 @@ final class WakeWordPipeline {
       let window = Array(melBuffer.prefix(Self.melWindow))
       embeddingBuffer.append(embedding.embed(window))
       melBuffer.removeFirst(Self.melStep)
+      if embeddingBuffer.count > Self.embeddingCount {
+        embeddingBuffer.removeFirst(embeddingBuffer.count - Self.embeddingCount)
+      }
+      if firedFramesAgo != Int.max { firedFramesAgo += 1 }
+      classifyIfReady()
+    }
+  }
+
+  private func classifyIfReady() {
+    guard embeddingBuffer.count == Self.embeddingCount else { return }
+    guard firedFramesAgo >= Self.debounceEmbeddings else { return }
+    let gScore = gravar.classify(embeddingBuffer)
+    let pScore = parar.classify(embeddingBuffer)
+    if gScore >= gravarThreshold {
+      onCommand?(.start)
+      firedFramesAgo = 0
+    } else if pScore >= pararThreshold {
+      onCommand?(.stop)
+      firedFramesAgo = 0
     }
   }
 }

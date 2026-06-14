@@ -71,3 +71,54 @@ extension WakeWordPipelineTests {
     XCTAssertEqual(embedding.callCount, 1, "76th frame fills the window")
   }
 }
+
+extension WakeWordPipelineTests {
+  private func filledPipeline(gravarScore: Float, pararScore: Float,
+                              onCommand: @escaping (WakeCommand) -> Void) -> WakeWordPipeline {
+    let g = FakeClassifier(); g.fixedScore = gravarScore
+    let p = FakeClassifier(); p.fixedScore = pararScore
+    let pipeline = WakeWordPipeline(
+      mel: FakeMel(), embedding: FakeEmbedding(),
+      gravar: g, parar: p, gravarThreshold: 0.34, pararThreshold: 0.23
+    )
+    pipeline.onCommand = onCommand
+    return pipeline
+  }
+
+  func testGravarFiresAtOrAboveThreshold() {
+    var cmds: [WakeCommand] = []
+    let pipeline = filledPipeline(gravarScore: 0.35, pararScore: 0.0) { cmds.append($0) }
+    pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
+    XCTAssertEqual(cmds, [.start], "0.35 >= 0.34 fires start")
+  }
+
+  func testGravarDoesNotFireBelowThreshold() {
+    var cmds: [WakeCommand] = []
+    let pipeline = filledPipeline(gravarScore: 0.33, pararScore: 0.0) { cmds.append($0) }
+    pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
+    XCTAssertEqual(cmds, [], "0.33 < 0.34 does not fire")
+  }
+
+  func testPararFiresAtThreshold() {
+    var cmds: [WakeCommand] = []
+    let pipeline = filledPipeline(gravarScore: 0.0, pararScore: 0.24) { cmds.append($0) }
+    pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
+    XCTAssertEqual(cmds, [.stop], "0.24 >= 0.23 fires stop")
+  }
+
+  func testDebounceCollapsesRepeatWithinWindow() {
+    var cmds: [WakeCommand] = []
+    let pipeline = filledPipeline(gravarScore: 0.9, pararScore: 0.0) { cmds.append($0) }
+    pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
+    pipeline.process([Float](repeating: 0.1, count: 1280 * 8))
+    XCTAssertEqual(cmds, [.start], "repeated crossings within debounce collapse to one")
+  }
+
+  func testEmbeddingBufferStaysBounded() {
+    var cmds: [WakeCommand] = []
+    let pipeline = filledPipeline(gravarScore: 0.0, pararScore: 0.0) { cmds.append($0) }
+    pipeline.process([Float](repeating: 0.1, count: 1280 * 1000))
+    XCTAssertTrue(pipeline.embeddingBufferCountForTesting <= 16,
+                  "embeddingBuffer bounded to last 16, got \(pipeline.embeddingBufferCountForTesting)")
+  }
+}
