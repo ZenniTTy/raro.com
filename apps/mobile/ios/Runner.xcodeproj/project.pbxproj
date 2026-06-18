@@ -55,6 +55,15 @@
 		CA00000000000000000000F6 /* WakeWordPipelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000F7 /* WakeWordPipelineTests.swift */; };
 		CA00000000000000000000D7 /* OnnxModelSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000D8 /* OnnxModelSessionTests.swift */; };
 		CA00000000000000000000DC /* WakeWordDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000DD /* WakeWordDetectorTests.swift */; };
+		CA00000000000000000000DF /* WakeWordRecallTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000DE /* WakeWordRecallTests.swift */; };
+		CA0000000000000000000100 /* gravar_1.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000F8 /* gravar_1.wav */; };
+		CA0000000000000000000101 /* gravar_2.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000F9 /* gravar_2.wav */; };
+		CA0000000000000000000102 /* gravar_3.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000FA /* gravar_3.wav */; };
+		CA0000000000000000000103 /* gravar_4.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000FB /* gravar_4.wav */; };
+		CA0000000000000000000104 /* parar_1.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000FC /* parar_1.wav */; };
+		CA0000000000000000000105 /* parar_2.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000FD /* parar_2.wav */; };
+		CA0000000000000000000106 /* parar_3.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000FE /* parar_3.wav */; };
+		CA0000000000000000000107 /* parar_4.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000FF /* parar_4.wav */; };
 		CA00000000000000000000E9 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E8 /* ObjCExceptionCatcher.m */; };
 /* End PBXBuildFile section */
 
@@ -141,6 +150,15 @@
 		CA00000000000000000000F7 /* WakeWordPipelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeWordPipelineTests.swift; sourceTree = "<group>"; };
 		CA00000000000000000000D8 /* OnnxModelSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnnxModelSessionTests.swift; sourceTree = "<group>"; };
 		CA00000000000000000000DD /* WakeWordDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeWordDetectorTests.swift; sourceTree = "<group>"; };
+		CA00000000000000000000DE /* WakeWordRecallTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeWordRecallTests.swift; sourceTree = "<group>"; };
+		CA00000000000000000000F8 /* gravar_1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/gravar_1.wav; sourceTree = "<group>"; };
+		CA00000000000000000000F9 /* gravar_2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/gravar_2.wav; sourceTree = "<group>"; };
+		CA00000000000000000000FA /* gravar_3.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/gravar_3.wav; sourceTree = "<group>"; };
+		CA00000000000000000000FB /* gravar_4.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/gravar_4.wav; sourceTree = "<group>"; };
+		CA00000000000000000000FC /* parar_1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/parar_1.wav; sourceTree = "<group>"; };
+		CA00000000000000000000FD /* parar_2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/parar_2.wav; sourceTree = "<group>"; };
+		CA00000000000000000000FE /* parar_3.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/parar_3.wav; sourceTree = "<group>"; };
+		CA00000000000000000000FF /* parar_4.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/parar_4.wav; sourceTree = "<group>"; };
 		CA00000000000000000000E8 /* ObjCExceptionCatcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Native/Voice/ObjCExceptionCatcher.m; sourceTree = "<group>"; };
 		CA00000000000000000000EA /* ObjCExceptionCatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Native/Voice/ObjCExceptionCatcher.h; sourceTree = "<group>"; };
 		DEA69524B3E9912E3431748D /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
@@ -208,6 +226,15 @@
 				CA00000000000000000000F7 /* WakeWordPipelineTests.swift */,
 				CA00000000000000000000D8 /* OnnxModelSessionTests.swift */,
 				CA00000000000000000000DD /* WakeWordDetectorTests.swift */,
+				CA00000000000000000000DE /* WakeWordRecallTests.swift */,
+				CA00000000000000000000F8 /* gravar_1.wav */,
+				CA00000000000000000000F9 /* gravar_2.wav */,
+				CA00000000000000000000FA /* gravar_3.wav */,
+				CA00000000000000000000FB /* gravar_4.wav */,
+				CA00000000000000000000FC /* parar_1.wav */,
+				CA00000000000000000000FD /* parar_2.wav */,
+				CA00000000000000000000FE /* parar_3.wav */,
+				CA00000000000000000000FF /* parar_4.wav */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -382,6 +409,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA0000000000000000000100 /* gravar_1.wav in Resources */,
+				CA0000000000000000000101 /* gravar_2.wav in Resources */,
+				CA0000000000000000000102 /* gravar_3.wav in Resources */,
+				CA0000000000000000000103 /* gravar_4.wav in Resources */,
+				CA0000000000000000000104 /* parar_1.wav in Resources */,
+				CA0000000000000000000105 /* parar_2.wav in Resources */,
+				CA0000000000000000000106 /* parar_3.wav in Resources */,
+				CA0000000000000000000107 /* parar_4.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -516,6 +551,7 @@
 				CA00000000000000000000F6 /* WakeWordPipelineTests.swift in Sources */,
 				CA00000000000000000000D7 /* OnnxModelSessionTests.swift in Sources */,
 				CA00000000000000000000DC /* WakeWordDetectorTests.swift in Sources */,
+				CA00000000000000000000DF /* WakeWordRecallTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

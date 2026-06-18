@@ -63,11 +63,16 @@ final class WakeWordDetector {
     set { pipeline.onCommand = newValue }
   }
 
-  init() throws {
+  var onScoresForTesting: ((Float, Float) -> Void)? {
+    get { pipeline.onScoresForTesting }
+    set { pipeline.onScoresForTesting = newValue }
+  }
+
+  init(classifierProvider: OnnxExecutionProvider = .coreML) throws {
     let mel = MelAdapter(session: try OnnxModelSession(modelName: "melspectrogram", executionProvider: .cpu))
-    let embedding = EmbeddingAdapter(session: try OnnxModelSession(modelName: "embedding_model", executionProvider: .coreML))
-    let gravar = ClassifierAdapter(session: try OnnxModelSession(modelName: "raro_gravar", executionProvider: .coreML))
-    let parar = ClassifierAdapter(session: try OnnxModelSession(modelName: "raro_parar", executionProvider: .coreML))
+    let embedding = EmbeddingAdapter(session: try OnnxModelSession(modelName: "embedding_model", executionProvider: classifierProvider))
+    let gravar = ClassifierAdapter(session: try OnnxModelSession(modelName: "raro_gravar", executionProvider: classifierProvider))
+    let parar = ClassifierAdapter(session: try OnnxModelSession(modelName: "raro_parar", executionProvider: classifierProvider))
     pipeline = WakeWordPipeline(
       mel: mel, embedding: embedding, gravar: gravar, parar: parar,
       gravarThreshold: 0.34, pararThreshold: 0.23

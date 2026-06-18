@@ -30,6 +30,7 @@ final class WakeWordPipeline {
   private var embeddingBuffer: [[Float]] = []
 
   var onCommand: ((WakeCommand) -> Void)?
+  var onScoresForTesting: ((Float, Float) -> Void)?
   private var firedFramesAgo = Int.max
   private static let debounceEmbeddings = 20
 
@@ -74,6 +75,7 @@ final class WakeWordPipeline {
     guard firedFramesAgo >= Self.debounceEmbeddings else { return }
     let gScore = gravar.classify(embeddingBuffer)
     let pScore = parar.classify(embeddingBuffer)
+    onScoresForTesting?(gScore, pScore)
     if gScore >= gravarThreshold {
       onCommand?(.start)
       firedFramesAgo = 0
