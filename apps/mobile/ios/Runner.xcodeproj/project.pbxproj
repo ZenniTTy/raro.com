@@ -45,6 +45,7 @@
 		CA00000000000000000000C4 /* ReplayExportSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000D4 /* ReplayExportSettingsTests.swift */; };
 		CA00000000000000000000E1 /* VoiceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E0 /* VoiceManager.swift */; };
 		CA000000000000000000010A /* WakeWordPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA000000000000000000010B /* WakeWordPipeline.swift */; };
+		CA00000000000000000000DA /* WakeWordDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000DB /* WakeWordDetector.swift */; };
 		CA00000000000000000000D5 /* OnnxModelSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000D6 /* OnnxModelSession.swift */; };
 		CA00000000000000000000F5 /* AudioSessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000F4 /* AudioSessionCoordinator.swift */; };
 		CA00000000000000000000E3 /* VoiceHostApiImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E2 /* VoiceHostApiImpl.swift */; };
@@ -53,6 +54,7 @@
 		CA00000000000000000000F3 /* AudioSessionCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000F2 /* AudioSessionCoordinatorTests.swift */; };
 		CA00000000000000000000F6 /* WakeWordPipelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000F7 /* WakeWordPipelineTests.swift */; };
 		CA00000000000000000000D7 /* OnnxModelSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000D8 /* OnnxModelSessionTests.swift */; };
+		CA00000000000000000000DC /* WakeWordDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000DD /* WakeWordDetectorTests.swift */; };
 		CA00000000000000000000E9 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E8 /* ObjCExceptionCatcher.m */; };
 /* End PBXBuildFile section */
 
@@ -129,6 +131,7 @@
 		CA00000000000000000000D4 /* ReplayExportSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayExportSettingsTests.swift; sourceTree = "<group>"; };
 		CA00000000000000000000E0 /* VoiceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Voice/VoiceManager.swift; sourceTree = "<group>"; };
 		CA000000000000000000010B /* WakeWordPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Voice/WakeWordPipeline.swift; sourceTree = "<group>"; };
+		CA00000000000000000000DB /* WakeWordDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Voice/WakeWordDetector.swift; sourceTree = "<group>"; };
 		CA00000000000000000000D6 /* OnnxModelSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Voice/OnnxModelSession.swift; sourceTree = "<group>"; };
 		CA00000000000000000000F4 /* AudioSessionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Voice/AudioSessionCoordinator.swift; sourceTree = "<group>"; };
 		CA00000000000000000000E2 /* VoiceHostApiImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Voice/VoiceHostApiImpl.swift; sourceTree = "<group>"; };
@@ -137,6 +140,7 @@
 		CA00000000000000000000F2 /* AudioSessionCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionCoordinatorTests.swift; sourceTree = "<group>"; };
 		CA00000000000000000000F7 /* WakeWordPipelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeWordPipelineTests.swift; sourceTree = "<group>"; };
 		CA00000000000000000000D8 /* OnnxModelSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnnxModelSessionTests.swift; sourceTree = "<group>"; };
+		CA00000000000000000000DD /* WakeWordDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeWordDetectorTests.swift; sourceTree = "<group>"; };
 		CA00000000000000000000E8 /* ObjCExceptionCatcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Native/Voice/ObjCExceptionCatcher.m; sourceTree = "<group>"; };
 		CA00000000000000000000EA /* ObjCExceptionCatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Native/Voice/ObjCExceptionCatcher.h; sourceTree = "<group>"; };
 		DEA69524B3E9912E3431748D /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
@@ -203,6 +207,7 @@
 				CA00000000000000000000F2 /* AudioSessionCoordinatorTests.swift */,
 				CA00000000000000000000F7 /* WakeWordPipelineTests.swift */,
 				CA00000000000000000000D8 /* OnnxModelSessionTests.swift */,
+				CA00000000000000000000DD /* WakeWordDetectorTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -271,6 +276,7 @@
 				CA00000000000000000000E0 /* VoiceManager.swift */,
 				CA00000000000000000000F4 /* AudioSessionCoordinator.swift */,
 				CA000000000000000000010B /* WakeWordPipeline.swift */,
+				CA00000000000000000000DB /* WakeWordDetector.swift */,
 				CA00000000000000000000D6 /* OnnxModelSession.swift */,
 				CA00000000000000000000E2 /* VoiceHostApiImpl.swift */,
 				CA00000000000000000000E4 /* VoiceApi.g.swift */,
@@ -509,6 +515,7 @@
 				CA00000000000000000000F3 /* AudioSessionCoordinatorTests.swift in Sources */,
 				CA00000000000000000000F6 /* WakeWordPipelineTests.swift in Sources */,
 				CA00000000000000000000D7 /* OnnxModelSessionTests.swift in Sources */,
+				CA00000000000000000000DC /* WakeWordDetectorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -534,6 +541,7 @@
 				CA00000000000000000000E1 /* VoiceManager.swift in Sources */,
 				CA00000000000000000000F5 /* AudioSessionCoordinator.swift in Sources */,
 				CA000000000000000000010A /* WakeWordPipeline.swift in Sources */,
+				CA00000000000000000000DA /* WakeWordDetector.swift in Sources */,
 				CA00000000000000000000D5 /* OnnxModelSession.swift in Sources */,
 				CA00000000000000000000E3 /* VoiceHostApiImpl.swift in Sources */,
 				CA00000000000000000000E5 /* VoiceApi.g.swift in Sources */,
