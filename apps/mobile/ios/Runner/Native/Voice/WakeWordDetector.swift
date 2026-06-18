@@ -1,12 +1,24 @@
 import Foundation
+import os.log
+
+private let voiceLog = OSLog(subsystem: "com.rarocamera/voice", category: "wakeword")
 
 private struct MelAdapter: MelExtracting {
   let session: OnnxModelSession
   func extract(_ samples: [Float]) -> [[Float]] {
-    guard let raw = try? session.run(input: samples, inputName: "input",
-                                     shape: [1, NSNumber(value: samples.count)],
-                                     outputName: "output") else { return [] }
+    let raw: [Float]
+    do {
+      raw = try session.run(input: samples, inputName: "input",
+                            shape: [1, NSNumber(value: samples.count)],
+                            outputName: "output")
+    } catch {
+      os_log("mel extract failed: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
+      return []
+    }
     let binCount = 32
+    if raw.count % binCount != 0 {
+      os_log("mel output not multiple of 32: %d", log: voiceLog, type: .error, raw.count)
+    }
     let frameCount = raw.count / binCount
     var frames: [[Float]] = []
     frames.reserveCapacity(frameCount)
@@ -22,8 +34,13 @@ private struct EmbeddingAdapter: Embedding {
   let session: OnnxModelSession
   func embed(_ melWindow: [[Float]]) -> [Float] {
     let flat = melWindow.flatMap { $0 }
-    return (try? session.run(input: flat, inputName: "input_1",
-                             shape: [1, 76, 32, 1], outputName: "conv2d_19")) ?? []
+    do {
+      return try session.run(input: flat, inputName: "input_1",
+                             shape: [1, 76, 32, 1], outputName: "conv2d_19")
+    } catch {
+      os_log("embedding failed: %{public}@", log: voiceLog, type: .error, error.localizedDescription)
+      return []
+    }
   }
 }
 
