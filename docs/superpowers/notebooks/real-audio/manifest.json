@@ -1,0 +1,570 @@
+[
+  {
+    "name": "pos_001.wav",
+    "region": "pos",
+    "t_start": 1.08,
+    "t_end": 1.52,
+    "dur": 0.44,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_002.wav",
+    "region": "pos",
+    "t_start": 2.2,
+    "t_end": 2.54,
+    "dur": 0.34,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_003.wav",
+    "region": "pos",
+    "t_start": 2.56,
+    "t_end": 3.04,
+    "dur": 0.48,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_004.wav",
+    "region": "pos",
+    "t_start": 3.94,
+    "t_end": 4.5,
+    "dur": 0.56,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_005.wav",
+    "region": "pos",
+    "t_start": 5.1,
+    "t_end": 5.58,
+    "dur": 0.48,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_006.wav",
+    "region": "pos",
+    "t_start": 6.0,
+    "t_end": 6.38,
+    "dur": 0.38,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_007.wav",
+    "region": "pos",
+    "t_start": 7.16,
+    "t_end": 7.76,
+    "dur": 0.6,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_008.wav",
+    "region": "pos",
+    "t_start": 8.16,
+    "t_end": 8.68,
+    "dur": 0.52,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_009.wav",
+    "region": "pos",
+    "t_start": 9.36,
+    "t_end": 9.84,
+    "dur": 0.48,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_010.wav",
+    "region": "pos",
+    "t_start": 10.48,
+    "t_end": 10.94,
+    "dur": 0.46,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_011.wav",
+    "region": "pos",
+    "t_start": 11.64,
+    "t_end": 12.04,
+    "dur": 0.4,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_012.wav",
+    "region": "pos",
+    "t_start": 12.98,
+    "t_end": 13.56,
+    "dur": 0.58,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_013.wav",
+    "region": "pos",
+    "t_start": 14.04,
+    "t_end": 14.74,
+    "dur": 0.7,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_014.wav",
+    "region": "pos",
+    "t_start": 15.38,
+    "t_end": 15.96,
+    "dur": 0.58,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_015.wav",
+    "region": "pos",
+    "t_start": 17.08,
+    "t_end": 18.14,
+    "dur": 1.06,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_016.wav",
+    "region": "pos",
+    "t_start": 19.4,
+    "t_end": 20.54,
+    "dur": 1.14,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_017.wav",
+    "region": "pos",
+    "t_start": 21.42,
+    "t_end": 21.92,
+    "dur": 0.5,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_018.wav",
+    "region": "pos",
+    "t_start": 22.46,
+    "t_end": 22.96,
+    "dur": 0.5,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_019.wav",
+    "region": "pos",
+    "t_start": 23.68,
+    "t_end": 24.24,
+    "dur": 0.56,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_020.wav",
+    "region": "pos",
+    "t_start": 25.3,
+    "t_end": 25.68,
+    "dur": 0.38,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_021.wav",
+    "region": "pos",
+    "t_start": 26.22,
+    "t_end": 26.74,
+    "dur": 0.52,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_022.wav",
+    "region": "pos",
+    "t_start": 27.14,
+    "t_end": 27.68,
+    "dur": 0.54,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_023.wav",
+    "region": "pos",
+    "t_start": 28.46,
+    "t_end": 28.96,
+    "dur": 0.5,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_024.wav",
+    "region": "pos",
+    "t_start": 29.82,
+    "t_end": 30.34,
+    "dur": 0.52,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_025.wav",
+    "region": "pos",
+    "t_start": 31.26,
+    "t_end": 31.96,
+    "dur": 0.7,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_026.wav",
+    "region": "pos",
+    "t_start": 32.64,
+    "t_end": 33.12,
+    "dur": 0.48,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_027.wav",
+    "region": "pos",
+    "t_start": 33.76,
+    "t_end": 34.3,
+    "dur": 0.54,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_028.wav",
+    "region": "pos",
+    "t_start": 34.8,
+    "t_end": 35.44,
+    "dur": 0.64,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_029.wav",
+    "region": "pos",
+    "t_start": 36.04,
+    "t_end": 36.68,
+    "dur": 0.64,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_030.wav",
+    "region": "pos",
+    "t_start": 37.6,
+    "t_end": 38.24,
+    "dur": 0.64,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_031.wav",
+    "region": "pos",
+    "t_start": 39.3,
+    "t_end": 39.94,
+    "dur": 0.64,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_032.wav",
+    "region": "pos",
+    "t_start": 41.06,
+    "t_end": 41.64,
+    "dur": 0.58,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_033.wav",
+    "region": "pos",
+    "t_start": 44.06,
+    "t_end": 44.68,
+    "dur": 0.62,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_034.wav",
+    "region": "pos",
+    "t_start": 47.28,
+    "t_end": 47.92,
+    "dur": 0.64,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_035.wav",
+    "region": "pos",
+    "t_start": 48.94,
+    "t_end": 49.56,
+    "dur": 0.62,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_036.wav",
+    "region": "pos",
+    "t_start": 50.66,
+    "t_end": 51.28,
+    "dur": 0.62,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_037.wav",
+    "region": "pos",
+    "t_start": 51.78,
+    "t_end": 52.26,
+    "dur": 0.48,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_038.wav",
+    "region": "pos",
+    "t_start": 53.42,
+    "t_end": 54.06,
+    "dur": 0.64,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_039.wav",
+    "region": "pos",
+    "t_start": 55.48,
+    "t_end": 56.2,
+    "dur": 0.72,
+    "tag": "ok"
+  },
+  {
+    "name": "pos_040.wav",
+    "region": "pos",
+    "t_start": 59.88,
+    "t_end": 60.56,
+    "dur": 0.68,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_001.wav",
+    "region": "neg",
+    "t_start": 61.22,
+    "t_end": 61.78,
+    "dur": 0.56,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_002.wav",
+    "region": "neg",
+    "t_start": 62.3,
+    "t_end": 62.92,
+    "dur": 0.62,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_003.wav",
+    "region": "neg",
+    "t_start": 63.52,
+    "t_end": 64.2,
+    "dur": 0.68,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_004.wav",
+    "region": "neg",
+    "t_start": 65.04,
+    "t_end": 65.72,
+    "dur": 0.68,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_005.wav",
+    "region": "neg",
+    "t_start": 66.62,
+    "t_end": 67.46,
+    "dur": 0.84,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_006.wav",
+    "region": "neg",
+    "t_start": 68.22,
+    "t_end": 68.78,
+    "dur": 0.56,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_007.wav",
+    "region": "neg",
+    "t_start": 69.2,
+    "t_end": 69.84,
+    "dur": 0.64,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_008.wav",
+    "region": "neg",
+    "t_start": 70.2,
+    "t_end": 70.94,
+    "dur": 0.74,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_009.wav",
+    "region": "neg",
+    "t_start": 71.82,
+    "t_end": 72.54,
+    "dur": 0.72,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_010.wav",
+    "region": "neg",
+    "t_start": 72.9,
+    "t_end": 73.68,
+    "dur": 0.78,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_011.wav",
+    "region": "neg",
+    "t_start": 74.02,
+    "t_end": 74.86,
+    "dur": 0.84,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_012.wav",
+    "region": "neg",
+    "t_start": 75.42,
+    "t_end": 76.14,
+    "dur": 0.72,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_013.wav",
+    "region": "neg",
+    "t_start": 76.44,
+    "t_end": 77.3,
+    "dur": 0.86,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_014.wav",
+    "region": "neg",
+    "t_start": 77.92,
+    "t_end": 78.72,
+    "dur": 0.8,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_015.wav",
+    "region": "neg",
+    "t_start": 79.44,
+    "t_end": 80.16,
+    "dur": 0.72,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_016.wav",
+    "region": "neg",
+    "t_start": 82.38,
+    "t_end": 83.12,
+    "dur": 0.74,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_017.wav",
+    "region": "neg",
+    "t_start": 85.28,
+    "t_end": 86.06,
+    "dur": 0.78,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_018.wav",
+    "region": "neg",
+    "t_start": 87.46,
+    "t_end": 88.26,
+    "dur": 0.8,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_019.wav",
+    "region": "neg",
+    "t_start": 89.08,
+    "t_end": 89.66,
+    "dur": 0.58,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_020.wav",
+    "region": "neg",
+    "t_start": 91.42,
+    "t_end": 92.14,
+    "dur": 0.72,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_021.wav",
+    "region": "neg",
+    "t_start": 93.46,
+    "t_end": 94.04,
+    "dur": 0.58,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_022.wav",
+    "region": "neg",
+    "t_start": 94.6,
+    "t_end": 95.24,
+    "dur": 0.64,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_023.wav",
+    "region": "neg",
+    "t_start": 96.66,
+    "t_end": 97.4,
+    "dur": 0.74,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_024.wav",
+    "region": "neg",
+    "t_start": 98.1,
+    "t_end": 98.86,
+    "dur": 0.76,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_025.wav",
+    "region": "neg",
+    "t_start": 99.14,
+    "t_end": 100.08,
+    "dur": 0.94,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_026.wav",
+    "region": "neg",
+    "t_start": 100.58,
+    "t_end": 101.28,
+    "dur": 0.7,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_027.wav",
+    "region": "neg",
+    "t_start": 102.02,
+    "t_end": 102.64,
+    "dur": 0.62,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_028.wav",
+    "region": "neg",
+    "t_start": 102.9,
+    "t_end": 103.68,
+    "dur": 0.78,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_029.wav",
+    "region": "neg",
+    "t_start": 104.2,
+    "t_end": 104.92,
+    "dur": 0.72,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_030.wav",
+    "region": "neg",
+    "t_start": 105.98,
+    "t_end": 106.72,
+    "dur": 0.74,
+    "tag": "ok"
+  },
+  {
+    "name": "neg_031.wav",
+    "region": "neg",
+    "t_start": 107.24,
+    "t_end": 107.94,
+    "dur": 0.7,
+    "tag": "ok"
+  }
+]

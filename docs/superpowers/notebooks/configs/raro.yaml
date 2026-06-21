@@ -105,6 +105,8 @@ voxcpm_tts:
   - 10
 n_samples: 4000
 n_samples_val: 1000
+augmentation:
+  rounds: 2
 model:
   model_type: conv_attention
   model_size: small
