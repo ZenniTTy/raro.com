@@ -20,8 +20,7 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		CA00000000000000000000C6 /* melspectrogram.onnx in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000C5 /* melspectrogram.onnx */; };
 		CA00000000000000000000C8 /* embedding_model.onnx in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000C7 /* embedding_model.onnx */; };
-		CA00000000000000000000CB /* raro_gravar.onnx in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000C9 /* raro_gravar.onnx */; };
-		CA00000000000000000000CD /* raro_parar.onnx in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000CC /* raro_parar.onnx */; };
+		CA00000000000000000000CB /* raro.onnx in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000C9 /* raro.onnx */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		CA00000000000000000000A1 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B1 /* CameraManager.swift */; };
 		CA00000000000000000000A2 /* CameraErrorMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000B2 /* CameraErrorMapper.swift */; };
@@ -64,6 +63,12 @@
 		CA0000000000000000000105 /* parar_2.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000FD /* parar_2.wav */; };
 		CA0000000000000000000106 /* parar_3.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000FE /* parar_3.wav */; };
 		CA0000000000000000000107 /* parar_4.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000FF /* parar_4.wav */; };
+		CA0000000000000000000110 /* raro_1.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000120 /* raro_1.wav */; };
+		CA0000000000000000000111 /* raro_2.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000121 /* raro_2.wav */; };
+		CA0000000000000000000112 /* raro_3.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000122 /* raro_3.wav */; };
+		CA0000000000000000000113 /* raro_4.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000123 /* raro_4.wav */; };
+		CA0000000000000000000114 /* raro_5.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000124 /* raro_5.wav */; };
+		CA0000000000000000000115 /* raro_6.wav in Resources */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000125 /* raro_6.wav */; };
 		CA00000000000000000000E9 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E8 /* ObjCExceptionCatcher.m */; };
 /* End PBXBuildFile section */
 
@@ -113,8 +118,7 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CA00000000000000000000C5 /* melspectrogram.onnx */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/melspectrogram.onnx; sourceTree = "<group>"; };
 		CA00000000000000000000C7 /* embedding_model.onnx */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/embedding_model.onnx; sourceTree = "<group>"; };
-		CA00000000000000000000C9 /* raro_gravar.onnx */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/raro_gravar.onnx; sourceTree = "<group>"; };
-		CA00000000000000000000CC /* raro_parar.onnx */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/raro_parar.onnx; sourceTree = "<group>"; };
+		CA00000000000000000000C9 /* raro.onnx */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/raro.onnx; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B05C1B29D68A9DDF989FF3B5 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -159,6 +163,12 @@
 		CA00000000000000000000FD /* parar_2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/parar_2.wav; sourceTree = "<group>"; };
 		CA00000000000000000000FE /* parar_3.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/parar_3.wav; sourceTree = "<group>"; };
 		CA00000000000000000000FF /* parar_4.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/parar_4.wav; sourceTree = "<group>"; };
+		CA0000000000000000000120 /* raro_1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/raro_1.wav; sourceTree = "<group>"; };
+		CA0000000000000000000121 /* raro_2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/raro_2.wav; sourceTree = "<group>"; };
+		CA0000000000000000000122 /* raro_3.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/raro_3.wav; sourceTree = "<group>"; };
+		CA0000000000000000000123 /* raro_4.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/raro_4.wav; sourceTree = "<group>"; };
+		CA0000000000000000000124 /* raro_5.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/raro_5.wav; sourceTree = "<group>"; };
+		CA0000000000000000000125 /* raro_6.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fixtures/raro_6.wav; sourceTree = "<group>"; };
 		CA00000000000000000000E8 /* ObjCExceptionCatcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Native/Voice/ObjCExceptionCatcher.m; sourceTree = "<group>"; };
 		CA00000000000000000000EA /* ObjCExceptionCatcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Native/Voice/ObjCExceptionCatcher.h; sourceTree = "<group>"; };
 		DEA69524B3E9912E3431748D /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
@@ -235,6 +245,12 @@
 				CA00000000000000000000FD /* parar_2.wav */,
 				CA00000000000000000000FE /* parar_3.wav */,
 				CA00000000000000000000FF /* parar_4.wav */,
+				CA0000000000000000000120 /* raro_1.wav */,
+				CA0000000000000000000121 /* raro_2.wav */,
+				CA0000000000000000000122 /* raro_3.wav */,
+				CA0000000000000000000123 /* raro_4.wav */,
+				CA0000000000000000000124 /* raro_5.wav */,
+				CA0000000000000000000125 /* raro_6.wav */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -279,8 +295,7 @@
 				97C146FD1CF9000F007C117D /* Assets.xcassets */,
 				CA00000000000000000000C5 /* melspectrogram.onnx */,
 				CA00000000000000000000C7 /* embedding_model.onnx */,
-				CA00000000000000000000C9 /* raro_gravar.onnx */,
-				CA00000000000000000000CC /* raro_parar.onnx */,
+				CA00000000000000000000C9 /* raro.onnx */,
 				97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */,
 				97C147021CF9000F007C117D /* Info.plist */,
 				1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */,
@@ -417,6 +432,12 @@
 				CA0000000000000000000105 /* parar_2.wav in Resources */,
 				CA0000000000000000000106 /* parar_3.wav in Resources */,
 				CA0000000000000000000107 /* parar_4.wav in Resources */,
+				CA0000000000000000000110 /* raro_1.wav in Resources */,
+				CA0000000000000000000111 /* raro_2.wav in Resources */,
+				CA0000000000000000000112 /* raro_3.wav in Resources */,
+				CA0000000000000000000113 /* raro_4.wav in Resources */,
+				CA0000000000000000000114 /* raro_5.wav in Resources */,
+				CA0000000000000000000115 /* raro_6.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,8 +450,7 @@
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				CA00000000000000000000C6 /* melspectrogram.onnx in Resources */,
 				CA00000000000000000000C8 /* embedding_model.onnx in Resources */,
-				CA00000000000000000000CB /* raro_gravar.onnx in Resources */,
-				CA00000000000000000000CD /* raro_parar.onnx in Resources */,
+				CA00000000000000000000CB /* raro.onnx in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

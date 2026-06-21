@@ -7,8 +7,9 @@ final class WakeWordRecallTests: XCTestCase {
   private let recallLog = OSLog(subsystem: "com.rarocamera/voice", category: "recall")
   private static let silenceSamples = 24000
 
-  private let gravarFixtures = ["gravar_1", "gravar_2", "gravar_3", "gravar_4"]
-  private let pararFixtures = ["parar_1", "parar_2", "parar_3", "parar_4"]
+  private let raroFixtures = [
+    "raro_1", "raro_2", "raro_3", "raro_4", "raro_5", "raro_6",
+  ]
 
   private func loadSamples(_ name: String) throws -> [Float] {
     let url = Bundle(for: type(of: self)).url(forResource: name, withExtension: "wav")
@@ -79,38 +80,33 @@ final class WakeWordRecallTests: XCTestCase {
     return silence + samples + silence
   }
 
-  private func fireCommand(for name: String) throws -> WakeCommand? {
+  private func fires(for name: String) throws -> Bool {
     let detector = try WakeWordDetector()
-    var captured: WakeCommand?
-    detector.onCommand = { command in
-      if captured == nil { captured = command }
-    }
+    var fired = false
+    detector.onWake = { fired = true }
     let samples = try loadSamples(name)
     detector.process(padded(samples))
-    return captured
+    return fired
   }
 
-  private func maxScores(for name: String, provider: OnnxExecutionProvider) throws -> (gravar: Float, parar: Float) {
+  private func maxScore(for name: String, provider: OnnxExecutionProvider) throws -> Float {
     let detector = try WakeWordDetector(classifierProvider: provider)
-    var maxG: Float = 0
-    var maxP: Float = 0
-    detector.onScoresForTesting = { g, p in
-      if g > maxG { maxG = g }
-      if p > maxP { maxP = p }
+    var maxScore: Float = 0
+    detector.onScoreForTesting = { s in
+      if s > maxScore { maxScore = s }
     }
     let samples = try loadSamples(name)
     detector.process(padded(samples))
-    return (maxG, maxP)
+    return maxScore
   }
 
   func testRawScoresCoreMLvsCPU() throws {
-    let all = gravarFixtures + pararFixtures
     for provider in [OnnxExecutionProvider.coreML, OnnxExecutionProvider.cpu] {
       let tag = provider == .coreML ? "CoreML" : "CPU"
       var lines: [String] = []
-      for name in all {
-        let s = try maxScores(for: name, provider: provider)
-        lines.append(String(format: "%@ g=%.3f p=%.3f", name, s.gravar, s.parar))
+      for name in raroFixtures {
+        let s = try maxScore(for: name, provider: provider)
+        lines.append(String(format: "%@ raro=%.3f", name, s))
       }
       let summary = "SCORES[\(tag)]: " + lines.joined(separator: " | ")
       os_log("%{public}@", log: recallLog, type: .default, summary)
@@ -118,57 +114,25 @@ final class WakeWordRecallTests: XCTestCase {
     }
   }
 
-  func testGravarClipsFireStart() throws {
+  func testRaroClipsFireWake() throws {
     var hits = 0
-    var falseFires = 0
     var results: [String] = []
-    for name in gravarFixtures {
-      let command = try fireCommand(for: name)
-      switch command {
-      case .start:
+    for name in raroFixtures {
+      let fired = try fires(for: name)
+      if fired {
         hits += 1
-        results.append("\(name)=start")
-      case .stop:
-        falseFires += 1
-        results.append("\(name)=stop(WRONG)")
-      case nil:
+        results.append("\(name)=wake")
+      } else {
         results.append("\(name)=none")
       }
     }
-    os_log("RECALL RESULT: gravar %d/4 fired .start, false-fires %d — %{public}@",
-           log: recallLog, type: .default, hits, falseFires, results.joined(separator: " "))
-    print("RECALL RESULT: gravar \(hits)/4 fired .start, false-fires \(falseFires) — \(results.joined(separator: " "))")
+    let total = raroFixtures.count
+    os_log("RECALL RESULT: raro %d/%d fired .wake — %{public}@",
+           log: recallLog, type: .default, hits, total, results.joined(separator: " "))
+    print("RECALL RESULT: raro \(hits)/\(total) fired .wake — \(results.joined(separator: " "))")
 
-    for name in gravarFixtures {
-      let command = try fireCommand(for: name)
-      XCTAssertEqual(command, .start, "\(name) should fire .start")
-    }
-  }
-
-  func testPararClipsFireStop() throws {
-    var hits = 0
-    var falseFires = 0
-    var results: [String] = []
-    for name in pararFixtures {
-      let command = try fireCommand(for: name)
-      switch command {
-      case .stop:
-        hits += 1
-        results.append("\(name)=stop")
-      case .start:
-        falseFires += 1
-        results.append("\(name)=start(WRONG)")
-      case nil:
-        results.append("\(name)=none")
-      }
-    }
-    os_log("RECALL RESULT: parar %d/4 fired .stop, false-fires %d — %{public}@",
-           log: recallLog, type: .default, hits, falseFires, results.joined(separator: " "))
-    print("RECALL RESULT: parar \(hits)/4 fired .stop, false-fires \(falseFires) — \(results.joined(separator: " "))")
-
-    for name in pararFixtures {
-      let command = try fireCommand(for: name)
-      XCTAssertEqual(command, .stop, "\(name) should fire .stop")
+    for name in raroFixtures {
+      XCTAssertTrue(try fires(for: name), "\(name) (contains 'raro') should fire .wake")
     }
   }
 }

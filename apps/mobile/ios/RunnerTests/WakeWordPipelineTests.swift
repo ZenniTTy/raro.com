@@ -34,8 +34,7 @@ final class WakeWordPipelineTests: XCTestCase {
     let mel = FakeMel()
     let pipeline = WakeWordPipeline(
       mel: mel, embedding: FakeEmbedding(),
-      gravar: FakeClassifier(), parar: FakeClassifier(),
-      gravarThreshold: 0.34, pararThreshold: 0.23
+      raro: FakeClassifier(), raroThreshold: 0.5
     )
     pipeline.process([Float](repeating: 0.1, count: 1279))
     XCTAssertEqual(mel.callCount, 0, "1279 samples must NOT trigger mel")
@@ -48,8 +47,7 @@ final class WakeWordPipelineTests: XCTestCase {
     let mel = FakeMel()
     let pipeline = WakeWordPipeline(
       mel: mel, embedding: FakeEmbedding(),
-      gravar: FakeClassifier(), parar: FakeClassifier(),
-      gravarThreshold: 0.34, pararThreshold: 0.23
+      raro: FakeClassifier(), raroThreshold: 0.5
     )
     pipeline.process([Float](repeating: 0.1, count: 1280 * 2 + 100))
     XCTAssertEqual(mel.callCount, 2, "2560+100 samples drain to exactly 2 mel calls, 100 residual")
@@ -62,8 +60,7 @@ extension WakeWordPipelineTests {
     let embedding = CountingEmbedding()
     let pipeline = WakeWordPipeline(
       mel: mel, embedding: embedding,
-      gravar: FakeClassifier(), parar: FakeClassifier(),
-      gravarThreshold: 0.34, pararThreshold: 0.23
+      raro: FakeClassifier(), raroThreshold: 0.5
     )
     pipeline.process([Float](repeating: 0.1, count: 1280 * 75))
     XCTAssertEqual(embedding.callCount, 0, "75 frames < 76 window: no embedding yet")
@@ -73,58 +70,49 @@ extension WakeWordPipelineTests {
 }
 
 extension WakeWordPipelineTests {
-  private func filledPipeline(gravarScore: Float, pararScore: Float,
-                              onCommand: @escaping (WakeCommand) -> Void) -> WakeWordPipeline {
-    let g = FakeClassifier(); g.fixedScore = gravarScore
-    let p = FakeClassifier(); p.fixedScore = pararScore
+  private func filledPipeline(raroScore: Float,
+                              onWake: @escaping () -> Void) -> WakeWordPipeline {
+    let r = FakeClassifier(); r.fixedScore = raroScore
     let pipeline = WakeWordPipeline(
       mel: FakeMel(), embedding: FakeEmbedding(),
-      gravar: g, parar: p, gravarThreshold: 0.34, pararThreshold: 0.23
+      raro: r, raroThreshold: 0.5
     )
-    pipeline.onCommand = onCommand
+    pipeline.onWake = onWake
     return pipeline
   }
 
-  func testGravarFiresAtOrAboveThreshold() {
-    var cmds: [WakeCommand] = []
-    let pipeline = filledPipeline(gravarScore: 0.35, pararScore: 0.0) { cmds.append($0) }
+  func testRaroFiresAtOrAboveThreshold() {
+    var wakes = 0
+    let pipeline = filledPipeline(raroScore: 0.51) { wakes += 1 }
     pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
-    XCTAssertEqual(cmds, [.start], "0.35 >= 0.34 fires start")
+    XCTAssertEqual(wakes, 1, "0.51 >= 0.5 fires wake")
   }
 
-  func testGravarDoesNotFireBelowThreshold() {
-    var cmds: [WakeCommand] = []
-    let pipeline = filledPipeline(gravarScore: 0.33, pararScore: 0.0) { cmds.append($0) }
+  func testRaroDoesNotFireBelowThreshold() {
+    var wakes = 0
+    let pipeline = filledPipeline(raroScore: 0.49) { wakes += 1 }
     pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
-    XCTAssertEqual(cmds, [], "0.33 < 0.34 does not fire")
-  }
-
-  func testPararFiresAtThreshold() {
-    var cmds: [WakeCommand] = []
-    let pipeline = filledPipeline(gravarScore: 0.0, pararScore: 0.24) { cmds.append($0) }
-    pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
-    XCTAssertEqual(cmds, [.stop], "0.24 >= 0.23 fires stop")
+    XCTAssertEqual(wakes, 0, "0.49 < 0.5 does not fire")
   }
 
   func testDebounceBlocksRefireWithinWindow() {
-    var cmds: [WakeCommand] = []
-    let pipeline = filledPipeline(gravarScore: 0.9, pararScore: 0.0) { cmds.append($0) }
+    var wakes = 0
+    let pipeline = filledPipeline(raroScore: 0.9) { wakes += 1 }
     pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
     for _ in 0..<19 { pipeline.process([Float](repeating: 0.1, count: 1280 * 8)) }
-    XCTAssertEqual(cmds, [.start], "19 embeddings after fire: still debounced")
+    XCTAssertEqual(wakes, 1, "19 embeddings after fire: still debounced")
   }
 
   func testDebounceAllowsRefireAfterWindow() {
-    var cmds: [WakeCommand] = []
-    let pipeline = filledPipeline(gravarScore: 0.9, pararScore: 0.0) { cmds.append($0) }
+    var wakes = 0
+    let pipeline = filledPipeline(raroScore: 0.9) { wakes += 1 }
     pipeline.process([Float](repeating: 0.1, count: 1280 * 196))
     for _ in 0..<20 { pipeline.process([Float](repeating: 0.1, count: 1280 * 8)) }
-    XCTAssertEqual(cmds, [.start, .start], "20th embedding after fire: debounce lifts, refires")
+    XCTAssertEqual(wakes, 2, "20th embedding after fire: debounce lifts, refires")
   }
 
   func testEmbeddingBufferStaysBounded() {
-    var cmds: [WakeCommand] = []
-    let pipeline = filledPipeline(gravarScore: 0.0, pararScore: 0.0) { cmds.append($0) }
+    let pipeline = filledPipeline(raroScore: 0.0) { }
     pipeline.process([Float](repeating: 0.1, count: 1280 * 1000))
     XCTAssertTrue(pipeline.embeddingBufferCountForTesting <= 16,
                   "embeddingBuffer bounded to last 16, got \(pipeline.embeddingBufferCountForTesting)")

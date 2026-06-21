@@ -8,9 +8,9 @@ final class WakeWordDetectorTests: XCTestCase {
 
   func testFeedingSilenceDoesNotCrashAndDoesNotFalseFire() throws {
     let detector = try WakeWordDetector()
-    var commands: [WakeCommand] = []
-    detector.onCommand = { commands.append($0) }
+    var wakes = 0
+    detector.onWake = { wakes += 1 }
     detector.process([Float](repeating: 0, count: 16000 * 2))
-    XCTAssertTrue(commands.isEmpty, "pure silence must not trigger a wake command")
+    XCTAssertEqual(wakes, 0, "pure silence must not trigger a wake")
   }
 }

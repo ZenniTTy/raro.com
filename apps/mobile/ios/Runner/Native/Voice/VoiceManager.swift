@@ -49,23 +49,66 @@ final class VoiceManager: NSObject {
   private let recentAudioMaxCount = 24
   private static let terminalErrorCodes: Set<Int> = [1101, 1107, 7, 4, 203, 1700]
 
+  // ⚠️ BUILD DE TESTE — ONNX wake-word (background) LIGADO por padrao p/ o dono testar "Raro" ao vivo.
+  // REVERTER para `false` (ou o check de arg/env) antes de qualquer commit de producao — SFSpeech fica off neste build.
+  private let useOnnxEngine: Bool = true
+  // BUILD DE TESTE (modelo v2 hibrido com voz real): limiar 0.35 calibrado pelo gate offline v2.
+  // Picos de "Raro" na voz crua: melhores 0.43-0.50; iscas medianas ~0.14, ruido ~0.06.
+  // 0.35 fica acima das iscas/ruido e pega os "Raro" fortes. Device CoreML/fp16 pode diferir do offline CPU.
+  private let onnxTestThreshold: Float = 0.35
+  private let wakeDetector: WakeWordDetector?
+  private var voiceToggleOn = false
+  private let onnxCoordinator = AudioSessionCoordinator()
+  private var onnxCoordinatorRunning = false
+  private var onnxFrameCount = 0
+
   init(wakeWord: String, locale: Locale = Locale(identifier: "pt-BR")) {
     self.wakeWord = wakeWord
     self.recognizer = SFSpeechRecognizer(locale: locale)
+    self.wakeDetector = try? WakeWordDetector(raroThreshold: onnxTestThreshold)
     super.init()
+    self.wakeDetector?.onWake = { [weak self] in
+      self?.queue.async { self?.handleWakeToggle() }
+    }
+    self.wakeDetector?.onScoreForTesting = { score in
+      if score >= 0.08 {
+        os_log("onnx raro PEAK score=%.3f (candidate — speak 'Raro' to test trigger)", log: voiceLog, type: .info, score)
+      }
+    }
+    self.onnxCoordinator.onFrame = { [weak self] frames in
+      guard let self = self else { return }
+      self.queue.async {
+        guard self.wantsListening, !frames.isEmpty else { return }
+        self.onnxFrameCount += 1
+        if self.onnxFrameCount == 1 || self.onnxFrameCount % 200 == 0 {
+          os_log("onnx frames flowing: count=%d (mic is HOT, audio reaching detector)", log: voiceLog, type: .info, self.onnxFrameCount)
+        }
+        self.wakeDetector?.process(frames)
+      }
+    }
+    self.onnxCoordinator.onShouldRestart = { [weak self] in
+      self?.queue.async { self?.restartOnnxCoordinator() }
+    }
   }
 
   func isAvailable(_ completion: @escaping (Bool) -> Void) {
+    let requestMic: (@escaping (Bool) -> Void) -> Void = { done in
+      if #available(iOS 17.0, *) {
+        AVAudioApplication.requestRecordPermission(completionHandler: done)
+      } else {
+        AVAudioSession.sharedInstance().requestRecordPermission(done)
+      }
+    }
+    if useOnnxEngine {
+      requestMic { micOk in
+        os_log("isAvailable(onnx): micOk=%{public}@", log: voiceLog, type: .info, micOk ? "true" : "false")
+        completion(micOk)
+      }
+      return
+    }
     SFSpeechRecognizer.requestAuthorization { status in
       let speechOk = status == .authorized
       let onDevice = self.recognizer?.supportsOnDeviceRecognition ?? false
-      let requestMic: (@escaping (Bool) -> Void) -> Void = { done in
-        if #available(iOS 17.0, *) {
-          AVAudioApplication.requestRecordPermission(completionHandler: done)
-        } else {
-          AVAudioSession.sharedInstance().requestRecordPermission(done)
-        }
-      }
       requestMic { micOk in
         completion(speechOk && onDevice && micOk)
       }
@@ -74,6 +117,7 @@ final class VoiceManager: NSObject {
 
   func start() {
     queue.async {
+      os_log("VoiceManager.start() called — wantsListening=true, useOnnx=%{public}@", log: voiceLog, type: .info, self.useOnnxEngine ? "true" : "false")
       self.wantsListening = true
       self.startListeningInternal()
     }
@@ -86,8 +130,27 @@ final class VoiceManager: NSObject {
       self.lastCommandTime = nil
       self.teardownRecognition()
       self.stopOwnAudioSource()
+      if self.onnxCoordinatorRunning {
+        self.onnxCoordinator.stop()
+        self.onnxCoordinatorRunning = false
+      }
       DispatchQueue.main.async { self.onStateChanged?(.idle) }
     }
+  }
+
+  func resumeIfNeeded() {
+    onnxCoordinator.setLifecycleState(foreground: true)
+    queue.async {
+      guard self.wantsListening, self.useOnnxEngine else { return }
+      if !self.onnxCoordinator.isRunning() {
+        os_log("resumeIfNeeded: coordinator was stopped — restarting (lifecycle/interruption recovery)", log: voiceLog, type: .info)
+        self.ensureAudioSource()
+      }
+    }
+  }
+
+  func markBackground() {
+    onnxCoordinator.setLifecycleState(foreground: false)
   }
 
   func appendCaptureAudio(_ sampleBuffer: CMSampleBuffer) {
@@ -105,6 +168,12 @@ final class VoiceManager: NSObject {
 
   private func startListeningInternal() {
     guard wantsListening else { return }
+    if useOnnxEngine {
+      os_log("voice engine = ONNX (background wake-word)", log: voiceLog, type: .info)
+      ensureAudioSource()
+      DispatchQueue.main.async { self.onStateChanged?(.listening) }
+      return
+    }
     guard let recognizer = recognizer, recognizer.isAvailable else {
       DispatchQueue.main.async { self.onStateChanged?(.unavailable) }
       scheduleErrorRetry()
@@ -223,6 +292,16 @@ final class VoiceManager: NSObject {
   }
 
   private func ensureAudioSource() {
+    if useOnnxEngine {
+      if !onnxCoordinator.isRunning() {
+        os_log("audio source -> AudioSessionCoordinator (onnx dedicated, camera-independent, background-capable)", log: voiceLog, type: .info)
+        onnxCoordinatorRunning = onnxCoordinator.start()
+        if !onnxCoordinatorRunning {
+          os_log("onnx coordinator failed to start", log: voiceLog, type: .error)
+        }
+      }
+      return
+    }
     let cameraActive = isCameraAudioActive?() ?? false
     if cameraActive {
       if ownEngineRunning {
@@ -288,5 +367,29 @@ final class VoiceManager: NSObject {
     if ownAudioEngine.isRunning { ownAudioEngine.stop() }
     ownAudioEngine.inputNode.removeTap(onBus: 0)
     ownEngineRunning = false
+  }
+
+  private func restartOnnxCoordinator() {
+    guard useOnnxEngine, wantsListening else { return }
+    os_log("onnx coordinator restart (interruption/config change)", log: voiceLog, type: .info)
+    onnxCoordinator.stop()
+    onnxCoordinatorRunning = onnxCoordinator.start()
+    if !onnxCoordinatorRunning {
+      os_log("onnx coordinator restart failed", log: voiceLog, type: .error)
+    }
+  }
+
+  private func handleWakeToggle() {
+    let now = Date()
+    if let lastCommandTime = lastCommandTime,
+       now.timeIntervalSince(lastCommandTime) < 2.5 {
+      os_log("onnx wake debounced", log: voiceLog, type: .info)
+      return
+    }
+    lastCommandTime = now
+    voiceToggleOn.toggle()
+    let cmd: VoiceCommand = voiceToggleOn ? .start : .stop
+    os_log("onnx wake matched -> %{public}@", log: voiceLog, type: .info, "\(cmd)")
+    DispatchQueue.main.async { self.onCommand?(cmd) }
   }
 }

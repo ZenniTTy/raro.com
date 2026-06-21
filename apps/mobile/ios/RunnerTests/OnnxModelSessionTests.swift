@@ -2,8 +2,8 @@ import XCTest
 @testable import Runner
 
 final class OnnxModelSessionTests: XCTestCase {
-  func testAllFourModelsLoadFromBundle() throws {
-    for name in ["melspectrogram", "embedding_model", "raro_gravar", "raro_parar"] {
+  func testAllThreeModelsLoadFromBundle() throws {
+    for name in ["melspectrogram", "embedding_model", "raro"] {
       XCTAssertNoThrow(
         try OnnxModelSession(modelName: name, executionProvider: .cpu),
         "\(name).onnx must be in the app bundle"
@@ -12,7 +12,7 @@ final class OnnxModelSessionTests: XCTestCase {
   }
 
   func testClassifierProducesFiniteScoreInRange() throws {
-    let session = try OnnxModelSession(modelName: "raro_gravar", executionProvider: .cpu)
+    let session = try OnnxModelSession(modelName: "raro", executionProvider: .cpu)
     let input = [Float](repeating: 0, count: 16 * 96)
     let out = try session.run(input: input, inputName: "embeddings",
                               shape: [1, 16, 96], outputName: "score")

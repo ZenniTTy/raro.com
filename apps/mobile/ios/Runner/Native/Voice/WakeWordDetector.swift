@@ -58,24 +58,22 @@ private struct ClassifierAdapter: Classifying {
 final class WakeWordDetector {
   private let pipeline: WakeWordPipeline
 
-  var onCommand: ((WakeCommand) -> Void)? {
-    get { pipeline.onCommand }
-    set { pipeline.onCommand = newValue }
+  var onWake: (() -> Void)? {
+    get { pipeline.onWake }
+    set { pipeline.onWake = newValue }
   }
 
-  var onScoresForTesting: ((Float, Float) -> Void)? {
-    get { pipeline.onScoresForTesting }
-    set { pipeline.onScoresForTesting = newValue }
+  var onScoreForTesting: ((Float) -> Void)? {
+    get { pipeline.onScoreForTesting }
+    set { pipeline.onScoreForTesting = newValue }
   }
 
-  init(classifierProvider: OnnxExecutionProvider = .coreML) throws {
+  init(classifierProvider: OnnxExecutionProvider = .coreML, raroThreshold: Float = 0.5) throws {
     let mel = MelAdapter(session: try OnnxModelSession(modelName: "melspectrogram", executionProvider: .cpu))
     let embedding = EmbeddingAdapter(session: try OnnxModelSession(modelName: "embedding_model", executionProvider: classifierProvider))
-    let gravar = ClassifierAdapter(session: try OnnxModelSession(modelName: "raro_gravar", executionProvider: classifierProvider))
-    let parar = ClassifierAdapter(session: try OnnxModelSession(modelName: "raro_parar", executionProvider: classifierProvider))
+    let raro = ClassifierAdapter(session: try OnnxModelSession(modelName: "raro", executionProvider: classifierProvider))
     pipeline = WakeWordPipeline(
-      mel: mel, embedding: embedding, gravar: gravar, parar: parar,
-      gravarThreshold: 0.34, pararThreshold: 0.23
+      mel: mel, embedding: embedding, raro: raro, raroThreshold: raroThreshold
     )
   }
 
