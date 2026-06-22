@@ -2,6 +2,9 @@
 
 > Visão de arquitetura de alto nível. Detalhes técnicos canônicos em [Blueprint.md Seção 3](Blueprint.md).
 
+> **ESTADO:** paridade Android é ALVO, não estado — Android não compila ainda (PLANO-MESTRE Bloco 3). A topologia simétrica iOS/Android abaixo descreve o destino, não o que roda hoje.
+> **Engine de voz vigente** = SFSpeech foreground (ADR-0022); ONNX/background = standby Sensory (0029).
+
 ## Topologia
 
 ```
@@ -46,7 +49,7 @@
 |---|---|
 | `com.rarocamera/camera` | Discovery de lentes, alternância 0.5×/1×, resolução, FPS, captura |
 | `com.rarocamera/replay_buffer` | Buffer circular em RAM (15s/30s), salvamento (concat buffer + stream) |
-| `com.rarocamera/voice` | Inicialização do reconhecimento, detecção wake word `"Raro"`, callbacks |
+| `com.rarocamera/voice` | Inicialização do reconhecimento, detecção wake word `"Raro"`, callbacks (engine vigente = SFSpeech foreground / ADR-0022; ONNX background = standby Sensory / 0029) |
 | `com.rarocamera/volume` | Captura de eventos de botões físicos de volume (modo "Volume OFF") |
 
 Contrato JSON-serializável é documentado em `apps/mobile/lib/core/native_bridges/<bridge>_contract.md` antes da implementação. Cada bridge tem sua própria spec na Fase 5.

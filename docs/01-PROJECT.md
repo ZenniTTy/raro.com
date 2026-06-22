@@ -44,10 +44,8 @@ Após quitação integral do contrato, todos os direitos de propriedade intelect
 
 - Briefing aprovado em maio/2026.
 - Blueprint aprovado em 2026-05-25.
-- Bootstrap em execução (fases 1–5 do `bootstrap-mobile-flutter`).
+- Finalização para entrega ao cliente — ver [PLANO-MESTRE-finalizacao-entrega-cliente.md](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md). iOS foreground funcional (câmera/gravação/replay/voz/galeria); Android em paridade pendente (não compila); monetização/Firebase pendentes.
 
 ## Próximos marcos
 
-1. Fase 4 (Harness) e Fase 5 (Spec-Driven) do bootstrap.
-2. Primeira spec: `feat/camera-native-bridge` — valida pipeline native bridge crítico.
-3. Specs subsequentes na ordem do roadmap em [04-ROADMAP.md](04-ROADMAP.md).
+Sequenciados em [PLANO-MESTRE-finalizacao-entrega-cliente.md](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md) (6 blocos): destravar build Android, infra Firebase/Crashlytics, monetização RevenueCat real, paridade Android, i18n, release nas lojas.

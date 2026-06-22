@@ -13,21 +13,35 @@ Read order obrigatório:
 1. AGENTS.md (thin redirect)
 2. CLAUDE.md (manual autoritativo)
 3. docs/Blueprint.md (decisões aprovadas)
-4. docs/sessions/0001-INDEX.md (último estado)
+4. docs/superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md (ROADMAP VIGENTE)
+5. docs/sessions/0001-INDEX.md (último estado)
+
+ESTADO ATUAL (2026-06-22):
+- Fase: finalização para entrega (PLANO-MESTRE, 6 blocos). NÃO é mais bootstrap.
+- Voz: FOREGROUND SFSpeech "raro gravar"/"raro parar" FUNCIONA (iPhone 12).
+  BACKGROUND wake-word ONNX = INVIÁVEL (sessão 0029, 4 modelos) → STANDBY
+  aguardando licença Sensory. NÃO reabrir treino ONNX nem WakeWordDetector
+  sem ADR novo (beco provado, ~US$11). Prompt openwakeword = OBSOLETO.
+- Mock/pendente: RevenueCat (bool local), Firebase (não inicializado),
+  share ("Em breve"), i18n (0 .arb), Volume (stub). Ver PLANO-MESTRE.
+- Android NÃO compila (CameraHostApiImpl.kt falta startRecording/stopRecording)
+  → PLANO-MESTRE Bloco 0.1 destrava.
 
 Locked invariants:
 - Wake word = "Raro" (NUNCA "OkCamera")
 - Free trial = 30 dias (não 15)
 - Planos = Mensal R$ 9,90 + Anual R$ 89,90 com "MELHOR OFERTA"
-- Bundle ID = com.rarocamera
+- Bundle ID iOS = com.rarocamera (Android atual = com.rarocamera.raro_mobile
+  — DIVERGÊNCIA a resolver, PLANO-MESTRE Bloco 0.3)
 - Backend = client-only (sem apps/api)
 
 Gates ativos:
 - Conventional Commits via commitlint (subject lowercase, scope obrigatório)
 - lefthook pre-commit: dart-format, biome-format, block-secrets
 - lefthook pre-push: bun run lint && bun run test
-- .claude/hooks/ registrados em settings.json (6 hooks em 3 eventos):
-  PreToolUse: block-env, block-secrets, warn-adr-drift
+- .claude/hooks/ (11 hooks): PreToolUse: block-env, block-secrets,
+  warn-adr-drift, block-forbidden-terms, block-pigeon-error-rawvalue,
+  warn-gesturedetector-over-platformview, warn-sfspeech-recycle-per-error
   PostToolUse: format-dart, run-riverpod-codegen
   SessionStart: reinject-roadmap
 - .claude/hooks/verify-task.sh: utilitário invocável manualmente
@@ -47,7 +61,9 @@ EOF
 
 if [ -f "$root/docs/sessions/0001-INDEX.md" ]; then
   echo ""
-  head -10 "$root/docs/sessions/0001-INDEX.md"
+  echo "Últimas sessões (ver 0001-INDEX.md para detalhe):"
+  # cabeçalho + 3 linhas de sessão, truncando colunas longas para não poluir o contexto
+  grep -E '^\| \[[0-9]' "$root/docs/sessions/0001-INDEX.md" | head -3 | cut -c1-140
 fi
 
 echo ""

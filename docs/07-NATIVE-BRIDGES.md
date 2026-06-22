@@ -23,6 +23,8 @@ Responsabilidade: discovery de lentes físicas, alternância 0.5×/1×, resoluç
 iOS: `AVCaptureDevice.DiscoverySession` com `builtInUltraWideCamera` + `builtInWideAngleCamera`. `AVCaptureSession` + `AVAssetWriter`.
 Android: `CameraSelector.Builder().addCameraFilter()` filtrando por `LENS_INFO_AVAILABLE_FOCAL_LENGTHS`. `MediaCodec` + `MediaMuxer`.
 
+> ESTADO: iOS real e validado; ANDROID não compila (CameraHostApiImpl.kt não implementa startRecording/stopRecording exigidos pelo contrato — PLANO-MESTRE Bloco 0.1).
+
 ## `com.rarocamera/replay_buffer`
 
 Responsabilidade: buffer circular em RAM dos últimos N segundos. Permite "começar a gravar" com pré-roll.
@@ -54,9 +56,11 @@ Responsabilidade: detecção on-device do wake word `"Raro"`.
 
 iOS: `SFSpeechRecognizer` configurado para on-device. Android: `SpeechRecognizer` com `EXTRA_PREFER_OFFLINE` (API 31+).
 
+> ESTADO REAL: engine vigente = SFSpeechRecognizer foreground (ADR-0022). ONNX/wake-word dedicada = STANDBY (reprovado device, sessão 0029, aguarda Sensory). Android voz = não implementado (só contrato Pigeon).
+
 **Privacidade:** áudio nunca sai do device. Privacy Manifest iOS declara uso de speech.
 
-## `com.rarocamera/volume`
+## `com.rarocamera/volume` **[ESTADO: só stub Pigeon, não implementado iOS/Android]**
 
 Responsabilidade: captura de eventos de botões físicos de volume (modo "Volume OFF" em Settings) + detecção de fones BT que reportam como volume.
 

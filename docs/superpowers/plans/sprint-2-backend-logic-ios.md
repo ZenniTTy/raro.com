@@ -1,5 +1,7 @@
 # Sprint 2 — Backend/Lógica Real iOS (Detailed Execution Plan)
 
+> ⚠️ PARCIALMENTE ENTREGUE / DRIFT CONHECIDO (2026-06-22). Entregues e validados iPhone 12: gravação real, replay buffer, voz foreground, galeria real (Tasks A/B/F). NÃO entregues (ficaram mock/pendentes, reescopados para PLANO-MESTRE): RevenueCat (Task E = mock total, Bloco 2), Firebase (nunca inicializado, Bloco 1), Share (botão 'Em breve', Bloco 4.1). Wake-word: o arco real foi ONNX (ADR-0023) → REVERTIDO para SFSpeech foreground 2 comandos (sessão 0029, commit 7e9c0c9); background INVIÁVEL/standby Sensory. NÃO re-executar a Task C como escrita nem o smoke de wake-word de palavra única. Roadmap vigente = PLANO-MESTRE.
+
 > **REQUIRED SUB-SKILL** para sessões de execução: `superpowers:subagent-driven-development`. Tasks usam checkbox `- [ ]`.
 
 **Goal**: Substituir implementações mock dos Riverpod providers de Sprint 1 por implementações REAIS, mantendo a mesma signature pública (UI não muda). Entregar app iOS funcionalmente completo no iPhone 12 (free Apple ID) — gravação real, replay buffer, wake word, volume button, paywall RevenueCat sandbox, vault persistido.

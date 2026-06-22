@@ -45,15 +45,17 @@
 - [decisions/0010-dual-subscription-plans.md](decisions/0010-dual-subscription-plans.md) — modelo dual mensal + anual
 - [decisions/0011-volume-control-not-bluetooth.md](decisions/0011-volume-control-not-bluetooth.md) — controle por botões de volume
 - [decisions/0012-xiaomi-onboarding-hybrid.md](decisions/0012-xiaomi-onboarding-hybrid.md) — onboarding Xiaomi híbrido
+- ADRs continuam de **0013 a 0024** em [decisions/](decisions/) (camera bridge strategy, e2e harness, recording pipeline, 4k60, voz SFSpeech/ONNX/toggle único etc.) — a lista vai até 0024, não para em 0012.
 
 ## Sessions (log append-only)
 
 - [sessions/0000-template.md](sessions/0000-template.md) — template de session log
-- [sessions/0001-INDEX.md](sessions/0001-INDEX.md) — índice de sessions (mais recente no topo)
+- [sessions/0001-INDEX.md](sessions/0001-INDEX.md) — fonte atualizada de sessions (mais recente no topo, sessões até 0029) — consultar este índice, não as referências congeladas abaixo
 - [sessions/0001-bootstrap.md](sessions/0001-bootstrap.md) — bootstrap do projeto (Fases 1–5 + 3 sprints de fixes)
 
 ## Specs e plans (TLC Spec-Driven)
 
+- [superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md) — **roadmap vigente até entrega** (6 blocos; supersede o DAG de 20 specs em 04-ROADMAP.md)
 - [superpowers/specs/0000-template.md](superpowers/specs/0000-template.md) — template canônico de spec
 - [superpowers/plans/0000-template.md](superpowers/plans/0000-template.md) — template canônico de plan com 7 execution rules + Phase 0 pre-flight + atomic tasks
 - `superpowers/specs/<YYYY-MM-DD>-<slug>-design.md` — specs por feature (criadas via `/new-spec`)

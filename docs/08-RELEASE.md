@@ -25,11 +25,13 @@
 
 ```bash
 # iOS (.ipa)
-bun --filter @raro/mobile run build:ios
+bun run --filter '@raro/mobile' build:ios
 
 # Android (.aab)
-bun --filter @raro/mobile run build:android
+bun run --filter '@raro/mobile' build:android
 ```
+
+> **ESTADO:** nenhuma release existe; `build:android` falha (Android não compila); signing iOS/Android e Firebase/RevenueCat pendentes — ver [PLANO-MESTRE Bloco 5](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md).
 
 **Pré-requisitos:**
 - Signing iOS: certificados + provisioning profiles do cliente em Apple Developer Portal

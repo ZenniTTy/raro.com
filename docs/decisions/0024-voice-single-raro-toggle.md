@@ -1,10 +1,14 @@
 # 0024 — Comando de voz: toggle de palavra única "Raro" (NÃO dois comandos "gravar"/"parar")
 
 - **Data:** 2026-06-19
-- **Status:** Accepted
-- **Relaciona:** **Supersede a cláusula "dois comandos" do [ADR-0022](0022-voice-on-device-sfspeechrecognizer.md) e do [ADR-0023](0023-voice-engine-dedicated-not-sfspeechrecognizer.md)** (ambos diziam "dois comandos 'Raro gravar'/'Raro parar'"). **Restaura e confirma o [ADR-0009](0009-wake-word-raro.md) e o Blueprint M03** (toggle de palavra única). Engine (ONNX/livekit-wakeword) do ADR-0023 permanece válida.
+- **Status:** **Conceito de UX Accepted, mas a ENGINE que o realizaria está em STANDBY (sessão 0029). Ver Atualização 2026-06-21 abaixo.**
+- **Relaciona:** **Supersede a cláusula "dois comandos" do [ADR-0022](0022-voice-on-device-sfspeechrecognizer.md) e do [ADR-0023](0023-voice-engine-dedicated-not-sfspeechrecognizer.md)** (ambos diziam "dois comandos 'Raro gravar'/'Raro parar'"). **Restaura e confirma o [ADR-0009](0009-wake-word-raro.md) e o Blueprint M03** (toggle de palavra única). Engine (ONNX/livekit-wakeword) do ADR-0023 — agora em standby.
 - **Decisores:** Eduardo Rodrigues
 - **Contexto:** Sessão de re-treino do wake-word, validação no iPhone 12 físico + confirmação device-validated do app concorrente.
+
+> ## 🛑 ATUALIZAÇÃO 2026-06-21 (sessão 0029) — o toggle único depende da engine ONNX, que ficou em STANDBY
+>
+> O toggle de palavra única "Raro" permanece o **design de produto correto** (Blueprint M03, ADR-0009). MAS ele só seria realizado pela **engine ONNX do ADR-0023, que foi reprovada no device** (4 modelos, nenhum dispara "Raro" na voz real — ver ADR-0023 Atualização 2026-06-21). **Consequência prática:** o app entrega hoje **NÃO o toggle único, mas os DOIS comandos foreground "raro gravar"/"raro parar" via SFSpeech (ADR-0022)** — porque é o único caminho que funciona no device atualmente. Ou seja, **o código em produção contradiz este ADR-0024** por necessidade técnica, e isso é intencional/conhecido (revert `7e9c0c9`, sessão 0029). O toggle único volta a ser o alvo quando/se a engine de background (Sensory ou outra) viabilizar. Decisão de produto ABERTA com o cliente.
 
 ## Contexto — contradição documentada descoberta
 

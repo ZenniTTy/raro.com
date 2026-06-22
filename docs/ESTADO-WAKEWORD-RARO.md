@@ -1,5 +1,8 @@
 # Estado Completo do Wake-Word "Raro" — Diagnóstico, Tentativas e Caminho
 
+> # 🛑 SUPERSEDED — desfecho na sessão 0029 (2026-06-21)
+> Este doc (de 2026-06-20) recomendava o **treino híbrido com voz real** como "o caminho nunca tentado". A sessão 0029 **executou exatamente isso e provou inviável**: treinou o modelo híbrido com a voz real do dono e, no iPhone 12, "Raro" não dispara (pico 0.128 vs limiar usável; AUC máx 0.54). **Conclusão revisada:** a palavra "Raro" é o limite do pipeline openWakeWord, não a falta de voz real. O app **reverteu para SFSpeech foreground** (commit `7e9c0c9`); background = **STANDBY aguardando licença Sensory**. Verdade atual: session log `docs/sessions/0029-*.md` + ADR-0023 (Atualização 2026-06-21) + `PLANO-MESTRE-finalizacao-entrega-cliente.md`. **Este doc fica como histórico do diagnóstico até a 0029.**
+>
 > **Documento-mestre** do problema de wake-word de voz do RARO. Criado em 2026-06-20 (sessão S2.E) a pedido do dono, reescrito após auditoria EXAUSTIVA de todas as sessões (0023–0028), ADRs (0009/0022/0023/0024) e 13 memórias.
 >
 > **Regra deste documento:** tudo aqui é factual e rastreável a log/doc/sessão. Nada de suposição apresentada como fato. Onde algo é hipótese ou não-testado, está marcado como tal. Sem drift: o objetivo abaixo é o do Blueprint, não uma reinterpretação.

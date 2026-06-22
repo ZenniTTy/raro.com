@@ -1,6 +1,13 @@
 # Prompt — Próxima sessão: integração iOS do wake-word ONNX (S2.D parte 2)
 
-> **ATUALIZADO na sessão 0026 (2026-06-14).** Os 4 modelos ONNX (pipeline de 3 estágios) JÁ ESTÃO versionados em `apps/mobile/ios/Runner/Resources/`, com contrato de I/O VALIDADO por inspeção direta dos `.onnx`. O treino e a obtenção dos modelos NÃO são mais o próximo passo; escrever o **`WakeWordDetector.swift`** é. **A Sprint 2 inteira foi mergeada em `develop` (PR #2); a branch `feat/camera-native-bridge` segue viva e idêntica à develop — continue nela.**
+> # 🛑🛑 OBSOLETO — NÃO EXECUTAR (sessão 0029, 2026-06-21) 🛑🛑
+> Este prompt manda escrever/integrar o **`WakeWordDetector.swift` ONNX**. Isso JÁ FOI FEITO (sessões 0027-0029) e **REPROVADO no device**: 4 modelos treinados, nenhum dispara "Raro" na voz real (pico 0.128). O caminho ONNX/openWakeWord para a palavra "Raro" é um **beco já provado** (custou ~US$11 + várias sessões). O app foi **revertido para SFSpeech foreground** (commit `7e9c0c9`). Background = **standby Sensory**.
+>
+> **Seguir este prompt = reabrir o beco-sem-saída.** O roadmap vigente é `docs/superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md`. Pipeline ONNX preservado dormente em `01a1f67`. Ver ADR-0023 (Atualização 2026-06-21) e session log 0029. **Mantido só como histórico.**
+>
+> ---
+>
+> **ATUALIZADO na sessão 0026 (2026-06-14) [histórico]:** Os 4 modelos ONNX (pipeline de 3 estágios) JÁ ESTÃO versionados em `apps/mobile/ios/Runner/Resources/`, com contrato de I/O VALIDADO por inspeção direta dos `.onnx`. O treino e a obtenção dos modelos NÃO são mais o próximo passo; escrever o **`WakeWordDetector.swift`** é. **A Sprint 2 inteira foi mergeada em `develop` (PR #2); a branch `feat/camera-native-bridge` segue viva e idêntica à develop — continue nela.**
 
 ## ESTADO REAL (0026): modelos bundlados + contrato provado, falta a peça nativa
 

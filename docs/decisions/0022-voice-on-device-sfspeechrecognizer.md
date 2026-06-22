@@ -1,8 +1,12 @@
 # 0022 — Voz on-device com SFSpeechRecognizer (modo selecionável, foreground, dois comandos)
 
 - **Data:** 2026-06-08
-- **Status:** Accepted
+- **Status:** **Accepted — É A ENGINE VIGENTE NO APP (foreground) desde a sessão 0029.** Ver Atualização 2026-06-21 abaixo.
 - **Relaciona:** ADR-0009 (wake word "Raro"), ADR-0011 (controle por volume — modo alternativo, Sprint 3), ADR-0003 + Addendum 2026-06-07 (pré-roll embutido no REC), ADR-0020 (pipeline unificado de captura)
+
+> ## ✅ ATUALIZAÇÃO 2026-06-21 (sessão 0029) — este ADR é o caminho de produção VIGENTE
+>
+> Após a engine ONNX (ADR-0023) ser **reprovada no device** (4 modelos, nenhum dispara "Raro" na voz real), o app **reverteu para este ADR-0022** (`SFSpeechRecognizer` foreground, commit `7e9c0c9`). É o que roda hoje, **validado no iPhone 12** (log `wake matched: start`/`stop`). **Nuance vs ADR-0024:** o app entrega os **DOIS comandos "raro gravar"/"raro parar"** (deste ADR), NÃO o toggle único do ADR-0024 — porque o toggle dependia da engine ONNX que ficou em standby. Limitação: **foreground apenas** (app aberto); background é standby Sensory (ver ADR-0023).
 - **Decisores:** Eduardo Rodrigues
 - **Contexto:** Sprint 2 Sessão S2.C — ligar o segundo gatilho do save (voz). O briefing (Seção 5.4), o protótipo (onboarding "Diga Raro", Settings "Controle de Gravação", hint da câmera) e o ADR-0009 exigem acionamento por voz. A feature era greenfield: só existia `VoiceConfig.wakeWord='Raro'` em `raro_shared` e um stub Pigeon (`voicePing`/`voiceReady`). Decisão informada por dump real do app concorrente "Ok Câmera" no Galaxy M54 (2026-06-07/08).
 

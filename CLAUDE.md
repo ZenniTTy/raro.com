@@ -20,11 +20,11 @@ Detalhe complementar: este projeto também segue as **15 práticas Karpathy** pa
 | Item | Estado |
 |---|---|
 | Blueprint | [docs/Blueprint.md](docs/Blueprint.md) Approved em 2026-05-25 |
-| Fase atual do bootstrap | Spec-Driven (Fase 5) — 2 specs entregues (`api-contract-shared`/ADR-0013, `flutter-3.44-spm-migration`/ADR-0014) |
+| Fase atual do bootstrap | Finalização para entrega (PLANO-MESTRE, 6 blocos). Sprint 2 iOS done-com-drift (RevenueCat/Firebase mock); Android não compila (Bloco 0.1); wake-word background STANDBY (ONNX reprovado 0029, aguarda Sensory), foreground SFSpeech funciona. |
 | Branch principal | `main` (devs em `develop` ou feature branches) |
-| Bundle ID | `com.rarocamera` |
+| Bundle ID | `com.rarocamera` (iOS=com.rarocamera; Android atual=com.rarocamera.raro_mobile — DIVERGÊNCIA a resolver, PLANO-MESTRE Bloco 0.3) |
 | Plataformas alvo | iOS 15+ / Android API 24+ |
-| Wake word | `"Raro"` (NÃO `"OkCamera"`) |
+| Wake word | `"Raro"` (NÃO `"OkCamera"`) — FOREGROUND SFSpeech funciona ('raro gravar'/'raro parar'); BACKGROUND ONNX inviável (sessão 0029) em STANDBY (Sensory). NÃO reabrir treino ONNX sem ADR. |
 | Free trial | 30 dias |
 | Planos | Mensal R$ 9,90 + Anual R$ 89,90 |
 
@@ -104,9 +104,7 @@ Quando precisar de doc de lib externa, a ordem é:
 
 ### Sprint MDs ativos
 
-- `docs/superpowers/plans/sprint-1-foundation-walking-skeleton.md` (em execução)
-- `docs/superpowers/plans/sprint-2-backend-logic-ios.md` (backlog)
-- `docs/superpowers/plans/sprint-3-android-parity-testflight-client.md` (backlog)
+Roadmap vigente: `docs/superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md` (6 blocos). sprint-1 fechado; sprint-2 done-com-drift; sprint-3 reindexado pelo Bloco 3 do PLANO-MESTRE.
 
 ### Spec/plan templates (uso de exceção, não rotina)
 

@@ -2,6 +2,31 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-06-22] — 0.7.1 (Reconciliação do harness + estado real auditado)
+
+> Auditoria de consistência documental (3 agentes sobre código real) + correção do drift em todo o harness para as próximas sessões terem contexto verdadeiro. Roadmap vigente passa a ser `PLANO-MESTRE-finalizacao-entrega-cliente.md`.
+
+### Mudado
+- **Harness reconciliado com o estado real:** Blueprint (§2.3/§3.3/§10), ADRs 0022/0023/0024 (notas de standby/vigência), 05/06/07/09 docs, CLAUDE.md/AGENTS.md, 01/02/03/04/08/index, sprints 1-3 + PROMPTS, hook `reinject-roadmap.sh` (inventário 6→11 hooks + estado de voz), `warn-adr-drift.sh` (cobertura ampliada p/ .onnx/Voice/.swift/configs de treino).
+- **Wake-word documentado honestamente:** foreground SFSpeech "raro gravar"/"raro parar" = vigente; background ONNX = STANDBY (aguarda licença Sensory). Prompt `NEXT-SESSION-voice-openwakeword` + docs ESTADO-WAKEWORD/CONTRAPONTO marcados OBSOLETO/SUPERSEDED.
+- **Mocks/pendências sinalizados** em todo doc: RevenueCat (mock), Firebase (não inicializado), share ("Em breve"), i18n (0 .arb), Volume (stub), Android (não compila).
+- **Lições não-mapeadas salvas** (sessões 0027-0029): corte de áudio < janela, augmentation rounds, eval sintético não é gate, N modelos = teto, etc.
+
+## [2026-06-21] — 0.7.0 (Saga do wake-word: ONNX treinado → inviável no device → revert SFSpeech foreground)
+
+> Sessões 0025-0029. Tentativa completa de wake-word "Raro" on-device via ONNX/openWakeWord, treino na nuvem (RunPod), e o veredito final: inviável na voz real → revert para o SFSpeech foreground que funcionava. Background fica em standby (negociação Sensory).
+
+### Adicionado
+- **Pipeline ONNX de 3 estágios (0025-0027):** `WakeWordDetector`/`WakeWordPipeline`/`OnnxModelSession` Swift + 4 modelos treinados no RunPod (livekit-wakeword 0.2.1 + VoxCPM PT-BR) + gate de recall offline (`WakeWordRecallTests`). Validado no iPhone 12.
+- **Treino híbrido com voz real do dono (0029):** 213 clips reais (`real-audio/`) injetados no treino; `PLANO-MESTRE-finalizacao-entrega-cliente.md` (roadmap de finalização).
+- ADR-0024 (toggle "Raro" único) + memórias técnicas de treino (RunPod, Kaggle, segmentação).
+
+### Corrigido
+- **Reconhecimento contínuo SFSpeech (0024, ADR-0022):** token de ciclo + ring buffer (NÃO reciclar por erro 1110 benigno) — 521→7 reciclos, "raro parar" parou de sumir. Validado no device.
+
+### Mudado / Revertido
+- **Wake-word "Raro" background ONNX provado INVIÁVEL no device (0029):** 4 modelos, nenhum dispara na voz real (pico 0.128, AUC máx 0.54). Causa: a palavra "Raro" (2 sílabas, muitas rimas PT-BR) é o limite do pipeline openWakeWord. **Revertido para SFSpeech foreground** (`7e9c0c9`); pipeline ONNX preservado dormente (`01a1f67`). Background = standby aguardando licença Sensory.
+
 ## [2026-06-04] — 0.6.1 (Thumbnail real na galeria — Sprint 2)
 
 > Capa da galeria (P07) passa a ser o 1º frame real de cada vídeo do vault, no lugar do gradiente HSL (reverte decisão de design Sprint 1 para vídeos reais). Sessão 0017. Validado no iPhone 12.

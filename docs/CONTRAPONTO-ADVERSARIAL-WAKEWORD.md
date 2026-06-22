@@ -1,5 +1,8 @@
 # Contraponto Adversarial: Auditoria do "ESTADO-WAKEWORD-RARO.md"
 
+> # 🛑 REFUTADO PELO DEVICE — sessão 0029 (2026-06-21)
+> A tese central deste contraponto — "Raro' falha por domain gap, não por ser foneticamente difícil; o treino híbrido com voz real resolve" — foi **testada e não se sustentou**. A sessão 0029 fez o treino híbrido com a voz real do dono e o veredito no iPhone 12 foi o oposto: mesmo com voz real no treino, "Raro" não dispara (AUC máx 0.54, melhor 0.497, não cruza 0.5). A palavra "Raro" (2 sílabas, muitas rimas PT-BR) **é** o limite do pipeline openWakeWord. O contraponto estava certo em exigir o teste híbrido (valeu fazer), mas a conclusão que ele previa não veio. Background = **STANDBY (Sensory)**; foreground SFSpeech vigente. Ver `docs/sessions/0029-*.md` + ADR-0023. **Mantido como histórico.**
+>
 > **Objetivo:** Este documento é uma resposta direta e adversarial à análise feita na sessão S2.E (`ESTADO-WAKEWORD-RARO.md`). Ele visa expor falhas de lógica, contradições internas e testes fundamentais que foram ignorados antes de declarar o modelo "Raro" (toggle único) um beco sem saída devido ao seu tamanho (2 sílabas).
 
 ---
