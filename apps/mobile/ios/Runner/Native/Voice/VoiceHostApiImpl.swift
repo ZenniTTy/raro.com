@@ -1,7 +1,7 @@
 import Foundation
 
 final class VoiceHostApiImpl: NSObject, VoiceHostApi {
-  let manager: VoiceManager
+  private let manager: VoiceManager
   private let flutterApi: VoiceFlutterApi
 
   init(manager: VoiceManager, flutterApi: VoiceFlutterApi) {

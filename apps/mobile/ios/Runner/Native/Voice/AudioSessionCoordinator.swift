@@ -1,6 +1,5 @@
 import Foundation
 @preconcurrency import AVFoundation
-import UIKit
 import os.log
 
 final class AudioSessionCoordinator {
@@ -19,11 +18,6 @@ final class AudioSessionCoordinator {
   private let emitLock = UnsafeMutablePointer<os_unfair_lock>.allocate(capacity: 1)
   private var emitting = false
 
-  private var bufferTick = 0
-  private var rmsAccumulator: Float = 0
-  private var rmsPeakWindow: Float = 0
-  private let lifecycleState = UnsafeMutablePointer<Int32>.allocate(capacity: 1)
-
   private func setEmitting(_ value: Bool) {
     os_unfair_lock_lock(emitLock)
     emitting = value
@@ -39,7 +33,6 @@ final class AudioSessionCoordinator {
 
   init() {
     emitLock.initialize(to: os_unfair_lock())
-    lifecycleState.initialize(to: 1)
 
     NotificationCenter.default.addObserver(
       self,
@@ -63,8 +56,8 @@ final class AudioSessionCoordinator {
     do {
       try session.setCategory(
         .playAndRecord,
-        mode: .default,
-        options: [.mixWithOthers, .allowBluetooth, .defaultToSpeaker]
+        mode: .measurement,
+        options: [.mixWithOthers, .allowBluetooth]
       )
       try session.setActive(true, options: .notifyOthersOnDeactivation)
     } catch {
@@ -114,28 +107,20 @@ final class AudioSessionCoordinator {
     return true
   }
 
-  func isRunning() -> Bool {
-    queue.sync { running }
-  }
-
   func stop() {
     queue.sync {
       guard running else { return }
-      os_unfair_lock_lock(emitLock)
-      emitting = false
-      converter = nil
-      os_unfair_lock_unlock(emitLock)
+      setEmitting(false)
       engine.inputNode.removeTap(onBus: 0)
       engine.stop()
       running = false
+      converter = nil
     }
   }
 
   private func handleBuffer(_ buffer: AVAudioPCMBuffer, outFormat: AVAudioFormat) {
-    os_unfair_lock_lock(emitLock)
-    let activeConverter = emitting ? converter : nil
-    os_unfair_lock_unlock(emitLock)
-    guard let converter = activeConverter,
+    guard isEmitting() else { return }
+    guard let converter = converter,
           let out = AVAudioPCMBuffer(pcmFormat: outFormat, frameCapacity: 4096) else { return }
     var consumed = false
     var error: NSError?
@@ -154,39 +139,7 @@ final class AudioSessionCoordinator {
     }
     guard let channel = out.floatChannelData?[0] else { return }
     let frames = Array(UnsafeBufferPointer(start: channel, count: Int(out.frameLength)))
-    logRmsIfNeeded(frames)
     onFrame?(frames)
-  }
-
-  private func logRmsIfNeeded(_ frames: [Float]) {
-    guard !frames.isEmpty else { return }
-    bufferTick += 1
-    var sumSquares: Float = 0
-    var peak: Float = 0
-    for sample in frames {
-      sumSquares += sample * sample
-      let a = abs(sample)
-      if a > peak { peak = a }
-    }
-    let rms = (sumSquares / Float(frames.count)).squareRoot()
-    rmsAccumulator += rms
-    if peak > rmsPeakWindow { rmsPeakWindow = peak }
-    if bufferTick % 25 == 0 {
-      let avgRms = rmsAccumulator / 25
-      let raw = lifecycleState.pointee
-      let stateStr = raw == 1 ? "FOREGROUND" : (raw == 2 ? "BACKGROUND" : "INACTIVE")
-      os_log("RMS energy: avg=%.5f peak=%.5f state=%{public}@ (audio %{public}@)",
-             log: log, type: .info,
-             avgRms, rmsPeakWindow, stateStr,
-             avgRms > 0.0005 ? "HAS-CONTENT" : "SILENT-EMPTY")
-      rmsAccumulator = 0
-      rmsPeakWindow = 0
-    }
-  }
-
-  func setLifecycleState(foreground: Bool) {
-    lifecycleState.pointee = foreground ? 1 : 2
-    os_log("lifecycle -> %{public}@", log: log, type: .info, foreground ? "FOREGROUND" : "BACKGROUND")
   }
 
   @objc private func handleInterruption(_ note: Notification) {
@@ -211,7 +164,5 @@ final class AudioSessionCoordinator {
     NotificationCenter.default.removeObserver(self)
     emitLock.deinitialize(count: 1)
     emitLock.deallocate()
-    lifecycleState.deinitialize(count: 1)
-    lifecycleState.deallocate()
   }
 }
