@@ -1,5 +1,9 @@
 # Prompt de abertura — próxima sessão (Bloco 0: destravar e estabilizar)
 
+> # 🛑 OBSOLETO — NÃO USAR (Bloco 0 FECHADO na sessão 0031, 2026-06-22) 🛑
+> O Bloco 0 (destravar Android, App ID, label, ONNX dormente) **já foi executado e fechado** (sessão 0031, commits `3d24c13`/`74a6516`). Usar este prompt = refazer trabalho pronto.
+> **Prompt vigente:** [NEXT-SESSION-PROMPT-bloco-1-firebase.md](NEXT-SESSION-PROMPT-bloco-1-firebase.md). Mantido só como histórico.
+
 > Cole o bloco "PROMPT" abaixo como primeira mensagem da próxima sessão. Ele assume que o `reinject-roadmap.sh` (SessionStart) já injeta o estado atual; por isso o prompt **aponta** para as fontes em vez de repetir tudo.
 >
 > **Vigente desde:** 2026-06-22 (pós-reconciliação do harness; sessão 0030 fechada e **pushada**, HEAD `38b85ca` em `origin/feat/camera-native-bridge`).
