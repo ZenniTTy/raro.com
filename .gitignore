@@ -22,6 +22,11 @@ bun.lockb
 .env.*
 !.env.example
 
+# Firebase config (contém chaves do projeto — Bloco 1; nunca commitar)
+**/GoogleService-Info.plist
+**/google-services.json
+**/firebase_options.dart
+
 # ───────────────────────── Flutter / Dart ─────────────
 .dart_tool/
 .flutter-plugins
