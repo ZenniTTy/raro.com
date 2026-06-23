@@ -16,14 +16,19 @@ Read order obrigatório:
 4. docs/superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md (ROADMAP VIGENTE)
 5. docs/sessions/0001-INDEX.md (último estado)
 
-ESTADO ATUAL (2026-06-22):
+ESTADO ATUAL (2026-06-23):
 - Fase: finalização para entrega (PLANO-MESTRE, 6 blocos). NÃO é mais bootstrap.
 - Voz: FOREGROUND SFSpeech "raro gravar"/"raro parar" FUNCIONA (iPhone 12).
   BACKGROUND wake-word ONNX = INVIÁVEL (sessão 0029, 4 modelos) → STANDBY
   aguardando licença Sensory. NÃO reabrir treino ONNX nem WakeWordDetector
   sem ADR novo (beco provado, ~US$11). Prompt openwakeword = OBSOLETO.
-- Mock/pendente: RevenueCat (bool local), Firebase (não inicializado),
-  share ("Em breve"), i18n (0 .arb), Volume (stub). Ver PLANO-MESTRE.
+- Mock/pendente: RevenueCat (bool local), Firebase (não inicializado —
+  código), share ("Em breve"), i18n (0 .arb), Volume (stub). Ver PLANO-MESTRE.
+- Firebase Bloco 1 PRÉ-REQS PRONTOS (0032): conta raro-camera, apps
+  registrados (com.rarocamera), GoogleService-Info.plist + google-services.json
+  posicionados (gitignored, só no device do dono), flutterfire CLI instalado
+  (~/.pub-cache/bin, FORA do PATH → export na hora). Falta só o código:
+  flutterfire configure + initializeApp + plugins gradle + 3 handlers Crashlytics.
 - Android JÁ COMPILA (Bloco 0.1 resolvido 2026-06-22): startRecording/
   stopRecording stub (throw FlutterError) + discoverCapabilities reshaped
   p/ supportedFormats; flutter build appbundle ✓ (app-release.aab). Gravação

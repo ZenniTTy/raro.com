@@ -42,8 +42,11 @@
 - [x] **0.4** `android:label` → "Raro Camera".
 
 ### BLOCO 1 — Infra que evita crash + mede (1-2 sessões)
-**Objetivo:** app não crasha em release, telemetria liga. **Depende: conta Firebase do cliente.**
-- [ ] **1.1** Firebase: `flutterfire configure`, `GoogleService-Info.plist` + `google-services.json`, `Firebase.initializeApp` no `main`, plugin gradle.
+**Objetivo:** app não crasha em release, telemetria liga.
+
+> **✅ Pré-requisitos PRONTOS (2026-06-23, sessão 0032):** conta Firebase criada (projeto `raro-camera`); apps iOS+Android registrados no console com bundle `com.rarocamera`; `GoogleService-Info.plist` em `apps/mobile/ios/Runner/` e `google-services.json` em `apps/mobile/android/app/` (ambos **gitignored** — chaves reais, NÃO commitar; existem só no device do dono); `flutterfire_cli` 1.4.0 instalado em `~/.pub-cache/bin` (⚠️ NÃO está no PATH — rodar com `export PATH="$PATH:$HOME/.pub-cache/bin"` no comando, ou caminho absoluto). **Falta só o código abaixo.**
+
+- [ ] **1.1** Firebase: `flutterfire configure` (gera `firebase_options.dart` — também gitignored), `Firebase.initializeApp` no `main`, plugin gradle google-services (DSL moderno: `id("com.google.gms.google-services") version "X" apply false` em `settings.gradle.kts` + `id(...)` em `app/build.gradle.kts` — NÃO é classpath legado). Plist/json já posicionados.
 - [ ] **1.2** Crashlytics: 3 handlers (FlutterError + PlatformDispatcher + Isolate — memória `raro-pattern-crashlytics-3-handlers`).
 - [ ] **1.3** Confirmar analytics events disparando (já há `camera_analytics_listener`).
 
@@ -103,7 +106,7 @@ Do [09-DOD.md](../../09-DOD.md), aberto hoje:
 | Bloco | Sessões | Depende de |
 |---|---|---|
 | 0 — Destravar | 1 | — |
-| 1 — Firebase | 1-2 | conta Firebase |
+| 1 — Firebase | 1-2 | conta Firebase ✅ pronta (prep 0032) |
 | 2 — Monetização | 2-3 | RevenueCat + lojas |
 | 3 — Android paridade | 5-8 | device Android |
 | 4 — Acabamentos | 2-3 | — |
@@ -116,4 +119,4 @@ Do [09-DOD.md](../../09-DOD.md), aberto hoje:
 
 ## Próxima ação imediata
 
-**Bloco 0 fechado em 2026-06-22** (Android compila, App ID alinhado, label corrigido, ONNX dormente). **Próximo: Bloco 1 — Firebase/Crashlytics** (depende da conta Firebase do cliente). Nada está mais "objetivamente quebrado"; daqui pra frente é "falta implementar".
+**Bloco 0 fechado em 2026-06-22** (Android compila, App ID alinhado, label corrigido, ONNX dormente). **Pré-requisitos do Bloco 1 prontos em 2026-06-23** (sessão 0032: conta Firebase `raro-camera`, apps registrados, configs posicionados+gitignored, flutterfire CLI instalado). **Próximo: Bloco 1 — Firebase/Crashlytics**, que agora é só código (`flutterfire configure` + `initializeApp` + plugins gradle + 3 handlers Crashlytics). Nada está mais "objetivamente quebrado".

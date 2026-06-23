@@ -41,7 +41,7 @@ Em ordem de precedência. Leia tudo antes de propor qualquer mudança:
 bun run lint                  # turbo lint
 bun run typecheck             # turbo typecheck
 bun run test                  # turbo test
-bun --filter @raro/mobile run codegen   # dart run build_runner
+bun run --filter '@raro/mobile' codegen   # dart run build_runner (filter DEPOIS de run — bun 1.3.13)
 cd apps/mobile && flutter run # rodar o app
 ```
 
