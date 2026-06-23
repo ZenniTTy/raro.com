@@ -19,9 +19,17 @@ Read order obrigatório:
 ESTADO ATUAL (2026-06-23):
 - Fase: finalização para entrega (PLANO-MESTRE, 6 blocos). NÃO é mais bootstrap.
 - Voz: FOREGROUND SFSpeech "raro gravar"/"raro parar" FUNCIONA (iPhone 12).
-  BACKGROUND wake-word ONNX = INVIÁVEL (sessão 0029, 4 modelos) → STANDBY
-  aguardando licença Sensory. NÃO reabrir treino ONNX nem WakeWordDetector
-  sem ADR novo (beco provado, ~US$11). Prompt openwakeword = OBSOLETO.
+  BACKGROUND wake-word ONNX próprio = INVIÁVEL (sessão 0029, 4 modelos).
+  NÃO reabrir treino ONNX nem WakeWordDetector sem ADR novo (beco provado,
+  ~US$11). Prompt openwakeword = OBSOLETO.
+- SENSORY EM VALIDAÇÃO ATIVA (0033, email Jeff Rogers 2026-06-23): respondeu,
+  deu VoiceHub Pro grátis (expira 2026-09-21), TEM pt-BR nativo, licença de
+  PRODUÇÃO non-expiring + 1 preço cobre iOS+Android; dono ASSINOU o NDA mútuo.
+  Modelo "Raro" pt-BR em build (Best Quality). PENDENTE p/ decidir: (a) PREÇO
+  (Jeff vai mandar; per-user inviabiliza R$9,90, flat/per-app serve) + (b) TESTE
+  do modelo no iPhone 12. Decisão de produto ABERTA — NÃO é "Sensory resolvido".
+  Runtime background já provado (memória proven-ane); o que falta é a palavra
+  "Raro" passar no device.
 - Mock/pendente: RevenueCat (bool local), Firebase (não inicializado —
   código), share ("Em breve"), i18n (0 .arb), Volume (stub). Ver PLANO-MESTRE.
 - Firebase Bloco 1 PRÉ-REQS PRONTOS (0032): conta raro-camera, apps
