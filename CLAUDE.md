@@ -20,9 +20,9 @@ Detalhe complementar: este projeto também segue as **15 práticas Karpathy** pa
 | Item | Estado |
 |---|---|
 | Blueprint | [docs/Blueprint.md](docs/Blueprint.md) Approved em 2026-05-25 |
-| Fase atual do bootstrap | Finalização para entrega (PLANO-MESTRE, 6 blocos). Sprint 2 iOS done-com-drift (RevenueCat/Firebase mock); Android não compila (Bloco 0.1); wake-word background STANDBY (ONNX reprovado 0029, aguarda Sensory), foreground SFSpeech funciona. |
+| Fase atual do bootstrap | Finalização para entrega (PLANO-MESTRE, 6 blocos). Bloco 0 fechado 2026-06-22 (Android compila — appbundle ✓; App ID alinhado; label "Raro Camera"; ONNX dormente). Sprint 2 iOS done-com-drift (RevenueCat/Firebase mock); wake-word background STANDBY (ONNX reprovado 0029, aguarda Sensory), foreground SFSpeech funciona. Próximo: Bloco 1 (Firebase). |
 | Branch principal | `main` (devs em `develop` ou feature branches) |
-| Bundle ID | `com.rarocamera` (iOS=com.rarocamera; Android atual=com.rarocamera.raro_mobile — DIVERGÊNCIA a resolver, PLANO-MESTRE Bloco 0.3) |
+| Bundle ID | `com.rarocamera` (iOS + Android `applicationId` alinhados — Bloco 0.3 resolvido 2026-06-22; `namespace` Kotlin segue `com.rarocamera.raro_mobile`, ok divergir). Imutável pós-publicação |
 | Plataformas alvo | iOS 15+ / Android API 24+ |
 | Wake word | `"Raro"` (NÃO `"OkCamera"`) — FOREGROUND SFSpeech funciona ('raro gravar'/'raro parar'); BACKGROUND ONNX inviável (sessão 0029) em STANDBY (Sensory). NÃO reabrir treino ONNX sem ADR. |
 | Free trial | 30 dias |

@@ -27,19 +27,19 @@
 | i18n | escopo S3 | **0 arquivos `.arb`**; tudo hardcoded PT-BR |
 | Wake-word "Raro" toggle background | meta DoD >90% | **inviável** (4 modelos falharam no device — sessão 0029); revertido p/ foreground |
 
-### 🔴 Bug que trava AGORA
-- **Android não compila:** `CameraHostApiImpl.kt` não implementa `startRecording`/`stopRecording` que o `CameraApi.g.kt` (regen 2026-06-07) exige. `flutter build appbundle` falha.
+### 🔴 Bug que travava AGORA — ✅ RESOLVIDO (Bloco 0.1, 2026-06-22)
+- **Android não compilava:** `CameraHostApiImpl.kt` não implementava `startRecording`/`stopRecording` + `CameraManager.discoverCapabilities` usava campos removidos pela regen (`supportedResolutions`/`supportedFps` → `supportedFormats`). Ambos corrigidos. `flutter build appbundle` ✓.
 
 ---
 
 ## Blocos sequenciados (ordem de execução recomendada)
 
-### BLOCO 0 — Destravar e estabilizar (1 sessão, rápido)
+### BLOCO 0 — Destravar e estabilizar (✅ FECHADO 2026-06-22)
 **Objetivo:** o projeto compila e roda nas 2 plataformas, sem dívida silenciosa.
-- [ ] **0.1** Destravar build Android: implementar `startRecording`/`stopRecording` no `CameraHostApiImpl.kt` (stub que lança `UnsupportedOperationException` como o iOS faz com replay, OU já a impl real se atacar o Bloco 3 junto). Confirmar `flutter build appbundle` passa.
-- [ ] **0.2** Decidir wake-word ONNX órfão: remover `raro.onnx` + 3 arquivos Swift do bundle (peso morto) OU manter dormente com nota. Recomendo remover do bundle de produção (fica preservado no commit `01a1f67`).
-- [ ] **0.3** Resolver App ID Android inconsistente: `com.rarocamera.raro_mobile` vs `com.rarocamera` (iOS). **Decisão imutável pós-publicação** — alinhar gradle ↔ Blueprint ↔ Play Console.
-- [ ] **0.4** Corrigir `android:label` (`raro_mobile` → "Raro Camera").
+- [x] **0.1** Destravar build Android: `startRecording`/`stopRecording` em `CameraHostApiImpl.kt` como stub síncrono que lança `FlutterError(code="sessionFailed")` (a fronteira Pigeon converte em erro Dart limpo; impl real = Bloco 3.1). **Drift extra descoberto no build:** a regen Pigeon também trocou `CameraCapabilities.supportedResolutions/supportedFps` por `supportedFormats: List<FormatCapability>` — `CameraManager.discoverCapabilities` foi reescrito p/ montar a matriz (720/1080/4K × 30/60, `requiresPhysicalLens = 4K@60` igual iOS/ADR-0021). **Gate:** `flutter build appbundle` ✓ `app-release.aab` (58.6MB) + 320 testes Dart verdes.
+- [x] **0.2** Wake-word ONNX órfão **mantido dormente** (decisão do dono): nada em produção usa os 3 Swift (`WakeWordDetector`/`WakeWordPipeline`/`OnnxModelSession`) nem os 3 `.onnx` (~2,4MB). Remover exigiria cirurgia no `project.pbxproj` (risco de quebrar build iOS que funciona) e o scaffold pode ser reaproveitado se a licença Sensory entrar. Nota em `apps/mobile/ios/Runner/Native/Voice/README.md`. Histórico em `01a1f67`.
+- [x] **0.3** App ID Android alinhado ao iOS: `applicationId = "com.rarocamera"` (decisão do dono). `namespace` Kotlin segue `com.rarocamera.raro_mobile` (ok divergir — não afeta identidade nas lojas, evita renomear toda a árvore de fontes). Blueprint + CLAUDE + hook reconciliados. **Imutável pós-publicação.**
+- [x] **0.4** `android:label` → "Raro Camera".
 
 ### BLOCO 1 — Infra que evita crash + mede (1-2 sessões)
 **Objetivo:** app não crasha em release, telemetria liga. **Depende: conta Firebase do cliente.**
@@ -116,4 +116,4 @@ Do [09-DOD.md](../../09-DOD.md), aberto hoje:
 
 ## Próxima ação imediata
 
-**Bloco 0.1** — destravar o build Android (1 fix, desbloqueia tudo). É a única coisa que está objetivamente quebrada hoje. Tudo o mais é "falta implementar", não "está quebrado".
+**Bloco 0 fechado em 2026-06-22** (Android compila, App ID alinhado, label corrigido, ONNX dormente). **Próximo: Bloco 1 — Firebase/Crashlytics** (depende da conta Firebase do cliente). Nada está mais "objetivamente quebrado"; daqui pra frente é "falta implementar".

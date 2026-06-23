@@ -24,15 +24,18 @@ ESTADO ATUAL (2026-06-22):
   sem ADR novo (beco provado, ~US$11). Prompt openwakeword = OBSOLETO.
 - Mock/pendente: RevenueCat (bool local), Firebase (não inicializado),
   share ("Em breve"), i18n (0 .arb), Volume (stub). Ver PLANO-MESTRE.
-- Android NÃO compila (CameraHostApiImpl.kt falta startRecording/stopRecording)
-  → PLANO-MESTRE Bloco 0.1 destrava.
+- Android JÁ COMPILA (Bloco 0.1 resolvido 2026-06-22): startRecording/
+  stopRecording stub (throw FlutterError) + discoverCapabilities reshaped
+  p/ supportedFormats; flutter build appbundle ✓ (app-release.aab). Gravação
+  REAL Android = Bloco 3.1 (hoje stub). ReplayBuffer/Voice/Volume HostApi
+  ainda não registradas no MainActivity (Bloco 3.4).
 
 Locked invariants:
 - Wake word = "Raro" (NUNCA "OkCamera")
 - Free trial = 30 dias (não 15)
 - Planos = Mensal R$ 9,90 + Anual R$ 89,90 com "MELHOR OFERTA"
-- Bundle ID iOS = com.rarocamera (Android atual = com.rarocamera.raro_mobile
-  — DIVERGÊNCIA a resolver, PLANO-MESTRE Bloco 0.3)
+- Bundle ID = com.rarocamera (iOS + Android applicationId alinhados,
+  Bloco 0.3 resolvido 2026-06-22; namespace Kotlin segue raro_mobile, ok)
 - Backend = client-only (sem apps/api)
 
 Gates ativos:

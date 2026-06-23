@@ -23,6 +23,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.rarocamera.raro_mobile.generated.camera.CameraCapabilities
 import com.rarocamera.raro_mobile.generated.camera.CameraConfig
 import com.rarocamera.raro_mobile.generated.camera.FocusPoint
+import com.rarocamera.raro_mobile.generated.camera.FormatCapability
 import com.rarocamera.raro_mobile.generated.camera.Fps
 import com.rarocamera.raro_mobile.generated.camera.LensType
 import com.rarocamera.raro_mobile.generated.camera.Resolution
@@ -66,9 +67,22 @@ class CameraManager(
     if (lenses.isEmpty()) throw CameraNativeException.DeviceUnavailable
     return CameraCapabilities(
       availableLenses = lenses,
-      supportedResolutions = listOf(Resolution.HD720, Resolution.FHD1080, Resolution.UHD4K),
-      supportedFps = listOf(Fps.FPS30, Fps.FPS60),
+      supportedFormats = buildSupportedFormats(),
     )
+  }
+
+  private fun buildSupportedFormats(): List<FormatCapability> {
+    val resolutions = listOf(Resolution.HD720, Resolution.FHD1080, Resolution.UHD4K)
+    val fpsOptions = listOf(Fps.FPS30, Fps.FPS60)
+    return resolutions.flatMap { resolution ->
+      fpsOptions.map { fps ->
+        FormatCapability(
+          resolution = resolution,
+          fps = fps,
+          requiresPhysicalLens = resolution == Resolution.UHD4K && fps == Fps.FPS60,
+        )
+      }
+    }
   }
 
   fun startSession(config: CameraConfig) {

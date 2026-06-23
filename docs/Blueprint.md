@@ -519,7 +519,9 @@ Linha decorativa associada (`grad-line`): height 1.5px, fundo `--raro-gradient`.
 | Android | **API 24+** (Android 7.0+) |
 | Xiaomi/MIUI | MIUI 12+ ou HyperOS (com configuração manual via M02) |
 
-Bundle ID / Application ID: `com.rarocamera`.
+Bundle ID / Application ID: `com.rarocamera` (iOS e Android).
+
+> **Resolução 2026-06-22 (PLANO-MESTRE Bloco 0.3):** o Android divergia em `com.rarocamera.raro_mobile`; alinhado ao iOS — `applicationId = "com.rarocamera"`. O `namespace` Kotlin permanece `com.rarocamera.raro_mobile` (R class/BuildConfig; pode divergir do `applicationId` sem afetar a identidade nas lojas), evitando renomear toda a árvore de fontes. Decisão do dono. Imutável pós-publicação.
 
 ---
 
