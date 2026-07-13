@@ -46,9 +46,11 @@
 
 > **✅ Pré-requisitos PRONTOS (2026-06-23, sessão 0032):** conta Firebase criada (projeto `raro-camera`); apps iOS+Android registrados no console com bundle `com.rarocamera`; `GoogleService-Info.plist` em `apps/mobile/ios/Runner/` e `google-services.json` em `apps/mobile/android/app/` (ambos **gitignored** — chaves reais, NÃO commitar; existem só no device do dono); `flutterfire_cli` 1.4.0 instalado em `~/.pub-cache/bin` (⚠️ NÃO está no PATH — rodar com `export PATH="$PATH:$HOME/.pub-cache/bin"` no comando, ou caminho absoluto). **Falta só o código abaixo.**
 
-- [ ] **1.1** Firebase: `flutterfire configure` (gera `firebase_options.dart` — também gitignored), `Firebase.initializeApp` no `main`, plugin gradle google-services (DSL moderno: `id("com.google.gms.google-services") version "X" apply false` em `settings.gradle.kts` + `id(...)` em `app/build.gradle.kts` — NÃO é classpath legado). Plist/json já posicionados.
-- [ ] **1.2** Crashlytics: 3 handlers (FlutterError + PlatformDispatcher + Isolate — memória `raro-pattern-crashlytics-3-handlers`).
-- [ ] **1.3** Confirmar analytics events disparando (já há `camera_analytics_listener`).
+- [x] **1.1** Firebase: `flutterfire configure` gerou `firebase_options.dart` (gitignored), `Firebase.initializeApp(options: currentPlatform)` no `main.dart`, plugins gradle DSL moderno `google-services 4.4.4` + `crashlytics 3.0.7` (`settings.gradle.kts` + `app/build.gradle.kts`). **CÓDIGO + BUILD provados** (sessão 0034, commit `2085811`): Android `✓ app-debug.aab`, iOS `✓ Runner.app` (Firebase via SPM). Plist/json gitignored, nenhum secret commitado.
+- [x] **1.2** Crashlytics: os 3 handlers (FlutterError + PlatformDispatcher + Isolate) em `main.dart`. **CÓDIGO pronto; prova de crash no DEVICE pendente** (gate §10 — runbook `docs/superpowers/notes/firebase-device-crash-runbook.md`).
+- [x] **1.3** Analytics: `cameraAnalyticsListenerProvider` estava **morto** (nunca observado) — `RaroApp` virou ConsumerWidget + `ref.watch`, agora `camera_started` dispara. **CÓDIGO pronto; confirmação no DebugView pendente** (sessão de device).
+
+> **⚠️ Bloco 1 fica "código + build" nesta sessão. Falta só o gate de device** (crash real no painel Crashlytics + `camera_started` no DebugView do Analytics), deixado para a sessão com o iPhone 12 conectado (decisão do dono 2026-07-13: "código+build agora, device depois"). Runbook em `docs/superpowers/notes/firebase-device-crash-runbook.md`.
 
 ### BLOCO 2 — Monetização real (2-3 sessões)
 **Objetivo:** app pago funciona. **Depende: conta RevenueCat + produtos na loja + In-App Purchase Key.**
