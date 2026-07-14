@@ -17,7 +17,7 @@
 
 - [Blueprint.md](Blueprint.md) — decisões arquiteturais aprovadas
 
-## Wiki numerada (01–10)
+## Wiki numerada (01–11)
 
 - [01-PROJECT.md](01-PROJECT.md) — visão de produto e contexto
 - [02-ARCHITECTURE.md](02-ARCHITECTURE.md) — topologia técnica de alto nível
@@ -29,6 +29,7 @@
 - [08-RELEASE.md](08-RELEASE.md) — processo de release nas lojas
 - [09-DOD.md](09-DOD.md) — Definition of Done v1.0
 - [10-CHANGELOG.md](10-CHANGELOG.md) — append-only log de versões
+- [11-SYSTEM-DESIGN.md](11-SYSTEM-DESIGN.md) — desenho de sistema client-only (dados/vault, gargalos, evolução)
 
 ## Decisions (ADRs)
 
@@ -46,6 +47,8 @@
 - [decisions/0011-volume-control-not-bluetooth.md](decisions/0011-volume-control-not-bluetooth.md) — controle por botões de volume
 - [decisions/0012-xiaomi-onboarding-hybrid.md](decisions/0012-xiaomi-onboarding-hybrid.md) — onboarding Xiaomi híbrido
 - ADRs continuam de **0013 a 0024** em [decisions/](decisions/) (camera bridge strategy, e2e harness, recording pipeline, 4k60, voz SFSpeech/ONNX/toggle único etc.) — a lista vai até 0024, não para em 0012.
+- [decisions/0025-firebase-bootstrap-strategy.md](decisions/0025-firebase-bootstrap-strategy.md) — bootstrap Firebase (init eager + Crashlytics 3 handlers + pins gradle)
+- [decisions/0026-system-design-client-only.md](decisions/0026-system-design-client-only.md) — system design client-only single-node; vault filesystem como store canônico
 
 ## Sessions (log append-only)
 
