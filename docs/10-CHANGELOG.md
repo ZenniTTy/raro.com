@@ -2,6 +2,25 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-07-14] — 0.8.0 (Bloco 1: Firebase + Crashlytics + Analytics ligados e provados no device)
+
+> PLANO-MESTRE Bloco 1 fechado (sessões 0034 código+build, 0035 prova no iPhone 12). Firebase deixa de ser mock/não-inicializado.
+
+### Adicionado
+- **Firebase inicializado** (`main.dart`): `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` async antes do `runApp` — sem isso o app crashava em release.
+- **Crashlytics: 3 handlers** (FlutterError.onError + PlatformDispatcher.onError + Isolate error listener) — memória `raro-pattern-crashlytics-3-handlers`.
+- **Plugins gradle** (DSL moderno): `com.google.gms.google-services` 4.4.4 + `com.google.firebase.crashlytics` 3.0.7 em `settings.gradle.kts` + `app/build.gradle.kts`.
+- **ADR-0025** (firebase-bootstrap-strategy): registra init eager, os 3 handlers, a não-adoção de `runZonedGuarded`, e o pin dos plugins gradle.
+
+### Corrigido
+- **Analytics listener estava morto:** `cameraAnalyticsListenerProvider` era definido mas nunca observado → `RaroApp` virou `ConsumerWidget` + `ref.watch`, agora `camera_started`/`camera_error` disparam.
+
+### Provado (gate §10, iPhone 12, 2026-07-14)
+- Crash de teste → recebido no painel Crashlytics ("1 falha não processada") + 3 dSYMs subidos (UUID `A3098D9F…` bate). Builds: Android `app-debug.aab` + iOS `Runner.app` (Firebase via SPM, 16 pins). `firebase_options.dart`/plist/json gitignored — nenhum secret commitado.
+
+### Pendência herdada (Bloco 5)
+- Upload automático de dSYM em release/CI (o `flutter build` de linha de comando pode não disparar a build phase; validar no pipeline de publicação).
+
 ## [2026-06-22] — 0.7.1 (Reconciliação do harness + estado real auditado)
 
 > Auditoria de consistência documental (3 agentes sobre código real) + correção do drift em todo o harness para as próximas sessões terem contexto verdadeiro. Roadmap vigente passa a ser `PLANO-MESTRE-finalizacao-entrega-cliente.md`.

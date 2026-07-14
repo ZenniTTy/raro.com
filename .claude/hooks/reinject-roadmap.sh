@@ -16,7 +16,7 @@ Read order obrigatório:
 4. docs/superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md (ROADMAP VIGENTE)
 5. docs/sessions/0001-INDEX.md (último estado)
 
-ESTADO ATUAL (2026-06-23):
+ESTADO ATUAL (2026-07-14):
 - Fase: finalização para entrega (PLANO-MESTRE, 6 blocos). NÃO é mais bootstrap.
 - Voz: FOREGROUND SFSpeech "raro gravar"/"raro parar" FUNCIONA (iPhone 12).
   BACKGROUND wake-word ONNX próprio = INVIÁVEL (sessão 0029, 4 modelos).
@@ -30,13 +30,15 @@ ESTADO ATUAL (2026-06-23):
   do modelo no iPhone 12. Decisão de produto ABERTA — NÃO é "Sensory resolvido".
   Runtime background já provado (memória proven-ane); o que falta é a palavra
   "Raro" passar no device.
-- Mock/pendente: RevenueCat (bool local), Firebase (não inicializado —
-  código), share ("Em breve"), i18n (0 .arb), Volume (stub). Ver PLANO-MESTRE.
-- Firebase Bloco 1 PRÉ-REQS PRONTOS (0032): conta raro-camera, apps
-  registrados (com.rarocamera), GoogleService-Info.plist + google-services.json
-  posicionados (gitignored, só no device do dono), flutterfire CLI instalado
-  (~/.pub-cache/bin, FORA do PATH → export na hora). Falta só o código:
-  flutterfire configure + initializeApp + plugins gradle + 3 handlers Crashlytics.
+- Mock/pendente: RevenueCat (bool local), share ("Em breve"), i18n (0 .arb),
+  Volume (stub). Ver PLANO-MESTRE.
+- Firebase Bloco 1 FECHADO (0034 código+build, 0035 provado no iPhone 12):
+  Firebase.initializeApp em main.dart + 3 handlers Crashlytics + analytics
+  listener ligado (era morto); plugins gradle google-services 4.4.4 +
+  crashlytics 3.0.7. Provado no device: crash chegou no painel Crashlytics +
+  dSYM subido (UUID bate). firebase_options.dart/plist/json gitignored (chaves
+  reais, só no device do dono). Próximo CÓDIGO = Bloco 2 (Monetização
+  RevenueCat, depende conta+produtos+IAP Key do dono). Ver ADR-0025.
 - Android JÁ COMPILA (Bloco 0.1 resolvido 2026-06-22): startRecording/
   stopRecording stub (throw FlutterError) + discoverCapabilities reshaped
   p/ supportedFormats; flutter build appbundle ✓ (app-release.aab). Gravação

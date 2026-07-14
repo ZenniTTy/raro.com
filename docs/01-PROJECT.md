@@ -44,8 +44,8 @@ Após quitação integral do contrato, todos os direitos de propriedade intelect
 
 - Briefing aprovado em maio/2026.
 - Blueprint aprovado em 2026-05-25.
-- Finalização para entrega ao cliente — ver [PLANO-MESTRE-finalizacao-entrega-cliente.md](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md). iOS foreground funcional (câmera/gravação/replay/voz/galeria); Android em paridade pendente (não compila); monetização/Firebase pendentes.
+- Finalização para entrega ao cliente — ver [PLANO-MESTRE-finalizacao-entrega-cliente.md](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md). iOS foreground funcional (câmera/gravação/replay/voz/galeria); Android compila (Bloco 0); Firebase/Crashlytics/Analytics ligados e provados no device (Bloco 1, 2026-07-14); Android em paridade pendente e monetização real pendente.
 
 ## Próximos marcos
 
-Sequenciados em [PLANO-MESTRE-finalizacao-entrega-cliente.md](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md) (6 blocos): destravar build Android, infra Firebase/Crashlytics, monetização RevenueCat real, paridade Android, i18n, release nas lojas.
+Sequenciados em [PLANO-MESTRE-finalizacao-entrega-cliente.md](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md) (6 blocos): ✅ destravar build Android (Bloco 0), ✅ infra Firebase/Crashlytics (Bloco 1), → monetização RevenueCat real (Bloco 2, próximo), paridade Android, acabamentos/i18n, release nas lojas.
