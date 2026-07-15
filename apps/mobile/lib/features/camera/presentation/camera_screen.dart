@@ -322,46 +322,48 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       backgroundColor: colors.bgDeep,
       body: Stack(
         children: [
-          Column(
-            children: [
-              const _TopBar(),
-              const _GradLine(),
-              const SizedBox(height: 12),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: _Viewport(
-                      cameraReady: cameraReady,
-                      recording: recording,
-                      elapsed: _elapsed,
-                      voiceState: voiceState,
-                      controlMode: controlMode,
-                      bufferDuration: bufferDuration,
-                      lens: shell.lens,
-                      lensLabel: shell.hudLensLabel,
-                      resolutionLabel: resolutionLabel(_format.resolution),
-                      fpsLabel: fpsLabel(_format.fps),
-                      ultraWideEnabled: !_is4k60,
-                      onToggleBuffer: () => ref
-                          .read(settingsControllerProvider.notifier)
-                          .toggleBufferDuration(),
-                      onSelectLens: _onSelectLens,
-                      onTapHud: widget.onSettings,
+          SafeArea(
+            child: Column(
+              children: [
+                const _TopBar(),
+                const _GradLine(),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: _Viewport(
+                        cameraReady: cameraReady,
+                        recording: recording,
+                        elapsed: _elapsed,
+                        voiceState: voiceState,
+                        controlMode: controlMode,
+                        bufferDuration: bufferDuration,
+                        lens: shell.lens,
+                        lensLabel: shell.hudLensLabel,
+                        resolutionLabel: resolutionLabel(_format.resolution),
+                        fpsLabel: fpsLabel(_format.fps),
+                        ultraWideEnabled: !_is4k60,
+                        onToggleBuffer: () => ref
+                            .read(settingsControllerProvider.notifier)
+                            .toggleBufferDuration(),
+                        onSelectLens: _onSelectLens,
+                        onTapHud: widget.onSettings,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              _BottomControls(
-                recording: recording,
-                replayArmed: replayArmed,
-                replayWindowSeconds: replayWindowSeconds,
-                onGallery: widget.onGallery,
-                onSettings: widget.onSettings,
-                onRecTap: _onRecTap,
-              ),
-            ],
+                _BottomControls(
+                  recording: recording,
+                  replayArmed: replayArmed,
+                  replayWindowSeconds: replayWindowSeconds,
+                  onGallery: widget.onGallery,
+                  onSettings: widget.onSettings,
+                  onRecTap: _onRecTap,
+                ),
+              ],
+            ),
           ),
           if (_prerollConfirmationSeconds != null)
             PrerollConfirmation(
