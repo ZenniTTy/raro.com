@@ -34,19 +34,21 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colors.bgDeep,
-      body: Column(
-        children: [
-          _Header(onBack: onBack),
-          const _GradLineThin(),
-          Expanded(
-            child: settings.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => const SizedBox.shrink(),
-              data: (data) =>
-                  _SettingsBody(settings: data, onSeePlans: onSeePlans),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _Header(onBack: onBack),
+            const _GradLineThin(),
+            Expanded(
+              child: settings.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, _) => const SizedBox.shrink(),
+                data: (data) =>
+                    _SettingsBody(settings: data, onSeePlans: onSeePlans),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

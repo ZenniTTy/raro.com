@@ -26,13 +26,15 @@ class GalleryScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colors.bgDeep,
-      body: videosAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => const SizedBox.shrink(),
-        data: (videos) => _GalleryBody(
-          videos: videos,
-          onBack: onBack,
-          onOpenVideo: onOpenVideo,
+      body: SafeArea(
+        child: videosAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, _) => const SizedBox.shrink(),
+          data: (videos) => _GalleryBody(
+            videos: videos,
+            onBack: onBack,
+            onOpenVideo: onOpenVideo,
+          ),
         ),
       ),
     );
