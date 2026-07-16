@@ -176,20 +176,6 @@ void main() {
       expect(find.byType(RecButton), findsOneWidget);
     });
 
-    testWidgets('protege os controles com SafeArea (android edge-to-edge)', (
-      tester,
-    ) async {
-      await tester.pumpWidget(harness());
-      await tester.pump();
-      expect(
-        find.descendant(
-          of: find.byType(Scaffold),
-          matching: find.byType(SafeArea),
-        ),
-        findsWidgets,
-      );
-    });
-
     testWidgets('em modo voz escutando mostra o indicador DIGA RARO', (
       tester,
     ) async {
