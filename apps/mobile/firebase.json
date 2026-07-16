@@ -1,0 +1,30 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "raro-camera",
+          "appId": "1:432839051603:android:cfc14703134c03c0aeb9a6",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "raro-camera",
+          "appId": "1:432839051603:ios:7816f46401f0544eaeb9a6",
+          "uploadDebugSymbols": true,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "raro-camera",
+          "configurations": {
+            "android": "1:432839051603:android:cfc14703134c03c0aeb9a6",
+            "ios": "1:432839051603:ios:7816f46401f0544eaeb9a6"
+          }
+        }
+      }
+    }
+  }
+}

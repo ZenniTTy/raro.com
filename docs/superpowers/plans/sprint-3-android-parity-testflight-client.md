@@ -1,5 +1,7 @@
 # Sprint 3 — Android Parity + TestFlight + Polish + Entrega Cliente (Detailed Execution Plan)
 
+> ⚠️ ESTADO REAL 2026-06-22. Pre-flight desatualizado. (1) Android NÃO compila hoje — CameraHostApiImpl.kt não implementa startRecording/stopRecording exigidos pelo CameraApi.g.kt; executar PLANO-MESTRE Bloco 0.1 ANTES de qualquer Task Android. (2) Já existe camera-preview Kotlin (não é 'scaffold vazio'). (3) Wake-word Android = foreground 'raro gravar'/'raro parar' (NÃO palavra única; background standby Sensory). (4) Comandos bun no plano com ordem errada: usar 'bun run --filter X <script>'. Roadmap vigente = PLANO-MESTRE.
+
 > **REQUIRED SUB-SKILL** para sessões de execução: `superpowers:subagent-driven-development`. Tasks usam checkbox `- [ ]`.
 
 **Goal**: Atingir paridade Android com iOS (Sprint 2), pagar Apple Developer Program ($99/ano), shippar build TestFlight, criar Google Play Console internal testing track, convidar cliente e entregar app testável em **AMBAS plataformas**.

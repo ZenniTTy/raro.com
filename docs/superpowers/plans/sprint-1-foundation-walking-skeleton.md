@@ -1,5 +1,7 @@
 # Sprint 1 — Foundation + Walking Skeleton iOS (Detailed Execution Plan)
 
+> ✅ FECHADO (histórico). Superseded pelo PLANO-MESTRE-finalizacao-entrega-cliente.md. Mantido como registro do walking skeleton.
+
 > **REQUIRED SUB-SKILL** para sessões de execução: `superpowers:subagent-driven-development` ou `superpowers:executing-plans`. Steps usam checkbox (`- [ ]`) para tracking.
 
 **Goal**: Limpar acúmulo + fechar branch `feat/camera-native-bridge` + entregar app navegável end-to-end no iPhone 12 com todas 12 telas do prototype HTML, dados hard-coded via Riverpod 3 providers (swap-able em Sprint 2).

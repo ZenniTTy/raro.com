@@ -1,5 +1,7 @@
 # Sprint 1 — Prompts (Foundation + Walking Skeleton iOS)
 
+> ✅ FECHADO (histórico, 2026-06-22). Sprint 1 concluído. Roadmap vigente = `PLANO-MESTRE-finalizacao-entrega-cliente.md`. Mantido como registro.
+
 > **Uso**: este arquivo contém TODOS os prompts copy-paste para sessões da Sprint 1. Abra → encontre o prompt → copie → cole em chat novo Claude Code. Self-contained: não precisa abrir outros arquivos.
 
 **Entrega Sprint 1**: cleanup memórias/CLAUDE.md/docs + merge `feat/camera-native-bridge` em `develop` + 12 telas Flutter navegáveis no iPhone 12 com Riverpod 3 providers swap-able (hard-coded data, signature real). Free Apple ID. iOS-only. Não paga $99. Não toca Android.

@@ -1,19 +1,39 @@
 # Config livekit-wakeword 0.2.1 — comando START ("Raro gravar") → raro_gravar.onnx
-# Campos validados na fonte primária (github.com/livekit/livekit-wakeword + docs.livekit.io, 2026-06-11).
+# Campos validados na fonte primária (github.com/livekit/livekit-wakeword + docs.livekit.io).
 # Piper gera só INGLÊS por padrão → qualquer outro idioma usa voxcpm (doc oficial).
-# PT-BR não é listado explicitamente nos "30 idiomas" do VoxCPM — validar no 1º run que "raro
-# gravar" sai inteligível; se VoxCPM não cobrir PT-BR bem, é gatilho de Plano B.
+#
+# === RE-TREINO (sessão 0028, pós-gate de recall 0027) ===
+# O modelo de PROVA (n_samples=2000, 14 prompts, SEM custom negatives) reprovou no gate de voz REAL
+# no iPhone 12: raro_gravar topou em score 0.213 (precisa 0.34) — falha de RECALL por gap síntese→real.
+# Correção principal (causa-raiz provada device + docs livekit): mais diversidade de vozes sintéticas
+# (prompts 14→~80) + lote cheio (n_samples=15000, NUNCA executado — a 0025 rodou 2000 via heredoc).
+# Hard negatives (custom_negative_phrases) = insurance secundária contra cross-fire, modesta no gravar
+# (compartilha onset "raro" → pode deprimir recall já fraco; gated no teste de device).
 # Decisão 5a: 1 modelo por frase (este detecta SÓ "raro gravar"); o STOP está em raro_parar.yaml.
 
 model_name: raro_gravar
 target_phrases:
   - "raro gravar"
 
+# custom_negative_phrases (sintaxe verificada em fonte primária, tag v0.2.1: config.py:122
+# `custom_negative_phrases: list[str]`, generate.py:390-391 `.extend()` antes do TTS synth).
+# Nível RAIZ (sibling de target_phrases), lista de STRINGS PT-BR sintetizadas por VoxCPM.
+# Compartilham o orçamento único de negativos (sem count por frase) → repetir 3x + variantes p/ "morder".
+# MODESTO no gravar (3x): "raro parar" compartilha o onset "raro"; o trainer 3-fases dobra
+# max_negative_weight se FPPH>target → negativo agressivo num modelo recall-fraco pode piorar recall.
+# Se o gate de device mostrar recall regredida, remover este bloco e re-treinar só com prompts+samples.
+custom_negative_phrases:
+  - "raro parar"
+  - "raro parar"
+  - "raro parar"
+  - "raro para"
+  - "raro pra"
+
 tts_backend: voxcpm
-# voice_design_prompts: descrições de vozes (VoxCPM desenha a voz a partir do prompt). A doc NÃO diz
-# que precisam ser em inglês — usei inglês por convenção (plausível, não exigido). A frase-alvo
-# (target_phrases) é que sai em PT-BR. Aviso oficial: acurácia multilíngue menor → recomenda 50-100
-# prompts; comece com estes ~14 e EXPANDA p/ 50-100 se o recall do gate ficar baixo (Plano B).
+# voice_design_prompts: descrições de vozes (VoxCPM desenha a voz a partir do prompt). A frase-alvo
+# (target_phrases) sai em PT-BR. Aviso oficial: acurácia multilíngue menor → MAIS prompts = MAIS
+# diversidade de locutores = fecha o gap síntese→real (a correção load-bearing desta rodada).
+# ~80 personas variando idade/gênero/pitch/ritmo/sotaque regional BR/energia/distância/ambiente.
 voxcpm_tts:
   voice_design_prompts:
     - "A young adult woman, clear mid-pitch voice, moderate pace, calm and neutral"
@@ -30,19 +50,83 @@ voxcpm_tts:
     - "A man speaking close to the mic, slightly muffled, intimate"
     - "A woman with a fast excited delivery, higher pitch, expressive"
     - "A man with a calm slow delivery, lower pitch, monotone"
+    - "A young woman with a Brazilian Portuguese accent, bright voice, natural pace"
+    - "A young man with a Brazilian Portuguese accent, mid voice, conversational"
+    - "A middle-aged woman from Rio de Janeiro, melodic intonation, relaxed pace"
+    - "A middle-aged man from São Paulo, neutral accent, steady measured voice"
+    - "A woman from the Brazilian northeast, lilting accent, warm mid voice"
+    - "A man from the Brazilian northeast, open vowels, friendly pace"
+    - "A woman from southern Brazil, slightly sing-song accent, clear diction"
+    - "A man from Minas Gerais, soft swallowed consonants, calm pace"
+    - "A young woman speaking quietly as if not to wake someone, low volume"
+    - "A young man speaking loudly across a room, raised projecting voice"
+    - "A woman speaking while slightly out of breath, uneven pace"
+    - "A man speaking with a tired flat affect, low energy, slow"
+    - "A woman with a cheerful animated tone, rising pitch, quick"
+    - "A man with a serious deliberate tone, deep, slow and clear"
+    - "A girl about ten years old, small high voice, careful pronunciation"
+    - "A boy about ten years old, light bright voice, eager pace"
+    - "A woman in her sixties, mature warm voice, unhurried"
+    - "A man in his sixties, seasoned steady voice, gentle gravel"
+    - "A young woman speaking in a small echoey bathroom, noticeable reverb"
+    - "A man speaking in a large empty hall, long reverb tail"
+    - "A woman speaking near a fan with mild background hum"
+    - "A man speaking outdoors with faint wind and distance"
+    - "A woman with a husky low alto voice, slow sultry pace"
+    - "A man with a high tenor voice, bright and forward"
+    - "A young woman mumbling slightly, relaxed casual articulation"
+    - "A young man over-enunciating, crisp careful consonants"
+    - "A woman speaking with a smile in her voice, warm friendly"
+    - "A man speaking flatly and neutrally, news-anchor cadence"
+    - "A woman with a soft whispery delivery, very low volume"
+    - "A man with a booming confident delivery, high volume"
+    - "A teenage girl giggling slightly between words, playful"
+    - "A teenage boy speaking fast and clipped, impatient"
+    - "A woman with a calm meditative pace, even low pitch"
+    - "A man with an excited rapid-fire delivery, rising energy"
+    - "A young woman with a slightly hoarse voice, recovering from a cold"
+    - "A young man with a deep resonant chest voice, slow"
+    - "A middle-aged woman speaking while walking, slight motion noise"
+    - "A middle-aged man speaking in a car with low road noise"
+    - "A woman with a bright cheerful Brazilian accent, fast and clear"
+    - "A man with a laid-back Brazilian accent, slow and warm"
+    - "A young woman speaking softly at arm's length from the phone"
+    - "A young man speaking right up against the microphone, close and bassy"
+    - "A woman with a thin reedy voice, high pitch, quick pace"
+    - "A man with a full round voice, mid pitch, measured pace"
+    - "An elderly woman with a slight tremor in her voice, slow careful"
+    - "An elderly man with a soft breathy voice, slow and gentle"
+    - "A woman speaking emphatically, stressing each syllable"
+    - "A man speaking offhandedly, swallowing the ends of words"
+    - "A young woman with an upbeat radio-host energy, bright"
+    - "A young man with a deadpan even tone, low affect"
+    - "A woman speaking in a quiet kitchen with faint clinking"
+    - "A man speaking on a street with distant traffic hum"
+    - "A girl in her early teens, bright clear voice, neat diction"
+    - "A boy in his early teens, light energetic voice, quick"
+    - "A woman with a warm maternal tone, slow and reassuring"
+    - "A man with a brisk businesslike tone, clipped and clear"
+    - "A young woman with a slightly nasal Brazilian accent, mid pace"
+    - "A young man with open relaxed Brazilian vowels, easygoing"
+    - "A woman almost shouting over background noise, strained loud"
+    - "A man murmuring close to the mic, very quiet and low"
+    - "A middle-aged woman with a confident clear projection"
+    - "A middle-aged man with a soft-spoken gentle delivery"
+    - "A young woman speaking quickly and brightly, high energy"
+    - "A young man speaking slowly and thoughtfully, low and even"
+    - "A woman with a smoky low contralto, unhurried"
+    - "A man with a light airy voice, mid-high pitch, casual"
 
-# n_samples por classe. VoxCPM é lento → para 1ª prova de viabilidade barata use 3000 (override
-# via linha de comando ou edite aqui); para treino "de verdade" suba para 15000-30000 (a doc pede
-# n_samples alto p/ multilíngue). n_samples_val ~20% de n_samples.
+# n_samples por classe. LOTE CHEIO desta rodada (a 0025 rodou só 2000 via heredoc — NUNCA 15000).
+# VoxCPM é lento (~3-4s/clip) → vigiar o contador de clips e o crédito. n_samples_val ~20%.
 n_samples: 15000
 n_samples_val: 3000
 
 model:
   model_type: conv_attention   # conv_attention (melhor FP) | dnn | rnn
-  model_size: small            # tiny | small | medium | large — suba p/ medium se recall baixo
+  model_size: small            # MANTER small — medium piora overfit no sintético (gap síntese→real)
 
 steps: 50000
 target_fp_per_hour: 0.2        # limiar de falso-positivo usado no eval/DET
 
-# (output_format omitido — ONNX é o default; a doc só documenta `output_format: tflite` p/ trocar.
-#  O export gera <model_name>.onnx por padrão.)
+# (output_format omitido — ONNX é o default; o export gera <model_name>.onnx por padrão.)

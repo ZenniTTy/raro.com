@@ -1,17 +1,31 @@
 # Config livekit-wakeword 0.2.1 — comando STOP ("Raro parar") → raro_parar.onnx
-# Campos validados na fonte primária (github.com/livekit/livekit-wakeword + docs.livekit.io, 2026-06-11).
+# Campos validados na fonte primária (github.com/livekit/livekit-wakeword + docs.livekit.io).
 # Piper gera só INGLÊS por padrão → qualquer outro idioma usa voxcpm (doc oficial).
-# PT-BR não é listado explicitamente nos "30 idiomas" do VoxCPM — validar no 1º run que "raro
-# parar" sai inteligível; se VoxCPM não cobrir PT-BR bem, é gatilho de Plano B.
+#
+# === RE-TREINO (sessão 0028, paridade com raro_gravar) ===
+# No gate de voz REAL (0027) o raro_parar PASSOU recall (3/4, scores 0.50-0.73) — seu único defeito é
+# cross-fire: deu 0.339 num clip de "raro gravar" (acima do seu limiar 0.23). Por isso este modelo
+# recebe custom_negative_phrases ["raro gravar"] COM CONFIANÇA (tem folga de recall, ao contrário do
+# gravar). Mesma expansão de prompts (paridade de diversidade) + lote cheio 15000.
 # Decisão 5a: 1 modelo por frase (este detecta SÓ "raro parar"); o START está em raro_gravar.yaml.
 
 model_name: raro_parar
 target_phrases:
   - "raro parar"
 
+# custom_negative_phrases (sintaxe verificada v0.2.1 config.py:122 + generate.py:390-391).
+# Nível RAIZ, strings PT-BR. Aplicado com confiança aqui (parar tem folga de recall) p/ matar o
+# cross-fire (0.339 num clip de gravar). 3x + variantes p/ "morder" o orçamento compartilhado.
+custom_negative_phrases:
+  - "raro gravar"
+  - "raro gravar"
+  - "raro gravar"
+  - "raro grava"
+  - "raro grave"
+
 tts_backend: voxcpm
-# voice_design_prompts: mesmo conjunto do raro_gravar (paridade de diversidade entre os 2 comandos).
-# Inglês por convenção (a doc não exige idioma p/ os prompts). Aviso oficial: subir p/ 50-100 se recall baixo.
+# voice_design_prompts: MESMO conjunto do raro_gravar (paridade de diversidade entre os 2 comandos).
+# ~80 personas variando idade/gênero/pitch/ritmo/sotaque regional BR/energia/distância/ambiente.
 voxcpm_tts:
   voice_design_prompts:
     - "A young adult woman, clear mid-pitch voice, moderate pace, calm and neutral"
@@ -28,6 +42,72 @@ voxcpm_tts:
     - "A man speaking close to the mic, slightly muffled, intimate"
     - "A woman with a fast excited delivery, higher pitch, expressive"
     - "A man with a calm slow delivery, lower pitch, monotone"
+    - "A young woman with a Brazilian Portuguese accent, bright voice, natural pace"
+    - "A young man with a Brazilian Portuguese accent, mid voice, conversational"
+    - "A middle-aged woman from Rio de Janeiro, melodic intonation, relaxed pace"
+    - "A middle-aged man from São Paulo, neutral accent, steady measured voice"
+    - "A woman from the Brazilian northeast, lilting accent, warm mid voice"
+    - "A man from the Brazilian northeast, open vowels, friendly pace"
+    - "A woman from southern Brazil, slightly sing-song accent, clear diction"
+    - "A man from Minas Gerais, soft swallowed consonants, calm pace"
+    - "A young woman speaking quietly as if not to wake someone, low volume"
+    - "A young man speaking loudly across a room, raised projecting voice"
+    - "A woman speaking while slightly out of breath, uneven pace"
+    - "A man speaking with a tired flat affect, low energy, slow"
+    - "A woman with a cheerful animated tone, rising pitch, quick"
+    - "A man with a serious deliberate tone, deep, slow and clear"
+    - "A girl about ten years old, small high voice, careful pronunciation"
+    - "A boy about ten years old, light bright voice, eager pace"
+    - "A woman in her sixties, mature warm voice, unhurried"
+    - "A man in his sixties, seasoned steady voice, gentle gravel"
+    - "A young woman speaking in a small echoey bathroom, noticeable reverb"
+    - "A man speaking in a large empty hall, long reverb tail"
+    - "A woman speaking near a fan with mild background hum"
+    - "A man speaking outdoors with faint wind and distance"
+    - "A woman with a husky low alto voice, slow sultry pace"
+    - "A man with a high tenor voice, bright and forward"
+    - "A young woman mumbling slightly, relaxed casual articulation"
+    - "A young man over-enunciating, crisp careful consonants"
+    - "A woman speaking with a smile in her voice, warm friendly"
+    - "A man speaking flatly and neutrally, news-anchor cadence"
+    - "A woman with a soft whispery delivery, very low volume"
+    - "A man with a booming confident delivery, high volume"
+    - "A teenage girl giggling slightly between words, playful"
+    - "A teenage boy speaking fast and clipped, impatient"
+    - "A woman with a calm meditative pace, even low pitch"
+    - "A man with an excited rapid-fire delivery, rising energy"
+    - "A young woman with a slightly hoarse voice, recovering from a cold"
+    - "A young man with a deep resonant chest voice, slow"
+    - "A middle-aged woman speaking while walking, slight motion noise"
+    - "A middle-aged man speaking in a car with low road noise"
+    - "A woman with a bright cheerful Brazilian accent, fast and clear"
+    - "A man with a laid-back Brazilian accent, slow and warm"
+    - "A young woman speaking softly at arm's length from the phone"
+    - "A young man speaking right up against the microphone, close and bassy"
+    - "A woman with a thin reedy voice, high pitch, quick pace"
+    - "A man with a full round voice, mid pitch, measured pace"
+    - "An elderly woman with a slight tremor in her voice, slow careful"
+    - "An elderly man with a soft breathy voice, slow and gentle"
+    - "A woman speaking emphatically, stressing each syllable"
+    - "A man speaking offhandedly, swallowing the ends of words"
+    - "A young woman with an upbeat radio-host energy, bright"
+    - "A young man with a deadpan even tone, low affect"
+    - "A woman speaking in a quiet kitchen with faint clinking"
+    - "A man speaking on a street with distant traffic hum"
+    - "A girl in her early teens, bright clear voice, neat diction"
+    - "A boy in his early teens, light energetic voice, quick"
+    - "A woman with a warm maternal tone, slow and reassuring"
+    - "A man with a brisk businesslike tone, clipped and clear"
+    - "A young woman with a slightly nasal Brazilian accent, mid pace"
+    - "A young man with open relaxed Brazilian vowels, easygoing"
+    - "A woman almost shouting over background noise, strained loud"
+    - "A man murmuring close to the mic, very quiet and low"
+    - "A middle-aged woman with a confident clear projection"
+    - "A middle-aged man with a soft-spoken gentle delivery"
+    - "A young woman speaking quickly and brightly, high energy"
+    - "A young man speaking slowly and thoughtfully, low and even"
+    - "A woman with a smoky low contralto, unhurried"
+    - "A man with a light airy voice, mid-high pitch, casual"
 
 n_samples: 15000
 n_samples_val: 3000
@@ -39,4 +119,4 @@ model:
 steps: 50000
 target_fp_per_hour: 0.2
 
-# (output_format omitido — ONNX é o default; a doc só documenta `output_format: tflite` p/ trocar.)
+# (output_format omitido — ONNX é o default; o export gera <model_name>.onnx por padrão.)

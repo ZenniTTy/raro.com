@@ -1,5 +1,7 @@
 # 04-ROADMAP — RARO
 
+> ⚠️ SUPERSEDED 2026-06-22: o DAG de 20 specs abaixo é HISTÓRICO. Roadmap vigente = [docs/superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md).
+
 > Roadmap de specs pós-bootstrap. Ordem orientada por **dependência técnica + risco** + **API contract first**. Cada spec referencia agents, hooks, gates e sizing do harness. Não é commitment de prazo.
 
 ## Princípios deste roadmap
@@ -151,7 +153,7 @@ Cada micro-sprint dentro de uma spec deve passar **antes** de avançar:
 - Salvar vídeo exige entitlement `premium` ativo
 - Builds release `.ipa` + `.aab` com signing
 - App aprovado e publicado em App Store + Google Play
-- ADRs criados para todas as decisões arquiteturais novas (0013-0021)
+- ADRs criados para todas as decisões arquiteturais novas (planejado 0013-0021; reais existem 0001-0024)
 - CHANGELOG atualizado a cada spec mergeada
 
 Ver também [Blueprint Seção 11](Blueprint.md) e [docs/09-DOD.md](09-DOD.md).
@@ -171,6 +173,8 @@ Ver também [Blueprint Seção 11](Blueprint.md) e [docs/09-DOD.md](09-DOD.md).
 | **0021** | **Storage strategy: sandbox app vs MediaStore** | **spec-017 µ-sprint 17.1** (bloqueante para spec-015/016) | `raro-pattern-android-13-media-permissions` |
 
 Total: 9 ADRs novos previstos (0013–0021), adicionados aos 12 existentes (0001–0012) = **21 ADRs no fim do v1.0**.
+
+> **ESTADO 2026-06-22:** a numeração real divergiu deste plano — os ADRs no repo vão de **0001 a 0024** (não param em 0021). Ver `docs/decisions/` para a lista canônica.
 
 ## Memories que devem ser lidas antes de implementar cada spec
 

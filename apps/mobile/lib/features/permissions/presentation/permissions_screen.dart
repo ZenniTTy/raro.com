@@ -26,97 +26,99 @@ class PermissionsScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<RaroColors>()!;
     return Scaffold(
       backgroundColor: colors.bgDeep,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 70, 24, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ShaderMask(
-                  shaderCallback: (bounds) =>
-                      RaroGradients.rainbow.createShader(bounds),
-                  child: const Text(
-                    'PASSO 1 DE 1',
-                    style: TextStyle(
-                      fontFamily: RaroFonts.mono,
-                      fontSize: 10,
-                      letterSpacing: 1.8,
-                      color: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 70, 24, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ShaderMask(
+                    shaderCallback: (bounds) =>
+                        RaroGradients.rainbow.createShader(bounds),
+                    child: const Text(
+                      'PASSO 1 DE 1',
+                      style: TextStyle(
+                        fontFamily: RaroFonts.mono,
+                        fontSize: 10,
+                        letterSpacing: 1.8,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Permissões essenciais',
-                  style: TextStyle(
-                    fontFamily: RaroFonts.display,
-                    fontSize: 28,
-                    height: 1.1,
-                    fontWeight: FontWeight.w600,
-                    color: colors.ink,
+                  const SizedBox(height: 8),
+                  Text(
+                    'Permissões essenciais',
+                    style: TextStyle(
+                      fontFamily: RaroFonts.display,
+                      fontSize: 28,
+                      height: 1.1,
+                      fontWeight: FontWeight.w600,
+                      color: colors.ink,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'O RARO precisa de acesso para funcionar plenamente. '
-                  'Você pode revogar a qualquer momento.',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    height: 1.55,
-                    color: colors.inkDim,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Expanded(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(20, 28, 20, 0),
-              child: Column(
-                children: [
-                  _PermissionCard(
-                    icon: Icons.camera_alt_outlined,
-                    title: 'Câmera',
-                    description:
-                        'Necessário para gravar vídeo em 4K com lentes '
-                        '0.5x e 1x.',
-                  ),
-                  SizedBox(height: 10),
-                  _PermissionCard(
-                    icon: Icons.mic_none_rounded,
-                    title: 'Microfone',
-                    description:
-                        'Para áudio do vídeo e para escutar o comando “Raro”.',
+                  const SizedBox(height: 8),
+                  Text(
+                    'O RARO precisa de acesso para funcionar plenamente. '
+                    'Você pode revogar a qualquer momento.',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      height: 1.55,
+                      color: colors.inkDim,
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 48),
-            child: GestureDetector(
-              onTap: () => _continue(ref),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  gradient: RaroGradients.rainbow,
-                  borderRadius: BorderRadius.circular(16),
+            const Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 28, 20, 0),
+                child: Column(
+                  children: [
+                    _PermissionCard(
+                      icon: Icons.camera_alt_outlined,
+                      title: 'Câmera',
+                      description:
+                          'Necessário para gravar vídeo em 4K com lentes '
+                          '0.5x e 1x.',
+                    ),
+                    SizedBox(height: 10),
+                    _PermissionCard(
+                      icon: Icons.mic_none_rounded,
+                      title: 'Microfone',
+                      description:
+                          'Para áudio do vídeo e para escutar o comando “Raro”.',
+                    ),
+                  ],
                 ),
-                alignment: Alignment.center,
-                child: const Text(
-                  'Continuar',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 48),
+              child: GestureDetector(
+                onTap: () => _continue(ref),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: RaroGradients.rainbow,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Continuar',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,11 +1,23 @@
 # 0023 — Engine de voz: wake-word dedicada on-device (NÃO SFSpeechRecognizer)
 
 - **Data:** 2026-06-08
-- **Status:** Accepted — **CONDICIONAL/BACKGROUND-ONLY a partir de 2026-06-11 (ver Atualização 0024 abaixo)**
+- **Status:** **VALIDAÇÃO SENSORY EM CURSO desde 2026-06-23 (sessão 0033)** — ONNX próprio segue REPROVADO/dormente; caminho de background candidato = Sensory (pendente preço + teste device). Ver Atualização 2026-06-23 no topo. (Histórico: Accepted → CONDICIONAL/BACKGROUND-ONLY 2026-06-11 → STANDBY/ONNX-reprovado 2026-06-21.)
 - **Relaciona:** **Supersede a escolha de engine do [ADR-0022](0022-voice-on-device-sfspeechrecognizer.md)** (que escolheu SFSpeechRecognizer). Demais decisões do ADR-0022 (modo selecionável, foreground, dois comandos, contrato Pigeon, indicador sempre-visível) permanecem válidas.
 - **Decisores:** Eduardo Rodrigues
 - **Contexto:** Sessão S2.C, validação no iPhone 12 físico (iOS 26.5) + investigação device-validated do app concorrente no iOS.
 
+> ## 🔵 ATUALIZAÇÃO 2026-06-23 (sessão 0033) — Sensory reaberto; VALIDAÇÃO ATIVA (decisão de produto ABERTA)
+>
+> Fonte: **email de Jeff Rogers (Sensory) ao dono, 2026-06-23** (fato externo, não verificável no repo). A Sensory respondeu ao contato e: (1) deu acesso **grátis ao VoiceHub Pro** (expira 2026-09-21); (2) o portal **tem pt-BR nativo** — o idioma cuja ausência matou o ONNX próprio na 0029; (3) confirmou que a licença de **produção é non-expiring** (a expiração documentada na memória é só do tier de teste); (4) **1 preço cobre iOS+Android**. O dono **assinou o NDA mútuo** (recíproco, 5 anos vigência / 3 anos sigilo, lei CA, sem cláusula de non-use/exclusividade — lido e aprovado). Um modelo "Raro" pt-BR está **em build** no VoiceHub (Best Quality).
+>
+> **Isto NÃO promove o ADR a Accepted nem declara o background resolvido.** Faltam DOIS gates antes de qualquer decisão: **(a)** o **preço concreto** do Jeff (um royalty per-user inviabiliza a margem de R$9,90; só flat/per-app fecha conta) e **(b)** o **teste do modelo "Raro" no iPhone 12** (lição 0029: só o device decide — eval do VoiceHub não basta). A regra **"não reabrir treino ONNX próprio sem ADR"** continua valendo (Sensory é caminho distinto, não retorno ao ONNX). Se a Sensory passar nos dois gates e o dono fechar contrato, isso vira um **ADR-0025** (troca de engine de background). Detalhes: sessão 0033, memória `raro-competitor-sensory-voicehub-ios-sdk-gated` (virada no topo).
+>
+> ## 🛑 ATUALIZAÇÃO 2026-06-21 (sessão 0029) — engine ONNX REPROVADA no device; ADR em STANDBY
+>
+> A decisão central deste ADR (migrar o wake-word de background para **livekit-wakeword/ONNX**) foi **executada e reprovada**. Treinaram-se **4 modelos** (gravar / parar / toggle sintético / toggle híbrido com voz real do dono) e **nenhum dispara "Raro" na voz real no iPhone 12** — pico de score 0.128 vs limiar usável; gate offline AUC máx 0.54, melhor "Raro" 0.497 (não cruza 0.5). Causa provada por device: a palavra **"Raro" (2 sílabas, muitas rimas PT-BR: caro/barro/faro/claro/carro)** é o limite do pipeline openWakeWord — não a falta de voz real no treino (o híbrido com voz real piorou/empatou). Detalhes: sessão 0029, `PLANO-MESTRE-finalizacao-entrega-cliente.md`.
+>
+> **Consequência:** o background do wake-word fica em **STANDBY**. O dono está **negociando licença com a Sensory** (a engine que o concorrente "Ok Câmera" usa — memória `raro-competitor-sensory-voicehub-ios-sdk-gated`) como caminho alternativo para o background. O app entrega hoje **só foreground via SFSpeech (ADR-0022)**. Pipeline ONNX preservado dormente no commit `01a1f67` (não está no caminho de produção; reverter foi o commit `7e9c0c9`). **NÃO reabrir treino ONNX nem `WakeWordDetector.swift` sem um ADR novo** — é um beco já provado (custou ~US$11 + várias sessões). A decisão de produto (foreground-only vs Sensory vs mudar a palavra) está **ABERTA** com o cliente.
+>
 > ## ⚠️ ATUALIZAÇÃO 2026-06-11 (sessão 0024) — premissa FOREGROUND refutada; escopo deste ADR reduzido a BACKGROUND
 >
 > A premissa central deste ADR (que o SFSpeechRecognizer é **beco-sem-saída** para wake-word, baseada no sintoma "funciona EXATAMENTE 1×" da seção Contexto abaixo) **foi REFUTADA por log limpo + device na sessão 0024.** O "funciona 1×" NÃO era limitação do endpointer/onset da Apple — era um **bug de arquitetura no nosso código**: reciclar a `recognitionTask` a cada erro benigno `1110` (no-speech). Corrigido sem trocar de engine (token de ciclo + ring buffer, commit `a43421a`); SFSpeech foreground agora **funciona** (8 wake matched no iPhone 12). Memória `raro-pattern-sfspeech-continuous-no-recycle-per-error`.

@@ -14,12 +14,13 @@ Em ordem de precedência. Leia tudo antes de propor qualquer mudança:
 6. [docs/decisions/](docs/decisions/) — ADRs (decisões irreversíveis)
 7. [docs/sessions/](docs/sessions/) — log append-only de sessões de trabalho
 8. [docs/superpowers/specs/](docs/superpowers/specs/) e [docs/superpowers/plans/](docs/superpowers/plans/) — specs e plans por feature (TLC Spec-Driven)
+9. [docs/superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md](docs/superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md) — roadmap vigente até entrega
 
 ## Regras inegociáveis
 
 - **Protótipo é fonte de verdade** (briefing Seção 3.2). Toda divergência vira ADR antes de implementar.
 - **Wake word é `"Raro"`.** "OkCamera" não existe em código, copy, docs ou ADRs.
-- **Free trial é 30 dias.** Configurado no RevenueCat dashboard, refletido no copy.
+- **Free trial alvo 30 dias** (a configurar no RevenueCat — hoje mock, PLANO-MESTRE Bloco 2), refletido no copy.
 - **Planos: Mensal R$ 9,90 + Anual R$ 89,90** com badge "MELHOR OFERTA" no anual.
 - **Versões fixadas** via Context7 + pub.dev — nunca atualizar dep sem novo ADR.
 - **Sem comentários em código de produção** (Karpathy Surgical Changes). Nomes explicam WHAT, ADRs explicam WHY.
@@ -40,7 +41,7 @@ Em ordem de precedência. Leia tudo antes de propor qualquer mudança:
 bun run lint                  # turbo lint
 bun run typecheck             # turbo typecheck
 bun run test                  # turbo test
-bun --filter @raro/mobile run codegen   # dart run build_runner
+bun run --filter '@raro/mobile' codegen   # dart run build_runner (filter DEPOIS de run — bun 1.3.13)
 cd apps/mobile && flutter run # rodar o app
 ```
 

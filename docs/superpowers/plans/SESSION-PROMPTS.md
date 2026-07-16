@@ -1,5 +1,7 @@
 # Session Prompts — Índice
 
+> ⚠️ Roadmap vigente = PLANO-MESTRE-finalizacao-entrega-cliente.md. Estes prompts de sprint são HISTÓRICOS; use só para o detalhe atômico das tasks referenciadas pelo PLANO-MESTRE.
+
 > Os prompts agora estão **separados em 3 arquivos**, um por Sprint. Self-contained: abra o arquivo da Sprint que vai trabalhar, copie o prompt apropriado, cole em chat novo Claude Code.
 
 ---

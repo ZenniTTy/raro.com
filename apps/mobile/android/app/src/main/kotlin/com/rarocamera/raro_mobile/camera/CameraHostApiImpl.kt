@@ -10,6 +10,7 @@ import com.rarocamera.raro_mobile.generated.camera.FlutterError
 import com.rarocamera.raro_mobile.generated.camera.FocusPoint
 import com.rarocamera.raro_mobile.generated.camera.Fps
 import com.rarocamera.raro_mobile.generated.camera.LensType
+import com.rarocamera.raro_mobile.generated.camera.RecordingOptions
 import com.rarocamera.raro_mobile.generated.camera.Resolution
 
 class CameraHostApiImpl(
@@ -85,6 +86,22 @@ class CameraHostApiImpl(
     } catch (e: Throwable) {
       callback(Result.failure(toFlutterError(e)))
     }
+  }
+
+  override fun startRecording(options: RecordingOptions): String {
+    throw FlutterError(
+      code = "sessionFailed",
+      message = "startRecording not implemented on Android until Bloco 3.1 (PLANO-MESTRE)",
+      details = null,
+    )
+  }
+
+  override fun stopRecording() {
+    throw FlutterError(
+      code = "sessionFailed",
+      message = "stopRecording not implemented on Android until Bloco 3.1 (PLANO-MESTRE)",
+      details = null,
+    )
   }
 
   override fun generateThumbnail(videoPath: String, callback: (Result<String>) -> Unit) {

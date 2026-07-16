@@ -52,7 +52,7 @@ bun run lint            # turbo lint
 bun run typecheck       # turbo typecheck
 bun run test            # turbo test
 bun run format          # biome format --write
-bun --filter @raro/mobile run codegen   # dart run build_runner
+bun run --filter '@raro/mobile' codegen   # dart run build_runner
 cd apps/mobile && flutter run
 ```
 
@@ -64,7 +64,7 @@ Hooks (lefthook):
 
 ## i18n
 
-- Strings de UI sempre via `.arb`. Nunca literais inline.
+- Strings de UI sempre via `.arb`. Nunca literais inline. **[ESTADO: i18n não implementada — 0 arquivos .arb, hoje hardcoded PT-BR; convenção é alvo, PLANO-MESTRE Bloco 4.6]**
 - `pt-BR` é default e fallback. `en` e `es` cobertura completa.
 - `flutter gen-l10n` gera classes Dart tipadas.
 

@@ -1,13 +1,31 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:raro_shared/raro_shared.dart';
 
 import 'package:raro_mobile/app.dart';
+import 'package:raro_mobile/core/analytics/firebase_analytics_provider.dart';
+
+class _MockAnalytics extends Mock implements FirebaseAnalytics {}
 
 void main() {
   group('RaroApp smoke', () {
     testWidgets('boots inside ProviderScope without throwing', (tester) async {
-      await tester.pumpWidget(const ProviderScope(child: RaroApp()));
+      final analytics = _MockAnalytics();
+      when(
+        () => analytics.logEvent(
+          name: any(named: 'name'),
+          parameters: any(named: 'parameters'),
+        ),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [firebaseAnalyticsProvider.overrideWithValue(analytics)],
+          child: const RaroApp(),
+        ),
+      );
       await tester.pump();
       expect(find.byType(RaroApp), findsOneWidget);
     });

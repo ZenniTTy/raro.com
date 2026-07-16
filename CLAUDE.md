@@ -20,11 +20,11 @@ Detalhe complementar: este projeto também segue as **15 práticas Karpathy** pa
 | Item | Estado |
 |---|---|
 | Blueprint | [docs/Blueprint.md](docs/Blueprint.md) Approved em 2026-05-25 |
-| Fase atual do bootstrap | Spec-Driven (Fase 5) — 2 specs entregues (`api-contract-shared`/ADR-0013, `flutter-3.44-spm-migration`/ADR-0014) |
+| Fase atual do bootstrap | Finalização para entrega (PLANO-MESTRE, 6 blocos). Bloco 0 fechado 2026-06-22 (Android compila — appbundle ✓; App ID alinhado; label "Raro Camera"; ONNX dormente). Bloco 1 (Firebase) FECHADO 2026-07-14 (0034 código+build, 0035 provado no iPhone 12: initializeApp + 3 handlers Crashlytics + analytics ligado; crash chegou no painel + dSYM; ADR-0025). Sprint 2 iOS done-com-drift (RevenueCat ainda mock); wake-word background STANDBY (ONNX reprovado 0029, aguarda Sensory), foreground SFSpeech funciona. Próximo: Bloco 2 (Monetização RevenueCat). |
 | Branch principal | `main` (devs em `develop` ou feature branches) |
-| Bundle ID | `com.rarocamera` |
+| Bundle ID | `com.rarocamera` (iOS + Android `applicationId` alinhados — Bloco 0.3 resolvido 2026-06-22; `namespace` Kotlin segue `com.rarocamera.raro_mobile`, ok divergir). Imutável pós-publicação |
 | Plataformas alvo | iOS 15+ / Android API 24+ |
-| Wake word | `"Raro"` (NÃO `"OkCamera"`) |
+| Wake word | `"Raro"` (NÃO `"OkCamera"`) — FOREGROUND SFSpeech funciona ('raro gravar'/'raro parar'); BACKGROUND ONNX inviável (sessão 0029) em STANDBY (Sensory). NÃO reabrir treino ONNX sem ADR. |
 | Free trial | 30 dias |
 | Planos | Mensal R$ 9,90 + Anual R$ 89,90 |
 
@@ -104,9 +104,7 @@ Quando precisar de doc de lib externa, a ordem é:
 
 ### Sprint MDs ativos
 
-- `docs/superpowers/plans/sprint-1-foundation-walking-skeleton.md` (em execução)
-- `docs/superpowers/plans/sprint-2-backend-logic-ios.md` (backlog)
-- `docs/superpowers/plans/sprint-3-android-parity-testflight-client.md` (backlog)
+Roadmap vigente: `docs/superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md` (6 blocos). sprint-1 fechado; sprint-2 done-com-drift; sprint-3 reindexado pelo Bloco 3 do PLANO-MESTRE.
 
 ### Spec/plan templates (uso de exceção, não rotina)
 

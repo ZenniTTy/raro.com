@@ -1,5 +1,7 @@
 # Sprint 2 — Prompts (Backend/Lógica Real iOS)
 
+> ⚠️ OBSOLETO EM PARTE (2026-06-22). NÃO rodar o smoke de closure como está: ele manda validar 'Dizer Raro → REC inicia' (wake-word de palavra única, que NÃO é o estado real — hoje são 2 comandos foreground 'raro gravar'/'raro parar') e 'Subscribe sandbox → trial 30d' (RevenueCat = mock, nunca integrado). Wake-word background = standby Sensory (ONNX reprovado, sessão 0029).
+
 > **Uso**: este arquivo contém TODOS os prompts copy-paste para sessões da Sprint 2. Abra → encontre o prompt → copie → cole em chat novo Claude Code. Self-contained: não precisa abrir outros arquivos.
 
 **Entrega Sprint 2**: substituir implementações mock dos Riverpod providers de Sprint 1 por implementações REAIS, mantendo UI intacta. Recording real (MP4 H.264/H.265 → vault), replay buffer 15s/30s native (AVAssetWriter), wake word "Raro" (SFSpeechRecognizer + restart loop), volume button (KVO AVAudioSession), paywall RevenueCat sandbox, vault + share. Ainda iOS-only. Free Apple ID. NÃO paga $99. NÃO toca Android.

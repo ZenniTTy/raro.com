@@ -29,6 +29,11 @@ case "$rel" in
   docs/Blueprint.md) sensitive=1 ;;
   apps/mobile/lib/core/native_bridges/*) sensitive=1 ;;
   apps/mobile/pigeons/*.dart) sensitive=1 ;;
+  # Voz/wake-word: onde o drift Blueprint-vs-ADR aconteceu (custou ~US$5 + 0029).
+  # Modelos .onnx, engine de voz nativa e configs de treino mudam a decisão de stack.
+  apps/mobile/ios/Runner/Resources/*.onnx) sensitive=1 ;;
+  apps/mobile/ios/Runner/Native/Voice/*.swift) sensitive=1 ;;
+  docs/superpowers/notebooks/configs/*.yaml) sensitive=1 ;;
 esac
 
 if [ "$sensitive" -eq 1 ]; then

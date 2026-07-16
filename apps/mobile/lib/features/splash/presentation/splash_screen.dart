@@ -45,34 +45,36 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final colors = Theme.of(context).extension<RaroColors>()!;
     return Scaffold(
       backgroundColor: colors.bgDeep,
-      body: Stack(
-        children: [
-          const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                BreathingLogo(),
-                SizedBox(height: 32),
-                DotLoader(key: Key('splash_loader')),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 40,
-            child: Text(
-              'CAPTURE · UNSCRIPTED',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: RaroFonts.mono,
-                fontSize: 10,
-                letterSpacing: 2,
-                color: colors.inkFaint,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  BreathingLogo(),
+                  SizedBox(height: 32),
+                  DotLoader(key: Key('splash_loader')),
+                ],
               ),
             ),
-          ),
-        ],
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 40,
+              child: Text(
+                'CAPTURE · UNSCRIPTED',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: RaroFonts.mono,
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  color: colors.inkFaint,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

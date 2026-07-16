@@ -67,12 +67,14 @@ A Seção 3.2 do briefing define o protótipo como fonte de verdade inegociável
 
 ### 2.3 Reconhecimento de voz (wake word `"Raro"`)
 
-| Plataforma | Tecnologia | Notas |
-|---|---|---|
-| iOS | **Wake-word dedicada on-device** — modelo "Raro" (LiveKit) via **ONNX Runtime + CoreML EP** (SPM) | ADR-0023. Superseded `SFSpeechRecognizer` (1110-loop, limite 1 min/sessão). Sessão `PlayAndRecord` persistente + background. |
-| Android | **SpeechRecognizer** (`android.speech`) | API 31+ com `EXTRA_PREFER_OFFLINE` força on-device. (Migração para a mesma engine ONNX no Sprint 3.) |
+> **⚠️ ESTADO REAL 2026-06-22 (sessão 0029):** a engine VIGENTE no app é **`SFSpeechRecognizer` FOREGROUND** (ADR-0022), comandos "raro gravar"/"raro parar", validado no device. A migração para ONNX (ADR-0023, tabela abaixo) foi **tentada e reprovada** — 4 modelos treinados, nenhum dispara "Raro" na voz real. Background = **STANDBY** aguardando licença Sensory. A tabela abaixo descreve o ALVO ONNX (em standby), não o estado atual.
 
-**Dependência nativa (iOS):** `onnxruntime` via Swift Package Manager (`github.com/microsoft/onnxruntime-swift-package-manager`, `~1.16.0+`) no target Runner — runtime de inferência do modelo wake-word. CoreML Execution Provider a confirmar na versão resolvida (fallback CPU). Coberto pelo ADR-0023; atualizar dep = abrir ADR.
+| Plataforma | Tecnologia (ALVO ONNX — em standby) | Estado real |
+|---|---|---|
+| iOS | Wake-word dedicada on-device — modelo "Raro" (LiveKit) via ONNX Runtime + CoreML EP (SPM) — ADR-0023 | **Standby (inviável no device, 0029).** Vigente: `SFSpeechRecognizer` foreground (ADR-0022, 2 comandos) |
+| Android | **SpeechRecognizer** (`android.speech`), API 31+ `EXTRA_PREFER_OFFLINE` on-device | **Não implementado** (só contrato Pigeon). Alvo = foreground "raro gravar"/"raro parar" (PLANO-MESTRE Bloco 3.3) |
+
+**Dependência nativa (iOS):** `onnxruntime` via Swift Package Manager está no projeto mas **dormente** (pipeline ONNX preservado no commit `01a1f67`, não no caminho de produção). CoreML EP. Coberto pelo ADR-0023 (em standby); atualizar dep = abrir ADR.
 
 **Privacidade:** áudio processado exclusivamente local (inferência on-device, sem rede). Declarado em `Info.plist` (`NSMicrophoneUsageDescription`) e Privacy Manifest iOS.
 
@@ -256,9 +258,8 @@ apps/mobile/
 ### 3.3 Restrições de plataforma conhecidas
 
 **iOS:**
-- Voz wake-word opera em background (tela bloqueada) via `UIBackgroundModes: audio` + `AVAudioSession .playAndRecord` persistente (ADR-0023, espelha o concorrente). Escuta morre se o app for encerrado à força no app-switcher (regra iOS inescapável). Replay Buffer continua foreground.
-- Engine de voz = wake-word dedicada on-device (ONNX Runtime), não mais `SFSpeechRecognizer` (que tinha limite ~1 min/sessão + 1110-loop — superseded pelo ADR-0023).
-- Botões de volume capturáveis via `AVAudioSession` + observer no `outputVolume`; não há API direta para volume buttons.
+- **Voz wake-word (estado real 2026-06-22, sessão 0029):** funciona **FOREGROUND** (app aberto na tela) via `SFSpeechRecognizer` on-device — comandos "raro gravar" / "raro parar" (ADR-0022 + ciclo correto da sessão 0024). **O BACKGROUND (tela bloqueada) está em STANDBY:** a engine ONNX dedicada (ADR-0023) foi treinada (4 modelos: gravar/parar/toggle-sint/toggle-híbrido) e **provada inviável no device** — nenhum dispara "Raro" na voz real (pico 0.128 vs limiar usável; a palavra "Raro", 2 sílabas com muitas rimas PT-BR, é o limite do pipeline openWakeWord). Background aguarda **licença Sensory** (engine do concorrente) como alternativa. **Não reabrir treino ONNX sem ADR.** Pipeline ONNX preservado dormente (commit `01a1f67`). Escuta sempre morre se o app for force-quit no app-switcher (regra iOS). Replay Buffer continua foreground.
+- Botões de volume capturáveis via `AVAudioSession` + observer no `outputVolume`; não há API direta para volume buttons. **(Estado: só stub Pigeon, não implementado — PLANO-MESTRE Bloco 4.5.)**
 
 **Android:**
 - Fabricantes com camadas (Xiaomi/MIUI, Samsung/OneUI, Oppo/ColorOS) aplicam kill agressivo em background → onboarding Xiaomi obrigatório.
@@ -518,7 +519,9 @@ Linha decorativa associada (`grad-line`): height 1.5px, fundo `--raro-gradient`.
 | Android | **API 24+** (Android 7.0+) |
 | Xiaomi/MIUI | MIUI 12+ ou HyperOS (com configuração manual via M02) |
 
-Bundle ID / Application ID: `com.rarocamera`.
+Bundle ID / Application ID: `com.rarocamera` (iOS e Android).
+
+> **Resolução 2026-06-22 (PLANO-MESTRE Bloco 0.3):** o Android divergia em `com.rarocamera.raro_mobile`; alinhado ao iOS — `applicationId = "com.rarocamera"`. O `namespace` Kotlin permanece `com.rarocamera.raro_mobile` (R class/BuildConfig; pode divergir do `applicationId` sem afetar a identidade nas lojas), evitando renomear toda a árvore de fontes. Decisão do dono. Imutável pós-publicação.
 
 ---
 
@@ -579,14 +582,15 @@ Bundle ID / Application ID: `com.rarocamera`.
 - [ ] `flutter analyze` sem warnings
 - [ ] Cobertura de testes: use cases ≥ 80%, repositórios ≥ 70%, widgets críticos ≥ 60%
 - [ ] Replay Buffer estável em iOS + Android (sem perda de frames, sem crashes)
-- [ ] Wake word `"Raro"` com taxa de detecção > 90% em ambiente silencioso
+- [ ] Wake word `"Raro"` **FOREGROUND** (app aberto) detecta "raro gravar"/"raro parar" com taxa > 90% em ambiente silencioso. **⚠️ Background (tela bloqueada) está em STANDBY (inviável via ONNX, sessão 0029; aguarda licença Sensory) — DECISÃO DE PRODUTO ABERTA com o cliente: aceitar foreground-only, mudar wake-word, ou Sensory.**
 - [ ] Lock mode reduz consumo de bateria medido em ≥ 50% vs tela acesa
 - [ ] App testado em ≥ 1 device Xiaomi/MIUI real
 - [ ] i18n completa em pt-BR / en / es (todas as strings no `.arb`)
 - [ ] Builds release `.ipa` + `.aab` com signing correto
 - [ ] App aprovado e publicado em App Store + Google Play
-- [ ] ADRs 0001–0012 registrados em `docs/decisions/`
+- [ ] ADRs 0001–0024 registrados em `docs/decisions/`
 - [ ] `docs/01-PROJECT.md` até `10-CHANGELOG.md` preenchidos
+- [ ] **Roadmap vigente seguido: `docs/superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md` (6 blocos)**
 
 ---
 

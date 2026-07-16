@@ -1,5 +1,7 @@
 # Sprint 3 — Prompts (Android Parity + TestFlight + Cliente)
 
+> ⚠️ ESTADO REAL 2026-06-22. Pre-flight incompleto: adicionar 'build Android compila (flutter build appbundle) — se falhar, executar PLANO-MESTRE Bloco 0.1 antes'. Wake-word Android = 2 comandos foreground (não palavra única); background standby Sensory. Comandos bun: 'bun run --filter X <script>'.
+
 > **Uso**: este arquivo contém TODOS os prompts copy-paste para sessões da Sprint 3. Abra → encontre o prompt → copie → cole em chat novo Claude Code. Self-contained: não precisa abrir outros arquivos.
 
 **Entrega Sprint 3**: paridade Android com iOS (Sprint 2) + pagamento Apple Developer Program ($99/ano) + Google Play Console ($25 taxa única) + TestFlight build + Google Play Internal Testing + cliente convidado em AMBAS plataformas. Entrega final do plano 3-Sprint.

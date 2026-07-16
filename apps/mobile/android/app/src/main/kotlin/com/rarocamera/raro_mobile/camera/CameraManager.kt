@@ -23,6 +23,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.rarocamera.raro_mobile.generated.camera.CameraCapabilities
 import com.rarocamera.raro_mobile.generated.camera.CameraConfig
 import com.rarocamera.raro_mobile.generated.camera.FocusPoint
+import com.rarocamera.raro_mobile.generated.camera.FormatCapability
 import com.rarocamera.raro_mobile.generated.camera.Fps
 import com.rarocamera.raro_mobile.generated.camera.LensType
 import com.rarocamera.raro_mobile.generated.camera.Resolution
@@ -39,12 +40,17 @@ class CameraManager(
   private var preview: Preview? = null
   private var camera: Camera? = null
   private var currentConfig: CameraConfig? = null
+  private var pendingConfig: CameraConfig? = null
 
   var onLensSwitched: ((LensType) -> Unit)? = null
   var surfaceProvider: Preview.SurfaceProvider? = null
     set(value) {
       field = value
-      preview?.let { p -> value?.let(p::setSurfaceProvider) }
+      if (value != null) {
+        bindIfReady()
+      } else {
+        preview?.setSurfaceProvider(null)
+      }
     }
 
   fun hasPermission(): Boolean =
@@ -66,26 +72,46 @@ class CameraManager(
     if (lenses.isEmpty()) throw CameraNativeException.DeviceUnavailable
     return CameraCapabilities(
       availableLenses = lenses,
-      supportedResolutions = listOf(Resolution.HD720, Resolution.FHD1080, Resolution.UHD4K),
-      supportedFps = listOf(Fps.FPS30, Fps.FPS60),
+      supportedFormats = buildSupportedFormats(),
     )
   }
 
+  private fun buildSupportedFormats(): List<FormatCapability> {
+    val resolutions = listOf(Resolution.HD720, Resolution.FHD1080, Resolution.UHD4K)
+    val fpsOptions = listOf(Fps.FPS30, Fps.FPS60)
+    return resolutions.flatMap { resolution ->
+      fpsOptions.map { fps ->
+        FormatCapability(
+          resolution = resolution,
+          fps = fps,
+          requiresPhysicalLens = resolution == Resolution.UHD4K && fps == Fps.FPS60,
+        )
+      }
+    }
+  }
+
   fun startSession(config: CameraConfig) {
-    if (preview != null) throw CameraNativeException.AlreadyRunning
     if (!hasPermission()) throw CameraNativeException.PermissionDenied
+    pendingConfig = config
+    bindIfReady()
+  }
+
+  private fun bindIfReady() {
+    val config = pendingConfig ?: return
+    val sp = surfaceProvider ?: return
     val p = providerNow()
     try {
+      p.unbindAll()
       val selector = CameraLensDiscovery.selectorFor(p, config.lens)
       val pv = buildPreview(config.resolution, config.fps)
-      surfaceProvider?.let(pv::setSurfaceProvider)
+      pv.setSurfaceProvider(sp)
       camera = p.bindToLifecycle(lifecycleOwner, selector, pv)
       preview = pv
       currentConfig = config
     } catch (e: CameraNativeException) {
       throw e
     } catch (e: Throwable) {
-      Log.w(TAG, "startSession failed", e)
+      Log.w(TAG, "bindIfReady failed", e)
       throw CameraNativeException.SessionFailed(e.message ?: e.javaClass.simpleName)
     }
   }
@@ -95,6 +121,7 @@ class CameraManager(
     preview = null
     camera = null
     currentConfig = null
+    pendingConfig = null
   }
 
   fun switchLens(lens: LensType) {

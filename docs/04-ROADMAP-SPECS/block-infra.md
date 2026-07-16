@@ -15,7 +15,7 @@
 ### Problem
 
 Bootstrap declarou `firebase_core ^4.9.0`, `firebase_analytics ^12.4.1`, `firebase_crashlytics ^5.2.2` em `pubspec.yaml` mas:
-- `google-services.json` (Android) e `GoogleService-Info.plist` (iOS) não estão no repo (corretamente — vêm da conta Firebase do cliente)
+- `google-services.json` (Android) e `GoogleService-Info.plist` (iOS) não estão no repo (corretamente — vêm da conta Firebase do cliente). **Atualização 2026-06-23 (sessão 0032):** ambos já foram baixados e posicionados (`apps/mobile/android/app/` e `apps/mobile/ios/Runner/`), gitignored; existem só no device do dono.
 - Não há `Firebase.initializeApp()` no boot
 - `AnalyticsEvents` consts existem em shared mas não há `FirebaseAnalytics` wrapper que as consuma
 
@@ -25,7 +25,7 @@ Bootstrap declarou `firebase_core ^4.9.0`, `firebase_analytics ^12.4.1`, `fireba
 
 **Entregar:**
 - Documento `docs/setup/firebase-onboarding.md` instruindo o cliente passo-a-passo a criar projeto Firebase com bundle ID `com.rarocamera`, adicionar apps iOS + Android, baixar configs
-- Adicionar `google-services.json` e `GoogleService-Info.plist` ao `.gitignore` (verificar — já está coberto pelo bloqueio do hook `block-env`, mas confirmar no .gitignore explícito)
+- ✅ **Feito (commit `f211d8e`, 2026-06-23):** `**/google-services.json`, `**/GoogleService-Info.plist` e `**/firebase_options.dart` no `.gitignore` explícito (além do bloqueio do hook `block-env`)
 
 **Verification:**
 - Documento existe e é navegável
