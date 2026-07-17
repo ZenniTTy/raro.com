@@ -17,7 +17,7 @@
 | `android.speech.SpeechRecognizer` on-device (API 31+) | **ESCOLHIDO p/ foreground.** Grátis, sem modelo. pt-BR on-device NÃO é garantido por doc — depende do "Speech Services by Google" do aparelho; **gate: `checkRecognitionSupport()` no M54 ANTES da bridge**. Não serve p/ serviço contínuo em background (sessões curtas, restart-loop frágil fora de UI). |
 | Foreground service type `microphone` (Android 14+) | **ESCOLHIDO como arquitetura de background.** Exige `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_MICROPHONE` + `foregroundServiceType="microphone"` + notificação; só pode INICIAR com app visível; declaração no Play Console (targetSdk 34+). Com FGS ativo, captura segue com tela desligada. |
 | Vosk (`vosk-model-small-pt-0.3`, 31 MB, Apache 2.0) | **ESCOLHIDO como engine de background.** Precisão mediana, suficiente p/ spotting de 2 frases fixas com matching fuzzy. Projeto em manutenção (última release 2024) — risco aceito. Plugin Flutter morto → bridge Kotlin própria sobre o AAR. |
-| Sensory TrulyNatural | Motor DEFINITIVO candidato (pt-BR nativo, provado pelo concorrente) — preço pendente (NDA ok). A interface `WakeEngine` (§3) permite trocar Vosk→Sensory sem refazer serviço/Pigeon/UI. |
+| Sensory TrulyNatural | Motor DEFINITIVO candidato (pt-BR nativo, provado pelo concorrente). Status por ADR-0028 (2026-07-17): comercialização ADIADA, contrato ainda não assinado. Vosk é a ponte gratuita ATÉ a Sensory entrar. A interface `WakeEngine` (§3) permite trocar Vosk→Sensory sem refazer serviço/Pigeon/UI — reconciliação explícita exigida no corpo do ADR-0029 (não são engines de background conflitantes; são fases da mesma decisão). |
 | sherpa-onnx KWS / openWakeWord | **Descartados**: sem modelo pt-BR (mesma parede do ONNX próprio, sessão 0029). |
 | whisper.cpp | Descartado: não-streaming, bateria alta. |
 
@@ -44,7 +44,7 @@ VoiceHostApiImpl (Kotlin, registrado no MainActivity)
 
 ## 4. ADR
 
-Vosk = dependência nova (AAR `com.alphacephei:vosk-android`) + asset de 31 MB → **ADR-0028 obrigatório antes do merge** (estratégia de engine de voz Android: SpeechRecognizer foreground + Vosk background com interface trocável p/ Sensory).
+Vosk = dependência nova (AAR `com.alphacephei:vosk-android`) + asset de 31 MB → **ADR-0029 obrigatório antes do merge** (0028 já consumido em 2026-07-17 pelo ADR de wake phrases Sensory). O ADR-0029 cobre a decisão coesa: SpeechRecognizer foreground + Vosk background + foreground service `type=microphone` (a permissão `FOREGROUND_SERVICE_MICROPHONE` cabe aqui, sem ADR separado) + interface `WakeEngine` trocável. Deve **referenciar o ADR-0028** explicitamente: Vosk é a ponte gratuita Android até a Sensory entrar como engine definitivo — não são decisões conflitantes.
 
 ## 5. Erros
 
@@ -54,6 +54,7 @@ Vosk = dependência nova (AAR `com.alphacephei:vosk-android`) + asset de 31 MB �
 
 ## 6. Validação (DoD)
 
+0. **Confirmar install ANTES de pedir teste** (gate §10, memória `feedback_verify_device_install_before_test`): `flutter build` + install; ler `App installed:` + container UUID novo. Métrica idêntica ao teste anterior = binário velho — não pedir teste sem provar install fresco.
 1. **Spike-gate** (primeiro passo do plan): `checkRecognitionSupport` no M54 provando pt-BR on-device — resultado registrado na spec/PR.
 2. M54 app aberto: "raro gravar" inicia gravação real (Fatia 1), "raro parar" finaliza — 5/5 detecções em logcat.
 3. M54 minimizado (toggle on): comandos funcionam via FGS + Vosk.

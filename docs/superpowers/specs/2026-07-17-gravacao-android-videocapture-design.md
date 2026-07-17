@@ -27,6 +27,12 @@ Implementar gravação real com **CameraX `VideoCapture<Recorder>`** (API oficia
 - Foto (se houver stub separado) não muda nesta fatia.
 - Nenhuma mudança de contrato Pigeon, zero `.swift`, zero Dart além do necessário (o Dart já consome os callbacks).
 
+## 3b. ADR obrigatório antes do merge
+
+`VideoCapture<Recorder>`/`Recorder`/`QualitySelector` vivem no artefato Maven **`androidx.camera:camera-video`**, que **NÃO está** no `apps/mobile/android/app/build.gradle.kts` (hoje só `camera-core/camera2/lifecycle/view:1.6.1`). Adicionar essa linha é dependência nova → **ADR-0030 obrigatório antes do merge**.
+
+**Divergência de stack a reconciliar (decisão do dono 2026-07-17):** o Blueprint (linha 55) fixa encoding Android = `MediaCodec` + `MediaMuxer`. Esta fatia usa `CameraX VideoCapture<Recorder>` (o Recorder faz o mux internamente). Decisão: **CameraX Recorder para gravação linear + ADR-0030 que ATUALIZA o Blueprint**. O Blueprint passa a dizer: gravação linear = CameraX Recorder; pré-roll/replay buffer = `MediaCodec` + `MediaMuxer` (fatia futura, onde o controle de buffer circular é obrigatório — memória `raro-pattern-android-mediacodec-buffer-management`). Recorder é o caminho oficial 2026 para gravação simples, com áudio e negociação de formato prontos; MediaCodec continua sendo o caminho do replay. O ADR-0030 estende a estratégia MP4 do ADR-0018 (iOS/AVAssetWriter) ao Android e registra essa atualização do Blueprint. Números finais atribuídos na ordem real de merge; o par obrigatório é voz/Vosk (0029) e camera-video (0030).
+
 ## 4. Erros
 
 - Sem permissão de mic → gravar sem áudio NÃO: falhar com `onRecordingFailed` claro (o app já pede mic no onboarding).
