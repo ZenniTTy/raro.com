@@ -49,3 +49,18 @@ Implementar gravação real com **CameraX `VideoCapture<Recorder>`** (API oficia
 3. Voltar de Configurações durante idle NÃO regride (bindIfReady com 2 use cases).
 4. `analyze` + suíte Dart verdes; contract test do bridge inalterado.
 5. Kit adb (screencap) confirmando UI de REC ativa durante a gravação.
+
+---
+
+## Adendo de auditoria (2026-07-17, pós-implementação)
+
+Auditoria adversarial de 3 lentes (bugs silenciosos, drift, boas práticas) sobre o diff da Fatia 1. Contrato Pigeon intacto, tipos batem, ADRs consistentes. Achados corrigidos:
+
+1. **Áudio degradado silencioso (HIGH):** o `Finalize` só checava `hasError()`. Se o mic for tomado no meio (ligação), o CameraX finaliza com sucesso um clipe mudo. Fix: `RecordingController` inspeciona `recordingStats.audioStats.audioState` no finalize e loga `Log.w` quando não é `ACTIVE`/`DISABLED`. (Confirmado via Context7/docs CameraX.)
+2. **VideoCapture derrubava o Preview (HIGH):** `QualitySelector.fromOrderedList` sem `FallbackStrategy` lança no bind se nenhuma qualidade for suportada — e como o bind é Preview+VideoCapture juntos, a câmera inteira falharia em device de entrada (API 24+). Fix: `FallbackStrategy.lowerQualityOrHigherThan(Quality.HD)` + `Quality.SD` na lista → negocia em vez de lançar.
+3. **Thumbnail parcial (MEDIUM):** `compress` retornava boolean não checado → JPEG meio-escrito poderia ser retornado como sucesso; bitmap não reciclado. Fix: checar o boolean, `out.delete()` em falha, `frame.recycle()` no finally.
+4. **SecurityException genérica (MEDIUM):** mic negado caía em "sessionFailed" genérico. Fix: `CameraManager.startRecording` captura `SecurityException` → `CameraNativeException.PermissionDenied` (mensagem clara).
+
+**Achado latente NÃO corrigido (documentado):** se o replay buffer estivesse armado, o Dart mostraria "últimos Ns incluídos" mas o Kotlin ignora o preroll (UX lie). Hoje **não pode ocorrer no Android**: o `ReplayBufferHostApi` não está registrado no `MainActivity` (Bloco 3.4), então `replayArmed` é sempre `false` no Android. Quando o replay Android for implementado, gatear a confirmação de preroll por plataforma OU sinalizar no contrato que o preroll não foi incluído. Registrado aqui para não virar bug silencioso na fatia de replay.
+
+**Drift de escopo:** `bloco-2-revenuecat-setup-guia.md` + `roadmap-apk-preview-cliente-android.md` (docs do Bloco 2/distribuição) entraram nesta branch por serem untracked no início. Baixo impacto (docs), mas fora do escopo "gravação". Mantidos por já estarem commitados e linkados no index; não repetir o padrão.

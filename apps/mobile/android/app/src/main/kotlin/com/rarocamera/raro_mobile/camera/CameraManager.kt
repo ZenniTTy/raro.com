@@ -17,6 +17,7 @@ import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.FallbackStrategy
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
@@ -173,7 +174,11 @@ class CameraManager(
       Log.w(TAG, "includeReplayPreroll ignored on Android (replay buffer is a future slice)")
     }
     val sessionId = UUID.randomUUID().toString()
-    recordingController.start(vc, sessionId, callbacks)
+    try {
+      recordingController.start(vc, sessionId, callbacks)
+    } catch (e: SecurityException) {
+      throw CameraNativeException.PermissionDenied
+    }
     return sessionId
   }
 
@@ -208,7 +213,10 @@ class CameraManager(
     }
     val recorder = Recorder.Builder()
       .setQualitySelector(
-        QualitySelector.fromOrderedList(listOf(quality, Quality.FHD, Quality.HD)),
+        QualitySelector.fromOrderedList(
+          listOf(quality, Quality.FHD, Quality.HD, Quality.SD),
+          FallbackStrategy.lowerQualityOrHigherThan(Quality.HD),
+        ),
       )
       .build()
     return VideoCapture.withOutput(recorder)

@@ -3,6 +3,7 @@ package com.rarocamera.raro_mobile.camera
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import androidx.camera.video.AudioStats
 import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
@@ -59,6 +60,12 @@ class RecordingController(
                 "recording failed error=${event.error}",
               )
             } else {
+              val audioState = event.recordingStats.audioStats.audioState
+              if (audioState != AudioStats.AUDIO_STATE_ACTIVE &&
+                audioState != AudioStats.AUDIO_STATE_DISABLED
+              ) {
+                Log.w(TAG, "recording finalized with degraded audio state=$audioState")
+              }
               val durationMs = event.recordingStats.recordedDurationNanos / 1_000_000
               callbacks.onFinished(target.absolutePath, durationMs)
             }
