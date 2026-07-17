@@ -49,6 +49,8 @@
 - ADRs continuam de **0013 a 0024** em [decisions/](decisions/) (camera bridge strategy, e2e harness, recording pipeline, 4k60, voz SFSpeech/ONNX/toggle único etc.) — a lista vai até 0024, não para em 0012.
 - [decisions/0025-firebase-bootstrap-strategy.md](decisions/0025-firebase-bootstrap-strategy.md) — bootstrap Firebase (init eager + Crashlytics 3 handlers + pins gradle)
 - [decisions/0026-system-design-client-only.md](decisions/0026-system-design-client-only.md) — system design client-only single-node; vault filesystem como store canônico
+- [decisions/0027-camera-fullbleed-diverge-prototipo.md](decisions/0027-camera-fullbleed-diverge-prototipo.md) — câmera full-bleed diverge do protótipo
+- [decisions/0028-wake-phrases-two-word-commands-sensory.md](decisions/0028-wake-phrases-two-word-commands-sensory.md) — wake phrases de 2 palavras ("raro gravar"/"raro parar") via Sensory em background; estende ADR-0009
 
 ## Sessions (log append-only)
 
@@ -59,6 +61,8 @@
 ## Specs e plans (TLC Spec-Driven)
 
 - [superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md) — **roadmap vigente até entrega** (6 blocos; supersede o DAG de 20 specs em 04-ROADMAP.md)
+- [superpowers/plans/bloco-2-revenuecat-setup-guia.md](superpowers/plans/bloco-2-revenuecat-setup-guia.md) — guia de pré-requisitos do Bloco 2 (contas/produtos/chaves RevenueCat antes do código)
+- [superpowers/plans/roadmap-apk-preview-cliente-android.md](superpowers/plans/roadmap-apk-preview-cliente-android.md) — roadmap de distribuição da APK Android de preview ao cliente
 - [superpowers/specs/0000-template.md](superpowers/specs/0000-template.md) — template canônico de spec
 - [superpowers/plans/0000-template.md](superpowers/plans/0000-template.md) — template canônico de plan com 7 execution rules + Phase 0 pre-flight + atomic tasks
 - `superpowers/specs/<YYYY-MM-DD>-<slug>-design.md` — specs por feature (criadas via `/new-spec`)

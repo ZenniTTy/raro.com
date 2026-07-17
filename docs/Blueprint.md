@@ -52,7 +52,7 @@ A Seção 3.2 do briefing define o protótipo como fonte de verdade inegociável
 | Plataforma | Stack nativa | Responsabilidade |
 |---|---|---|
 | iOS | **AVFoundation** (Swift) | `AVCaptureDevice.DiscoverySession` com `builtInUltraWideCamera` + `builtInWideAngleCamera`. `AVCaptureSession` + `AVAssetWriter` para pipeline e Replay Buffer. |
-| Android | **CameraX** (Kotlin) | `CameraSelector.Builder().addCameraFilter()` com filtro por `LENS_INFO_AVAILABLE_FOCAL_LENGTHS`. `MediaCodec` + `MediaMuxer` para encoding + buffer. |
+| Android | **CameraX** (Kotlin) | `CameraSelector.Builder().addCameraFilter()` com filtro por `LENS_INFO_AVAILABLE_FOCAL_LENGTHS`. Gravação linear: `VideoCapture<Recorder>` (`androidx.camera:camera-video`, ADR-0030). Replay/pré-roll buffer: `MediaCodec` + `MediaMuxer` (fatia futura, buffer circular). |
 
 **Method Channels (Dart ↔ Swift/Kotlin):**
 
