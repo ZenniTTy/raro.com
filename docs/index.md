@@ -61,6 +61,8 @@
 ## Specs e plans (TLC Spec-Driven)
 
 - [superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md](superpowers/plans/PLANO-MESTRE-finalizacao-entrega-cliente.md) — **roadmap vigente até entrega** (6 blocos; supersede o DAG de 20 specs em 04-ROADMAP.md)
+- [superpowers/plans/bloco-2-revenuecat-setup-guia.md](superpowers/plans/bloco-2-revenuecat-setup-guia.md) — guia de pré-requisitos do Bloco 2 (contas/produtos/chaves RevenueCat antes do código)
+- [superpowers/plans/roadmap-apk-preview-cliente-android.md](superpowers/plans/roadmap-apk-preview-cliente-android.md) — roadmap de distribuição da APK Android de preview ao cliente
 - [superpowers/specs/0000-template.md](superpowers/specs/0000-template.md) — template canônico de spec
 - [superpowers/plans/0000-template.md](superpowers/plans/0000-template.md) — template canônico de plan com 7 execution rules + Phase 0 pre-flight + atomic tasks
 - `superpowers/specs/<YYYY-MM-DD>-<slug>-design.md` — specs por feature (criadas via `/new-spec`)
