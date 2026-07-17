@@ -435,6 +435,9 @@ class _Viewport extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final insets = MediaQuery.viewPaddingOf(context);
+    final overlayTop = insets.top + 16;
+    final overlayBottom = insets.bottom + 112;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -453,20 +456,24 @@ class _Viewport extends StatelessWidget {
           ),
         ),
         if (recording)
-          Positioned(top: 56, left: 12, child: RecIndicator(elapsed: elapsed))
+          Positioned(
+            top: overlayTop,
+            left: 12,
+            child: RecIndicator(elapsed: elapsed),
+          )
         else if (controlMode == ControlMode.voice)
           Center(child: VoiceListeningIndicator(state: voiceState))
         else
           const Center(child: CameraCenterHint()),
         Positioned(
-          top: 56,
+          top: overlayTop,
           right: 12,
           child: BufferPill(duration: bufferDuration, onTap: onToggleBuffer),
         ),
         Positioned(
           left: 12,
           right: 12,
-          bottom: 150,
+          bottom: overlayBottom,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,

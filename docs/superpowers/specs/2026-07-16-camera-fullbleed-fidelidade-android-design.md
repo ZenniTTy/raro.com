@@ -98,3 +98,15 @@ O autor (Claude) DEVE inspecionar o PNG do golden e comparar com o alvo ANTES de
 5. Build iOS compila; goldens iOS revisados.
 6. Divergência registrada (ADR/Blueprint).
 7. Diff sem `.swift`, sem regen Pigeon.
+
+---
+
+## Adendos pós-implementação (2026-07-16, auditoria pré-session-end)
+
+Desvios conscientes descobertos/decididos na implementação — o código é a verdade; esta seção reconcilia a spec:
+
+1. **1 linha de Kotlin foi necessária** (contradiz §3/§7 "zero Kotlin"): `PreviewView.ImplementationMode.COMPATIBLE` em `CameraPlatformView.kt`. Sem ela, o SurfaceView default fura a tela no full-bleed e ENGOLE todos os overlays Flutter (provado no M54: controles sumiram; o "popup cortado" original era o mesmo buraco). Commit `6793ed3`, ADR-0027, memória `raro-pattern-android-surfaceview-fullbleed-eats-overlays`.
+2. **Popups NÃO ficaram em SafeArea** (contradiz §3.2/§4): `PrerollConfirmation` retorna `Positioned` (exige ser filho direto do Stack — SafeArea no meio quebra o parent data; teste pegou a regressão). O corte real do popup era o buraco do SurfaceView (item 1). `PrerollConfirmation` ajustado para `bottom: viewPadding+124` (não sobrepor os controles que subiram com o SafeArea).
+3. **Offsets dos overlays viraram responsivos a insets** (a spec fixava 56/150 como ponto de partida): `overlayTop = viewPadding.top+16`, `overlayBottom = viewPadding.bottom+112` — hardcoded quebrava em devices com insets maiores (Dynamic Island ~59px; o full-bleed vale pro iOS).
+4. **DoD §8.3 (design-fidelity)**: executado via workflow de auditoria (design-fidelity-checker, 2026-07-16). Resultado: moldura diverge (coberta pelo ADR-0027); 7 gaps menores pré-existentes registrados como backlog no session log (bufferBar nunca implementada, estado desarmado do BufferPill, grad-line dos controles, glow do REC, cores da lens pill, botão close do topo, literais fora de .arb → Bloco 4.6).
+5. **DoD §8.2**: golden ganhou 2º cenário (popup inteiro sobre o full-bleed). Cenários recording/voice/not-ready ficam como melhoria futura.
