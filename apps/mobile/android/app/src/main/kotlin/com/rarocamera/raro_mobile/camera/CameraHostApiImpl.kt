@@ -1,9 +1,11 @@
 package com.rarocamera.raro_mobile.camera
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import com.rarocamera.raro_mobile.generated.camera.CameraCapabilities
 import com.rarocamera.raro_mobile.generated.camera.CameraConfig
+import com.rarocamera.raro_mobile.generated.camera.CameraErrorCode
 import com.rarocamera.raro_mobile.generated.camera.CameraFlutterApi
 import com.rarocamera.raro_mobile.generated.camera.CameraHostApi
 import com.rarocamera.raro_mobile.generated.camera.FlutterError
@@ -14,6 +16,7 @@ import com.rarocamera.raro_mobile.generated.camera.RecordingOptions
 import com.rarocamera.raro_mobile.generated.camera.Resolution
 
 class CameraHostApiImpl(
+  private val context: Context,
   private val manager: CameraManager,
   private val flutterApi: CameraFlutterApi,
 ) : CameraHostApi {
@@ -89,31 +92,42 @@ class CameraHostApiImpl(
   }
 
   override fun startRecording(options: RecordingOptions): String {
-    throw FlutterError(
-      code = "sessionFailed",
-      message = "startRecording not implemented on Android until Bloco 3.1 (PLANO-MESTRE)",
-      details = null,
-    )
+    try {
+      return manager.startRecording(
+        options,
+        object : RecordingController.RecordingCallbacks {
+          override fun onStarted(sessionId: String) {
+            main.post { flutterApi.onRecordingStarted(sessionId) {} }
+          }
+
+          override fun onFinished(path: String, durationMs: Long) {
+            main.post { flutterApi.onRecordingFinished(path, durationMs) {} }
+          }
+
+          override fun onFailed(code: CameraErrorCode, message: String?) {
+            main.post { flutterApi.onRecordingFailed(code, message) {} }
+          }
+        },
+      )
+    } catch (e: Throwable) {
+      throw toFlutterError(e)
+    }
   }
 
   override fun stopRecording() {
-    throw FlutterError(
-      code = "sessionFailed",
-      message = "stopRecording not implemented on Android until Bloco 3.1 (PLANO-MESTRE)",
-      details = null,
-    )
+    try {
+      manager.stopRecording()
+    } catch (e: Throwable) {
+      throw toFlutterError(e)
+    }
   }
 
   override fun generateThumbnail(videoPath: String, callback: (Result<String>) -> Unit) {
-    callback(
-      Result.failure(
-        FlutterError(
-          code = "formatUnsupported",
-          message = "generateThumbnail not implemented on Android until Sprint 3 (ADR-0019)",
-          details = null,
-        ),
-      ),
-    )
+    try {
+      callback(Result.success(ThumbnailExtractor.extractFirstFrameJpeg(context, videoPath)))
+    } catch (e: Throwable) {
+      callback(Result.failure(toFlutterError(e)))
+    }
   }
 
   override fun requestPermission(callback: (Result<Boolean>) -> Unit) {
