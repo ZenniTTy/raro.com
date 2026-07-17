@@ -11,6 +11,7 @@ class CameraPlatformView(
 ) : PlatformView {
   private val previewView: PreviewView = PreviewView(context).apply {
     scaleType = PreviewView.ScaleType.FILL_CENTER
+    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
   }
 
   init {
