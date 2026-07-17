@@ -17,6 +17,10 @@ import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
+import androidx.camera.video.Recorder
+import androidx.camera.video.VideoCapture
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -26,7 +30,9 @@ import com.rarocamera.raro_mobile.generated.camera.FocusPoint
 import com.rarocamera.raro_mobile.generated.camera.FormatCapability
 import com.rarocamera.raro_mobile.generated.camera.Fps
 import com.rarocamera.raro_mobile.generated.camera.LensType
+import com.rarocamera.raro_mobile.generated.camera.RecordingOptions
 import com.rarocamera.raro_mobile.generated.camera.Resolution
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 private const val TAG = "RaroCamera"
@@ -41,6 +47,8 @@ class CameraManager(
   private var camera: Camera? = null
   private var currentConfig: CameraConfig? = null
   private var pendingConfig: CameraConfig? = null
+  private var videoCapture: VideoCapture<Recorder>? = null
+  private val recordingController = RecordingController(context, ContextCompat.getMainExecutor(context))
 
   var onLensSwitched: ((LensType) -> Unit)? = null
   var surfaceProvider: Preview.SurfaceProvider? = null
@@ -105,8 +113,10 @@ class CameraManager(
       val selector = CameraLensDiscovery.selectorFor(p, config.lens)
       val pv = buildPreview(config.resolution, config.fps)
       pv.setSurfaceProvider(sp)
-      camera = p.bindToLifecycle(lifecycleOwner, selector, pv)
+      val vc = buildVideoCapture(config.resolution)
+      camera = p.bindToLifecycle(lifecycleOwner, selector, pv, vc)
       preview = pv
+      videoCapture = vc
       currentConfig = config
     } catch (e: CameraNativeException) {
       throw e
@@ -120,6 +130,7 @@ class CameraManager(
     provider?.unbindAll()
     preview = null
     camera = null
+    videoCapture = null
     currentConfig = null
     pendingConfig = null
   }
@@ -131,8 +142,10 @@ class CameraManager(
     val selector = CameraLensDiscovery.selectorFor(p, lens)
     val pv = buildPreview(cfg.resolution, cfg.fps)
     surfaceProvider?.let(pv::setSurfaceProvider)
-    camera = p.bindToLifecycle(lifecycleOwner, selector, pv)
+    val vc = buildVideoCapture(cfg.resolution)
+    camera = p.bindToLifecycle(lifecycleOwner, selector, pv, vc)
     preview = pv
+    videoCapture = vc
     currentConfig = cfg.copy(lens = lens)
     onLensSwitched?.invoke(lens)
   }
@@ -144,9 +157,29 @@ class CameraManager(
     val selector = CameraLensDiscovery.selectorFor(p, cfg.lens)
     val pv = buildPreview(resolution, fps)
     surfaceProvider?.let(pv::setSurfaceProvider)
-    camera = p.bindToLifecycle(lifecycleOwner, selector, pv)
+    val vc = buildVideoCapture(resolution)
+    camera = p.bindToLifecycle(lifecycleOwner, selector, pv, vc)
     preview = pv
+    videoCapture = vc
     currentConfig = cfg.copy(resolution = resolution, fps = fps)
+  }
+
+  fun startRecording(
+    options: RecordingOptions,
+    callbacks: RecordingController.RecordingCallbacks,
+  ): String {
+    val vc = videoCapture ?: throw CameraNativeException.NotRunning
+    if (options.includeReplayPreroll) {
+      Log.w(TAG, "includeReplayPreroll ignored on Android (replay buffer is a future slice)")
+    }
+    val sessionId = UUID.randomUUID().toString()
+    recordingController.start(vc, sessionId, callbacks)
+    return sessionId
+  }
+
+  fun stopRecording() {
+    if (!recordingController.isRecording()) throw CameraNativeException.NotRunning
+    recordingController.stop()
   }
 
   fun focusAt(point: FocusPoint) {
@@ -165,6 +198,20 @@ class CameraManager(
     val fresh = ProcessCameraProvider.getInstance(context).get()
     provider = fresh
     return fresh
+  }
+
+  private fun buildVideoCapture(resolution: Resolution): VideoCapture<Recorder> {
+    val quality = when (resolution) {
+      Resolution.UHD4K -> Quality.UHD
+      Resolution.FHD1080 -> Quality.FHD
+      Resolution.HD720 -> Quality.HD
+    }
+    val recorder = Recorder.Builder()
+      .setQualitySelector(
+        QualitySelector.fromOrderedList(listOf(quality, Quality.FHD, Quality.HD)),
+      )
+      .build()
+    return VideoCapture.withOutput(recorder)
   }
 
   @OptIn(ExperimentalCamera2Interop::class)
