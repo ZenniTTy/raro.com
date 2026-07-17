@@ -9,7 +9,6 @@ import 'package:raro_mobile/core/native_bridges/generated/voice_api.g.dart';
 import 'package:raro_mobile/features/camera/domain/camera_error_message.dart';
 import 'package:raro_mobile/features/camera/domain/format_catalog.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
-import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/camera/application/camera_controller.dart';
 import 'package:raro_mobile/features/camera/application/camera_flutter_api_provider.dart';
@@ -322,46 +321,41 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       backgroundColor: colors.bgDeep,
       body: Stack(
         children: [
-          Column(
-            children: [
-              const _TopBar(),
-              const _GradLine(),
-              const SizedBox(height: 12),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: _Viewport(
-                      cameraReady: cameraReady,
-                      recording: recording,
-                      elapsed: _elapsed,
-                      voiceState: voiceState,
-                      controlMode: controlMode,
-                      bufferDuration: bufferDuration,
-                      lens: shell.lens,
-                      lensLabel: shell.hudLensLabel,
-                      resolutionLabel: resolutionLabel(_format.resolution),
-                      fpsLabel: fpsLabel(_format.fps),
-                      ultraWideEnabled: !_is4k60,
-                      onToggleBuffer: () => ref
-                          .read(settingsControllerProvider.notifier)
-                          .toggleBufferDuration(),
-                      onSelectLens: _onSelectLens,
-                      onTapHud: widget.onSettings,
-                    ),
-                  ),
+          Positioned.fill(
+            child: _Viewport(
+              cameraReady: cameraReady,
+              recording: recording,
+              elapsed: _elapsed,
+              voiceState: voiceState,
+              controlMode: controlMode,
+              bufferDuration: bufferDuration,
+              lens: shell.lens,
+              lensLabel: shell.hudLensLabel,
+              resolutionLabel: resolutionLabel(_format.resolution),
+              fpsLabel: fpsLabel(_format.fps),
+              ultraWideEnabled: !_is4k60,
+              onToggleBuffer: () => ref
+                  .read(settingsControllerProvider.notifier)
+                  .toggleBufferDuration(),
+              onSelectLens: _onSelectLens,
+              onTapHud: widget.onSettings,
+            ),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                const _TopBar(),
+                const Spacer(),
+                _BottomControls(
+                  recording: recording,
+                  replayArmed: replayArmed,
+                  replayWindowSeconds: replayWindowSeconds,
+                  onGallery: widget.onGallery,
+                  onSettings: widget.onSettings,
+                  onRecTap: _onRecTap,
                 ),
-              ),
-              _BottomControls(
-                recording: recording,
-                replayArmed: replayArmed,
-                replayWindowSeconds: replayWindowSeconds,
-                onGallery: widget.onGallery,
-                onSettings: widget.onSettings,
-                onRecTap: _onRecTap,
-              ),
-            ],
+              ],
+            ),
           ),
           if (_prerollConfirmationSeconds != null)
             PrerollConfirmation(
@@ -388,7 +382,7 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.fromLTRB(20, 60, 20, 12),
+      padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
       child: Center(
         child: Text(
           'RARO',
@@ -441,6 +435,9 @@ class _Viewport extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final insets = MediaQuery.viewPaddingOf(context);
+    final overlayTop = insets.top + 16;
+    final overlayBottom = insets.bottom + 112;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -459,20 +456,24 @@ class _Viewport extends StatelessWidget {
           ),
         ),
         if (recording)
-          Positioned(top: 12, left: 12, child: RecIndicator(elapsed: elapsed))
+          Positioned(
+            top: overlayTop,
+            left: 12,
+            child: RecIndicator(elapsed: elapsed),
+          )
         else if (controlMode == ControlMode.voice)
           Center(child: VoiceListeningIndicator(state: voiceState))
         else
           const Center(child: CameraCenterHint()),
         Positioned(
-          top: 12,
+          top: overlayTop,
           right: 12,
           child: BufferPill(duration: bufferDuration, onTap: onToggleBuffer),
         ),
         Positioned(
           left: 12,
           right: 12,
-          bottom: 12,
+          bottom: overlayBottom,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -541,19 +542,6 @@ class _BottomControls extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _GradLine extends StatelessWidget {
-  const _GradLine();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 1.5,
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: const BoxDecoration(gradient: RaroGradients.rainbow),
     );
   }
 }

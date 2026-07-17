@@ -44,7 +44,7 @@ class _PrerollConfirmationState extends State<PrerollConfirmation>
     return Positioned(
       left: 0,
       right: 0,
-      bottom: 120,
+      bottom: MediaQuery.viewPaddingOf(context).bottom + 124,
       child: IgnorePointer(
         child: Center(
           child: FadeTransition(
