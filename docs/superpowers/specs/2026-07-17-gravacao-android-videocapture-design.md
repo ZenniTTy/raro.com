@@ -9,10 +9,13 @@
 
 ## 2. Solução
 
+> **Validado via Context7 (developer.android.com/media/camera/camerax/video-capture, 2026-07-17):** padrão oficial = `videoCapture.output.prepareRecording(context, outputOptions).withAudioEnabled().start(mainExecutor, Consumer<VideoRecordEvent>)`; `PendingRecording` → `Recording` (permite `stop()`/`pause()`/`resume()`); eventos `VideoRecordEvent.Start` / `.Status` (file size, duração) / `.Finalize` com `hasError()` + `outputResults.outputUri`. `asPersistentRecording()` mantém gravação através de rebind da câmera.
+
 Implementar gravação real com **CameraX `VideoCapture<Recorder>`** (API oficial moderna, mesma família do `Preview` já em uso):
 
 - `Recorder.Builder()` com `QualitySelector` derivado do `RecordingOptions`/formato corrente (fallback ordenado — CameraX negocia o suportado; sem fallback silencioso não-reportado: qualidade efetiva logada).
 - `videoCapture.output.prepareRecording(context, FileOutputOptions)` + `.withAudioEnabled()` (exige `RECORD_AUDIO`, já no manifest) → MP4 com áudio. Sem áudio habilitado o clipe sai mudo — mesmo bug já visto no iOS.
+  - **Decisão FileOutputOptions vs MediaStoreOutputOptions:** usar `FileOutputOptions` (vault sandbox do app), NÃO `MediaStoreOutputOptions` (galeria pública). Paridade com o iOS (vault privado, galeria in-app própria) e consistência do sidecar. A doc oficial suporta ambos; a escolha é de produto (privacidade/controle), não técnica.
 - Eventos `VideoRecordEvent.Start/Finalize` → callbacks Pigeon `onRecordingStarted(sessionId)` / `onRecordingFinished(path, durationMs)` / `onRecordingFailed(code, message)`.
 - Arquivo gravado no **vault do app** com o MESMO layout do iOS (mesma convenção de nome/pasta + sidecar JSON com **escrita atômica tmp+rename** — memória `raro-pattern-vault-sidecar-atomic-write-race`), para a galeria Flutter ler sem branch por plataforma. Path persistido relativo/por id (memória `raro-pattern-ios-container-uuid-stale-absolute-path`).
 
