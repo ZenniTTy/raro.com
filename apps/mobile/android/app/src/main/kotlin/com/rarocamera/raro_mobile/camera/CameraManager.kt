@@ -12,6 +12,7 @@ import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
 import androidx.camera.core.FocusMeteringAction
+import androidx.camera.core.MeteringPoint
 import androidx.camera.core.Preview
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.resolutionselector.ResolutionSelector
@@ -34,6 +35,7 @@ import com.rarocamera.raro_mobile.generated.camera.LensType
 import com.rarocamera.raro_mobile.generated.camera.RecordingOptions
 import com.rarocamera.raro_mobile.generated.camera.Resolution
 import java.util.UUID
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 private const val TAG = "RaroCamera"
@@ -187,14 +189,31 @@ class CameraManager(
     recordingController.stop()
   }
 
-  fun focusAt(point: FocusPoint) {
-    val cam = camera ?: throw CameraNativeException.NotRunning
+  fun focusAt(point: FocusPoint, onResult: (Boolean) -> Unit) {
     val factory = SurfaceOrientedMeteringPointFactory(1f, 1f)
     val meteringPoint = factory.createPoint(point.x.toFloat(), point.y.toFloat())
-    val action = FocusMeteringAction.Builder(meteringPoint)
+    focusAtMeteringPoint(meteringPoint, onResult)
+  }
+
+  fun focusAtMeteringPoint(point: MeteringPoint, onResult: (Boolean) -> Unit) {
+    val cam = camera ?: throw CameraNativeException.NotRunning
+    val action = FocusMeteringAction.Builder(point)
       .setAutoCancelDuration(5, TimeUnit.SECONDS)
       .build()
-    cam.cameraControl.startFocusAndMetering(action)
+    val future = cam.cameraControl.startFocusAndMetering(action)
+    future.addListener({
+      val ok = try {
+        future.get().isFocusSuccessful
+      } catch (e: ExecutionException) {
+        Log.w(TAG, "focus metering failed", e)
+        false
+      } catch (e: InterruptedException) {
+        Thread.currentThread().interrupt()
+        Log.w(TAG, "focus metering interrupted", e)
+        false
+      }
+      onResult(ok)
+    }, ContextCompat.getMainExecutor(context))
   }
 
   private fun providerNow(): ProcessCameraProvider {

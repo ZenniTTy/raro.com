@@ -81,8 +81,9 @@ class CameraHostApiImpl(
 
   override fun focusAt(point: FocusPoint, callback: (Result<Unit>) -> Unit) {
     try {
-      manager.focusAt(point)
-      main.post { flutterApi.onFocusChanged(point, true) {} }
+      manager.focusAt(point) { locked ->
+        main.post { flutterApi.onFocusChanged(point, locked) {} }
+      }
       callback(Result.success(Unit))
     } catch (e: Throwable) {
       callback(Result.failure(toFlutterError(e)))
