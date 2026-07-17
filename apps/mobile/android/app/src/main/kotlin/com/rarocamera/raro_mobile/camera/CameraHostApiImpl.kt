@@ -1,6 +1,5 @@
 package com.rarocamera.raro_mobile.camera
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import com.rarocamera.raro_mobile.generated.camera.CameraCapabilities
@@ -16,7 +15,6 @@ import com.rarocamera.raro_mobile.generated.camera.RecordingOptions
 import com.rarocamera.raro_mobile.generated.camera.Resolution
 
 class CameraHostApiImpl(
-  private val context: Context,
   private val manager: CameraManager,
   private val flutterApi: CameraFlutterApi,
 ) : CameraHostApi {
@@ -124,7 +122,7 @@ class CameraHostApiImpl(
 
   override fun generateThumbnail(videoPath: String, callback: (Result<String>) -> Unit) {
     try {
-      callback(Result.success(ThumbnailExtractor.extractFirstFrameJpeg(context, videoPath)))
+      callback(Result.success(ThumbnailExtractor.extractFirstFrameJpeg(videoPath)))
     } catch (e: Throwable) {
       callback(Result.failure(toFlutterError(e)))
     }

@@ -14,7 +14,7 @@ class MainActivity : FlutterActivity() {
     val messenger = flutterEngine.dartExecutor.binaryMessenger
     val manager = CameraManager(applicationContext, this)
     val flutterApi = CameraFlutterApi(messenger)
-    val hostApi = CameraHostApiImpl(applicationContext, manager, flutterApi)
+    val hostApi = CameraHostApiImpl(manager, flutterApi)
     CameraHostApi.setUp(messenger, hostApi)
     flutterEngine
       .platformViewsController
