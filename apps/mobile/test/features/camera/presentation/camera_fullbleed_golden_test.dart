@@ -7,6 +7,9 @@ import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/presentation/camera_screen.dart';
+import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
+import 'package:raro_mobile/features/paywall/data/subscription_store.dart';
+import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
 import 'package:raro_mobile/features/replay/data/replay_buffer_repository.dart';
 import 'package:raro_mobile/features/replay/data/replay_buffer_repository_provider.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
@@ -22,6 +25,14 @@ class _FakeSettingsStore implements SettingsStore {
 
   @override
   Future<void> save(RecordingSettings settings) async {}
+}
+
+class _FakeSubscriptionStore implements SubscriptionStore {
+  @override
+  Future<SubscriptionState> load() async => const SubscriptionState.initial();
+
+  @override
+  Future<void> save(SubscriptionState state) async {}
 }
 
 class _StubVoiceRepository implements VoiceRepository {
@@ -67,6 +78,42 @@ _MockCameraRepository _buildRepo() {
 
 void _noop() {}
 
+Widget _cameraUnderInsets({bool fakeSubscription = false}) {
+  return SizedBox(
+    width: 400,
+    height: 860,
+    child: MediaQuery(
+      data: const MediaQueryData(
+        size: Size(400, 860),
+        viewPadding: EdgeInsets.only(top: 40, bottom: 48),
+        padding: EdgeInsets.only(top: 40, bottom: 48),
+      ),
+      child: ProviderScope(
+        overrides: [
+          cameraRepositoryProvider.overrideWithValue(_buildRepo()),
+          settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
+          voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+          voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
+          voiceStateEventsProvider.overrideWithValue(const Stream.empty()),
+          replayBufferRepositoryProvider.overrideWithValue(_buildReplayRepo()),
+          if (fakeSubscription)
+            subscriptionStoreProvider.overrideWithValue(
+              _FakeSubscriptionStore(),
+            ),
+        ],
+        child: MaterialApp(
+          theme: buildRaroDarkTheme(),
+          home: const CameraScreen(
+            onGallery: _noop,
+            onSettings: _noop,
+            onSeePlans: _noop,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 void main() {
   goldenTest(
     'camera_fullbleed',
@@ -76,43 +123,22 @@ void main() {
       children: [
         GoldenTestScenario(
           name: 'ready with android insets',
-          child: SizedBox(
-            width: 400,
-            height: 860,
-            child: MediaQuery(
-              data: const MediaQueryData(
-                size: Size(400, 860),
-                viewPadding: EdgeInsets.only(top: 40, bottom: 48),
-                padding: EdgeInsets.only(top: 40, bottom: 48),
-              ),
-              child: ProviderScope(
-                overrides: [
-                  cameraRepositoryProvider.overrideWithValue(_buildRepo()),
-                  settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
-                  voiceRepositoryProvider.overrideWithValue(
-                    _StubVoiceRepository(),
-                  ),
-                  voiceWakeEventsProvider.overrideWithValue(
-                    const Stream.empty(),
-                  ),
-                  voiceStateEventsProvider.overrideWithValue(
-                    const Stream.empty(),
-                  ),
-                  replayBufferRepositoryProvider.overrideWithValue(
-                    _buildReplayRepo(),
-                  ),
-                ],
-                child: MaterialApp(
-                  theme: buildRaroDarkTheme(),
-                  home: const CameraScreen(
-                    onGallery: _noop,
-                    onSettings: _noop,
-                    onSeePlans: _noop,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          child: _cameraUnderInsets(),
+        ),
+      ],
+    ),
+  );
+
+  goldenTest(
+    'camera_fullbleed_popup',
+    fileName: 'camera_fullbleed_popup',
+    // 2 pumps de 300ms disparam o timer de 450ms do popup de assinatura.
+    pumpBeforeTest: pumpNTimes(2, const Duration(milliseconds: 300)),
+    builder: () => GoldenTestGroup(
+      children: [
+        GoldenTestScenario(
+          name: 'subscription popup inteiro sobre o full-bleed',
+          child: _cameraUnderInsets(fakeSubscription: true),
         ),
       ],
     ),

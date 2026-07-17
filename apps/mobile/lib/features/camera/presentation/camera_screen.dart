@@ -453,7 +453,7 @@ class _Viewport extends StatelessWidget {
           ),
         ),
         if (recording)
-          Positioned(top: 12, left: 12, child: RecIndicator(elapsed: elapsed))
+          Positioned(top: 56, left: 12, child: RecIndicator(elapsed: elapsed))
         else if (controlMode == ControlMode.voice)
           Center(child: VoiceListeningIndicator(state: voiceState))
         else
