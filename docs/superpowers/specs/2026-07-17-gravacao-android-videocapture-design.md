@@ -17,13 +17,16 @@ Implementar gravação real com **CameraX `VideoCapture<Recorder>`** (API oficia
 - `videoCapture.output.prepareRecording(context, FileOutputOptions)` + `.withAudioEnabled()` (exige `RECORD_AUDIO`, já no manifest) → MP4 com áudio. Sem áudio habilitado o clipe sai mudo — mesmo bug já visto no iOS.
   - **Decisão FileOutputOptions vs MediaStoreOutputOptions:** usar `FileOutputOptions` (vault sandbox do app), NÃO `MediaStoreOutputOptions` (galeria pública). Paridade com o iOS (vault privado, galeria in-app própria) e consistência do sidecar. A doc oficial suporta ambos; a escolha é de produto (privacidade/controle), não técnica.
 - Eventos `VideoRecordEvent.Start/Finalize` → callbacks Pigeon `onRecordingStarted(sessionId)` / `onRecordingFinished(path, durationMs)` / `onRecordingFailed(code, message)`.
-- Arquivo gravado no **vault do app** com o MESMO layout do iOS (mesma convenção de nome/pasta + sidecar JSON com **escrita atômica tmp+rename** — memória `raro-pattern-vault-sidecar-atomic-write-race`), para a galeria Flutter ler sem branch por plataforma. Path persistido relativo/por id (memória `raro-pattern-ios-container-uuid-stale-absolute-path`).
+- **Descoberta ao ler o código (2026-07-17) — reduz o escopo nativo:** o vault, o sidecar JSON atômico e o thumbnail NÃO são trabalho do Kotlin. Vivem em Dart (`VaultService` + `recordingVaultSink` em `camera_flutter_api_provider.dart`), cross-platform: o nativo (iOS inclusive) só produz um `.mp4` cru num arquivo temporário e devolve o path via `onRecordingFinished(path, durationMs)`; o Dart copia pro vault, escreve o sidecar atômico e dispara o thumbnail. Portanto o Kotlin desta fatia:
+  - Grava o MP4 num arquivo temp em `context.filesDir`/cacheDir com nome **`raro_<sessionId>.mp4`** — a convenção que `_idFromPath` espera (remove o prefixo `raro_`; ver `camera_flutter_api_provider.dart:117-122`). Nome errado = id errado no vault.
+  - Devolve `onRecordingStarted(sessionId)` quando `VideoRecordEvent.Start` chega, `onRecordingFinished(tempPath, durationMs)` no `.Finalize` sem erro, `onRecordingFailed(code, msg)` no `.Finalize` com erro. As memórias de sidecar atômico e path-por-id já estão satisfeitas pelo Dart — não reimplementar no Kotlin.
 
 **Bind:** `bindIfReady()` passa a bindar `Preview + VideoCapture` juntos no mesmo `bindToLifecycle`. Preservar o comportamento provado da sessão 0036 (surface antes do bind).
 
 ## 3. Escopo consciente (fora)
 
 - **Pré-roll/replay buffer Android**: `RecordingOptions.includeReplayPreroll` é IGNORADO com `Log.w` explícito (não silencioso). Paridade de pré-roll é fatia futura (a mais complexa do app — MediaCodec/buffer circular, memória `raro-pattern-android-mediacodec-buffer-management`).
+- **Thumbnail Android (`generateThumbnail`)**: HOJE também é stub (`formatUnsupported`, `CameraHostApiImpl.kt:107`). Sem ele o clipe grava mas fica sem thumbnail na galeria (o Dart faz `try/catch` e só loga — não quebra). Para paridade real, **incluir nesta fatia** o thumbnail Android via `MediaMetadataRetriever.getFrameAtTime(0)` → JPEG no path que o Dart espera. Escopo pequeno e no mesmo arquivo; sem ele a galeria Android fica com placeholder de cor (`thumbnailHue`).
 - Foto (se houver stub separado) não muda nesta fatia.
 - Nenhuma mudança de contrato Pigeon, zero `.swift`, zero Dart além do necessário (o Dart já consome os callbacks).
 
