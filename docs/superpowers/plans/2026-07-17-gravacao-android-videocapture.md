@@ -502,15 +502,15 @@ adb shell "svc power stayon usb"
 adb exec-out screencap -p > /tmp/raro_rec_active.png
 ```
 
-- [ ] **Step 3: Puxar o clipe do vault e provar formato+áudio com ffprobe** (gate §10). O vault fica no sandbox interno do app (`path_provider` documentsDir → `files/vault/`), acessível via `run-as`:
+- [ ] **Step 3: Puxar o clipe do vault e provar formato+áudio com ffprobe** (gate §10). O vault fica em `app_flutter/vault/` (o `path_provider` documentsDir no Android é `app_flutter/`, NÃO `files/`). Os `.mp4` temp do Recorder ficam em `cache/` com prefixo `raro_`; o vault guarda o `<id>.mp4` sem prefixo. Acessível via `run-as`:
 
 ```bash
-adb exec-out run-as com.rarocamera ls files/vault/
+adb exec-out run-as com.rarocamera ls app_flutter/vault/
 # pegar o <id>.mp4 mais recente e copiar:
-adb exec-out run-as com.rarocamera cat files/vault/<id>.mp4 > /tmp/raro_clip.mp4
-ffprobe -v error -show_entries stream=codec_type,codec_name,width,height,r_frame_rate /tmp/raro_clip.mp4
+adb exec-out run-as com.rarocamera cat app_flutter/vault/<id>.mp4 > /tmp/raro_clip.mp4
+ffprobe -v error -show_entries stream=codec_type,codec_name,width,height,r_frame_rate,sample_rate,channels -of default=noprint_wrappers=1 /tmp/raro_clip.mp4
 ```
-Expected: uma stream `video` (h264/hevc, dimensões coerentes com o formato, fps) E uma stream `audio` (aac). **Anexar a saída no PR.** Se faltar a stream de áudio → `withAudioEnabled` não pegou (bug), não fechar a task.
+Expected: uma stream `video` (h264/hevc, dimensões coerentes com o formato, fps) E uma stream `audio` (aac, sample_rate, channels). **Anexar a saída no PR.** Se faltar a stream de áudio → `withAudioEnabled` não pegou (bug), não fechar a task. Nota: se o device não suportar 4K60 para gravação, o `QualitySelector` cai para 4K30 (fallback logado, não silencioso) — o ffprobe registra o fps real.
 
 - [ ] **Step 4: Confirmar galeria.** No app, abrir a galeria: o clipe aparece com thumbnail (não só cor) e reproduz.
 
