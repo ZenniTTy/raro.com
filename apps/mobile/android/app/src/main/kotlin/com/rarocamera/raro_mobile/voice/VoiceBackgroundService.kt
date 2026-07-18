@@ -65,7 +65,11 @@ class VoiceBackgroundService : Service() {
     @Volatile var commandListener: ((WakeCommand) -> Unit)? = null
 
     fun start(context: Context) {
-      context.startForegroundService(Intent(context, VoiceBackgroundService::class.java))
+      try {
+        context.startForegroundService(Intent(context, VoiceBackgroundService::class.java))
+      } catch (e: Exception) {
+        Log.w(TAG, "startForegroundService recusado (janela while-in-use?)", e)
+      }
     }
 
     fun stop(context: Context) {
