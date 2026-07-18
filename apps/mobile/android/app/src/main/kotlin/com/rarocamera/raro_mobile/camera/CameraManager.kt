@@ -54,6 +54,7 @@ class CameraManager(
   private val recordingController = RecordingController(context, ContextCompat.getMainExecutor(context))
 
   var onLensSwitched: ((LensType) -> Unit)? = null
+  var onFocusResult: ((FocusPoint, Boolean) -> Unit)? = null
   var surfaceProvider: Preview.SurfaceProvider? = null
     set(value) {
       field = value

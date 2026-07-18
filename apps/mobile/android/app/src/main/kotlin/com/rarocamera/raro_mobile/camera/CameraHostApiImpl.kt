@@ -24,6 +24,9 @@ class CameraHostApiImpl(
     manager.onLensSwitched = { lens ->
       main.post { flutterApi.onLensSwitched(lens) {} }
     }
+    manager.onFocusResult = { point, locked ->
+      main.post { flutterApi.onFocusChanged(point, locked) {} }
+    }
   }
 
   private fun toFlutterError(e: Throwable): FlutterError {

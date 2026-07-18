@@ -8,6 +8,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import androidx.camera.view.PreviewView
+import com.rarocamera.raro_mobile.generated.camera.FocusPoint
 import io.flutter.plugin.platform.PlatformView
 
 class CameraPlatformView(
@@ -58,10 +59,17 @@ class CameraPlatformView(
 
   private fun handleTap(x: Float, y: Float) {
     focusRing.show(x, y)
+    val width = previewView.width
+    val height = previewView.height
+    if (width <= 0 || height <= 0) return
+    val normalized = FocusPoint(
+      x = (x / width).coerceIn(0f, 1f).toDouble(),
+      y = (y / height).coerceIn(0f, 1f).toDouble(),
+    )
     val point = previewView.meteringPointFactory.createPoint(x, y)
     try {
       manager.focusAtMeteringPoint(point) { locked ->
-        Log.d(TAG, "tap focus at ($x,$y) locked=$locked")
+        manager.onFocusResult?.invoke(normalized, locked)
       }
     } catch (e: CameraNativeException) {
       Log.w(TAG, "tap focus ignored: ${e.message}")
