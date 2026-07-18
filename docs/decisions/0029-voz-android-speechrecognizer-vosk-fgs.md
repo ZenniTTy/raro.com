@@ -28,11 +28,13 @@ Esta decisão foi validada em **fonte primária** (developer.android.com, Maven 
 
 ## Decisão
 
-**Duas camadas atrás do MESMO Pigeon (zero mudança de contrato):**
+**Motor ÚNICO (Vosk) para foreground E background, atrás do MESMO Pigeon (zero mudança de contrato):**
 
-- **Foreground = `SpeechRecognizer` on-device** (`createOnDeviceSpeechRecognizer`, API 31). Restart-loop com token de ciclo; `VoiceCommandParser` (porta 1:1 do parser Swift, wake word de `raro_shared`).
-- **Background = FGS type `microphone` + Vosk** (`vosk-android:0.3.47`, modelo pt 31MB) atrás de uma interface **`WakeEngine`** trocável (`VoskWakeEngine` hoje; `SensoryWakeEngine` futuro sem refazer serviço/Pigeon/UI).
-- **Vosk é a PONTE gratuita** até a Sensory (ADR-0028) entrar como engine definitivo. Não são decisões conflitantes — são fases da mesma decisão. A interface `WakeEngine` é o ponto de troca.
+> **Revisão 2026-07-18 (pós-auditoria adversarial):** a arquitetura original propunha DOIS motores — `SpeechRecognizer` on-device no foreground + Vosk no background, com handoff por ciclo de vida. A auditoria provou que coordenar dois donos do microfone (`AudioRecord`) por tempo é intrinsecamente frágil: colisão de mic na transição (`ERROR_RECOGNIZER_BUSY`), estado `inBackground` travado, falha assíncrona de promoção a FGS. A doc oficial de *sharing audio input* confirma que captura concorrente é comportamento indefinido por OEM. **Decisão do dono: motor único.** Um só `AudioRecord`, um só dono do mic, o tempo todo — elimina a classe inteira de bugs de handoff na raiz (não mitiga).
+
+- **Foreground E background = FGS type `microphone` + Vosk** (`vosk-android:0.3.47`, modelo pt 31MB) atrás da interface **`WakeEngine`** trocável (`VoskWakeEngine` hoje; `SensoryWakeEngine` futuro). O FGS roda enquanto a escuta está ativa (o app visível é suficiente para INICIAR o FGS microphone — while-in-use permite); quando o app minimiza, nada muda (mesmo motor, mesmo `AudioRecord`). **Zero handoff.**
+- **Vosk é a PONTE gratuita** até a Sensory (ADR-0028) entrar. A interface `WakeEngine` é o ponto de troca.
+- **`SpeechRecognizer` on-device NÃO é usado no v1** — mas o spike-gate (`SpeechRecognitionProbe.kt`) provou pt-BR on-device no M54, deixando o caminho nativo VIÁVEL como otimização futura (fatia dedicada, com handoff event-driven bem testado, OU só-foreground sem background). Não reintroduzir sem ADR.
 
 ### Correções materiais vs. spec 2026-07-17 (validadas em fonte primária)
 

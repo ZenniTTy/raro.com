@@ -34,13 +34,9 @@ class MainActivity : FlutterActivity() {
     VoiceHostApi.setUp(messenger, voice)
   }
 
-  override fun onStop() {
-    voiceHostApi?.moveToBackground()
-    super.onStop()
-  }
-
-  override fun onStart() {
-    super.onStart()
-    voiceHostApi?.moveToForeground()
+  override fun onDestroy() {
+    voiceHostApi?.dispose()
+    voiceHostApi = null
+    super.onDestroy()
   }
 }

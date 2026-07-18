@@ -13,47 +13,50 @@ class VoiceHostApiImpl(
   private val flutterApi: VoiceFlutterApi,
 ) : VoiceHostApi {
   private val main = Handler(Looper.getMainLooper())
-  private val foreground = ForegroundVoiceRecognizer(
-    context,
-    onCommand = { cmd -> emitCommand(cmd) },
-    onState = { state -> emitState(state) },
-  )
 
   var wantsListening: Boolean = false
     private set
 
   init {
     VoiceBackgroundService.commandListener = { cmd -> emitCommand(cmd) }
+    VoiceBackgroundService.onUnavailable = {
+      main.post {
+        wantsListening = false
+        emitState(VoiceListeningState.UNAVAILABLE)
+      }
+    }
+    VoiceBackgroundService.onListening = { main.post { emitState(VoiceListeningState.LISTENING) } }
   }
 
   override fun isAvailable(callback: (Result<Boolean>) -> Unit) {
-    callback(Result.success(foreground.isAvailable()))
+    callback(Result.success(VoskWakeEngine.isModelAvailable(context)))
   }
 
   override fun startListening() {
     wantsListening = true
-    main.post { foreground.start() }
+    main.post {
+      if (!VoiceBackgroundService.start(context)) {
+        wantsListening = false
+        emitState(VoiceListeningState.UNAVAILABLE)
+      }
+    }
   }
 
   override fun stopListening() {
     wantsListening = false
-    main.post { foreground.stop() }
-  }
-
-  fun moveToBackground() {
-    if (!wantsListening) return
-    main.post {
-      foreground.stop()
-      VoiceBackgroundService.start(context)
-    }
-  }
-
-  fun moveToForeground() {
-    if (!wantsListening) return
     main.post {
       VoiceBackgroundService.stop(context)
-      foreground.start()
+      emitState(VoiceListeningState.IDLE)
     }
+  }
+
+  fun dispose() {
+    wantsListening = false
+    main.removeCallbacksAndMessages(null)
+    VoiceBackgroundService.stop(context)
+    VoiceBackgroundService.commandListener = null
+    VoiceBackgroundService.onUnavailable = null
+    VoiceBackgroundService.onListening = null
   }
 
   private fun emitCommand(cmd: WakeCommand) {

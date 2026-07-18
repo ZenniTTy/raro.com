@@ -14,33 +14,27 @@ import java.io.File
 import kotlin.concurrent.thread
 
 class VoskWakeEngine(private val context: Context) : WakeEngine {
-  private var model: Model? = null
-  private var recognizer: Recognizer? = null
-  private var record: AudioRecord? = null
   @Volatile private var running = false
   private var worker: Thread? = null
 
   @SuppressLint("MissingPermission")
-  override fun start(onCommand: (WakeCommand) -> Unit) {
-    if (running) return
+  override fun start(onCommand: (WakeCommand) -> Unit): Boolean {
+    if (running) return true
 
-    val m = try {
+    val model = try {
       Model(ensureModelUnpacked().absolutePath)
     } catch (e: Exception) {
       Log.w(TAG, "vosk model load failed", e)
-      return
+      return false
     }
-    model = m
-    val rec = Recognizer(m, SAMPLE_RATE.toFloat())
-    recognizer = rec
 
     val minBuf = AudioRecord.getMinBufferSize(
       SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
     )
     if (minBuf <= 0) {
       Log.w(TAG, "AudioRecord min buffer invalido=$minBuf")
-      releaseVosk()
-      return
+      model.close()
+      return false
     }
     val bufSize = maxOf(minBuf, SAMPLE_RATE)
     val audio = AudioRecord(
@@ -50,47 +44,48 @@ class VoskWakeEngine(private val context: Context) : WakeEngine {
     if (audio.state != AudioRecord.STATE_INITIALIZED) {
       Log.w(TAG, "AudioRecord nao inicializou (mic ocupado?)")
       audio.release()
-      releaseVosk()
-      return
+      model.close()
+      return false
     }
-    record = audio
+
     running = true
     audio.startRecording()
-
     worker = thread(name = "vosk-wake") {
+      val recognizer = Recognizer(model, SAMPLE_RATE.toFloat())
       val buffer = ShortArray(bufSize)
-      while (running) {
-        val n = audio.read(buffer, 0, buffer.size)
-        if (n > 0) {
-          val done = rec.acceptWaveForm(buffer, n)
-          val text = if (done) textOf(rec.getResult(), "text") else textOf(rec.getPartialResult(), "partial")
-          if (text.isNotBlank()) {
-            val cmd = VoiceCommandParser.parse(text)
-            if (cmd != null) {
-              Log.i(TAG, "vosk wake matched -> $cmd")
-              onCommand(cmd)
+      try {
+        while (running) {
+          val n = audio.read(buffer, 0, buffer.size)
+          if (n > 0) {
+            if (!running) break
+            val done = recognizer.acceptWaveForm(buffer, n)
+            val text = if (done) textOf(recognizer.getResult(), "text") else textOf(recognizer.getPartialResult(), "partial")
+            if (text.isNotBlank()) {
+              val cmd = VoiceCommandParser.parse(text)
+              if (cmd != null) {
+                Log.i(TAG, "vosk wake matched -> $cmd")
+                onCommand(cmd)
+              }
             }
+          } else if (n < 0) {
+            Log.w(TAG, "AudioRecord.read error=$n, encerrando engine")
+            break
           }
         }
+      } finally {
+        recognizer.close()
+        model.close()
+        runCatching { audio.stop() }.onFailure { e -> Log.w(TAG, "audioRecord stop failed", e) }
+        audio.release()
       }
     }
+    return true
   }
 
   override fun stop() {
     running = false
-    record?.let { runCatching { it.stop() }.onFailure { e -> Log.w(TAG, "audioRecord stop failed", e) } }
     worker?.join(THREAD_JOIN_MS)
     worker = null
-    record?.release()
-    record = null
-    releaseVosk()
-  }
-
-  private fun releaseVosk() {
-    recognizer?.close()
-    recognizer = null
-    model?.close()
-    model = null
   }
 
   private fun textOf(json: String, key: String): String =
@@ -118,11 +113,15 @@ class VoskWakeEngine(private val context: Context) : WakeEngine {
     }
   }
 
-  private companion object {
-    const val TAG = "RaroVoice"
-    const val SAMPLE_RATE = 16000
-    const val MODEL_DIR = "vosk-model-small-pt-0.3"
-    const val MODEL_SENTINEL = "final.mdl"
-    const val THREAD_JOIN_MS = 1500L
+  companion object {
+    private const val TAG = "RaroVoice"
+    private const val SAMPLE_RATE = 16000
+    private const val MODEL_DIR = "vosk-model-small-pt-0.3"
+    private const val MODEL_SENTINEL = "final.mdl"
+    private const val THREAD_JOIN_MS = 2000L
+
+    fun isModelAvailable(context: Context): Boolean =
+      runCatching { context.assets.list(MODEL_DIR)?.contains(MODEL_SENTINEL) == true }
+        .getOrDefault(false)
   }
 }
