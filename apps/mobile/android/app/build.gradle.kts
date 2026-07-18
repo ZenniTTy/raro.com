@@ -52,4 +52,5 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.6.1")
     implementation("androidx.camera:camera-view:1.6.1")
     implementation("androidx.camera:camera-video:1.6.1")
+    implementation("com.alphacephei:vosk-android:0.3.47")
 }
