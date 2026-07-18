@@ -137,19 +137,19 @@ class PlanCard extends StatelessWidget {
 class _PlanFeatures extends StatelessWidget {
   const _PlanFeatures();
 
-  static const _features = [
-    'Gravação em 4K 60fps',
-    'Buffer estendido',
-    'Sem anúncios',
-  ];
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final l10n = AppLocalizations.of(context);
+    final features = [
+      l10n.planFeature4k,
+      l10n.planFeatureBuffer,
+      l10n.planFeatureNoAds,
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final f in _features)
+        for (final f in features)
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Row(

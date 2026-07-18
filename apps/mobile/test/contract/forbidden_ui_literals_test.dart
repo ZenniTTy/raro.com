@@ -66,8 +66,41 @@ bool _isAllowed(String literal) {
   return !_hasLetter.hasMatch(withoutInterpolations);
 }
 
+final _constStringList = RegExp(
+  r'static const \w+ = (?:<String>)?\[([^\]]*)\]',
+  multiLine: true,
+  dotAll: true,
+);
+
+final _quotedString = RegExp('''['"]([^'"]+)['"]''');
+
 void main() {
   group('Family i18n — UI literals fora do arb', () {
+    test('presentation não contém lista const de strings traduzíveis', () {
+      final hits = <String>[];
+      final root = Directory('lib/features');
+      for (final entity in root.listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+        if (!entity.path.contains('/presentation/')) continue;
+        if (_isExcluded(entity.path)) continue;
+        final content = entity.readAsStringSync();
+        for (final list in _constStringList.allMatches(content)) {
+          for (final match in _quotedString.allMatches(list.group(1)!)) {
+            final literal = match.group(1)!;
+            if (!_isAllowed(literal)) {
+              hits.add('${entity.path}: $literal');
+            }
+          }
+        }
+      }
+      expect(
+        hits,
+        isEmpty,
+        reason:
+            'lista const com literal de UI fora do arb:\n${hits.join("\n")}',
+      );
+    });
+
     test('presentation não contém Text literal traduzível fora do arb', () {
       final hits = <String>[];
       final root = Directory('lib/features');
