@@ -1,8 +1,14 @@
 package com.rarocamera.raro_mobile.camera
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
+import android.widget.FrameLayout
 import androidx.camera.view.PreviewView
+import com.rarocamera.raro_mobile.generated.camera.FocusPoint
 import io.flutter.plugin.platform.PlatformView
 
 class CameraPlatformView(
@@ -14,13 +20,69 @@ class CameraPlatformView(
     implementationMode = PreviewView.ImplementationMode.COMPATIBLE
   }
 
-  init {
-    manager.surfaceProvider = previewView.surfaceProvider
+  private val focusRing = FocusRingView(context)
+
+  private val container: FrameLayout = FrameLayout(context).apply {
+    addView(
+      previewView,
+      FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.MATCH_PARENT,
+      ),
+    )
+    addView(focusRing, FrameLayout.LayoutParams(0, 0))
   }
 
-  override fun getView(): View = previewView
+  private val gestureDetector = GestureDetector(
+    context,
+    object : GestureDetector.SimpleOnGestureListener() {
+      override fun onDown(e: MotionEvent): Boolean = true
+
+      override fun onSingleTapUp(e: MotionEvent): Boolean {
+        handleTap(e.x, e.y)
+        return true
+      }
+    },
+  )
+
+  init {
+    manager.surfaceProvider = previewView.surfaceProvider
+    installTapListener()
+  }
+
+  @SuppressLint("ClickableViewAccessibility")
+  private fun installTapListener() {
+    previewView.setOnTouchListener { _, event ->
+      gestureDetector.onTouchEvent(event)
+    }
+  }
+
+  private fun handleTap(x: Float, y: Float) {
+    focusRing.show(x, y)
+    val width = previewView.width
+    val height = previewView.height
+    if (width <= 0 || height <= 0) return
+    val normalized = FocusPoint(
+      x = (x / width).coerceIn(0f, 1f).toDouble(),
+      y = (y / height).coerceIn(0f, 1f).toDouble(),
+    )
+    val point = previewView.meteringPointFactory.createPoint(x, y)
+    try {
+      manager.focusAtMeteringPoint(point) { locked ->
+        manager.onFocusResult?.invoke(normalized, locked)
+      }
+    } catch (e: CameraNativeException) {
+      Log.w(TAG, "tap focus ignored: ${e.message}")
+    }
+  }
+
+  override fun getView(): View = container
 
   override fun dispose() {
     manager.surfaceProvider = null
+  }
+
+  private companion object {
+    const val TAG = "RaroCamera"
   }
 }
