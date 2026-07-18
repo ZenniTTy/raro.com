@@ -69,7 +69,7 @@ class ForegroundVoiceRecognizer(
     for (t in hits) {
       val cmd = VoiceCommandParser.parse(t)
       if (cmd != null) {
-        Log.i(TAG, "wake matched: $t -> $cmd")
+        Log.i(TAG, "wake matched -> $cmd")
         onCommand(cmd)
         return true
       }
