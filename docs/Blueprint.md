@@ -72,7 +72,7 @@ A Seção 3.2 do briefing define o protótipo como fonte de verdade inegociável
 | Plataforma | Tecnologia (ALVO ONNX — em standby) | Estado real |
 |---|---|---|
 | iOS | Wake-word dedicada on-device — modelo "Raro" (LiveKit) via ONNX Runtime + CoreML EP (SPM) — ADR-0023 | **Standby (inviável no device, 0029).** Vigente: `SFSpeechRecognizer` foreground (ADR-0022, 2 comandos) |
-| Android | **SpeechRecognizer** (`android.speech`), API 31+ `EXTRA_PREFER_OFFLINE` on-device | **Não implementado** (só contrato Pigeon). Alvo = foreground "raro gravar"/"raro parar" (PLANO-MESTRE Bloco 3.3) |
+| Android | **Vosk MOTOR ÚNICO** (`vosk-android:0.3.47`, modelo pt-BR small 31MB) via FGS `microphone` — foreground+background, um só `AudioRecord`, zero handoff — ADR-0029 | **IMPLEMENTADO e provado no M54 (0038, PR #8).** "raro gravar"/"raro parar" reconhecidos com app aberto (câmera gravou por voz). Gramática restrita no `Recognizer` + match por radical + debounce 2000ms. SpeechRecognizer nativo NÃO usado (spike-gate provou pt-BR on-device; fica p/ otimização futura). Background/tela-apagada = follow-up (mesmo motor). |
 
 **Dependência nativa (iOS):** `onnxruntime` via Swift Package Manager está no projeto mas **dormente** (pipeline ONNX preservado no commit `01a1f67`, não no caminho de produção). CoreML EP. Coberto pelo ADR-0023 (em standby); atualizar dep = abrir ADR.
 

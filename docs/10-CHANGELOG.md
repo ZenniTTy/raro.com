@@ -2,6 +2,28 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-07-18] — 0.9.0 (Pacote pré-APK Android: gravação + tap-to-focus + voz — Fatias 1–3, provadas no M54)
+
+> Decomposição do pré-APK em 4 fatias (Gravação → Foco → Voz → i18n). Fatias 1–3 fechadas e provadas no Galaxy M54; Fatia 4 (i18n) pendente. Sessões 0037–0038.
+
+### Adicionado
+- **Gravação Android real** (Fatia 1, PR #5): CameraX `VideoCapture<Recorder>` (`camera-video:1.6.1`, ADR-0030), MP4+áudio, thumbnail via `MediaMetadataRetriever`. Era stub. Provado via ffprobe (h264 3840×2160 + aac 48kHz estéreo).
+- **Tap-to-focus Android** (Fatia 2, PR #7): tap captado no nativo (`GestureDetector.onSingleTapUp` + `meteringPointFactory`), ring de foco nativo animado por `Choreographer`, `onFocusChanged` reportando o `isFocusSuccessful` real (paridade iOS via `onFocusResult`).
+- **Voz Android "raro gravar"/"raro parar"** (Fatia 3, PR #8, ADR-0029): **Vosk motor único** (`vosk-android:0.3.47` + modelo pt-BR small 31MB) via FGS `microphone` — foreground+background, um só `AudioRecord`, zero handoff. Gramática restrita no `Recognizer` + match por radical + debounce 2000ms. `POST_NOTIFICATIONS` pedido no fluxo de permissões.
+
+### Corrigido
+- **Ring de foco sumia brusco** (Fatia 2): `animator_duration_scale=0` no M54 fazia `ValueAnimator`/`AnimatorSet` pularem pro fim → animação por `Choreographer` (imune à escala).
+- **Voz não reconhecia** (Fatia 3): vosk-small em reconhecimento livre não ouve a wake word "raro" e transcreve verbos aproximados ("parar"→"para") → gramática restrita (frases-alvo) + parser por radical/prefixo. Fim da detecção repetida via `recognizer.reset()` + debounce.
+- **15 achados de auditoria adversarial** (4 passadas nas Fatias 2–3): drift de `onFocusChanged`, re-taps duplicando animação, use-after-free do Vosk, FGS crash, falhas silenciosas de estado, leaks de ciclo de vida.
+
+### Arquitetura
+- **Voz Android = Vosk motor único** substituiu o design de 2 motores (SpeechRecognizer nativo + Vosk com handoff) após a auditoria provar a fragilidade do handoff por tempo. `ForegroundVoiceRecognizer` removido (-213 linhas). ADR-0029 documenta.
+- **Blueprint atualizado:** encoding Android distingue gravação linear (CameraX Recorder) de replay (MediaCodec futuro); voz Android passa de "não implementado" para Vosk motor único provado.
+
+### Provado (M54, Android 16 / API 36)
+- Gravação: ffprobe do clipe. Foco: ring + foco muda no tap. Voz: `[raro gravar]→START`/`[raro parar]→STOP` no log + **câmera gravou/parou por voz (confirmado na tela pelo dono)**.
+- 331 testes Dart + 11 parser Kotlin verdes. Privacidade: nunca loga transcript bruto de voz.
+
 ## [2026-07-14] — 0.8.0 (Bloco 1: Firebase + Crashlytics + Analytics ligados e provados no device)
 
 > PLANO-MESTRE Bloco 1 fechado (sessões 0034 código+build, 0035 prova no iPhone 12). Firebase deixa de ser mock/não-inicializado.
