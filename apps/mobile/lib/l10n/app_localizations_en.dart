@@ -242,6 +242,132 @@ class AppLocalizationsEn extends AppLocalizations {
   String get previewVideoNotFound => 'Video not found';
 
   @override
+  String get paywallTitle => 'Choose your plan';
+
+  @override
+  String paywallSubtitle(String brand, int days) {
+    return 'Unlock the full potential of $brand. $days days free, cancel anytime.';
+  }
+
+  @override
+  String paywallMonthlyEquivalent(String price) {
+    return 'R\$ $price / month';
+  }
+
+  @override
+  String get paywallBestOffer => 'BEST OFFER';
+
+  @override
+  String get paywallSubscribeNow => 'Subscribe now';
+
+  @override
+  String get paywallRestorePurchases => 'Restore purchases';
+
+  @override
+  String get paywallBack => 'Back';
+
+  @override
+  String get paywallPeriodMonthly => 'monthly';
+
+  @override
+  String get paywallPeriodYearly => 'yearly';
+
+  @override
+  String paywallLegal(String period) {
+    return '$period subscription with automatic renewal. Cancel anytime in your App Store settings.';
+  }
+
+  @override
+  String get planPremium => 'Premium';
+
+  @override
+  String get planUnlockPotential => 'Unlock the full potential';
+
+  @override
+  String get planFeature4k => '4K 60fps recording';
+
+  @override
+  String get planFeatureBuffer => 'Extended buffer';
+
+  @override
+  String get planFeatureNoAds => 'No ads';
+
+  @override
+  String planFreeDays(int days) {
+    return '$days DAYS FREE';
+  }
+
+  @override
+  String get planCancelAnytime => 'Cancel anytime';
+
+  @override
+  String get planSelected => 'SELECTED';
+
+  @override
+  String get popupEyebrow => 'SUBSCRIPTION';
+
+  @override
+  String get popupTitle => 'Subscription required';
+
+  @override
+  String get popupBody1 => 'You can use the app normally, but to ';
+
+  @override
+  String get popupBodyBold => 'save videos';
+
+  @override
+  String get popupBody2 => ' you need an active subscription.';
+
+  @override
+  String get popupTrial1 => 'The subscription includes ';
+
+  @override
+  String popupTrialBold(int days) {
+    return '$days days free';
+  }
+
+  @override
+  String popupTrial2(int days) {
+    return '. You can cancel before the $days days are over and you won\'t be charged anything.';
+  }
+
+  @override
+  String get popupMaybeLater => 'Maybe later';
+
+  @override
+  String get checkoutTitle => 'Complete subscription';
+
+  @override
+  String get checkoutPaymentMethod => 'Payment method';
+
+  @override
+  String get checkoutOrderSummary => 'ORDER SUMMARY';
+
+  @override
+  String checkoutSubscription(String period) {
+    return '$period subscription';
+  }
+
+  @override
+  String checkoutTrialPeriod(int days) {
+    return 'Trial period ($days days)';
+  }
+
+  @override
+  String get checkoutAfterTrial => 'After the trial';
+
+  @override
+  String checkoutProcessedBy(String brand) {
+    return 'Payment processed by the App Store or Google Play. $brand never stores your card details.';
+  }
+
+  @override
+  String get checkoutSelectMethod => 'SELECT A METHOD ABOVE';
+
+  @override
+  String get checkoutConfirm => 'Confirm subscription';
+
+  @override
   String get comingSoon => 'Coming soon';
 
   @override

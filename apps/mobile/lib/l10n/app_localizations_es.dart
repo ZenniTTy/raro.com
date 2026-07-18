@@ -244,6 +244,132 @@ class AppLocalizationsEs extends AppLocalizations {
   String get previewVideoNotFound => 'Video no encontrado';
 
   @override
+  String get paywallTitle => 'Elige tu plan';
+
+  @override
+  String paywallSubtitle(String brand, int days) {
+    return 'Desbloquea todo el potencial de $brand. $days días gratis, cancela cuando quieras.';
+  }
+
+  @override
+  String paywallMonthlyEquivalent(String price) {
+    return 'R\$ $price / mes';
+  }
+
+  @override
+  String get paywallBestOffer => 'MEJOR OFERTA';
+
+  @override
+  String get paywallSubscribeNow => 'Suscribirse ahora';
+
+  @override
+  String get paywallRestorePurchases => 'Restaurar compras';
+
+  @override
+  String get paywallBack => 'Volver';
+
+  @override
+  String get paywallPeriodMonthly => 'mensual';
+
+  @override
+  String get paywallPeriodYearly => 'anual';
+
+  @override
+  String paywallLegal(String period) {
+    return 'Suscripción $period con renovación automática. Cancela en cualquier momento en la configuración de la App Store.';
+  }
+
+  @override
+  String get planPremium => 'Premium';
+
+  @override
+  String get planUnlockPotential => 'Desbloquea todo el potencial';
+
+  @override
+  String get planFeature4k => 'Grabación en 4K 60fps';
+
+  @override
+  String get planFeatureBuffer => 'Búfer extendido';
+
+  @override
+  String get planFeatureNoAds => 'Sin anuncios';
+
+  @override
+  String planFreeDays(int days) {
+    return '$days DÍAS GRATIS';
+  }
+
+  @override
+  String get planCancelAnytime => 'Cancela cuando quieras';
+
+  @override
+  String get planSelected => 'SELECCIONADO';
+
+  @override
+  String get popupEyebrow => 'SUSCRIPCIÓN';
+
+  @override
+  String get popupTitle => 'Suscripción necesaria';
+
+  @override
+  String get popupBody1 => 'Puedes usar la app con normalidad, pero para ';
+
+  @override
+  String get popupBodyBold => 'guardar videos';
+
+  @override
+  String get popupBody2 => ' necesitas activar la suscripción.';
+
+  @override
+  String get popupTrial1 => 'La suscripción incluye ';
+
+  @override
+  String popupTrialBold(int days) {
+    return '$days días gratis';
+  }
+
+  @override
+  String popupTrial2(int days) {
+    return '. Puedes cancelar antes de completar los $days días y no se te cobrará nada.';
+  }
+
+  @override
+  String get popupMaybeLater => 'Quizás después';
+
+  @override
+  String get checkoutTitle => 'Finalizar suscripción';
+
+  @override
+  String get checkoutPaymentMethod => 'Método de pago';
+
+  @override
+  String get checkoutOrderSummary => 'RESUMEN DEL PEDIDO';
+
+  @override
+  String checkoutSubscription(String period) {
+    return 'Suscripción $period';
+  }
+
+  @override
+  String checkoutTrialPeriod(int days) {
+    return 'Período de prueba ($days días)';
+  }
+
+  @override
+  String get checkoutAfterTrial => 'Después de la prueba';
+
+  @override
+  String checkoutProcessedBy(String brand) {
+    return 'Pago procesado por la App Store o Google Play. $brand no almacena los datos de tu tarjeta.';
+  }
+
+  @override
+  String get checkoutSelectMethod => 'SELECCIONA UN MÉTODO ARRIBA';
+
+  @override
+  String get checkoutConfirm => 'Confirmar suscripción';
+
+  @override
   String get comingSoon => 'Muy pronto';
 
   @override

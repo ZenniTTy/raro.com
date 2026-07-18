@@ -508,6 +508,222 @@ abstract class AppLocalizations {
   /// **'Vídeo não encontrado'**
   String get previewVideoNotFound;
 
+  /// Título do paywall
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha seu plano'**
+  String get paywallTitle;
+
+  /// Subtítulo do paywall; brand não é traduzido; days vem de raro_shared
+  ///
+  /// In pt, this message translates to:
+  /// **'Desbloqueie o potencial total do {brand}. {days} dias grátis, cancele quando quiser.'**
+  String paywallSubtitle(String brand, int days);
+
+  /// Equivalente mensal do plano anual; moeda fixa em BRL nesta fase
+  ///
+  /// In pt, this message translates to:
+  /// **'R\$ {price} / mês'**
+  String paywallMonthlyEquivalent(String price);
+
+  /// Badge do plano anual (invariant de produto)
+  ///
+  /// In pt, this message translates to:
+  /// **'MELHOR OFERTA'**
+  String get paywallBestOffer;
+
+  /// CTA principal do paywall e do popup
+  ///
+  /// In pt, this message translates to:
+  /// **'Assinar agora'**
+  String get paywallSubscribeNow;
+
+  /// CTA secundário de restauração
+  ///
+  /// In pt, this message translates to:
+  /// **'Restaurar compras'**
+  String get paywallRestorePurchases;
+
+  /// Link de voltar do paywall
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar'**
+  String get paywallBack;
+
+  /// Palavra do período mensal usada em frases compostas
+  ///
+  /// In pt, this message translates to:
+  /// **'mensal'**
+  String get paywallPeriodMonthly;
+
+  /// Palavra do período anual usada em frases compostas
+  ///
+  /// In pt, this message translates to:
+  /// **'anual'**
+  String get paywallPeriodYearly;
+
+  /// Texto legal do paywall; period é paywallPeriodMonthly/Yearly
+  ///
+  /// In pt, this message translates to:
+  /// **'Assinatura {period} com renovação automática. Cancele a qualquer momento nas configurações da App Store.'**
+  String paywallLegal(String period);
+
+  /// Nome do plano no card e no checkout
+  ///
+  /// In pt, this message translates to:
+  /// **'Premium'**
+  String get planPremium;
+
+  /// Subtítulo do card de plano
+  ///
+  /// In pt, this message translates to:
+  /// **'Desbloqueie todo o potencial'**
+  String get planUnlockPotential;
+
+  /// Feature 1 do plano
+  ///
+  /// In pt, this message translates to:
+  /// **'Gravação em 4K 60fps'**
+  String get planFeature4k;
+
+  /// Feature 2 do plano
+  ///
+  /// In pt, this message translates to:
+  /// **'Buffer estendido'**
+  String get planFeatureBuffer;
+
+  /// Feature 3 do plano
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem anúncios'**
+  String get planFeatureNoAds;
+
+  /// Pill de dias grátis; days vem de raro_shared
+  ///
+  /// In pt, this message translates to:
+  /// **'{days} DIAS GRÁTIS'**
+  String planFreeDays(int days);
+
+  /// Nota sob a pill de dias grátis
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancele quando quiser'**
+  String get planCancelAnytime;
+
+  /// Pill do plano selecionado
+  ///
+  /// In pt, this message translates to:
+  /// **'SELECIONADO'**
+  String get planSelected;
+
+  /// Eyebrow do popup de assinatura
+  ///
+  /// In pt, this message translates to:
+  /// **'ASSINATURA'**
+  String get popupEyebrow;
+
+  /// Título do popup de assinatura
+  ///
+  /// In pt, this message translates to:
+  /// **'Assinatura necessária'**
+  String get popupTitle;
+
+  /// Fragmento 1 do corpo do popup, antes do trecho em negrito
+  ///
+  /// In pt, this message translates to:
+  /// **'Você pode usar o app normalmente, mas para '**
+  String get popupBody1;
+
+  /// Trecho em negrito do corpo do popup
+  ///
+  /// In pt, this message translates to:
+  /// **'salvar vídeos'**
+  String get popupBodyBold;
+
+  /// Fragmento 2 do corpo do popup
+  ///
+  /// In pt, this message translates to:
+  /// **' é preciso ativar a assinatura.'**
+  String get popupBody2;
+
+  /// Fragmento antes dos dias grátis em negrito
+  ///
+  /// In pt, this message translates to:
+  /// **'A assinatura inclui '**
+  String get popupTrial1;
+
+  /// Dias grátis em negrito no popup
+  ///
+  /// In pt, this message translates to:
+  /// **'{days} dias grátis'**
+  String popupTrialBold(int days);
+
+  /// Fragmento final sobre cancelamento no popup
+  ///
+  /// In pt, this message translates to:
+  /// **'. Você pode cancelar antes de completar os {days} dias e não será cobrado de nada.'**
+  String popupTrial2(int days);
+
+  /// CTA de dispensar o popup
+  ///
+  /// In pt, this message translates to:
+  /// **'Talvez depois'**
+  String get popupMaybeLater;
+
+  /// Título do header do checkout
+  ///
+  /// In pt, this message translates to:
+  /// **'Finalizar assinatura'**
+  String get checkoutTitle;
+
+  /// Label da seção de método de pagamento
+  ///
+  /// In pt, this message translates to:
+  /// **'Método de pagamento'**
+  String get checkoutPaymentMethod;
+
+  /// Label da seção de resumo
+  ///
+  /// In pt, this message translates to:
+  /// **'RESUMO DO PEDIDO'**
+  String get checkoutOrderSummary;
+
+  /// Linha do tipo de assinatura; period é paywallPeriodMonthly/Yearly
+  ///
+  /// In pt, this message translates to:
+  /// **'Assinatura {period}'**
+  String checkoutSubscription(String period);
+
+  /// Linha do período de teste no resumo
+  ///
+  /// In pt, this message translates to:
+  /// **'Período de teste ({days} dias)'**
+  String checkoutTrialPeriod(int days);
+
+  /// Linha do valor pós-teste no resumo
+  ///
+  /// In pt, this message translates to:
+  /// **'Após o teste'**
+  String get checkoutAfterTrial;
+
+  /// Nota de segurança do checkout; marcas de loja e brand não são traduzidas
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento processado pela App Store ou Google Play. O {brand} não armazena dados do seu cartão.'**
+  String checkoutProcessedBy(String brand);
+
+  /// Hint do bottom bar sem método selecionado
+  ///
+  /// In pt, this message translates to:
+  /// **'SELECIONE UM MÉTODO ACIMA'**
+  String get checkoutSelectMethod;
+
+  /// CTA final do checkout
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar assinatura'**
+  String get checkoutConfirm;
+
   /// SnackBar de recurso ainda não disponível
   ///
   /// In pt, this message translates to:

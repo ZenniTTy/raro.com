@@ -3,6 +3,7 @@ import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart';
 
 class PlanCard extends StatelessWidget {
@@ -55,9 +56,9 @@ class PlanCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Premium',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context).planPremium,
+                style: const TextStyle(
                   fontFamily: RaroFonts.display,
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -66,7 +67,7 @@ class PlanCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'Desbloqueie todo o potencial',
+                AppLocalizations.of(context).planUnlockPotential,
                 style: TextStyle(
                   fontFamily: RaroFonts.display,
                   fontSize: 12,
@@ -229,7 +230,7 @@ class _TrialBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '$days DIAS GRÁTIS',
+            AppLocalizations.of(context).planFreeDays(days),
             style: TextStyle(
               fontFamily: RaroFonts.mono,
               fontSize: 9,
@@ -240,7 +241,7 @@ class _TrialBox extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'Cancele quando quiser',
+            AppLocalizations.of(context).planCancelAnytime,
             style: TextStyle(fontSize: 9, color: colors.inkDim),
           ),
         ],
@@ -261,14 +262,14 @@ class _SelectedPill extends StatelessWidget {
         color: RaroAccents.yellow.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.check, size: 12, color: RaroAccents.yellow),
-          SizedBox(width: 6),
+          const Icon(Icons.check, size: 12, color: RaroAccents.yellow),
+          const SizedBox(width: 6),
           Text(
-            'SELECIONADO',
-            style: TextStyle(
+            AppLocalizations.of(context).planSelected,
+            style: const TextStyle(
               fontFamily: RaroFonts.mono,
               fontSize: 10,
               letterSpacing: 1,

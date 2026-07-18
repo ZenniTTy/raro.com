@@ -3,6 +3,7 @@ import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_cta.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart';
 
 class SubscriptionPopup extends StatelessWidget {
@@ -48,9 +49,9 @@ class SubscriptionPopup extends StatelessWidget {
                         ShaderMask(
                           shaderCallback: (bounds) =>
                               RaroGradients.rainbow.createShader(bounds),
-                          child: const Text(
-                            'ASSINATURA',
-                            style: TextStyle(
+                          child: Text(
+                            AppLocalizations.of(context).popupEyebrow,
+                            style: const TextStyle(
                               fontFamily: RaroFonts.mono,
                               fontSize: 10,
                               letterSpacing: 1.8,
@@ -78,9 +79,9 @@ class SubscriptionPopup extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Assinatura necessária',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context).popupTitle,
+                      style: const TextStyle(
                         fontFamily: RaroFonts.display,
                         fontSize: 26,
                         height: 1.05,
@@ -90,27 +91,34 @@ class SubscriptionPopup extends StatelessWidget {
                     const SizedBox(height: 12),
                     _RichBody(
                       colors: colors,
-                      segments: const [
-                        _Seg('Você pode usar o app normalmente, mas para '),
-                        _Seg('salvar vídeos', bold: true),
-                        _Seg(' é preciso ativar a assinatura.'),
+                      segments: [
+                        _Seg(AppLocalizations.of(context).popupBody1),
+                        _Seg(
+                          AppLocalizations.of(context).popupBodyBold,
+                          bold: true,
+                        ),
+                        _Seg(AppLocalizations.of(context).popupBody2),
                       ],
                     ),
                     const SizedBox(height: 8),
                     _RichBody(
                       colors: colors,
-                      segments: const [
-                        _Seg('A assinatura inclui '),
-                        _Seg('$trialDays dias grátis', bold: true),
+                      segments: [
+                        _Seg(AppLocalizations.of(context).popupTrial1),
                         _Seg(
-                          '. Você pode cancelar antes de completar os '
-                          '$trialDays dias e não será cobrado de nada.',
+                          AppLocalizations.of(
+                            context,
+                          ).popupTrialBold(trialDays),
+                          bold: true,
+                        ),
+                        _Seg(
+                          AppLocalizations.of(context).popupTrial2(trialDays),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
                     OnboardingCta(
-                      label: 'Assinar agora',
+                      label: AppLocalizations.of(context).paywallSubscribeNow,
                       onPressed: onSubscribe,
                       primary: true,
                     ),
@@ -120,7 +128,7 @@ class SubscriptionPopup extends StatelessWidget {
                       child: TextButton(
                         onPressed: onLater,
                         child: Text(
-                          'Talvez depois',
+                          AppLocalizations.of(context).popupMaybeLater,
                           style: TextStyle(fontSize: 13, color: colors.inkDim),
                         ),
                       ),

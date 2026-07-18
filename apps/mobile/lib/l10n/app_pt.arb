@@ -317,6 +317,198 @@
   "@previewVideoNotFound": {
     "description": "Estado vazio quando o vídeo não existe mais"
   },
+  "paywallTitle": "Escolha seu plano",
+  "@paywallTitle": {
+    "description": "Título do paywall"
+  },
+  "paywallSubtitle": "Desbloqueie o potencial total do {brand}. {days} dias grátis, cancele quando quiser.",
+  "@paywallSubtitle": {
+    "description": "Subtítulo do paywall; brand não é traduzido; days vem de raro_shared",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallMonthlyEquivalent": "R$ {price} / mês",
+  "@paywallMonthlyEquivalent": {
+    "description": "Equivalente mensal do plano anual; moeda fixa em BRL nesta fase",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallBestOffer": "MELHOR OFERTA",
+  "@paywallBestOffer": {
+    "description": "Badge do plano anual (invariant de produto)"
+  },
+  "paywallSubscribeNow": "Assinar agora",
+  "@paywallSubscribeNow": {
+    "description": "CTA principal do paywall e do popup"
+  },
+  "paywallRestorePurchases": "Restaurar compras",
+  "@paywallRestorePurchases": {
+    "description": "CTA secundário de restauração"
+  },
+  "paywallBack": "Voltar",
+  "@paywallBack": {
+    "description": "Link de voltar do paywall"
+  },
+  "paywallPeriodMonthly": "mensal",
+  "@paywallPeriodMonthly": {
+    "description": "Palavra do período mensal usada em frases compostas"
+  },
+  "paywallPeriodYearly": "anual",
+  "@paywallPeriodYearly": {
+    "description": "Palavra do período anual usada em frases compostas"
+  },
+  "paywallLegal": "Assinatura {period} com renovação automática. Cancele a qualquer momento nas configurações da App Store.",
+  "@paywallLegal": {
+    "description": "Texto legal do paywall; period é paywallPeriodMonthly/Yearly",
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "planPremium": "Premium",
+  "@planPremium": {
+    "description": "Nome do plano no card e no checkout"
+  },
+  "planUnlockPotential": "Desbloqueie todo o potencial",
+  "@planUnlockPotential": {
+    "description": "Subtítulo do card de plano"
+  },
+  "planFeature4k": "Gravação em 4K 60fps",
+  "@planFeature4k": {
+    "description": "Feature 1 do plano"
+  },
+  "planFeatureBuffer": "Buffer estendido",
+  "@planFeatureBuffer": {
+    "description": "Feature 2 do plano"
+  },
+  "planFeatureNoAds": "Sem anúncios",
+  "@planFeatureNoAds": {
+    "description": "Feature 3 do plano"
+  },
+  "planFreeDays": "{days} DIAS GRÁTIS",
+  "@planFreeDays": {
+    "description": "Pill de dias grátis; days vem de raro_shared",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planCancelAnytime": "Cancele quando quiser",
+  "@planCancelAnytime": {
+    "description": "Nota sob a pill de dias grátis"
+  },
+  "planSelected": "SELECIONADO",
+  "@planSelected": {
+    "description": "Pill do plano selecionado"
+  },
+  "popupEyebrow": "ASSINATURA",
+  "@popupEyebrow": {
+    "description": "Eyebrow do popup de assinatura"
+  },
+  "popupTitle": "Assinatura necessária",
+  "@popupTitle": {
+    "description": "Título do popup de assinatura"
+  },
+  "popupBody1": "Você pode usar o app normalmente, mas para ",
+  "@popupBody1": {
+    "description": "Fragmento 1 do corpo do popup, antes do trecho em negrito"
+  },
+  "popupBodyBold": "salvar vídeos",
+  "@popupBodyBold": {
+    "description": "Trecho em negrito do corpo do popup"
+  },
+  "popupBody2": " é preciso ativar a assinatura.",
+  "@popupBody2": {
+    "description": "Fragmento 2 do corpo do popup"
+  },
+  "popupTrial1": "A assinatura inclui ",
+  "@popupTrial1": {
+    "description": "Fragmento antes dos dias grátis em negrito"
+  },
+  "popupTrialBold": "{days} dias grátis",
+  "@popupTrialBold": {
+    "description": "Dias grátis em negrito no popup",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "popupTrial2": ". Você pode cancelar antes de completar os {days} dias e não será cobrado de nada.",
+  "@popupTrial2": {
+    "description": "Fragmento final sobre cancelamento no popup",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "popupMaybeLater": "Talvez depois",
+  "@popupMaybeLater": {
+    "description": "CTA de dispensar o popup"
+  },
+  "checkoutTitle": "Finalizar assinatura",
+  "@checkoutTitle": {
+    "description": "Título do header do checkout"
+  },
+  "checkoutPaymentMethod": "Método de pagamento",
+  "@checkoutPaymentMethod": {
+    "description": "Label da seção de método de pagamento"
+  },
+  "checkoutOrderSummary": "RESUMO DO PEDIDO",
+  "@checkoutOrderSummary": {
+    "description": "Label da seção de resumo"
+  },
+  "checkoutSubscription": "Assinatura {period}",
+  "@checkoutSubscription": {
+    "description": "Linha do tipo de assinatura; period é paywallPeriodMonthly/Yearly",
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "checkoutTrialPeriod": "Período de teste ({days} dias)",
+  "@checkoutTrialPeriod": {
+    "description": "Linha do período de teste no resumo",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "checkoutAfterTrial": "Após o teste",
+  "@checkoutAfterTrial": {
+    "description": "Linha do valor pós-teste no resumo"
+  },
+  "checkoutProcessedBy": "Pagamento processado pela App Store ou Google Play. O {brand} não armazena dados do seu cartão.",
+  "@checkoutProcessedBy": {
+    "description": "Nota de segurança do checkout; marcas de loja e brand não são traduzidas",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "checkoutSelectMethod": "SELECIONE UM MÉTODO ACIMA",
+  "@checkoutSelectMethod": {
+    "description": "Hint do bottom bar sem método selecionado"
+  },
+  "checkoutConfirm": "Confirmar assinatura",
+  "@checkoutConfirm": {
+    "description": "CTA final do checkout"
+  },
   "comingSoon": "Em breve",
   "@comingSoon": {
     "description": "SnackBar de recurso ainda não disponível"
