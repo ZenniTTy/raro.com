@@ -5,6 +5,7 @@ import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.SystemClock
 import android.util.Log
 import com.rarocamera.raro_mobile.generated.voice.WakeCommand
 import org.json.JSONObject
@@ -54,8 +55,10 @@ class VoskWakeEngine(private val context: Context) : WakeEngine {
     running = true
     audio.startRecording()
     worker = thread(name = "vosk-wake") {
-      val recognizer = Recognizer(model, SAMPLE_RATE.toFloat())
+      val recognizer = Recognizer(model, SAMPLE_RATE.toFloat(), GRAMMAR)
       val buffer = ShortArray(bufSize)
+      var lastCommand: WakeCommand? = null
+      var lastCommandAtMs = 0L
       try {
         while (running) {
           val n = audio.read(buffer, 0, buffer.size)
@@ -66,8 +69,15 @@ class VoskWakeEngine(private val context: Context) : WakeEngine {
             if (text.isNotBlank()) {
               val cmd = VoiceCommandParser.parse(text)
               if (cmd != null) {
-                Log.i(TAG, "vosk wake matched -> $cmd")
-                onCommand(cmd)
+                val now = SystemClock.elapsedRealtime()
+                val isRepeat = cmd == lastCommand && now - lastCommandAtMs < DEBOUNCE_MS
+                if (!isRepeat) {
+                  Log.i(TAG, "vosk wake matched -> $cmd")
+                  lastCommand = cmd
+                  lastCommandAtMs = now
+                  onCommand(cmd)
+                }
+                recognizer.reset()
               }
             }
           } else if (n < 0) {
@@ -129,6 +139,9 @@ class VoskWakeEngine(private val context: Context) : WakeEngine {
     private const val MODEL_DIR = "vosk-model-small-pt-0.3"
     private const val MODEL_SENTINEL = "final.mdl"
     private const val THREAD_JOIN_MS = 2000L
+    private const val DEBOUNCE_MS = 2000L
+    private const val GRAMMAR =
+      "[\"raro gravar\", \"raro parar\", \"gravar\", \"parar\", \"[unk]\"]"
 
     fun isModelAvailable(context: Context): Boolean =
       runCatching { context.assets.list(MODEL_DIR)?.contains(MODEL_SENTINEL) == true }

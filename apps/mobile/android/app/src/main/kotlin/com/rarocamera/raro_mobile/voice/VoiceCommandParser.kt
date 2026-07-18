@@ -4,17 +4,19 @@ import com.rarocamera.raro_mobile.generated.voice.WakeCommand
 import java.text.Normalizer
 
 object VoiceCommandParser {
-  private const val WAKE = "raro"
-  private val STOP_VERBS = listOf("parar", "encerrar")
-  private val START_VERBS = listOf("gravar", "comecar")
+  private val STOP_STEMS = listOf("parar", "para", "encerr")
+  private val START_STEMS = listOf("gravar", "grava", "comec")
 
   fun parse(transcript: String): WakeCommand? {
-    val n = normalize(transcript)
-    if (!n.contains(WAKE)) return null
-    if (STOP_VERBS.any { n.contains(it) }) return WakeCommand.STOP
-    if (START_VERBS.any { n.contains(it) }) return WakeCommand.START
+    val words = normalize(transcript).split(" ").filter { it.isNotBlank() }
+    if (words.isEmpty()) return null
+    if (words.any { matchesStem(it, STOP_STEMS) }) return WakeCommand.STOP
+    if (words.any { matchesStem(it, START_STEMS) }) return WakeCommand.START
     return null
   }
+
+  private fun matchesStem(word: String, stems: List<String>): Boolean =
+    stems.any { stem -> word == stem || word.startsWith(stem) }
 
   private fun normalize(s: String): String {
     val lower = s.trim().lowercase()
