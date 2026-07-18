@@ -8,6 +8,7 @@ import 'package:raro_mobile/features/onboarding/data/onboarding_store.dart';
 import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
 import 'package:raro_mobile/features/permissions/data/permission_gateway.dart';
 import 'package:raro_mobile/features/permissions/presentation/permissions_screen.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class _MockPermissionGateway extends Mock implements PermissionGateway {}
 
@@ -43,6 +44,9 @@ void main() {
         onboardingStoreProvider.overrideWithValue(onboardingStore),
       ],
       child: MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
         home: PermissionsScreen(onGranted: onGranted ?? () {}),
       ),

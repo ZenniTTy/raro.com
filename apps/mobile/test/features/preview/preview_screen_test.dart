@@ -5,6 +5,7 @@ import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/gallery/application/video_list_provider.dart';
 import 'package:raro_mobile/features/gallery/domain/video_entity.dart';
 import 'package:raro_mobile/features/preview/presentation/preview_screen.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 List<VideoEntity> _fakeVideos() => [
   VideoEntity(
@@ -25,6 +26,9 @@ void main() {
     return ProviderScope(
       overrides: [videoListProvider.overrideWith((ref) async => _fakeVideos())],
       child: MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
         home: PreviewScreen(videoId: id, onBack: () => backTapped = true),
       ),

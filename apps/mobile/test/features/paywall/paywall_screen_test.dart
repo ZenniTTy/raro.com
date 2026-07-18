@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
 import 'package:raro_mobile/features/paywall/presentation/paywall_screen.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 void main() {
   PlanType? checkoutPlan;
@@ -12,6 +13,9 @@ void main() {
     checkoutPlan = null;
     return ProviderScope(
       child: MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
         home: PaywallScreen(
           onClose: () {},

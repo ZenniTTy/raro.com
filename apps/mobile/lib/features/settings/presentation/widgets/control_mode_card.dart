@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class ControlModeCard extends StatelessWidget {
   const ControlModeCard({
@@ -66,7 +67,9 @@ class ControlModeCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                enabled ? subtitle : 'em breve',
+                enabled
+                    ? subtitle
+                    : AppLocalizations.of(context).settingsComingSoonBadge,
                 style: TextStyle(
                   fontFamily: RaroFonts.mono,
                   fontSize: 11,

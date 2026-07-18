@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/features/voice/domain/voice_state.dart';
 import 'package:raro_mobile/features/voice/presentation/voice_listening_indicator.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 void main() {
   Widget host(Widget child) => MaterialApp(
+    locale: const Locale('pt', 'BR'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(body: Center(child: child)),
   );
 

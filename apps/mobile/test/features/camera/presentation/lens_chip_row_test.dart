@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/features/camera/presentation/lens_chip_row.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('hides ultraWide chip when unavailable', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: LensChipRow(
             availableLenses: const [LensType.wide],
@@ -23,6 +27,9 @@ void main() {
   testWidgets('shows both chips when both lenses available', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: LensChipRow(
             availableLenses: const [LensType.ultraWide, LensType.wide],
@@ -40,6 +47,9 @@ void main() {
     LensType? tapped;
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: LensChipRow(
             availableLenses: const [LensType.ultraWide, LensType.wide],

@@ -28,6 +28,7 @@ import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:raro_mobile/features/voice/application/voice_flutter_api_provider.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository_provider.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart' show BufferDuration;
 
 class _FakeSubscriptionStore implements SubscriptionStore {
@@ -158,6 +159,9 @@ void main() {
           ),
       ],
       child: MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
         home: CameraScreen(
           onGallery: onGallery ?? () {},
@@ -315,6 +319,9 @@ void main() {
               voiceStateEventsProvider.overrideWithValue(const Stream.empty()),
             ],
             child: MaterialApp(
+              locale: const Locale('pt', 'BR'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
               theme: buildRaroDarkTheme(),
               home: Consumer(
                 builder: (context, ref, _) {
@@ -396,6 +403,9 @@ void main() {
             voiceStateEventsProvider.overrideWithValue(const Stream.empty()),
           ],
           child: MaterialApp(
+            locale: const Locale('pt', 'BR'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             theme: buildRaroDarkTheme(),
             home: Consumer(
               builder: (context, ref, _) {

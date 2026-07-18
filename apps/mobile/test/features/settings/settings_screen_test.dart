@@ -9,6 +9,7 @@ import 'package:raro_mobile/features/settings/application/settings_controller.da
 import 'package:raro_mobile/features/settings/data/settings_store.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:raro_mobile/features/settings/presentation/settings_screen.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart';
 
 class _FakeSettingsStore implements SettingsStore {
@@ -51,6 +52,9 @@ void main() {
           ),
       ],
       child: MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
         home: SettingsScreen(onBack: () {}, onSeePlans: () {}),
       ),
@@ -132,6 +136,9 @@ void main() {
       ProviderScope(
         overrides: [settingsStoreProvider.overrideWithValue(store)],
         child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildRaroDarkTheme(),
           home: SettingsScreen(onBack: () {}, onSeePlans: () => tapped = true),
         ),

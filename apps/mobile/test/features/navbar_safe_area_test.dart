@@ -9,6 +9,7 @@ import 'package:raro_mobile/features/onboarding/data/onboarding_store.dart';
 import 'package:raro_mobile/features/permissions/presentation/permissions_screen.dart';
 import 'package:raro_mobile/features/settings/presentation/settings_screen.dart';
 import 'package:raro_mobile/features/splash/presentation/splash_screen.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class _FakeOnboardingStore implements OnboardingStore {
   @override
@@ -31,6 +32,9 @@ void main() {
       ProviderScope(
         overrides: [videoListProvider.overrideWith((ref) async => const [])],
         child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildRaroDarkTheme(),
           home: GalleryScreen(onBack: () {}, onOpenVideo: (_) {}),
         ),
@@ -46,6 +50,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildRaroDarkTheme(),
           home: PermissionsScreen(onGranted: () {}),
         ),
@@ -59,6 +66,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildRaroDarkTheme(),
           home: SettingsScreen(onBack: () {}, onSeePlans: () {}),
         ),
@@ -75,6 +85,9 @@ void main() {
           onboardingStoreProvider.overrideWithValue(_FakeOnboardingStore()),
         ],
         child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildRaroDarkTheme(),
           home: const SplashScreen(),
         ),

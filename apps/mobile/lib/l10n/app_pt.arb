@@ -4,6 +4,146 @@
   "@settingsTitle": {
     "description": "Título do header da tela de configurações"
   },
+  "settingsQualitySection": "Qualidade de Gravação",
+  "@settingsQualitySection": {
+    "description": "Título da seção de qualidade em configurações"
+  },
+  "settingsControlSection": "Controle de Gravação",
+  "@settingsControlSection": {
+    "description": "Título da seção de modo de controle em configurações"
+  },
+  "settingsLanguageSection": "Idioma",
+  "@settingsLanguageSection": {
+    "description": "Título da seção do seletor de idioma"
+  },
+  "settingsAboutSection": "Sobre",
+  "@settingsAboutSection": {
+    "description": "Título da seção sobre o app"
+  },
+  "settingsResolutionLabel": "Resolução",
+  "@settingsResolutionLabel": {
+    "description": "Label acima dos chips de resolução"
+  },
+  "settingsResolutionFixedLensHint": "lente fixa",
+  "@settingsResolutionFixedLensHint": {
+    "description": "Hint do chip 4K60 indicando restrição de lente"
+  },
+  "settingsFpsStandardHint": "Standard",
+  "@settingsFpsStandardHint": {
+    "description": "Hint do chip 30 FPS"
+  },
+  "settingsFpsSmoothHint": "Smooth",
+  "@settingsFpsSmoothHint": {
+    "description": "Hint do chip 60 FPS"
+  },
+  "settingsStabilizationTitle": "Estabilização nativa",
+  "@settingsStabilizationTitle": {
+    "description": "Título da linha de estabilização"
+  },
+  "settingsStabilizationSubtitle": "Reduz tremor com sensor",
+  "@settingsStabilizationSubtitle": {
+    "description": "Subtítulo da linha de estabilização"
+  },
+  "settingsStabilizationAlways": "SEMPRE ATIVADA",
+  "@settingsStabilizationAlways": {
+    "description": "Pill indicando estabilização sempre ligada"
+  },
+  "settingsControlModeIntro": "Escolha o modo que você deseja gravar. No modo ",
+  "@settingsControlModeIntro": {
+    "description": "Fragmento 1 da descrição do modo de controle, antes do token ON"
+  },
+  "settingsControlModeVoicePart": " a gravação é controlada pela voz. No modo ",
+  "@settingsControlModeVoicePart": {
+    "description": "Fragmento 2 da descrição, entre os tokens ON e OFF"
+  },
+  "settingsControlModeVolumePart": ", a gravação é controlada pelos botões laterais de volume do aparelho.",
+  "@settingsControlModeVolumePart": {
+    "description": "Fragmento 3 da descrição, após o token OFF"
+  },
+  "settingsControlVolumeTitle": "Volume",
+  "@settingsControlVolumeTitle": {
+    "description": "Título do card de controle por volume"
+  },
+  "settingsControlVolumeSubtitle": "+ ou −",
+  "@settingsControlVolumeSubtitle": {
+    "description": "Subtítulo do card de controle por volume"
+  },
+  "settingsControlVoiceTitle": "Voz ativa",
+  "@settingsControlVoiceTitle": {
+    "description": "Título do card de controle por voz"
+  },
+  "settingsControlVoiceSubtitle": "Diga \"{wakeWord}\"",
+  "@settingsControlVoiceSubtitle": {
+    "description": "Subtítulo do card de voz; wakeWord vem de VoiceConfig e não é traduzido",
+    "placeholders": {
+      "wakeWord": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsComingSoonBadge": "em breve",
+  "@settingsComingSoonBadge": {
+    "description": "Badge de recurso indisponível no card de controle"
+  },
+  "settingsTrialBanner": "{days, plural, =1{Período de teste · 1 dia restante} other{Período de teste · {days} dias restantes}}",
+  "@settingsTrialBanner": {
+    "description": "Banner com dias restantes do período de teste",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsSeePlans": "Ver Planos",
+  "@settingsSeePlans": {
+    "description": "Botão que navega para o paywall"
+  },
+  "settingsVersionLabel": "Versão",
+  "@settingsVersionLabel": {
+    "description": "Label da linha de versão em Sobre"
+  },
+  "termsOfUse": "Termos de Uso",
+  "@termsOfUse": {
+    "description": "Link para termos de uso (Sobre e paywall)"
+  },
+  "privacyPolicy": "Política de Privacidade",
+  "@privacyPolicy": {
+    "description": "Link para política de privacidade (Sobre e paywall)"
+  },
+  "replayBufferBadge": "Buffer rotativo",
+  "@replayBufferBadge": {
+    "description": "Sufixo do badge do card Raro Replay; a marca fica fora da tradução"
+  },
+  "replayBufferDescription": "Grava 15 ou 30 segundos antes do comando de voz \"{wakeWord}\" ou do botão na tela inicial.",
+  "@replayBufferDescription": {
+    "description": "Descrição do card Raro Replay; wakeWord não é traduzido",
+    "placeholders": {
+      "wakeWord": {
+        "type": "String"
+      }
+    }
+  },
+  "replayBufferDurationLabel": "Duração do buffer",
+  "@replayBufferDurationLabel": {
+    "description": "Label acima dos chips 15s/30s"
+  },
+  "voiceSayToRecord": "DIGA “{wakeWord}” PARA GRAVAR",
+  "@voiceSayToRecord": {
+    "description": "Hint central da câmera quando a voz escuta; wakeWord não é traduzido",
+    "placeholders": {
+      "wakeWord": {
+        "type": "String"
+      }
+    }
+  },
+  "voicePaused": "VOZ PAUSADA",
+  "@voicePaused": {
+    "description": "Indicador de voz pausada na câmera"
+  },
+  "voiceEnableInSettings": "ATIVAR VOZ NAS CONFIGURAÇÕES",
+  "@voiceEnableInSettings": {
+    "description": "Indicador quando o reconhecimento de voz está indisponível"
+  },
   "galleryVideoCount": "{count, plural, =0{nenhum vídeo} =1{1 vídeo} other{{count} vídeos}}",
   "@galleryVideoCount": {
     "description": "Contador de vídeos no header da galeria",
