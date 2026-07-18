@@ -227,6 +227,7 @@ void main() {
     Future<void> goToCamera(WidgetTester tester) async {
       when(gateway.requestCamera).thenAnswer((_) async => true);
       when(gateway.requestMicrophone).thenAnswer((_) async => true);
+      when(gateway.requestNotification).thenAnswer((_) async => true);
       await tester.pumpWidget(app());
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1900));

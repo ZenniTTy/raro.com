@@ -5,6 +5,7 @@ abstract interface class PermissionGateway {
   Future<bool> microphoneStatus();
   Future<bool> requestCamera();
   Future<bool> requestMicrophone();
+  Future<bool> requestNotification();
   Future<bool> openSettings();
 }
 
@@ -26,6 +27,10 @@ class PermissionHandlerGateway implements PermissionGateway {
   @override
   Future<bool> requestMicrophone() async =>
       (await Permission.microphone.request()).isGranted;
+
+  @override
+  Future<bool> requestNotification() async =>
+      (await Permission.notification.request()).isGranted;
 
   @override
   Future<bool> openSettings() => openAppSettings();

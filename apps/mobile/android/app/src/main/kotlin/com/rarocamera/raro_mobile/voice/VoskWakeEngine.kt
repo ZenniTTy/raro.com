@@ -15,11 +15,14 @@ import kotlin.concurrent.thread
 
 class VoskWakeEngine(private val context: Context) : WakeEngine {
   @Volatile private var running = false
+  @Volatile private var diedOnError = false
   private var worker: Thread? = null
+  var onDied: (() -> Unit)? = null
 
   @SuppressLint("MissingPermission")
   override fun start(onCommand: (WakeCommand) -> Unit): Boolean {
     if (running) return true
+    diedOnError = false
 
     val model = try {
       Model(ensureModelUnpacked().absolutePath)
@@ -69,6 +72,7 @@ class VoskWakeEngine(private val context: Context) : WakeEngine {
             }
           } else if (n < 0) {
             Log.w(TAG, "AudioRecord.read error=$n, encerrando engine")
+            diedOnError = true
             break
           }
         }
@@ -77,6 +81,10 @@ class VoskWakeEngine(private val context: Context) : WakeEngine {
         model.close()
         runCatching { audio.stop() }.onFailure { e -> Log.w(TAG, "audioRecord stop failed", e) }
         audio.release()
+        if (diedOnError) {
+          running = false
+          onDied?.invoke()
+        }
       }
     }
     return true
@@ -87,6 +95,8 @@ class VoskWakeEngine(private val context: Context) : WakeEngine {
     worker?.join(THREAD_JOIN_MS)
     worker = null
   }
+
+  override fun isAlive(): Boolean = running && worker?.isAlive == true
 
   private fun textOf(json: String, key: String): String =
     runCatching { JSONObject(json).optString(key) }.getOrDefault("")

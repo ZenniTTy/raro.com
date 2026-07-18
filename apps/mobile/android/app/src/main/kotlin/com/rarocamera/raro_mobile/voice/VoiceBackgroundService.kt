@@ -19,7 +19,14 @@ class VoiceBackgroundService : Service() {
   override fun onBind(intent: Intent?): IBinder? = null
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    if (engine != null) return START_STICKY
+    if (intent?.action == ACTION_STOP) {
+      stopEngine()
+      stopSelf()
+      return START_NOT_STICKY
+    }
+
+    if (engine?.isAlive() == true) return START_NOT_STICKY
+    stopEngine()
 
     if (!startAsForeground()) {
       Log.w(TAG, "startForeground recusado, encerrando servico")
@@ -29,6 +36,11 @@ class VoiceBackgroundService : Service() {
     }
 
     val e = VoskWakeEngine(applicationContext)
+    e.onDied = {
+      Log.w(TAG, "vosk engine morreu (audio route?), encerrando servico")
+      onUnavailable?.invoke()
+      stopSelf()
+    }
     val started = e.start { command -> commandListener?.invoke(command) }
     if (!started) {
       Log.w(TAG, "vosk engine nao iniciou, encerrando servico")
@@ -39,7 +51,7 @@ class VoiceBackgroundService : Service() {
     engine = e
     onListening?.invoke()
     Log.i(TAG, "voice background service started")
-    return START_STICKY
+    return START_NOT_STICKY
   }
 
   private fun startAsForeground(): Boolean {
@@ -71,9 +83,13 @@ class VoiceBackgroundService : Service() {
     return CHANNEL_ID
   }
 
-  override fun onDestroy() {
+  private fun stopEngine() {
     engine?.stop()
     engine = null
+  }
+
+  override fun onDestroy() {
+    stopEngine()
     Log.i(TAG, "voice background service stopped")
     super.onDestroy()
   }
@@ -82,6 +98,7 @@ class VoiceBackgroundService : Service() {
     private const val TAG = "RaroVoice"
     private const val CHANNEL_ID = "raro_voice_bg"
     private const val NOTIF_ID = 4243
+    private const val ACTION_STOP = "com.rarocamera.voice.STOP"
 
     @Volatile var commandListener: ((WakeCommand) -> Unit)? = null
     @Volatile var onUnavailable: (() -> Unit)? = null
@@ -97,7 +114,13 @@ class VoiceBackgroundService : Service() {
       }
 
     fun stop(context: Context) {
-      context.stopService(Intent(context, VoiceBackgroundService::class.java))
+      val intent = Intent(context, VoiceBackgroundService::class.java).setAction(ACTION_STOP)
+      try {
+        context.startService(intent)
+      } catch (e: Exception) {
+        Log.w(TAG, "stop via action falhou, fallback stopService", e)
+        context.stopService(Intent(context, VoiceBackgroundService::class.java))
+      }
     }
   }
 }
