@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class BufferVisualization extends StatelessWidget {
   const BufferVisualization({super.key});
@@ -26,8 +27,14 @@ class BufferVisualization extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('BUFFER · 15s', style: labelStyle),
-              Text('AGORA', style: labelStyle),
+              Text(
+                AppLocalizations.of(context).bufferVisualizationLabel,
+                style: labelStyle,
+              ),
+              Text(
+                AppLocalizations.of(context).bufferVisualizationNow,
+                style: labelStyle,
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -46,7 +53,7 @@ class BufferVisualization extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Os 15s anteriores ficam salvos',
+            AppLocalizations.of(context).bufferVisualizationCaption,
             textAlign: TextAlign.right,
             style: TextStyle(
               fontFamily: RaroFonts.mono,

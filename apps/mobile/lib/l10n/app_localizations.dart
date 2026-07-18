@@ -286,6 +286,150 @@ abstract class AppLocalizations {
   /// **'ATIVAR VOZ NAS CONFIGURAÇÕES'**
   String get voiceEnableInSettings;
 
+  /// CTA de avançar do onboarding
+  ///
+  /// In pt, this message translates to:
+  /// **'Avançar'**
+  String get onboardingNext;
+
+  /// Botão de pular onboarding
+  ///
+  /// In pt, this message translates to:
+  /// **'Pular'**
+  String get onboardingSkip;
+
+  /// Título da página 1 do onboarding
+  ///
+  /// In pt, this message translates to:
+  /// **'Grave sem tocar'**
+  String get onboarding1Title;
+
+  /// Fragmento antes da wake word na página 1
+  ///
+  /// In pt, this message translates to:
+  /// **'Diga '**
+  String get onboarding1Say;
+
+  /// Fragmento após a wake word na página 1
+  ///
+  /// In pt, this message translates to:
+  /// **' para iniciar ou encerrar sua gravação.'**
+  String get onboarding1SayTail;
+
+  /// Tagline da página 1; brand é a marca RARO, não traduzida
+  ///
+  /// In pt, this message translates to:
+  /// **'— O {brand} escuta.'**
+  String onboarding1Tagline(String brand);
+
+  /// Título da página 2 do onboarding
+  ///
+  /// In pt, this message translates to:
+  /// **'Nunca perca o momento'**
+  String get onboarding2Title;
+
+  /// Fragmento antes de Raro Replay na página 2
+  ///
+  /// In pt, this message translates to:
+  /// **'O '**
+  String get onboarding2Intro;
+
+  /// Fragmento entre Raro Replay e a duração
+  ///
+  /// In pt, this message translates to:
+  /// **' salva automaticamente os últimos '**
+  String get onboarding2SavesLast;
+
+  /// Duração destacada do buffer na página 2
+  ///
+  /// In pt, this message translates to:
+  /// **'15 ou 30 segundos'**
+  String get onboarding2Seconds;
+
+  /// Fragmento entre a duração e o token REC
+  ///
+  /// In pt, this message translates to:
+  /// **'. Aconteceu algo importante? Basta apertar o botão '**
+  String get onboarding2Middle;
+
+  /// Fragmento entre REC e a frase de comando
+  ///
+  /// In pt, this message translates to:
+  /// **' ou dizer: '**
+  String get onboarding2OrSay;
+
+  /// Frase de comando destacada; wakeWord não é traduzido
+  ///
+  /// In pt, this message translates to:
+  /// **'\"{wakeWord}, começar a gravar.\"'**
+  String onboarding2WakePhrase(String wakeWord);
+
+  /// Label esquerdo da visualização de buffer no onboarding
+  ///
+  /// In pt, this message translates to:
+  /// **'BUFFER · 15s'**
+  String get bufferVisualizationLabel;
+
+  /// Label direito da visualização de buffer
+  ///
+  /// In pt, this message translates to:
+  /// **'AGORA'**
+  String get bufferVisualizationNow;
+
+  /// Legenda sob a visualização de buffer
+  ///
+  /// In pt, this message translates to:
+  /// **'Os 15s anteriores ficam salvos'**
+  String get bufferVisualizationCaption;
+
+  /// Eyebrow da tela de permissões
+  ///
+  /// In pt, this message translates to:
+  /// **'PASSO 1 DE 1'**
+  String get permissionsStep;
+
+  /// Título da tela de permissões
+  ///
+  /// In pt, this message translates to:
+  /// **'Permissões essenciais'**
+  String get permissionsTitle;
+
+  /// Descrição da tela de permissões; brand não é traduzido
+  ///
+  /// In pt, this message translates to:
+  /// **'O {brand} precisa de acesso para funcionar plenamente. Você pode revogar a qualquer momento.'**
+  String permissionsDescription(String brand);
+
+  /// Título do card de permissão de câmera
+  ///
+  /// In pt, this message translates to:
+  /// **'Câmera'**
+  String get permissionsCameraTitle;
+
+  /// Descrição do card de câmera
+  ///
+  /// In pt, this message translates to:
+  /// **'Necessário para gravar vídeo em 4K com lentes 0.5x e 1x.'**
+  String get permissionsCameraDescription;
+
+  /// Título do card de permissão de microfone
+  ///
+  /// In pt, this message translates to:
+  /// **'Microfone'**
+  String get permissionsMicTitle;
+
+  /// Descrição do card de microfone; wakeWord não é traduzido
+  ///
+  /// In pt, this message translates to:
+  /// **'Para áudio do vídeo e para escutar o comando “{wakeWord}”.'**
+  String permissionsMicDescription(String wakeWord);
+
+  /// CTA da tela de permissões
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get permissionsContinue;
+
   /// SnackBar de erro genérico ao gravar
   ///
   /// In pt, this message translates to:

@@ -8,6 +8,8 @@ import 'package:raro_mobile/features/onboarding/presentation/widgets/buffer_visu
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_cta.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_header.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_pagination.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
+import 'package:raro_shared/raro_shared.dart';
 
 class OnboardingPage2 extends ConsumerWidget {
   const OnboardingPage2({
@@ -22,6 +24,7 @@ class OnboardingPage2 extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final l10n = AppLocalizations.of(context);
 
     final mono = TextStyle(fontFamily: RaroFonts.mono, color: colors.ink);
     final white = TextStyle(color: colors.ink);
@@ -42,7 +45,7 @@ class OnboardingPage2 extends ConsumerWidget {
                     const BufferVisualization(),
                     const SizedBox(height: 32),
                     Text(
-                      'Nunca perca o momento',
+                      l10n.onboarding2Title,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: RaroFonts.display,
@@ -63,21 +66,17 @@ class OnboardingPage2 extends ConsumerWidget {
                           color: colors.inkDim,
                         ),
                         children: [
-                          const TextSpan(text: 'O '),
+                          TextSpan(text: l10n.onboarding2Intro),
                           TextSpan(text: 'Raro Replay', style: mono),
-                          const TextSpan(
-                            text: ' salva automaticamente os últimos ',
-                          ),
-                          TextSpan(text: '15 ou 30 segundos', style: white),
-                          const TextSpan(
-                            text:
-                                '. Aconteceu algo importante? '
-                                'Basta apertar o botão ',
-                          ),
+                          TextSpan(text: l10n.onboarding2SavesLast),
+                          TextSpan(text: l10n.onboarding2Seconds, style: white),
+                          TextSpan(text: l10n.onboarding2Middle),
                           TextSpan(text: 'REC', style: mono),
-                          const TextSpan(text: ' ou dizer: '),
+                          TextSpan(text: l10n.onboarding2OrSay),
                           TextSpan(
-                            text: '"Raro, começar a gravar."',
+                            text: l10n.onboarding2WakePhrase(
+                              VoiceConfig.wakeWord,
+                            ),
                             style: white,
                           ),
                         ],
@@ -90,7 +89,7 @@ class OnboardingPage2 extends ConsumerWidget {
               const OnboardingPagination(activeIndex: 1),
               const SizedBox(height: 28),
               OnboardingCta(
-                label: 'Avançar',
+                label: l10n.onboardingNext,
                 primary: true,
                 onPressed: () {
                   ref

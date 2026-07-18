@@ -144,6 +144,122 @@
   "@voiceEnableInSettings": {
     "description": "Indicador quando o reconhecimento de voz está indisponível"
   },
+  "onboardingNext": "Avançar",
+  "@onboardingNext": {
+    "description": "CTA de avançar do onboarding"
+  },
+  "onboardingSkip": "Pular",
+  "@onboardingSkip": {
+    "description": "Botão de pular onboarding"
+  },
+  "onboarding1Title": "Grave sem tocar",
+  "@onboarding1Title": {
+    "description": "Título da página 1 do onboarding"
+  },
+  "onboarding1Say": "Diga ",
+  "@onboarding1Say": {
+    "description": "Fragmento antes da wake word na página 1"
+  },
+  "onboarding1SayTail": " para iniciar ou encerrar sua gravação.",
+  "@onboarding1SayTail": {
+    "description": "Fragmento após a wake word na página 1"
+  },
+  "onboarding1Tagline": "— O {brand} escuta.",
+  "@onboarding1Tagline": {
+    "description": "Tagline da página 1; brand é a marca RARO, não traduzida",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "onboarding2Title": "Nunca perca o momento",
+  "@onboarding2Title": {
+    "description": "Título da página 2 do onboarding"
+  },
+  "onboarding2Intro": "O ",
+  "@onboarding2Intro": {
+    "description": "Fragmento antes de Raro Replay na página 2"
+  },
+  "onboarding2SavesLast": " salva automaticamente os últimos ",
+  "@onboarding2SavesLast": {
+    "description": "Fragmento entre Raro Replay e a duração"
+  },
+  "onboarding2Seconds": "15 ou 30 segundos",
+  "@onboarding2Seconds": {
+    "description": "Duração destacada do buffer na página 2"
+  },
+  "onboarding2Middle": ". Aconteceu algo importante? Basta apertar o botão ",
+  "@onboarding2Middle": {
+    "description": "Fragmento entre a duração e o token REC"
+  },
+  "onboarding2OrSay": " ou dizer: ",
+  "@onboarding2OrSay": {
+    "description": "Fragmento entre REC e a frase de comando"
+  },
+  "onboarding2WakePhrase": "\"{wakeWord}, começar a gravar.\"",
+  "@onboarding2WakePhrase": {
+    "description": "Frase de comando destacada; wakeWord não é traduzido",
+    "placeholders": {
+      "wakeWord": {
+        "type": "String"
+      }
+    }
+  },
+  "bufferVisualizationLabel": "BUFFER · 15s",
+  "@bufferVisualizationLabel": {
+    "description": "Label esquerdo da visualização de buffer no onboarding"
+  },
+  "bufferVisualizationNow": "AGORA",
+  "@bufferVisualizationNow": {
+    "description": "Label direito da visualização de buffer"
+  },
+  "bufferVisualizationCaption": "Os 15s anteriores ficam salvos",
+  "@bufferVisualizationCaption": {
+    "description": "Legenda sob a visualização de buffer"
+  },
+  "permissionsStep": "PASSO 1 DE 1",
+  "@permissionsStep": {
+    "description": "Eyebrow da tela de permissões"
+  },
+  "permissionsTitle": "Permissões essenciais",
+  "@permissionsTitle": {
+    "description": "Título da tela de permissões"
+  },
+  "permissionsDescription": "O {brand} precisa de acesso para funcionar plenamente. Você pode revogar a qualquer momento.",
+  "@permissionsDescription": {
+    "description": "Descrição da tela de permissões; brand não é traduzido",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionsCameraTitle": "Câmera",
+  "@permissionsCameraTitle": {
+    "description": "Título do card de permissão de câmera"
+  },
+  "permissionsCameraDescription": "Necessário para gravar vídeo em 4K com lentes 0.5x e 1x.",
+  "@permissionsCameraDescription": {
+    "description": "Descrição do card de câmera"
+  },
+  "permissionsMicTitle": "Microfone",
+  "@permissionsMicTitle": {
+    "description": "Título do card de permissão de microfone"
+  },
+  "permissionsMicDescription": "Para áudio do vídeo e para escutar o comando “{wakeWord}”.",
+  "@permissionsMicDescription": {
+    "description": "Descrição do card de microfone; wakeWord não é traduzido",
+    "placeholders": {
+      "wakeWord": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionsContinue": "Continuar",
+  "@permissionsContinue": {
+    "description": "CTA da tela de permissões"
+  },
   "cameraRecordFailed": "Falha ao gravar",
   "@cameraRecordFailed": {
     "description": "SnackBar de erro genérico ao gravar"

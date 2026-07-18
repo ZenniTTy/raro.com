@@ -5,6 +5,8 @@ import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/onboarding/application/onboarding_progress_provider.dart';
 import 'package:raro_mobile/features/permissions/application/permission_status_provider.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
+import 'package:raro_shared/raro_shared.dart';
 
 class PermissionsScreen extends ConsumerWidget {
   const PermissionsScreen({super.key, required this.onGranted});
@@ -37,9 +39,9 @@ class PermissionsScreen extends ConsumerWidget {
                   ShaderMask(
                     shaderCallback: (bounds) =>
                         RaroGradients.rainbow.createShader(bounds),
-                    child: const Text(
-                      'PASSO 1 DE 1',
-                      style: TextStyle(
+                    child: Text(
+                      AppLocalizations.of(context).permissionsStep,
+                      style: const TextStyle(
                         fontFamily: RaroFonts.mono,
                         fontSize: 10,
                         letterSpacing: 1.8,
@@ -49,7 +51,7 @@ class PermissionsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Permissões essenciais',
+                    AppLocalizations.of(context).permissionsTitle,
                     style: TextStyle(
                       fontFamily: RaroFonts.display,
                       fontSize: 28,
@@ -60,8 +62,7 @@ class PermissionsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'O RARO precisa de acesso para funcionar plenamente. '
-                    'Você pode revogar a qualquer momento.',
+                    AppLocalizations.of(context).permissionsDescription('RARO'),
                     style: TextStyle(
                       fontSize: 13.5,
                       height: 1.55,
@@ -71,24 +72,27 @@ class PermissionsScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const Expanded(
+            Expanded(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 28, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
                 child: Column(
                   children: [
                     _PermissionCard(
                       icon: Icons.camera_alt_outlined,
-                      title: 'Câmera',
-                      description:
-                          'Necessário para gravar vídeo em 4K com lentes '
-                          '0.5x e 1x.',
+                      title: AppLocalizations.of(
+                        context,
+                      ).permissionsCameraTitle,
+                      description: AppLocalizations.of(
+                        context,
+                      ).permissionsCameraDescription,
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     _PermissionCard(
                       icon: Icons.mic_none_rounded,
-                      title: 'Microfone',
-                      description:
-                          'Para áudio do vídeo e para escutar o comando “Raro”.',
+                      title: AppLocalizations.of(context).permissionsMicTitle,
+                      description: AppLocalizations.of(
+                        context,
+                      ).permissionsMicDescription(VoiceConfig.wakeWord),
                     ),
                   ],
                 ),
@@ -106,9 +110,9 @@ class PermissionsScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   alignment: Alignment.center,
-                  child: const Text(
-                    'Continuar',
-                    style: TextStyle(
+                  child: Text(
+                    AppLocalizations.of(context).permissionsContinue,
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,

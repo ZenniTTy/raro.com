@@ -119,6 +119,88 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceEnableInSettings => 'ENABLE VOICE IN SETTINGS';
 
   @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboarding1Title => 'Record without touching';
+
+  @override
+  String get onboarding1Say => 'Say ';
+
+  @override
+  String get onboarding1SayTail => ' to start or stop your recording.';
+
+  @override
+  String onboarding1Tagline(String brand) {
+    return '— $brand is listening.';
+  }
+
+  @override
+  String get onboarding2Title => 'Never miss the moment';
+
+  @override
+  String get onboarding2Intro => '';
+
+  @override
+  String get onboarding2SavesLast => ' automatically saves the last ';
+
+  @override
+  String get onboarding2Seconds => '15 or 30 seconds';
+
+  @override
+  String get onboarding2Middle =>
+      '. Did something important happen? Just press the ';
+
+  @override
+  String get onboarding2OrSay => ' button or say: ';
+
+  @override
+  String onboarding2WakePhrase(String wakeWord) {
+    return '\"$wakeWord, start recording.\"';
+  }
+
+  @override
+  String get bufferVisualizationLabel => 'BUFFER · 15s';
+
+  @override
+  String get bufferVisualizationNow => 'NOW';
+
+  @override
+  String get bufferVisualizationCaption => 'The previous 15s stay saved';
+
+  @override
+  String get permissionsStep => 'STEP 1 OF 1';
+
+  @override
+  String get permissionsTitle => 'Essential permissions';
+
+  @override
+  String permissionsDescription(String brand) {
+    return '$brand needs access to work fully. You can revoke it at any time.';
+  }
+
+  @override
+  String get permissionsCameraTitle => 'Camera';
+
+  @override
+  String get permissionsCameraDescription =>
+      'Required to record 4K video with 0.5x and 1x lenses.';
+
+  @override
+  String get permissionsMicTitle => 'Microphone';
+
+  @override
+  String permissionsMicDescription(String wakeWord) {
+    return 'For video audio and to listen for the “$wakeWord” command.';
+  }
+
+  @override
+  String get permissionsContinue => 'Continue';
+
+  @override
   String get cameraRecordFailed => 'Recording failed';
 
   @override

@@ -119,6 +119,88 @@ class AppLocalizationsPt extends AppLocalizations {
   String get voiceEnableInSettings => 'ATIVAR VOZ NAS CONFIGURAÇÕES';
 
   @override
+  String get onboardingNext => 'Avançar';
+
+  @override
+  String get onboardingSkip => 'Pular';
+
+  @override
+  String get onboarding1Title => 'Grave sem tocar';
+
+  @override
+  String get onboarding1Say => 'Diga ';
+
+  @override
+  String get onboarding1SayTail => ' para iniciar ou encerrar sua gravação.';
+
+  @override
+  String onboarding1Tagline(String brand) {
+    return '— O $brand escuta.';
+  }
+
+  @override
+  String get onboarding2Title => 'Nunca perca o momento';
+
+  @override
+  String get onboarding2Intro => 'O ';
+
+  @override
+  String get onboarding2SavesLast => ' salva automaticamente os últimos ';
+
+  @override
+  String get onboarding2Seconds => '15 ou 30 segundos';
+
+  @override
+  String get onboarding2Middle =>
+      '. Aconteceu algo importante? Basta apertar o botão ';
+
+  @override
+  String get onboarding2OrSay => ' ou dizer: ';
+
+  @override
+  String onboarding2WakePhrase(String wakeWord) {
+    return '\"$wakeWord, começar a gravar.\"';
+  }
+
+  @override
+  String get bufferVisualizationLabel => 'BUFFER · 15s';
+
+  @override
+  String get bufferVisualizationNow => 'AGORA';
+
+  @override
+  String get bufferVisualizationCaption => 'Os 15s anteriores ficam salvos';
+
+  @override
+  String get permissionsStep => 'PASSO 1 DE 1';
+
+  @override
+  String get permissionsTitle => 'Permissões essenciais';
+
+  @override
+  String permissionsDescription(String brand) {
+    return 'O $brand precisa de acesso para funcionar plenamente. Você pode revogar a qualquer momento.';
+  }
+
+  @override
+  String get permissionsCameraTitle => 'Câmera';
+
+  @override
+  String get permissionsCameraDescription =>
+      'Necessário para gravar vídeo em 4K com lentes 0.5x e 1x.';
+
+  @override
+  String get permissionsMicTitle => 'Microfone';
+
+  @override
+  String permissionsMicDescription(String wakeWord) {
+    return 'Para áudio do vídeo e para escutar o comando “$wakeWord”.';
+  }
+
+  @override
+  String get permissionsContinue => 'Continuar';
+
+  @override
   String get cameraRecordFailed => 'Falha ao gravar';
 
   @override
