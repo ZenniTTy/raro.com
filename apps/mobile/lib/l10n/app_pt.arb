@@ -144,6 +144,67 @@
   "@voiceEnableInSettings": {
     "description": "Indicador quando o reconhecimento de voz está indisponível"
   },
+  "cameraRecordFailed": "Falha ao gravar",
+  "@cameraRecordFailed": {
+    "description": "SnackBar de erro genérico ao gravar"
+  },
+  "cameraReplayThermal": "Replay pausado: o aparelho está aquecido.",
+  "@cameraReplayThermal": {
+    "description": "Erro de replay por aquecimento do aparelho"
+  },
+  "cameraReplaySaveFailed": "Não foi possível salvar o replay.",
+  "@cameraReplaySaveFailed": {
+    "description": "Erro genérico ao salvar o replay"
+  },
+  "cameraLensUnavailable4k60": "indisponível em 4K60",
+  "@cameraLensUnavailable4k60": {
+    "description": "Aviso sob o seletor de lente quando 4K60 trava a ultra-wide"
+  },
+  "cameraPrerollIncluded": "últimos {seconds}s incluídos",
+  "@cameraPrerollIncluded": {
+    "description": "Pill de confirmação do pré-roll incluído na gravação",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "galleryTitle": "Galeria",
+  "@galleryTitle": {
+    "description": "Título do header da galeria"
+  },
+  "previewInfoSection": "INFO",
+  "@previewInfoSection": {
+    "description": "Label da seção de metadados no preview"
+  },
+  "previewSizeLabel": "TAMANHO",
+  "@previewSizeLabel": {
+    "description": "Coluna de tamanho do arquivo no preview"
+  },
+  "previewDurationLabel": "DURAÇÃO",
+  "@previewDurationLabel": {
+    "description": "Coluna de duração no preview"
+  },
+  "previewCodecLabel": "CODEC",
+  "@previewCodecLabel": {
+    "description": "Coluna de codec no preview"
+  },
+  "previewShare": "Compartilhar",
+  "@previewShare": {
+    "description": "Botão de compartilhar no preview"
+  },
+  "previewVideoTitle": "Vídeo",
+  "@previewVideoTitle": {
+    "description": "Título fallback do header do preview"
+  },
+  "previewVideoNotFound": "Vídeo não encontrado",
+  "@previewVideoNotFound": {
+    "description": "Estado vazio quando o vídeo não existe mais"
+  },
+  "comingSoon": "Em breve",
+  "@comingSoon": {
+    "description": "SnackBar de recurso ainda não disponível"
+  },
   "galleryVideoCount": "{count, plural, =0{nenhum vídeo} =1{1 vídeo} other{{count} vídeos}}",
   "@galleryVideoCount": {
     "description": "Contador de vídeos no header da galeria",

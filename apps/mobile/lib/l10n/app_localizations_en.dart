@@ -119,6 +119,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceEnableInSettings => 'ENABLE VOICE IN SETTINGS';
 
   @override
+  String get cameraRecordFailed => 'Recording failed';
+
+  @override
+  String get cameraReplayThermal => 'Replay paused: the device is overheating.';
+
+  @override
+  String get cameraReplaySaveFailed => 'Could not save the replay.';
+
+  @override
+  String get cameraLensUnavailable4k60 => 'unavailable in 4K60';
+
+  @override
+  String cameraPrerollIncluded(int seconds) {
+    return 'last ${seconds}s included';
+  }
+
+  @override
+  String get galleryTitle => 'Gallery';
+
+  @override
+  String get previewInfoSection => 'INFO';
+
+  @override
+  String get previewSizeLabel => 'SIZE';
+
+  @override
+  String get previewDurationLabel => 'DURATION';
+
+  @override
+  String get previewCodecLabel => 'CODEC';
+
+  @override
+  String get previewShare => 'Share';
+
+  @override
+  String get previewVideoTitle => 'Video';
+
+  @override
+  String get previewVideoNotFound => 'Video not found';
+
+  @override
+  String get comingSoon => 'Coming soon';
+
+  @override
   String galleryVideoCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

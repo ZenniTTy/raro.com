@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
+import 'package:raro_shared/raro_shared.dart';
 
 class HudInfoBar extends StatelessWidget {
   const HudInfoBar({
@@ -123,7 +125,9 @@ class CameraCenterHint extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'DIGA “RARO” PARA GRAVAR',
+            AppLocalizations.of(
+              context,
+            ).voiceSayToRecord(VoiceConfig.wakeWord.toUpperCase()),
             style: TextStyle(
               fontFamily: RaroFonts.mono,
               fontSize: 10,

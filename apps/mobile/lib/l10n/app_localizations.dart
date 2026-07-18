@@ -286,6 +286,90 @@ abstract class AppLocalizations {
   /// **'ATIVAR VOZ NAS CONFIGURAÇÕES'**
   String get voiceEnableInSettings;
 
+  /// SnackBar de erro genérico ao gravar
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao gravar'**
+  String get cameraRecordFailed;
+
+  /// Erro de replay por aquecimento do aparelho
+  ///
+  /// In pt, this message translates to:
+  /// **'Replay pausado: o aparelho está aquecido.'**
+  String get cameraReplayThermal;
+
+  /// Erro genérico ao salvar o replay
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar o replay.'**
+  String get cameraReplaySaveFailed;
+
+  /// Aviso sob o seletor de lente quando 4K60 trava a ultra-wide
+  ///
+  /// In pt, this message translates to:
+  /// **'indisponível em 4K60'**
+  String get cameraLensUnavailable4k60;
+
+  /// Pill de confirmação do pré-roll incluído na gravação
+  ///
+  /// In pt, this message translates to:
+  /// **'últimos {seconds}s incluídos'**
+  String cameraPrerollIncluded(int seconds);
+
+  /// Título do header da galeria
+  ///
+  /// In pt, this message translates to:
+  /// **'Galeria'**
+  String get galleryTitle;
+
+  /// Label da seção de metadados no preview
+  ///
+  /// In pt, this message translates to:
+  /// **'INFO'**
+  String get previewInfoSection;
+
+  /// Coluna de tamanho do arquivo no preview
+  ///
+  /// In pt, this message translates to:
+  /// **'TAMANHO'**
+  String get previewSizeLabel;
+
+  /// Coluna de duração no preview
+  ///
+  /// In pt, this message translates to:
+  /// **'DURAÇÃO'**
+  String get previewDurationLabel;
+
+  /// Coluna de codec no preview
+  ///
+  /// In pt, this message translates to:
+  /// **'CODEC'**
+  String get previewCodecLabel;
+
+  /// Botão de compartilhar no preview
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar'**
+  String get previewShare;
+
+  /// Título fallback do header do preview
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo'**
+  String get previewVideoTitle;
+
+  /// Estado vazio quando o vídeo não existe mais
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo não encontrado'**
+  String get previewVideoNotFound;
+
+  /// SnackBar de recurso ainda não disponível
+  ///
+  /// In pt, this message translates to:
+  /// **'Em breve'**
+  String get comingSoon;
+
   /// Contador de vídeos no header da galeria
   ///
   /// In pt, this message translates to:

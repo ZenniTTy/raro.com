@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class PrerollConfirmation extends StatefulWidget {
   const PrerollConfirmation({super.key, required this.seconds});
@@ -65,7 +66,9 @@ class _PrerollConfirmationState extends State<PrerollConfirmation>
                   const Icon(Icons.replay, size: 14, color: RaroAccents.teal),
                   const SizedBox(width: 6),
                   Text(
-                    'últimos ${widget.seconds}s incluídos',
+                    AppLocalizations.of(
+                      context,
+                    ).cameraPrerollIncluded(widget.seconds),
                     style: const TextStyle(
                       fontFamily: RaroFonts.mono,
                       fontSize: 11,

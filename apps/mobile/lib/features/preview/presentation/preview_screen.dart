@@ -6,6 +6,7 @@ import 'package:raro_mobile/features/gallery/application/video_list_provider.dar
 import 'package:raro_mobile/features/gallery/domain/video_entity.dart';
 import 'package:raro_mobile/features/preview/domain/preview_metadata.dart';
 import 'package:raro_mobile/features/preview/presentation/widgets/preview_viewport.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class PreviewScreen extends ConsumerWidget {
   const PreviewScreen({super.key, required this.videoId, required this.onBack});
@@ -158,7 +159,7 @@ class _InfoCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'INFO',
+            AppLocalizations.of(context).previewInfoSection,
             style: TextStyle(
               fontFamily: RaroFonts.mono,
               fontSize: 11,
@@ -169,9 +170,18 @@ class _InfoCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              _InfoColumn(value: meta.sizeLabel, label: 'TAMANHO'),
-              _InfoColumn(value: meta.durationLabel, label: 'DURAÇÃO'),
-              _InfoColumn(value: meta.codecLabel, label: 'CODEC'),
+              _InfoColumn(
+                value: meta.sizeLabel,
+                label: AppLocalizations.of(context).previewSizeLabel,
+              ),
+              _InfoColumn(
+                value: meta.durationLabel,
+                label: AppLocalizations.of(context).previewDurationLabel,
+              ),
+              _InfoColumn(
+                value: meta.codecLabel,
+                label: AppLocalizations.of(context).previewCodecLabel,
+              ),
             ],
           ),
         ],
@@ -237,9 +247,9 @@ class _BottomActions extends StatelessWidget {
                   children: [
                     Icon(Icons.ios_share, size: 18, color: colors.ink),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Compartilhar',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context).previewShare,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -309,11 +319,14 @@ class _NotFound extends StatelessWidget {
     return SafeArea(
       child: Column(
         children: [
-          _Header(title: 'Vídeo', onBack: onBack),
+          _Header(
+            title: AppLocalizations.of(context).previewVideoTitle,
+            onBack: onBack,
+          ),
           Expanded(
             child: Center(
               child: Text(
-                'Vídeo não encontrado',
+                AppLocalizations.of(context).previewVideoNotFound,
                 style: TextStyle(color: colors.inkDim),
               ),
             ),
@@ -328,6 +341,9 @@ void _comingSoon(BuildContext context) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
-      const SnackBar(content: Text('Em breve'), duration: Duration(seconds: 1)),
+      SnackBar(
+        content: Text(AppLocalizations.of(context).comingSoon),
+        duration: const Duration(seconds: 1),
+      ),
     );
 }
