@@ -10,6 +10,6 @@ abstract class RecordingSettings with _$RecordingSettings {
     @Default(Fps.fps60) Fps fps,
     @Default(BufferDuration.seconds30) BufferDuration bufferDuration,
     @Default(ControlMode.voice) ControlMode controlMode,
-    @Default(AppLanguage.ptBr) AppLanguage language,
+    AppLanguage? language,
   }) = _RecordingSettings;
 }

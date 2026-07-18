@@ -48,6 +48,26 @@ void main() {
       expect(restored, settings);
     });
 
+    test('encode sem idioma escolhido omite a chave selectedLanguage', () {
+      final map = RecordingSettingsCodec.encode(const RecordingSettings());
+
+      expect(map.containsKey(StorageKeys.selectedLanguage), isFalse);
+    });
+
+    test('decode sem selectedLanguage devolve language null (sistema)', () {
+      final decoded = RecordingSettingsCodec.decode(const {});
+
+      expect(decoded.language, isNull);
+    });
+
+    test('idioma inválido persiste como null, não como pt-BR forçado', () {
+      final decoded = RecordingSettingsCodec.decode(const {
+        'raro.language.selected': 'klingon',
+      });
+
+      expect(decoded.language, isNull);
+    });
+
     test('valor inválido cai no default sem crashar (resiliência)', () {
       final decoded = RecordingSettingsCodec.decode(const {
         'raro.camera.resolution': 'lixo_invalido',

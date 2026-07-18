@@ -3,12 +3,13 @@ import 'package:raro_shared/raro_shared.dart';
 
 abstract final class RecordingSettingsCodec {
   static Map<String, String> encode(RecordingSettings settings) {
+    final language = settings.language;
     return {
       StorageKeys.preferredResolution: settings.resolution.name,
       StorageKeys.preferredFps: settings.fps.name,
       StorageKeys.preferredBufferDuration: settings.bufferDuration.name,
       StorageKeys.preferredControlMode: settings.controlMode.name,
-      StorageKeys.selectedLanguage: settings.language.name,
+      if (language != null) StorageKeys.selectedLanguage: language.name,
     };
   }
 
@@ -31,10 +32,9 @@ abstract final class RecordingSettingsCodec {
         ControlMode.values,
         defaults.controlMode,
       ),
-      language: _byName(
+      language: _byNameOrNull(
         raw[StorageKeys.selectedLanguage],
         AppLanguage.values,
-        defaults.language,
       ),
     );
   }
@@ -53,5 +53,13 @@ abstract final class RecordingSettingsCodec {
       if (value.name == raw) return value;
     }
     return fallback;
+  }
+
+  static T? _byNameOrNull<T extends Enum>(String? raw, List<T> values) {
+    if (raw == null) return null;
+    for (final value in values) {
+      if (value.name == raw) return value;
+    }
+    return null;
   }
 }

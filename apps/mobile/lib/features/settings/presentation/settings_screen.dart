@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:raro_mobile/core/l10n/app_locale.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart'
     show FormatCapability;
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
@@ -147,7 +148,9 @@ class _SettingsBody extends ConsumerWidget {
         SettingsSection(
           title: 'Idioma',
           child: LanguageGrid(
-            selected: settings.language,
+            selected:
+                settings.language ??
+                languageForLocale(Localizations.localeOf(context)),
             onSelected: controller.setLanguage,
           ),
         ),

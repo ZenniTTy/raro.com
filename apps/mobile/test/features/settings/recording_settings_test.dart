@@ -4,14 +4,14 @@ import 'package:raro_shared/raro_shared.dart';
 
 void main() {
   group('RecordingSettings', () {
-    test('defaults: 1080p, 60fps, buffer 30s, voz, pt-BR', () {
+    test('defaults: 1080p, 60fps, buffer 30s, voz, idioma do sistema', () {
       const settings = RecordingSettings();
 
       expect(settings.resolution, Resolution.fullHd1080);
       expect(settings.fps, Fps.fps60);
       expect(settings.bufferDuration, BufferDuration.seconds30);
       expect(settings.controlMode, ControlMode.voice);
-      expect(settings.language, AppLanguage.ptBr);
+      expect(settings.language, isNull);
     });
 
     test('copyWith troca apenas o campo informado', () {
