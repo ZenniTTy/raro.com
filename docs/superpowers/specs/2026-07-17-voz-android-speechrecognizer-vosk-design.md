@@ -55,7 +55,7 @@ Vosk = dependência nova (AAR `com.alphacephei:vosk-android`) + asset de 31 MB �
 ## 6. Validação (DoD)
 
 0. **Confirmar install ANTES de pedir teste** (gate §10, memória `feedback_verify_device_install_before_test`): `flutter build` + install; ler `App installed:` + container UUID novo. Métrica idêntica ao teste anterior = binário velho — não pedir teste sem provar install fresco.
-1. **Spike-gate** (primeiro passo do plan): `checkRecognitionSupport` no M54 provando pt-BR on-device — resultado registrado na spec/PR.
+1. **Spike-gate** (primeiro passo do plan): `checkRecognitionSupport` no M54 provando pt-BR on-device — resultado registrado na spec/PR. **✅ PROVADO 2026-07-18 (M54, API 36):** `isOnDeviceRecognitionAvailable=true`; `installed=[pt-BR]` (instalado offline AGORA, não só supported); `PT_BR_ON_DEVICE_INSTALLED=true`. Design confirmado: SpeechRecognizer on-device = foreground, sem fallback Vosk no foreground neste device. Ferramenta: `voice/SpeechRecognitionProbe.kt`. Ressalva de produção: outros devices podem ter pt-BR só em `supported` (download) ou ausente — fallback SDK_INT + Vosk seguem necessários.
 2. M54 app aberto: "raro gravar" inicia gravação real (Fatia 1), "raro parar" finaliza — 5/5 detecções em logcat.
 3. M54 minimizado (toggle on): comandos funcionam via FGS + Vosk.
 4. M54 tela desligada: idem (com ressalva OEM documentada).
