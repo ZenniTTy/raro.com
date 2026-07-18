@@ -39,11 +39,15 @@ ESTADO ATUAL (2026-07-14):
   dSYM subido (UUID bate). firebase_options.dart/plist/json gitignored (chaves
   reais, só no device do dono). Próximo CÓDIGO = Bloco 2 (Monetização
   RevenueCat, depende conta+produtos+IAP Key do dono). Ver ADR-0025.
-- Android JÁ COMPILA (Bloco 0.1 resolvido 2026-06-22): startRecording/
-  stopRecording stub (throw FlutterError) + discoverCapabilities reshaped
-  p/ supportedFormats; flutter build appbundle ✓ (app-release.aab). Gravação
-  REAL Android = Bloco 3.1 (hoje stub). ReplayBuffer/Voice/Volume HostApi
-  ainda não registradas no MainActivity (Bloco 3.4).
+- Android pré-APK: 3 de 4 fatias FECHADAS e provadas no Galaxy M54.
+  Fatia 1 GRAVAÇÃO (0037, PR #5): CameraX VideoCapture<Recorder>, MP4+áudio
+  real (ADR-0030). Fatia 2 FOCO (0038, PR #7): tap-to-focus nativo + ring.
+  Fatia 3 VOZ (0038, PR #8 aberto): "raro gravar"/"raro parar" via VOSK
+  MOTOR ÚNICO (vosk-android 0.3.47 + FGS microphone, ADR-0029) — provado no
+  M54 (câmera gravou por voz). SpeechRecognizer nativo NÃO usado (motor único,
+  spike-gate provou pt-BR on-device). Voice HostApi registrada no MainActivity.
+  Falta Fatia 4 (i18n PT/EN/ES) → depois o APK do cliente.
+  ReplayBuffer/Volume HostApi Android seguem não registradas (fatia futura).
 
 Locked invariants:
 - Wake word = "Raro" (NUNCA "OkCamera")

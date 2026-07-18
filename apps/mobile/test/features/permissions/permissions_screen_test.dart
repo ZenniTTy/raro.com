@@ -31,6 +31,7 @@ void main() {
     gateway = _MockPermissionGateway();
     when(gateway.cameraStatus).thenAnswer((_) async => false);
     when(gateway.microphoneStatus).thenAnswer((_) async => false);
+    when(gateway.requestNotification).thenAnswer((_) async => true);
     when(gateway.openSettings).thenAnswer((_) async => true);
     onboardingStore = _FakeOnboardingStore();
   });

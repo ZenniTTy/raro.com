@@ -27,6 +27,7 @@ class PermissionController extends _$PermissionController {
     final gateway = ref.read(permissionGatewayProvider);
     final cam = await gateway.requestCamera();
     final mic = await gateway.requestMicrophone();
+    await gateway.requestNotification();
     final result = cam && mic ? CamMicStatus.granted : CamMicStatus.denied;
     state = result;
     return result;

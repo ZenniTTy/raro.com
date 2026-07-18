@@ -57,6 +57,7 @@ void main() {
     test('retorna granted e atualiza estado quando ambos concedidos', () async {
       when(gateway.requestCamera).thenAnswer((_) async => true);
       when(gateway.requestMicrophone).thenAnswer((_) async => true);
+      when(gateway.requestNotification).thenAnswer((_) async => true);
       final container = makeContainer();
 
       final result = await container
@@ -73,6 +74,7 @@ void main() {
     test('retorna denied quando microfone recusado', () async {
       when(gateway.requestCamera).thenAnswer((_) async => true);
       when(gateway.requestMicrophone).thenAnswer((_) async => false);
+      when(gateway.requestNotification).thenAnswer((_) async => true);
       final container = makeContainer();
 
       final result = await container
