@@ -1,11 +1,14 @@
+import 'package:flutter/widgets.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
-String cameraErrorMessage(CameraErrorCode? code) {
+String cameraErrorMessage(BuildContext context, CameraErrorCode? code) {
+  final l10n = AppLocalizations.of(context);
   switch (code) {
     case CameraErrorCode.sessionInterrupted:
-      return 'Câmera interrompida. Tente novamente.';
+      return l10n.cameraSessionInterrupted;
     case CameraErrorCode.formatUnsupported:
-      return 'Resolução indisponível neste aparelho.';
+      return l10n.cameraFormatUnsupported;
     case CameraErrorCode.permissionDenied:
     case CameraErrorCode.deviceUnavailable:
     case CameraErrorCode.lensUnavailable:
@@ -13,6 +16,6 @@ String cameraErrorMessage(CameraErrorCode? code) {
     case CameraErrorCode.alreadyRunning:
     case CameraErrorCode.notRunning:
     case null:
-      return 'Falha ao gravar';
+      return l10n.cameraRecordFailed;
   }
 }

@@ -460,6 +460,72 @@ abstract class AppLocalizations {
   /// **'últimos {seconds}s incluídos'**
   String cameraPrerollIncluded(int seconds);
 
+  /// Erro quando a sessão da câmera é interrompida
+  ///
+  /// In pt, this message translates to:
+  /// **'Câmera interrompida. Tente novamente.'**
+  String get cameraSessionInterrupted;
+
+  /// Erro quando o formato pedido não existe no aparelho
+  ///
+  /// In pt, this message translates to:
+  /// **'Resolução indisponível neste aparelho.'**
+  String get cameraFormatUnsupported;
+
+  /// Sufixo de preço do plano mensal
+  ///
+  /// In pt, this message translates to:
+  /// **'/mês'**
+  String get planPerMonth;
+
+  /// Sufixo de preço do plano anual
+  ///
+  /// In pt, this message translates to:
+  /// **'/ano'**
+  String get planPerYear;
+
+  /// Filtro da galeria: todos os vídeos
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos'**
+  String get galleryFilterAll;
+
+  /// Filtro da galeria: gravados hoje
+  ///
+  /// In pt, this message translates to:
+  /// **'Hoje'**
+  String get galleryFilterToday;
+
+  /// Filtro da galeria: gravados nesta semana
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta semana'**
+  String get galleryFilterThisWeek;
+
+  /// Subtítulo do método Apple Pay; marcas não são traduzidas
+  ///
+  /// In pt, this message translates to:
+  /// **'App Store · Toque para autorizar com Face ID'**
+  String get checkoutAppleSubtitle;
+
+  /// Subtítulo do método Google Play; marcas não são traduzidas
+  ///
+  /// In pt, this message translates to:
+  /// **'Play Store · Cobrança na sua conta Google'**
+  String get checkoutGoogleSubtitle;
+
+  /// Hint de confirmação do método Apple
+  ///
+  /// In pt, this message translates to:
+  /// **'AUTORIZE COM FACE ID · APP STORE'**
+  String get checkoutAppleConfirmHint;
+
+  /// Hint de confirmação do método Google
+  ///
+  /// In pt, this message translates to:
+  /// **'AUTORIZE NA SUA CONTA GOOGLE · PLAY STORE'**
+  String get checkoutGoogleConfirmHint;
+
   /// Título do header da galeria
   ///
   /// In pt, this message translates to:

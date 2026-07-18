@@ -47,7 +47,12 @@ class _PreviewBody extends StatelessWidget {
       bottom: false,
       child: Column(
         children: [
-          _Header(title: meta.titleLabel, onBack: onBack),
+          _Header(
+            title:
+                '${AppLocalizations.of(context).previewVideoTitle} · '
+                '${meta.titleLabel}',
+            onBack: onBack,
+          ),
           Expanded(
             child: SingleChildScrollView(
               child: Column(

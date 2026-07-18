@@ -1,26 +1,13 @@
 import 'package:raro_shared/raro_shared.dart';
 
 enum PlanType {
-  monthly(
-    sku: SubscriptionSkus.monthly,
-    priceBRL: PlanPricing.monthlyBRL,
-    period: '/mês',
-  ),
-  yearly(
-    sku: SubscriptionSkus.yearly,
-    priceBRL: PlanPricing.yearlyBRL,
-    period: '/ano',
-  );
+  monthly(sku: SubscriptionSkus.monthly, priceBRL: PlanPricing.monthlyBRL),
+  yearly(sku: SubscriptionSkus.yearly, priceBRL: PlanPricing.yearlyBRL);
 
-  const PlanType({
-    required this.sku,
-    required this.priceBRL,
-    required this.period,
-  });
+  const PlanType({required this.sku, required this.priceBRL});
 
   final String sku;
   final double priceBRL;
-  final String period;
 
   String get priceLabel => 'R\$ ${_formatBRL(priceBRL)}';
 

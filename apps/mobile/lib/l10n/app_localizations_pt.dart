@@ -218,6 +218,44 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get cameraSessionInterrupted =>
+      'Câmera interrompida. Tente novamente.';
+
+  @override
+  String get cameraFormatUnsupported =>
+      'Resolução indisponível neste aparelho.';
+
+  @override
+  String get planPerMonth => '/mês';
+
+  @override
+  String get planPerYear => '/ano';
+
+  @override
+  String get galleryFilterAll => 'Todos';
+
+  @override
+  String get galleryFilterToday => 'Hoje';
+
+  @override
+  String get galleryFilterThisWeek => 'Esta semana';
+
+  @override
+  String get checkoutAppleSubtitle =>
+      'App Store · Toque para autorizar com Face ID';
+
+  @override
+  String get checkoutGoogleSubtitle =>
+      'Play Store · Cobrança na sua conta Google';
+
+  @override
+  String get checkoutAppleConfirmHint => 'AUTORIZE COM FACE ID · APP STORE';
+
+  @override
+  String get checkoutGoogleConfirmHint =>
+      'AUTORIZE NA SUA CONTA GOOGLE · PLAY STORE';
+
+  @override
   String get galleryTitle => 'Galeria';
 
   @override

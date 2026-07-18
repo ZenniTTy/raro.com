@@ -202,7 +202,9 @@ class _OrderSummary extends StatelessWidget {
           const SizedBox(height: 6),
           _SummaryRow(
             label: AppLocalizations.of(context).checkoutAfterTrial,
-            value: '${plan.priceLabel}${plan.period}',
+            value:
+                '${plan.priceLabel}'
+                '${plan == PlanType.monthly ? AppLocalizations.of(context).planPerMonth : AppLocalizations.of(context).planPerYear}',
           ),
         ],
       ),
@@ -294,10 +296,14 @@ class _PayTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    method.subtitle,
-                    style: TextStyle(fontSize: 11, color: colors.inkDim),
-                  ),
+                  Text(switch (method) {
+                    PaymentMethod.apple => AppLocalizations.of(
+                      context,
+                    ).checkoutAppleSubtitle,
+                    PaymentMethod.google => AppLocalizations.of(
+                      context,
+                    ).checkoutGoogleSubtitle,
+                  }, style: TextStyle(fontSize: 11, color: colors.inkDim)),
                 ],
               ),
             ),
@@ -369,9 +375,15 @@ class _BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
     final enabled = method != null;
-    final hint =
-        method?.confirmHint ??
-        AppLocalizations.of(context).checkoutSelectMethod;
+    final hint = switch (method) {
+      PaymentMethod.apple => AppLocalizations.of(
+        context,
+      ).checkoutAppleConfirmHint,
+      PaymentMethod.google => AppLocalizations.of(
+        context,
+      ).checkoutGoogleConfirmHint,
+      null => AppLocalizations.of(context).checkoutSelectMethod,
+    };
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Column(

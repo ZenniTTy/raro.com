@@ -285,6 +285,50 @@
       }
     }
   },
+  "cameraSessionInterrupted": "Câmera interrompida. Tente novamente.",
+  "@cameraSessionInterrupted": {
+    "description": "Erro quando a sessão da câmera é interrompida"
+  },
+  "cameraFormatUnsupported": "Resolução indisponível neste aparelho.",
+  "@cameraFormatUnsupported": {
+    "description": "Erro quando o formato pedido não existe no aparelho"
+  },
+  "planPerMonth": "/mês",
+  "@planPerMonth": {
+    "description": "Sufixo de preço do plano mensal"
+  },
+  "planPerYear": "/ano",
+  "@planPerYear": {
+    "description": "Sufixo de preço do plano anual"
+  },
+  "galleryFilterAll": "Todos",
+  "@galleryFilterAll": {
+    "description": "Filtro da galeria: todos os vídeos"
+  },
+  "galleryFilterToday": "Hoje",
+  "@galleryFilterToday": {
+    "description": "Filtro da galeria: gravados hoje"
+  },
+  "galleryFilterThisWeek": "Esta semana",
+  "@galleryFilterThisWeek": {
+    "description": "Filtro da galeria: gravados nesta semana"
+  },
+  "checkoutAppleSubtitle": "App Store · Toque para autorizar com Face ID",
+  "@checkoutAppleSubtitle": {
+    "description": "Subtítulo do método Apple Pay; marcas não são traduzidas"
+  },
+  "checkoutGoogleSubtitle": "Play Store · Cobrança na sua conta Google",
+  "@checkoutGoogleSubtitle": {
+    "description": "Subtítulo do método Google Play; marcas não são traduzidas"
+  },
+  "checkoutAppleConfirmHint": "AUTORIZE COM FACE ID · APP STORE",
+  "@checkoutAppleConfirmHint": {
+    "description": "Hint de confirmação do método Apple"
+  },
+  "checkoutGoogleConfirmHint": "AUTORIZE NA SUA CONTA GOOGLE · PLAY STORE",
+  "@checkoutGoogleConfirmHint": {
+    "description": "Hint de confirmação do método Google"
+  },
   "galleryTitle": "Galeria",
   "@galleryTitle": {
     "description": "Título do header da galeria"

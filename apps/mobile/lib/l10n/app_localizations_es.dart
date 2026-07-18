@@ -220,6 +220,44 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get cameraSessionInterrupted =>
+      'Cámara interrumpida. Inténtalo de nuevo.';
+
+  @override
+  String get cameraFormatUnsupported =>
+      'Resolución no disponible en este dispositivo.';
+
+  @override
+  String get planPerMonth => '/mes';
+
+  @override
+  String get planPerYear => '/año';
+
+  @override
+  String get galleryFilterAll => 'Todos';
+
+  @override
+  String get galleryFilterToday => 'Hoy';
+
+  @override
+  String get galleryFilterThisWeek => 'Esta semana';
+
+  @override
+  String get checkoutAppleSubtitle =>
+      'App Store · Toca para autorizar con Face ID';
+
+  @override
+  String get checkoutGoogleSubtitle =>
+      'Play Store · Cargo en tu cuenta de Google';
+
+  @override
+  String get checkoutAppleConfirmHint => 'AUTORIZA CON FACE ID · APP STORE';
+
+  @override
+  String get checkoutGoogleConfirmHint =>
+      'AUTORIZA CON TU CUENTA DE GOOGLE · PLAY STORE';
+
+  @override
   String get galleryTitle => 'Galería';
 
   @override

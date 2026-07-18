@@ -10,7 +10,7 @@ class PreviewMetadata {
 
   factory PreviewMetadata.fromVideo(VideoEntity video) {
     return PreviewMetadata(
-      titleLabel: _formatTitle(video.recordedAt),
+      titleLabel: _formatTimestamp(video.recordedAt),
       sizeBytes: video.duration.inSeconds * _bytesPerSecond,
       durationLabel: video.formattedDuration,
       codecLabel: _codec,
@@ -27,11 +27,11 @@ class PreviewMetadata {
   static const String _codec = 'H.265';
   static const int _bytesPerSecond = 1789569;
 
-  static String _formatTitle(DateTime at) {
+  static String _formatTimestamp(DateTime at) {
     final day = at.day.toString().padLeft(2, '0');
     final month = at.month.toString().padLeft(2, '0');
     final hour = at.hour.toString().padLeft(2, '0');
     final minute = at.minute.toString().padLeft(2, '0');
-    return 'Vídeo · $day/$month $hour:$minute';
+    return '$day/$month $hour:$minute';
   }
 }

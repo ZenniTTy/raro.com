@@ -1,14 +1,10 @@
 import 'package:raro_mobile/features/gallery/domain/video_entity.dart';
 
 enum GalleryFilter {
-  all('Todos'),
-  today('Hoje'),
-  thisWeek('Esta semana'),
-  raroReplay('Raro Replay');
-
-  const GalleryFilter(this.label);
-
-  final String label;
+  all,
+  today,
+  thisWeek,
+  raroReplay;
 
   List<VideoEntity> apply(List<VideoEntity> videos, {required DateTime now}) {
     return switch (this) {

@@ -153,7 +153,7 @@ class _FilterBar extends ConsumerWidget {
         children: [
           for (final filter in GalleryFilter.values) ...[
             FilterPill(
-              label: filter.label,
+              label: _filterLabel(context, filter),
               active: filter == selected,
               onTap: () => ref
                   .read(galleryFilterControllerProvider.notifier)
@@ -178,4 +178,14 @@ class _GradLineThin extends StatelessWidget {
       decoration: const BoxDecoration(gradient: RaroGradients.rainbow),
     );
   }
+}
+
+String _filterLabel(BuildContext context, GalleryFilter filter) {
+  final l10n = AppLocalizations.of(context);
+  return switch (filter) {
+    GalleryFilter.all => l10n.galleryFilterAll,
+    GalleryFilter.today => l10n.galleryFilterToday,
+    GalleryFilter.thisWeek => l10n.galleryFilterThisWeek,
+    GalleryFilter.raroReplay => 'Raro Replay',
+  };
 }

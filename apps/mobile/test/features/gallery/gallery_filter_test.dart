@@ -66,11 +66,13 @@ void main() {
       expect(ids, {'replay'});
     });
 
-    test('cada filtro tem label fiel ao protótipo', () {
-      expect(GalleryFilter.all.label, 'Todos');
-      expect(GalleryFilter.today.label, 'Hoje');
-      expect(GalleryFilter.thisWeek.label, 'Esta semana');
-      expect(GalleryFilter.raroReplay.label, 'Raro Replay');
+    test('enum cobre exatamente os 4 filtros do protótipo', () {
+      expect(GalleryFilter.values, [
+        GalleryFilter.all,
+        GalleryFilter.today,
+        GalleryFilter.thisWeek,
+        GalleryFilter.raroReplay,
+      ]);
     });
   });
 }

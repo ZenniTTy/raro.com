@@ -91,7 +91,9 @@ class PlanCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 3),
                     child: Text(
-                      plan.period,
+                      plan == PlanType.monthly
+                          ? AppLocalizations.of(context).planPerMonth
+                          : AppLocalizations.of(context).planPerYear,
                       style: TextStyle(
                         fontFamily: RaroFonts.mono,
                         fontSize: 10,
