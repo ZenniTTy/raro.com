@@ -1,0 +1,5 @@
+{
+  "@@locale": "es",
+  "settingsTitle": "Configuración",
+  "galleryVideoCount": "{count, plural, =0{ningún video} =1{1 video} other{{count} videos}}"
+}
