@@ -8,6 +8,7 @@ import 'package:raro_mobile/features/gallery/domain/gallery_filter.dart';
 import 'package:raro_mobile/features/gallery/domain/video_entity.dart';
 import 'package:raro_mobile/features/gallery/presentation/widgets/filter_pill.dart';
 import 'package:raro_mobile/features/gallery/presentation/widgets/video_thumbnail.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class GalleryScreen extends ConsumerWidget {
   const GalleryScreen({
@@ -115,7 +116,7 @@ class _Header extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Galeria',
+              AppLocalizations.of(context).galleryTitle,
               style: TextStyle(
                 fontFamily: RaroFonts.display,
                 fontSize: 18,
@@ -125,7 +126,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           Text(
-            '$count vídeos',
+            AppLocalizations.of(context).galleryVideoCount(count),
             style: TextStyle(
               fontFamily: RaroFonts.mono,
               fontSize: 10,
@@ -152,7 +153,7 @@ class _FilterBar extends ConsumerWidget {
         children: [
           for (final filter in GalleryFilter.values) ...[
             FilterPill(
-              label: filter.label,
+              label: _filterLabel(context, filter),
               active: filter == selected,
               onTap: () => ref
                   .read(galleryFilterControllerProvider.notifier)
@@ -177,4 +178,14 @@ class _GradLineThin extends StatelessWidget {
       decoration: const BoxDecoration(gradient: RaroGradients.rainbow),
     );
   }
+}
+
+String _filterLabel(BuildContext context, GalleryFilter filter) {
+  final l10n = AppLocalizations.of(context);
+  return switch (filter) {
+    GalleryFilter.all => l10n.galleryFilterAll,
+    GalleryFilter.today => l10n.galleryFilterToday,
+    GalleryFilter.thisWeek => l10n.galleryFilterThisWeek,
+    GalleryFilter.raroReplay => 'Raro Replay',
+  };
 }

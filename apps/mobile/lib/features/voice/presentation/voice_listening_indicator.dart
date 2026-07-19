@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/features/voice/domain/voice_state.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
+import 'package:raro_shared/raro_shared.dart';
 
 class VoiceListeningIndicator extends StatelessWidget {
   const VoiceListeningIndicator({super.key, required this.state});
@@ -10,21 +12,22 @@ class VoiceListeningIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return IgnorePointer(
       child: switch (state) {
-        VoiceListening() => const _VoiceHint(
+        VoiceListening() => _VoiceHint(
           dotColor: RaroAccents.teal,
-          label: 'DIGA “RARO” PARA GRAVAR',
+          label: l10n.voiceSayToRecord(VoiceConfig.wakeWord.toUpperCase()),
           textAlpha: 0.35,
         ),
-        VoicePaused() => const _VoiceHint(
+        VoicePaused() => _VoiceHint(
           dotColor: RaroAccents.dotIdle,
-          label: 'VOZ PAUSADA',
+          label: l10n.voicePaused,
           textAlpha: 0.3,
         ),
-        VoiceUnavailable() => const _VoiceHint(
+        VoiceUnavailable() => _VoiceHint(
           dotColor: RaroAccents.dotIdle,
-          label: 'ATIVAR VOZ NAS CONFIGURAÇÕES',
+          label: l10n.voiceEnableInSettings,
           textAlpha: 0.45,
         ),
         VoiceIdle() => const SizedBox.shrink(),

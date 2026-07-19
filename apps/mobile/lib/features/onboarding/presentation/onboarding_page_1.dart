@@ -8,6 +8,8 @@ import 'package:raro_mobile/features/onboarding/presentation/widgets/mic_halo_ic
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_cta.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_header.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_pagination.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
+import 'package:raro_shared/raro_shared.dart';
 
 class OnboardingPage1 extends ConsumerWidget {
   const OnboardingPage1({
@@ -22,6 +24,7 @@ class OnboardingPage1 extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: colors.bgDeep,
@@ -39,7 +42,7 @@ class OnboardingPage1 extends ConsumerWidget {
                     const MicHaloIcon(),
                     const SizedBox(height: 40),
                     Text(
-                      'Grave sem tocar',
+                      l10n.onboarding1Title,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: RaroFonts.display,
@@ -60,24 +63,22 @@ class OnboardingPage1 extends ConsumerWidget {
                           color: colors.inkDim,
                         ),
                         children: [
-                          const TextSpan(text: 'Diga '),
+                          TextSpan(text: l10n.onboarding1Say),
                           TextSpan(
-                            text: '"Raro"',
+                            text: '"${VoiceConfig.wakeWord}"',
                             style: TextStyle(
                               fontFamily: RaroFonts.mono,
                               color: colors.ink,
                             ),
                           ),
-                          const TextSpan(
-                            text: ' para iniciar ou encerrar sua gravação.',
-                          ),
+                          TextSpan(text: l10n.onboarding1SayTail),
                         ],
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '— O RARO escuta.',
+                      l10n.onboarding1Tagline('RARO'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: RaroFonts.mono,
@@ -92,7 +93,7 @@ class OnboardingPage1 extends ConsumerWidget {
               const OnboardingPagination(activeIndex: 0),
               const SizedBox(height: 28),
               OnboardingCta(
-                label: 'Avançar',
+                label: l10n.onboardingNext,
                 onPressed: () {
                   ref
                       .read(onboardingProgressProvider.notifier)

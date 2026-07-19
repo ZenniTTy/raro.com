@@ -1,0 +1,569 @@
+{
+  "@@locale": "pt",
+  "settingsTitle": "Configurações",
+  "@settingsTitle": {
+    "description": "Título do header da tela de configurações"
+  },
+  "settingsQualitySection": "Qualidade de Gravação",
+  "@settingsQualitySection": {
+    "description": "Título da seção de qualidade em configurações"
+  },
+  "settingsControlSection": "Controle de Gravação",
+  "@settingsControlSection": {
+    "description": "Título da seção de modo de controle em configurações"
+  },
+  "settingsLanguageSection": "Idioma",
+  "@settingsLanguageSection": {
+    "description": "Título da seção do seletor de idioma"
+  },
+  "settingsAboutSection": "Sobre",
+  "@settingsAboutSection": {
+    "description": "Título da seção sobre o app"
+  },
+  "settingsResolutionLabel": "Resolução",
+  "@settingsResolutionLabel": {
+    "description": "Label acima dos chips de resolução"
+  },
+  "settingsResolutionFixedLensHint": "lente fixa",
+  "@settingsResolutionFixedLensHint": {
+    "description": "Hint do chip 4K60 indicando restrição de lente"
+  },
+  "settingsFpsStandardHint": "Standard",
+  "@settingsFpsStandardHint": {
+    "description": "Hint do chip 30 FPS"
+  },
+  "settingsFpsSmoothHint": "Smooth",
+  "@settingsFpsSmoothHint": {
+    "description": "Hint do chip 60 FPS"
+  },
+  "settingsStabilizationTitle": "Estabilização nativa",
+  "@settingsStabilizationTitle": {
+    "description": "Título da linha de estabilização"
+  },
+  "settingsStabilizationSubtitle": "Reduz tremor com sensor",
+  "@settingsStabilizationSubtitle": {
+    "description": "Subtítulo da linha de estabilização"
+  },
+  "settingsStabilizationAlways": "SEMPRE ATIVADA",
+  "@settingsStabilizationAlways": {
+    "description": "Pill indicando estabilização sempre ligada"
+  },
+  "settingsControlModeIntro": "Escolha o modo que você deseja gravar. No modo ",
+  "@settingsControlModeIntro": {
+    "description": "Fragmento 1 da descrição do modo de controle, antes do token ON"
+  },
+  "settingsControlModeVoicePart": " a gravação é controlada pela voz. No modo ",
+  "@settingsControlModeVoicePart": {
+    "description": "Fragmento 2 da descrição, entre os tokens ON e OFF"
+  },
+  "settingsControlModeVolumePart": ", a gravação é controlada pelos botões laterais de volume do aparelho.",
+  "@settingsControlModeVolumePart": {
+    "description": "Fragmento 3 da descrição, após o token OFF"
+  },
+  "settingsControlVolumeTitle": "Volume",
+  "@settingsControlVolumeTitle": {
+    "description": "Título do card de controle por volume"
+  },
+  "settingsControlVolumeSubtitle": "+ ou −",
+  "@settingsControlVolumeSubtitle": {
+    "description": "Subtítulo do card de controle por volume"
+  },
+  "settingsControlVoiceTitle": "Voz ativa",
+  "@settingsControlVoiceTitle": {
+    "description": "Título do card de controle por voz"
+  },
+  "settingsControlVoiceSubtitle": "Diga \"{wakeWord}\"",
+  "@settingsControlVoiceSubtitle": {
+    "description": "Subtítulo do card de voz; wakeWord vem de VoiceConfig e não é traduzido",
+    "placeholders": {
+      "wakeWord": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsComingSoonBadge": "em breve",
+  "@settingsComingSoonBadge": {
+    "description": "Badge de recurso indisponível no card de controle"
+  },
+  "settingsTrialBanner": "{days, plural, =1{Período de teste · 1 dia restante} other{Período de teste · {days} dias restantes}}",
+  "@settingsTrialBanner": {
+    "description": "Banner com dias restantes do período de teste",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsSeePlans": "Ver Planos",
+  "@settingsSeePlans": {
+    "description": "Botão que navega para o paywall"
+  },
+  "settingsVersionLabel": "Versão",
+  "@settingsVersionLabel": {
+    "description": "Label da linha de versão em Sobre"
+  },
+  "termsOfUse": "Termos de Uso",
+  "@termsOfUse": {
+    "description": "Link para termos de uso (Sobre e paywall)"
+  },
+  "privacyPolicy": "Política de Privacidade",
+  "@privacyPolicy": {
+    "description": "Link para política de privacidade (Sobre e paywall)"
+  },
+  "replayBufferBadge": "Buffer rotativo",
+  "@replayBufferBadge": {
+    "description": "Sufixo do badge do card Raro Replay; a marca fica fora da tradução"
+  },
+  "replayBufferDescription": "Grava 15 ou 30 segundos antes do comando de voz \"{wakeWord}\" ou do botão na tela inicial.",
+  "@replayBufferDescription": {
+    "description": "Descrição do card Raro Replay; wakeWord não é traduzido",
+    "placeholders": {
+      "wakeWord": {
+        "type": "String"
+      }
+    }
+  },
+  "replayBufferDurationLabel": "Duração do buffer",
+  "@replayBufferDurationLabel": {
+    "description": "Label acima dos chips 15s/30s"
+  },
+  "voiceSayToRecord": "DIGA “{wakeWord}” PARA GRAVAR",
+  "@voiceSayToRecord": {
+    "description": "Hint central da câmera quando a voz escuta; wakeWord não é traduzido",
+    "placeholders": {
+      "wakeWord": {
+        "type": "String"
+      }
+    }
+  },
+  "voicePaused": "VOZ PAUSADA",
+  "@voicePaused": {
+    "description": "Indicador de voz pausada na câmera"
+  },
+  "voiceEnableInSettings": "ATIVAR VOZ NAS CONFIGURAÇÕES",
+  "@voiceEnableInSettings": {
+    "description": "Indicador quando o reconhecimento de voz está indisponível"
+  },
+  "onboardingNext": "Avançar",
+  "@onboardingNext": {
+    "description": "CTA de avançar do onboarding"
+  },
+  "onboardingSkip": "Pular",
+  "@onboardingSkip": {
+    "description": "Botão de pular onboarding"
+  },
+  "onboarding1Title": "Grave sem tocar",
+  "@onboarding1Title": {
+    "description": "Título da página 1 do onboarding"
+  },
+  "onboarding1Say": "Diga ",
+  "@onboarding1Say": {
+    "description": "Fragmento antes da wake word na página 1"
+  },
+  "onboarding1SayTail": " para iniciar ou encerrar sua gravação.",
+  "@onboarding1SayTail": {
+    "description": "Fragmento após a wake word na página 1"
+  },
+  "onboarding1Tagline": "— O {brand} escuta.",
+  "@onboarding1Tagline": {
+    "description": "Tagline da página 1; brand é a marca RARO, não traduzida",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "onboarding2Title": "Nunca perca o momento",
+  "@onboarding2Title": {
+    "description": "Título da página 2 do onboarding"
+  },
+  "onboarding2Intro": "O ",
+  "@onboarding2Intro": {
+    "description": "Fragmento antes de Raro Replay na página 2"
+  },
+  "onboarding2SavesLast": " salva automaticamente os últimos ",
+  "@onboarding2SavesLast": {
+    "description": "Fragmento entre Raro Replay e a duração"
+  },
+  "onboarding2Seconds": "15 ou 30 segundos",
+  "@onboarding2Seconds": {
+    "description": "Duração destacada do buffer na página 2"
+  },
+  "onboarding2Middle": ". Aconteceu algo importante? Basta apertar o botão ",
+  "@onboarding2Middle": {
+    "description": "Fragmento entre a duração e o token REC"
+  },
+  "onboarding2OrSay": " ou dizer: ",
+  "@onboarding2OrSay": {
+    "description": "Fragmento entre REC e a frase de comando"
+  },
+  "onboarding2WakePhrase": "\"{wakeWord}, começar a gravar.\"",
+  "@onboarding2WakePhrase": {
+    "description": "Frase de comando destacada; wakeWord não é traduzido",
+    "placeholders": {
+      "wakeWord": {
+        "type": "String"
+      }
+    }
+  },
+  "bufferVisualizationLabel": "BUFFER · 15s",
+  "@bufferVisualizationLabel": {
+    "description": "Label esquerdo da visualização de buffer no onboarding"
+  },
+  "bufferVisualizationNow": "AGORA",
+  "@bufferVisualizationNow": {
+    "description": "Label direito da visualização de buffer"
+  },
+  "bufferVisualizationCaption": "Os 15s anteriores ficam salvos",
+  "@bufferVisualizationCaption": {
+    "description": "Legenda sob a visualização de buffer"
+  },
+  "permissionsStep": "PASSO 1 DE 1",
+  "@permissionsStep": {
+    "description": "Eyebrow da tela de permissões"
+  },
+  "permissionsTitle": "Permissões essenciais",
+  "@permissionsTitle": {
+    "description": "Título da tela de permissões"
+  },
+  "permissionsDescription": "O {brand} precisa de acesso para funcionar plenamente. Você pode revogar a qualquer momento.",
+  "@permissionsDescription": {
+    "description": "Descrição da tela de permissões; brand não é traduzido",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionsCameraTitle": "Câmera",
+  "@permissionsCameraTitle": {
+    "description": "Título do card de permissão de câmera"
+  },
+  "permissionsCameraDescription": "Necessário para gravar vídeo em 4K com lentes 0.5x e 1x.",
+  "@permissionsCameraDescription": {
+    "description": "Descrição do card de câmera"
+  },
+  "permissionsMicTitle": "Microfone",
+  "@permissionsMicTitle": {
+    "description": "Título do card de permissão de microfone"
+  },
+  "permissionsMicDescription": "Para áudio do vídeo e para escutar o comando “{wakeWord}”.",
+  "@permissionsMicDescription": {
+    "description": "Descrição do card de microfone; wakeWord não é traduzido",
+    "placeholders": {
+      "wakeWord": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionsContinue": "Continuar",
+  "@permissionsContinue": {
+    "description": "CTA da tela de permissões"
+  },
+  "cameraRecordFailed": "Falha ao gravar",
+  "@cameraRecordFailed": {
+    "description": "SnackBar de erro genérico ao gravar"
+  },
+  "cameraReplayThermal": "Replay pausado: o aparelho está aquecido.",
+  "@cameraReplayThermal": {
+    "description": "Erro de replay por aquecimento do aparelho"
+  },
+  "cameraReplaySaveFailed": "Não foi possível salvar o replay.",
+  "@cameraReplaySaveFailed": {
+    "description": "Erro genérico ao salvar o replay"
+  },
+  "cameraLensUnavailable4k60": "indisponível em 4K60",
+  "@cameraLensUnavailable4k60": {
+    "description": "Aviso sob o seletor de lente quando 4K60 trava a ultra-wide"
+  },
+  "cameraPrerollIncluded": "últimos {seconds}s incluídos",
+  "@cameraPrerollIncluded": {
+    "description": "Pill de confirmação do pré-roll incluído na gravação",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "cameraSessionInterrupted": "Câmera interrompida. Tente novamente.",
+  "@cameraSessionInterrupted": {
+    "description": "Erro quando a sessão da câmera é interrompida"
+  },
+  "cameraFormatUnsupported": "Resolução indisponível neste aparelho.",
+  "@cameraFormatUnsupported": {
+    "description": "Erro quando o formato pedido não existe no aparelho"
+  },
+  "planPerMonth": "/mês",
+  "@planPerMonth": {
+    "description": "Sufixo de preço do plano mensal"
+  },
+  "planPerYear": "/ano",
+  "@planPerYear": {
+    "description": "Sufixo de preço do plano anual"
+  },
+  "galleryFilterAll": "Todos",
+  "@galleryFilterAll": {
+    "description": "Filtro da galeria: todos os vídeos"
+  },
+  "galleryFilterToday": "Hoje",
+  "@galleryFilterToday": {
+    "description": "Filtro da galeria: gravados hoje"
+  },
+  "galleryFilterThisWeek": "Esta semana",
+  "@galleryFilterThisWeek": {
+    "description": "Filtro da galeria: gravados nesta semana"
+  },
+  "checkoutAppleSubtitle": "App Store · Toque para autorizar com Face ID",
+  "@checkoutAppleSubtitle": {
+    "description": "Subtítulo do método Apple Pay; marcas não são traduzidas"
+  },
+  "checkoutGoogleSubtitle": "Play Store · Cobrança na sua conta Google",
+  "@checkoutGoogleSubtitle": {
+    "description": "Subtítulo do método Google Play; marcas não são traduzidas"
+  },
+  "checkoutAppleConfirmHint": "AUTORIZE COM FACE ID · APP STORE",
+  "@checkoutAppleConfirmHint": {
+    "description": "Hint de confirmação do método Apple"
+  },
+  "checkoutGoogleConfirmHint": "AUTORIZE NA SUA CONTA GOOGLE · PLAY STORE",
+  "@checkoutGoogleConfirmHint": {
+    "description": "Hint de confirmação do método Google"
+  },
+  "galleryTitle": "Galeria",
+  "@galleryTitle": {
+    "description": "Título do header da galeria"
+  },
+  "previewInfoSection": "INFO",
+  "@previewInfoSection": {
+    "description": "Label da seção de metadados no preview"
+  },
+  "previewSizeLabel": "TAMANHO",
+  "@previewSizeLabel": {
+    "description": "Coluna de tamanho do arquivo no preview"
+  },
+  "previewDurationLabel": "DURAÇÃO",
+  "@previewDurationLabel": {
+    "description": "Coluna de duração no preview"
+  },
+  "previewCodecLabel": "CODEC",
+  "@previewCodecLabel": {
+    "description": "Coluna de codec no preview"
+  },
+  "previewShare": "Compartilhar",
+  "@previewShare": {
+    "description": "Botão de compartilhar no preview"
+  },
+  "previewVideoTitle": "Vídeo",
+  "@previewVideoTitle": {
+    "description": "Título fallback do header do preview"
+  },
+  "previewVideoNotFound": "Vídeo não encontrado",
+  "@previewVideoNotFound": {
+    "description": "Estado vazio quando o vídeo não existe mais"
+  },
+  "paywallTitle": "Escolha seu plano",
+  "@paywallTitle": {
+    "description": "Título do paywall"
+  },
+  "paywallSubtitle": "Desbloqueie o potencial total do {brand}. {days} dias grátis, cancele quando quiser.",
+  "@paywallSubtitle": {
+    "description": "Subtítulo do paywall; brand não é traduzido; days vem de raro_shared",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallMonthlyEquivalent": "R$ {price} / mês",
+  "@paywallMonthlyEquivalent": {
+    "description": "Equivalente mensal do plano anual; moeda fixa em BRL nesta fase",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallBestOffer": "MELHOR OFERTA",
+  "@paywallBestOffer": {
+    "description": "Badge do plano anual (invariant de produto)"
+  },
+  "paywallSubscribeNow": "Assinar agora",
+  "@paywallSubscribeNow": {
+    "description": "CTA principal do paywall e do popup"
+  },
+  "paywallRestorePurchases": "Restaurar compras",
+  "@paywallRestorePurchases": {
+    "description": "CTA secundário de restauração"
+  },
+  "paywallBack": "Voltar",
+  "@paywallBack": {
+    "description": "Link de voltar do paywall"
+  },
+  "paywallPeriodMonthly": "mensal",
+  "@paywallPeriodMonthly": {
+    "description": "Palavra do período mensal usada em frases compostas"
+  },
+  "paywallPeriodYearly": "anual",
+  "@paywallPeriodYearly": {
+    "description": "Palavra do período anual usada em frases compostas"
+  },
+  "paywallLegal": "Assinatura {period} com renovação automática. Cancele a qualquer momento nas configurações da App Store.",
+  "@paywallLegal": {
+    "description": "Texto legal do paywall; period é paywallPeriodMonthly/Yearly",
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "planPremium": "Premium",
+  "@planPremium": {
+    "description": "Nome do plano no card e no checkout"
+  },
+  "planUnlockPotential": "Desbloqueie todo o potencial",
+  "@planUnlockPotential": {
+    "description": "Subtítulo do card de plano"
+  },
+  "planFeature4k": "Gravação em 4K 60fps",
+  "@planFeature4k": {
+    "description": "Feature 1 do plano"
+  },
+  "planFeatureBuffer": "Buffer estendido",
+  "@planFeatureBuffer": {
+    "description": "Feature 2 do plano"
+  },
+  "planFeatureNoAds": "Sem anúncios",
+  "@planFeatureNoAds": {
+    "description": "Feature 3 do plano"
+  },
+  "planFreeDays": "{days} DIAS GRÁTIS",
+  "@planFreeDays": {
+    "description": "Pill de dias grátis; days vem de raro_shared",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planCancelAnytime": "Cancele quando quiser",
+  "@planCancelAnytime": {
+    "description": "Nota sob a pill de dias grátis"
+  },
+  "planSelected": "SELECIONADO",
+  "@planSelected": {
+    "description": "Pill do plano selecionado"
+  },
+  "popupEyebrow": "ASSINATURA",
+  "@popupEyebrow": {
+    "description": "Eyebrow do popup de assinatura"
+  },
+  "popupTitle": "Assinatura necessária",
+  "@popupTitle": {
+    "description": "Título do popup de assinatura"
+  },
+  "popupBody1": "Você pode usar o app normalmente, mas para ",
+  "@popupBody1": {
+    "description": "Fragmento 1 do corpo do popup, antes do trecho em negrito"
+  },
+  "popupBodyBold": "salvar vídeos",
+  "@popupBodyBold": {
+    "description": "Trecho em negrito do corpo do popup"
+  },
+  "popupBody2": " é preciso ativar a assinatura.",
+  "@popupBody2": {
+    "description": "Fragmento 2 do corpo do popup"
+  },
+  "popupTrial1": "A assinatura inclui ",
+  "@popupTrial1": {
+    "description": "Fragmento antes dos dias grátis em negrito"
+  },
+  "popupTrialBold": "{days} dias grátis",
+  "@popupTrialBold": {
+    "description": "Dias grátis em negrito no popup",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "popupTrial2": ". Você pode cancelar antes de completar os {days} dias e não será cobrado de nada.",
+  "@popupTrial2": {
+    "description": "Fragmento final sobre cancelamento no popup",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "popupMaybeLater": "Talvez depois",
+  "@popupMaybeLater": {
+    "description": "CTA de dispensar o popup"
+  },
+  "checkoutTitle": "Finalizar assinatura",
+  "@checkoutTitle": {
+    "description": "Título do header do checkout"
+  },
+  "checkoutPaymentMethod": "Método de pagamento",
+  "@checkoutPaymentMethod": {
+    "description": "Label da seção de método de pagamento"
+  },
+  "checkoutOrderSummary": "RESUMO DO PEDIDO",
+  "@checkoutOrderSummary": {
+    "description": "Label da seção de resumo"
+  },
+  "checkoutSubscription": "Assinatura {period}",
+  "@checkoutSubscription": {
+    "description": "Linha do tipo de assinatura; period é paywallPeriodMonthly/Yearly",
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "checkoutTrialPeriod": "Período de teste ({days} dias)",
+  "@checkoutTrialPeriod": {
+    "description": "Linha do período de teste no resumo",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "checkoutAfterTrial": "Após o teste",
+  "@checkoutAfterTrial": {
+    "description": "Linha do valor pós-teste no resumo"
+  },
+  "checkoutProcessedBy": "Pagamento processado pela App Store ou Google Play. O {brand} não armazena dados do seu cartão.",
+  "@checkoutProcessedBy": {
+    "description": "Nota de segurança do checkout; marcas de loja e brand não são traduzidas",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "checkoutSelectMethod": "SELECIONE UM MÉTODO ACIMA",
+  "@checkoutSelectMethod": {
+    "description": "Hint do bottom bar sem método selecionado"
+  },
+  "checkoutConfirm": "Confirmar assinatura",
+  "@checkoutConfirm": {
+    "description": "CTA final do checkout"
+  },
+  "comingSoon": "Em breve",
+  "@comingSoon": {
+    "description": "SnackBar de recurso ainda não disponível"
+  },
+  "galleryVideoCount": "{count, plural, =0{nenhum vídeo} =1{1 vídeo} other{{count} vídeos}}",
+  "@galleryVideoCount": {
+    "description": "Contador de vídeos no header da galeria",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}

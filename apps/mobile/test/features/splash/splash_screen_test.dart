@@ -6,6 +6,7 @@ import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/onboarding/application/onboarding_progress_provider.dart';
 import 'package:raro_mobile/features/onboarding/data/onboarding_store.dart';
 import 'package:raro_mobile/features/splash/presentation/splash_screen.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class _FakeOnboardingStore implements OnboardingStore {
   _FakeOnboardingStore({this.completed = false});
@@ -33,6 +34,9 @@ void main() {
         ),
       ],
       child: MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
         home: SplashScreen(onComplete: onComplete),
       ),
@@ -116,7 +120,12 @@ void main() {
           overrides: [
             onboardingStoreProvider.overrideWithValue(_FakeOnboardingStore()),
           ],
-          child: const MaterialApp(home: SizedBox.shrink()),
+          child: const MaterialApp(
+            locale: Locale('pt', 'BR'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: SizedBox.shrink(),
+          ),
         ),
       );
       await tester.pump(const Duration(milliseconds: 2000));

@@ -4,11 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_2.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_cta.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 void main() {
   Widget harness({VoidCallback? onNext, VoidCallback? onSkip}) {
     return ProviderScope(
       child: MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
         home: OnboardingPage2(onNext: onNext ?? () {}, onSkip: onSkip ?? () {}),
       ),

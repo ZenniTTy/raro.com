@@ -58,9 +58,10 @@ void main() {
       expect(meta.sizeLabel, matches(RegExp(r'^\d+ MB$')));
     });
 
-    test('titleLabel formata "Vídeo · DD/MM HH:MM" a partir de recordedAt', () {
+    test('titleLabel formata timestamp "DD/MM HH:MM" a partir de recordedAt '
+        '(a palavra Vídeo vem do arb na presentation)', () {
       final meta = PreviewMetadata.fromVideo(_video());
-      expect(meta.titleLabel, 'Vídeo · 15/05 09:41');
+      expect(meta.titleLabel, '15/05 09:41');
     });
   });
 }

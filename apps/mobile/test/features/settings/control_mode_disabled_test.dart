@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/settings/presentation/widgets/control_mode_card.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 void main() {
   Widget host(Widget child) => MaterialApp(
+    locale: const Locale('pt', 'BR'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     theme: buildRaroDarkTheme(),
     home: Scaffold(body: child),
   );

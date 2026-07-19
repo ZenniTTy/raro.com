@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/core/native_bridges/generated/voice_api.g.dart';
-import 'package:raro_mobile/features/camera/domain/camera_error_message.dart';
+import 'package:raro_mobile/features/camera/presentation/camera_error_l10n.dart';
 import 'package:raro_mobile/features/camera/domain/format_catalog.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
@@ -37,6 +37,7 @@ import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:raro_mobile/features/voice/application/voice_controller.dart';
 import 'package:raro_mobile/features/voice/domain/voice_state.dart';
 import 'package:raro_mobile/features/voice/presentation/voice_listening_indicator.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart'
     show BufferDuration, Codec, ControlMode;
 
@@ -198,14 +199,20 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       _stopElapsedTimer();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(cameraErrorMessage(mapPigeonErrorCode(e.code)))),
+        SnackBar(
+          content: Text(
+            cameraErrorMessage(context, mapPigeonErrorCode(e.code)),
+          ),
+        ),
       );
     } on Object catch (_) {
       _stopElapsedTimer();
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Falha ao gravar')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).cameraRecordFailed),
+        ),
+      );
     }
   }
 
@@ -222,10 +229,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   }
 
   String _replayErrorMessage(String code) {
+    final l10n = AppLocalizations.of(context);
     if (code == 'thermalThrottled') {
-      return 'Replay pausado: o aparelho está aquecido.';
+      return l10n.cameraReplayThermal;
     }
-    return 'Não foi possível salvar o replay.';
+    return l10n.cameraReplaySaveFailed;
   }
 
   @override

@@ -8,6 +8,7 @@ import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart
 import 'package:raro_mobile/features/camera/presentation/camera_preview_widget.dart';
 import 'package:raro_mobile/features/camera/presentation/rule_of_thirds_painter.dart';
 import 'package:raro_mobile/features/camera/presentation/viewport_grain_painter.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class _MockRepo extends Mock implements CameraRepository {}
 
@@ -19,7 +20,12 @@ void main() {
   testWidgets('renders rule-of-thirds and grain overlays', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
-        child: MaterialApp(home: Scaffold(body: CameraPreviewWidget())),
+        child: MaterialApp(
+          locale: Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: CameraPreviewWidget()),
+        ),
       ),
     );
 
@@ -62,6 +68,9 @@ void main() {
       ProviderScope(
         overrides: [cameraRepositoryProvider.overrideWithValue(repo)],
         child: const MaterialApp(
+          locale: Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
               width: 400,
@@ -113,6 +122,9 @@ void main() {
         ProviderScope(
           overrides: [cameraRepositoryProvider.overrideWithValue(repo)],
           child: const MaterialApp(
+            locale: Locale('pt', 'BR'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: SizedBox(
                 width: 400,

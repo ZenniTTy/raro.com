@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class OnboardingHeader extends StatelessWidget {
   const OnboardingHeader({super.key, required this.onSkip});
@@ -26,7 +27,7 @@ class OnboardingHeader extends StatelessWidget {
         TextButton(
           onPressed: onSkip,
           child: Text(
-            'Pular',
+            AppLocalizations.of(context).onboardingSkip,
             style: TextStyle(
               fontFamily: RaroFonts.body,
               fontSize: 14,

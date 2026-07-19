@@ -18,6 +18,7 @@ import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:raro_mobile/features/voice/application/voice_flutter_api_provider.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository_provider.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class _FakeSettingsStore implements SettingsStore {
   @override
@@ -102,6 +103,9 @@ Widget _cameraUnderInsets({bool fakeSubscription = false}) {
             ),
         ],
         child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildRaroDarkTheme(),
           home: const CameraScreen(
             onGallery: _noop,

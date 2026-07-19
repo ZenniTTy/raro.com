@@ -5,6 +5,7 @@ import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_cta.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
 import 'package:raro_mobile/features/paywall/presentation/widgets/plan_card.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart';
 
 class PaywallScreen extends StatefulWidget {
@@ -27,9 +28,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final l10n = AppLocalizations.of(context);
     const trialDays = SubscriptionConfig.freeTrialDays;
-    final equivalent =
-        'R\$ ${PlanPricing.yearlyMonthlyEquivalentBRL.toStringAsFixed(2).replaceAll('.', ',')} / mês';
+    final equivalent = l10n.paywallMonthlyEquivalent(
+      PlanPricing.yearlyMonthlyEquivalentBRL
+          .toStringAsFixed(2)
+          .replaceAll('.', ','),
+    );
 
     return Scaffold(
       backgroundColor: colors.bgDeep,
@@ -48,9 +53,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Escolha seu plano',
-                          style: TextStyle(
+                        Text(
+                          l10n.paywallTitle,
+                          style: const TextStyle(
                             fontFamily: RaroFonts.display,
                             fontSize: 30,
                             fontWeight: FontWeight.bold,
@@ -60,8 +65,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Desbloqueie o potencial total do Raro Camera. '
-                          '$trialDays dias grátis, cancele quando quiser.',
+                          l10n.paywallSubtitle('Raro Camera', trialDays),
                           style: TextStyle(
                             fontFamily: RaroFonts.body,
                             fontSize: 12.5,
@@ -89,7 +93,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                 key: const Key('plan_card_yearly'),
                                 plan: PlanType.yearly,
                                 selected: _selected == PlanType.yearly,
-                                badge: 'MELHOR OFERTA',
+                                badge: l10n.paywallBestOffer,
                                 equivalentLabel: equivalent,
                                 onTap: () =>
                                     setState(() => _selected = PlanType.yearly),
@@ -108,28 +112,30 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   child: Column(
                     children: [
                       OnboardingCta(
-                        label: 'Assinar agora',
+                        label: l10n.paywallSubscribeNow,
                         primary: true,
                         onPressed: () => widget.onCheckout(_selected),
                       ),
                       const SizedBox(height: 8),
                       OnboardingCta(
-                        label: 'Restaurar compras',
+                        label: l10n.paywallRestorePurchases,
                         onPressed: () => _comingSoon(context),
                       ),
                       const SizedBox(height: 4),
                       TextButton(
                         onPressed: widget.onClose,
                         child: Text(
-                          'Voltar',
+                          l10n.paywallBack,
                           style: TextStyle(fontSize: 13, color: colors.inkDim),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Assinatura ${_selected == PlanType.yearly ? 'anual' : 'mensal'} '
-                        'com renovação automática. Cancele a qualquer momento nas '
-                        'configurações da App Store.',
+                        l10n.paywallLegal(
+                          _selected == PlanType.yearly
+                              ? l10n.paywallPeriodYearly
+                              : l10n.paywallPeriodMonthly,
+                        ),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 10,
@@ -240,12 +246,12 @@ class _LegalLinks extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: () => _comingSoon(context),
-          child: Text('Termos de Uso', style: style),
+          child: Text(AppLocalizations.of(context).termsOfUse, style: style),
         ),
         Text('  ·  ', style: style),
         GestureDetector(
           onTap: () => _comingSoon(context),
-          child: Text('Política de Privacidade', style: style),
+          child: Text(AppLocalizations.of(context).privacyPolicy, style: style),
         ),
       ],
     );
@@ -256,6 +262,9 @@ void _comingSoon(BuildContext context) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
-      const SnackBar(content: Text('Em breve'), duration: Duration(seconds: 1)),
+      SnackBar(
+        content: Text(AppLocalizations.of(context).comingSoon),
+        duration: const Duration(seconds: 1),
+      ),
     );
 }

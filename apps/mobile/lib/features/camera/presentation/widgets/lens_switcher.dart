@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class LensSwitcher extends StatelessWidget {
   const LensSwitcher({
@@ -43,7 +44,7 @@ class LensSwitcher extends StatelessWidget {
         if (!ultraWideEnabled) ...[
           const SizedBox(height: 4),
           Text(
-            'indisponível em 4K60',
+            AppLocalizations.of(context).cameraLensUnavailable4k60,
             style: TextStyle(
               fontSize: 9,
               color: Colors.white.withValues(alpha: 0.5),

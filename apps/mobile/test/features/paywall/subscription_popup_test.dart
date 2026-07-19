@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/paywall/presentation/widgets/subscription_popup.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 void main() {
   Widget host({
@@ -9,6 +10,9 @@ void main() {
     required VoidCallback onLater,
   }) {
     return MaterialApp(
+      locale: const Locale('pt', 'BR'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: buildRaroDarkTheme(),
       home: Scaffold(
         body: SubscriptionPopup(onSubscribe: onSubscribe, onLater: onLater),

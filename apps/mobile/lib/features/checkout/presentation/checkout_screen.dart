@@ -7,6 +7,7 @@ import 'package:raro_mobile/features/checkout/domain/payment_method.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_cta.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -40,7 +41,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
-    final period = widget.plan == PlanType.monthly ? 'mensal' : 'anual';
+    final l10n = AppLocalizations.of(context);
+    final period = widget.plan == PlanType.monthly
+        ? l10n.paywallPeriodMonthly
+        : l10n.paywallPeriodYearly;
 
     return Scaffold(
       backgroundColor: colors.bgDeep,
@@ -57,7 +61,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   children: [
                     _OrderSummary(plan: widget.plan, period: period),
                     const SizedBox(height: 24),
-                    const _SectionLabel(text: 'Método de pagamento'),
+                    _SectionLabel(text: l10n.checkoutPaymentMethod),
                     const SizedBox(height: 10),
                     for (final m in PaymentMethod.values) ...[
                       _PayTile(
@@ -111,9 +115,9 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const Text(
-            'Finalizar assinatura',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context).checkoutTitle,
+            style: const TextStyle(
               fontFamily: RaroFonts.display,
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -146,7 +150,9 @@ class _OrderSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionLabel(text: 'RESUMO DO PEDIDO'),
+          _SectionLabel(
+            text: AppLocalizations.of(context).checkoutOrderSummary,
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -169,16 +175,16 @@ class _OrderSummary extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'RARO Premium',
-                      style: TextStyle(
+                    Text(
+                      'RARO ${AppLocalizations.of(context).planPremium}',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
                       ),
                     ),
                     Text(
-                      'Assinatura $period',
+                      AppLocalizations.of(context).checkoutSubscription(period),
                       style: TextStyle(fontSize: 11, color: colors.inkDim),
                     ),
                   ],
@@ -189,14 +195,16 @@ class _OrderSummary extends StatelessWidget {
           const SizedBox(height: 16),
           const _GradLine(),
           const SizedBox(height: 12),
-          const _SummaryRow(
-            label: 'Período de teste ($trialDays dias)',
+          _SummaryRow(
+            label: AppLocalizations.of(context).checkoutTrialPeriod(trialDays),
             value: 'R\$ 0,00',
           ),
           const SizedBox(height: 6),
           _SummaryRow(
-            label: 'Após o teste',
-            value: '${plan.priceLabel}${plan.period}',
+            label: AppLocalizations.of(context).checkoutAfterTrial,
+            value:
+                '${plan.priceLabel}'
+                '${plan == PlanType.monthly ? AppLocalizations.of(context).planPerMonth : AppLocalizations.of(context).planPerYear}',
           ),
         ],
       ),
@@ -288,10 +296,14 @@ class _PayTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    method.subtitle,
-                    style: TextStyle(fontSize: 11, color: colors.inkDim),
-                  ),
+                  Text(switch (method) {
+                    PaymentMethod.apple => AppLocalizations.of(
+                      context,
+                    ).checkoutAppleSubtitle,
+                    PaymentMethod.google => AppLocalizations.of(
+                      context,
+                    ).checkoutGoogleSubtitle,
+                  }, style: TextStyle(fontSize: 11, color: colors.inkDim)),
                 ],
               ),
             ),
@@ -340,8 +352,7 @@ class _SecurityNote extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            'Pagamento processado pela App Store ou Google Play. '
-            'O RARO não armazena dados do seu cartão.',
+            AppLocalizations.of(context).checkoutProcessedBy('RARO'),
             style: TextStyle(
               fontSize: 11.5,
               height: 1.5,
@@ -364,7 +375,15 @@ class _BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
     final enabled = method != null;
-    final hint = method?.confirmHint ?? 'SELECIONE UM MÉTODO ACIMA';
+    final hint = switch (method) {
+      PaymentMethod.apple => AppLocalizations.of(
+        context,
+      ).checkoutAppleConfirmHint,
+      PaymentMethod.google => AppLocalizations.of(
+        context,
+      ).checkoutGoogleConfirmHint,
+      null => AppLocalizations.of(context).checkoutSelectMethod,
+    };
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Column(
@@ -374,7 +393,7 @@ class _BottomBar extends StatelessWidget {
             child: IgnorePointer(
               ignoring: !enabled,
               child: OnboardingCta(
-                label: 'Confirmar assinatura',
+                label: AppLocalizations.of(context).checkoutConfirm,
                 primary: true,
                 onPressed: onConfirm,
               ),

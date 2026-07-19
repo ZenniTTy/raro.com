@@ -3,6 +3,7 @@ import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/settings/presentation/widgets/settings_chip.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart';
 
 class ReplayBufferCard extends StatelessWidget {
@@ -18,6 +19,7 @@ class ReplayBufferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(1.5),
       decoration: BoxDecoration(
@@ -36,9 +38,9 @@ class ReplayBufferCard extends StatelessWidget {
             ShaderMask(
               shaderCallback: (bounds) =>
                   RaroGradients.rainbow.createShader(bounds),
-              child: const Text(
-                'Raro Replay · Buffer rotativo',
-                style: TextStyle(
+              child: Text(
+                'Raro Replay · ${l10n.replayBufferBadge}',
+                style: const TextStyle(
                   fontFamily: RaroFonts.mono,
                   fontSize: 10,
                   letterSpacing: 1.8,
@@ -49,13 +51,12 @@ class ReplayBufferCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Grava 15 ou 30 segundos antes do comando de voz "RARO" ou do '
-              'botão na tela inicial.',
+              l10n.replayBufferDescription(VoiceConfig.wakeWord.toUpperCase()),
               style: TextStyle(fontSize: 12, height: 1.5, color: colors.inkDim),
             ),
             const SizedBox(height: 12),
             Text(
-              'Duração do buffer',
+              l10n.replayBufferDurationLabel,
               style: TextStyle(fontSize: 11, color: colors.inkDim),
             ),
             const SizedBox(height: 8),

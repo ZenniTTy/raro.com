@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:raro_mobile/core/l10n/app_locale.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart'
     show FormatCapability;
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
@@ -15,6 +16,7 @@ import 'package:raro_mobile/features/settings/presentation/widgets/language_grid
 import 'package:raro_mobile/features/settings/presentation/widgets/replay_buffer_card.dart';
 import 'package:raro_mobile/features/settings/presentation/widgets/settings_chip.dart';
 import 'package:raro_mobile/features/settings/presentation/widgets/settings_section.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -82,7 +84,7 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            'Configurações',
+            AppLocalizations.of(context).settingsTitle,
             style: TextStyle(
               fontFamily: RaroFonts.display,
               fontSize: 18,
@@ -118,11 +120,12 @@ class _SettingsBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(settingsControllerProvider.notifier);
     final supportedFormats = ref.watch(capabilitiesProvider);
+    final l10n = AppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         SettingsSection(
-          title: 'Qualidade de Gravação',
+          title: l10n.settingsQualitySection,
           child: _RecordingQuality(
             settings: settings,
             supportedFormats: supportedFormats,
@@ -137,7 +140,7 @@ class _SettingsBody extends ConsumerWidget {
         ),
         const SizedBox(height: 14),
         SettingsSection(
-          title: 'Controle de Gravação',
+          title: l10n.settingsControlSection,
           child: _ControlMode(
             selected: settings.controlMode,
             onSelected: controller.setControlMode,
@@ -145,9 +148,11 @@ class _SettingsBody extends ConsumerWidget {
         ),
         const SizedBox(height: 14),
         SettingsSection(
-          title: 'Idioma',
+          title: l10n.settingsLanguageSection,
           child: LanguageGrid(
-            selected: settings.language,
+            selected:
+                settings.language ??
+                languageForLocale(Localizations.localeOf(context)),
             onSelected: controller.setLanguage,
           ),
         ),
@@ -155,7 +160,10 @@ class _SettingsBody extends ConsumerWidget {
         const _TrialBanner(),
         _SeePlansButton(onTap: onSeePlans),
         const SizedBox(height: 14),
-        const SettingsSection(title: 'Sobre', child: _About()),
+        SettingsSection(
+          title: l10n.settingsAboutSection,
+          child: const _About(),
+        ),
         const SizedBox(height: 24),
         const _Wordmark(),
       ],
@@ -182,11 +190,11 @@ class _RecordingQuality extends StatelessWidget {
     Resolution.uhd4k,
   ];
 
-  static const _resolutionLabels = <Resolution, (String, String?)>{
-    Resolution.hd720: ('720p HD', null),
-    Resolution.fullHd1080: ('1080p Full HD', null),
-    Resolution.uhd4k: ('4K Ultra HD', null),
-    Resolution.uhd4k60: ('4K 60fps', 'lente fixa'),
+  static const _resolutionLabels = <Resolution, String>{
+    Resolution.hd720: '720p HD',
+    Resolution.fullHd1080: '1080p Full HD',
+    Resolution.uhd4k: '4K Ultra HD',
+    Resolution.uhd4k60: '4K 60fps',
   };
 
   List<Resolution> get _resolutions {
@@ -197,12 +205,13 @@ class _RecordingQuality extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final l10n = AppLocalizations.of(context);
     final resolutions = _resolutions;
     final fpsLocked = settings.resolution == Resolution.uhd4k60;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Label('Resolução', colors),
+        _Label(l10n.settingsResolutionLabel, colors),
         const SizedBox(height: 8),
         for (var i = 0; i < resolutions.length; i += 2) ...[
           if (i > 0) const SizedBox(height: 6),
@@ -212,8 +221,10 @@ class _RecordingQuality extends StatelessWidget {
                 if (j > i) const SizedBox(width: 6),
                 Expanded(
                   child: SettingsChip(
-                    label: _resolutionLabels[resolutions[j]]!.$1,
-                    hint: _resolutionLabels[resolutions[j]]!.$2,
+                    label: _resolutionLabels[resolutions[j]]!,
+                    hint: resolutions[j] == Resolution.uhd4k60
+                        ? l10n.settingsResolutionFixedLensHint
+                        : null,
                     active: settings.resolution == resolutions[j],
                     onTap: () => onResolution(resolutions[j]),
                   ),
@@ -231,7 +242,7 @@ class _RecordingQuality extends StatelessWidget {
               Expanded(
                 child: SettingsChip(
                   label: '30 FPS',
-                  hint: 'Standard',
+                  hint: l10n.settingsFpsStandardHint,
                   active: settings.fps == Fps.fps30,
                   onTap: () => onFps(Fps.fps30),
                 ),
@@ -240,7 +251,7 @@ class _RecordingQuality extends StatelessWidget {
               Expanded(
                 child: SettingsChip(
                   label: '60 FPS',
-                  hint: 'Smooth',
+                  hint: l10n.settingsFpsSmoothHint,
                   active: settings.fps == Fps.fps60,
                   onTap: () => onFps(Fps.fps60),
                 ),
@@ -269,12 +280,12 @@ class _StabilizationRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Estabilização nativa',
+                AppLocalizations.of(context).settingsStabilizationTitle,
                 style: TextStyle(fontSize: 14, color: colors.ink),
               ),
               const SizedBox(height: 2),
               Text(
-                'Reduz tremor com sensor',
+                AppLocalizations.of(context).settingsStabilizationSubtitle,
                 style: TextStyle(fontSize: 11, color: colors.inkDim),
               ),
             ],
@@ -299,9 +310,9 @@ class _StabilizationRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'SEMPRE ATIVADA',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context).settingsStabilizationAlways,
+                style: const TextStyle(
                   fontFamily: RaroFonts.mono,
                   fontSize: 10,
                   letterSpacing: 1.2,
@@ -325,6 +336,7 @@ class _ControlMode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -332,25 +344,17 @@ class _ControlMode extends StatelessWidget {
           text: TextSpan(
             style: TextStyle(fontSize: 12.5, height: 1.5, color: colors.inkDim),
             children: [
-              const TextSpan(
-                text: 'Escolha o modo que você deseja gravar. No modo ',
-              ),
+              TextSpan(text: l10n.settingsControlModeIntro),
               TextSpan(
                 text: 'ON',
                 style: TextStyle(color: colors.ink),
               ),
-              const TextSpan(
-                text: ' a gravação é controlada pela voz. No modo ',
-              ),
+              TextSpan(text: l10n.settingsControlModeVoicePart),
               TextSpan(
                 text: 'OFF',
                 style: TextStyle(color: colors.ink),
               ),
-              const TextSpan(
-                text:
-                    ', a gravação é controlada pelos botões laterais de '
-                    'volume do aparelho.',
-              ),
+              TextSpan(text: l10n.settingsControlModeVolumePart),
             ],
           ),
         ),
@@ -360,8 +364,8 @@ class _ControlMode extends StatelessWidget {
             Expanded(
               child: ControlModeCard(
                 badge: 'OFF',
-                title: 'Volume',
-                subtitle: '+ ou −',
+                title: l10n.settingsControlVolumeTitle,
+                subtitle: l10n.settingsControlVolumeSubtitle,
                 active: selected == ControlMode.volume,
                 onTap: () => onSelected(ControlMode.volume),
                 enabled: false,
@@ -371,8 +375,10 @@ class _ControlMode extends StatelessWidget {
             Expanded(
               child: ControlModeCard(
                 badge: 'ON',
-                title: 'Voz ativa',
-                subtitle: 'Diga "Raro"',
+                title: l10n.settingsControlVoiceTitle,
+                subtitle: l10n.settingsControlVoiceSubtitle(
+                  VoiceConfig.wakeWord,
+                ),
                 active: selected == ControlMode.voice,
                 onTap: () => onSelected(ControlMode.voice),
               ),
@@ -416,7 +422,7 @@ class _TrialBanner extends ConsumerWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Período de teste · $remaining dias restantes',
+                AppLocalizations.of(context).settingsTrialBanner(remaining),
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
@@ -448,18 +454,18 @@ class _SeePlansButton extends StatelessWidget {
           gradient: RaroGradients.rainbow,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.workspace_premium_outlined,
               size: 16,
               color: Colors.black,
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
-              'Ver Planos',
-              style: TextStyle(
+              AppLocalizations.of(context).settingsSeePlans,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.black,
@@ -478,6 +484,7 @@ class _About extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         Padding(
@@ -486,7 +493,7 @@ class _About extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Versão',
+                l10n.settingsVersionLabel,
                 style: TextStyle(fontSize: 13, color: colors.inkDim),
               ),
               Text(
@@ -500,8 +507,8 @@ class _About extends StatelessWidget {
             ],
           ),
         ),
-        _AboutLink(label: 'Termos de Uso', colors: colors),
-        _AboutLink(label: 'Política de Privacidade', colors: colors),
+        _AboutLink(label: l10n.termsOfUse, colors: colors),
+        _AboutLink(label: l10n.privacyPolicy, colors: colors),
       ],
     );
   }

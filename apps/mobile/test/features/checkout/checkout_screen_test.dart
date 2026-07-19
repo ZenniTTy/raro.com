@@ -7,6 +7,7 @@ import 'package:raro_mobile/features/paywall/application/subscription_controller
 import 'package:raro_mobile/features/paywall/data/subscription_store.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
 import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class _FakeSubscriptionStore implements SubscriptionStore {
   SubscriptionState stored = const SubscriptionState.initial();
@@ -32,6 +33,9 @@ void main() {
     return ProviderScope(
       overrides: [subscriptionStoreProvider.overrideWithValue(store)],
       child: MaterialApp(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
         home: CheckoutScreen(
           plan: plan,

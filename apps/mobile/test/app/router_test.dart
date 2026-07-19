@@ -29,6 +29,7 @@ import 'package:raro_mobile/core/native_bridges/generated/voice_api.g.dart';
 import 'package:raro_mobile/features/voice/application/voice_flutter_api_provider.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository_provider.dart';
+import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class _MockPermissionGateway extends Mock implements PermissionGateway {}
 
@@ -154,6 +155,9 @@ void main() {
         videoListProvider.overrideWith((ref) async => seededVideos),
       ],
       child: MaterialApp.router(
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
         routerConfig: buildAppRouter(),
       ),
