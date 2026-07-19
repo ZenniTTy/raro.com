@@ -168,6 +168,14 @@ class CameraManager(
     currentConfig = cfg.copy(resolution = resolution, fps = fps)
   }
 
+  fun runReplaySpike(segments: Int, chunkSeconds: Int) {
+    val vc = videoCapture ?: throw CameraNativeException.NotRunning
+    com.rarocamera.raro_mobile.replay.ReplaySpikeGate(
+      context,
+      ContextCompat.getMainExecutor(context),
+    ).run(vc, segments, chunkSeconds)
+  }
+
   fun startRecording(
     options: RecordingOptions,
     callbacks: RecordingController.RecordingCallbacks,

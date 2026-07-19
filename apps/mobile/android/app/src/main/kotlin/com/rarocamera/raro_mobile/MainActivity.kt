@@ -5,8 +5,10 @@ import com.rarocamera.raro_mobile.camera.CameraManager
 import com.rarocamera.raro_mobile.camera.CameraPlatformViewFactory
 import com.rarocamera.raro_mobile.generated.camera.CameraFlutterApi
 import com.rarocamera.raro_mobile.generated.camera.CameraHostApi
+import com.rarocamera.raro_mobile.generated.replay_buffer.ReplayBufferHostApi
 import com.rarocamera.raro_mobile.generated.voice.VoiceFlutterApi
 import com.rarocamera.raro_mobile.generated.voice.VoiceHostApi
+import com.rarocamera.raro_mobile.replay.ReplayBufferHostApiImpl
 import com.rarocamera.raro_mobile.voice.VoiceHostApiImpl
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -32,6 +34,8 @@ class MainActivity : FlutterActivity() {
     val voice = VoiceHostApiImpl(applicationContext, VoiceFlutterApi(messenger))
     voiceHostApi = voice
     VoiceHostApi.setUp(messenger, voice)
+
+    ReplayBufferHostApi.setUp(messenger, ReplayBufferHostApiImpl(manager))
   }
 
   override fun onDestroy() {
