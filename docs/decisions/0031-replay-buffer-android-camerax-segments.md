@@ -36,6 +36,19 @@ Medido no Galaxy M54 físico, com `ffprobe` nos artefatos puxados do device:
 
 Reprovou qualquer critério → **parar e reavaliar** (Rota C vira ADR próprio). NÃO empilhar fixes sobre um gap estrutural (lição Vosk/SFSpeech, memória `feedback_many_native_fixes_means_reread_logs_not_abandon_framework`).
 
+### RESULTADO DO SPIKE (2026-07-19, M54 SM-M546B, 5 segmentos × 2s, 1080p60 h264 High L4.0 + aac LC 48kHz stereo) — **ROTA D APROVADA**
+
+`ReplaySpikeGate.kt` (temporário) ciclou 5 segmentos no `VideoCapture<Recorder>` real; arquivos puxados via `run-as` + ffprobe 8.1:
+
+1. **Gap de emenda: PASSA.** O gap "stop→start" bruto foi ~144ms avg / 152ms max, MAS isso é latência de `Recording.stop()` assíncrono (o `Finalize` chega ~140ms depois), não buraco de mídia. O gap REAL medido é `finalize→startReq = 0-1ms`: o próximo segmento começa assim que o anterior finaliza; a finalização roda em paralelo. Prova definitiva: **concat sem re-encode de 3 segmentos deu vídeo 5.588s vs 5.585s esperado (Δ=3ms no total de 3 emendas)**, ffmpeg sem erro de DTS/non-monotonic.
+2. **Gap no REC:** não medido isoladamente no spike (o spike só ciclou segmentos); a implementação real medirá o `stop-último-segmento → start-gravação-principal`. Dado o item 1 (finalize→start ~0ms), a expectativa é o mesmo padrão. Confirmar na implementação.
+3. **Bitstreams concatenáveis: PASSA.** SPS/PPS idênticos entre segmentos (profile_idc=100, level_idc=40, dims 1920×1080 iguais via `trace_headers`); codec/profile/level/sample_rate/channels idênticos. `-c copy` concat funcionou sem re-encode.
+4. **Concat múltiplo: PASSA.** 3 segmentos concatenados via `concat` demuxer `-c copy` sem erro; duração bate.
+
+**Resíduo conhecido:** A/V drift interno de ~30ms por segmento (áudio ligeiramente mais curto que vídeo dentro do MESMO segmento — ex. seg0 v=1.672s a=1.643s). É do CameraX Recorder, não da emenda; a implementação real deve alinhar por PTS no muxer para não acumular. Não é bloqueante (30ms/segmento, imperceptível; a janela de 15-30s tem 3-6 segmentos).
+
+**Veredito: Rota D VIÁVEL. Prosseguir para o plan + implementação.** Spike descartável (`ReplaySpikeGate.kt` + gancho no `enableReplayBuffer`/`CameraManager.runReplaySpike`) DEVE ser removido antes da implementação real.
+
 ## Consequências
 
 - **Atualiza o Blueprint (linha 55) e revisa o ADR-0030:** o replay buffer Android passa a usar CameraX Recorder segmentado + concat, NÃO MediaCodec+MediaMuxer, condicionado ao spike. MediaCodec permanece documentado como Rota C / plano B.
