@@ -93,6 +93,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                 key: const Key('plan_card_yearly'),
                                 plan: PlanType.yearly,
                                 selected: _selected == PlanType.yearly,
+                                highlight: true,
                                 badge: l10n.paywallBestOffer,
                                 equivalentLabel: equivalent,
                                 onTap: () =>

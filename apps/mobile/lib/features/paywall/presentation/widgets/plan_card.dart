@@ -14,6 +14,7 @@ class PlanCard extends StatelessWidget {
     required this.onTap,
     this.badge,
     this.equivalentLabel,
+    this.highlight = false,
   });
 
   final PlanType plan;
@@ -21,18 +22,40 @@ class PlanCard extends StatelessWidget {
   final VoidCallback onTap;
   final String? badge;
   final String? equivalentLabel;
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
-    return GestureDetector(
+    final card = GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           gradient: selected ? RaroGradients.planCardBorder : null,
-          border: selected ? null : Border.all(color: colors.borderBright),
+          border: selected
+              ? null
+              : Border.all(
+                  color: highlight
+                      ? RaroAccents.yellow.withValues(alpha: 0.9)
+                      : colors.borderBright,
+                  width: highlight ? 1.5 : 1,
+                ),
+          boxShadow: highlight
+              ? [
+                  BoxShadow(
+                    color: RaroAccents.yellow.withValues(alpha: 0.45),
+                    blurRadius: 22,
+                    spreadRadius: 1,
+                  ),
+                  BoxShadow(
+                    color: RaroAccents.orange.withValues(alpha: 0.25),
+                    blurRadius: 40,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
         ),
         child: Container(
           padding: const EdgeInsets.all(14),
@@ -41,49 +64,52 @@ class PlanCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.bolt,
-                    size: 26,
-                    color: selected ? RaroAccents.yellow : colors.inkFaint,
-                  ),
-                  if (badge != null) _Badge(text: badge!),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                AppLocalizations.of(context).planPremium,
-                style: const TextStyle(
-                  fontFamily: RaroFonts.display,
+              const Text('👑', style: TextStyle(fontSize: 30)),
+              const SizedBox(height: 8),
+              const Text(
+                'RARO CAM',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: RaroFonts.plans,
                   fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  color: RaroAccents.yellow,
                 ),
               ),
-              const SizedBox(height: 2),
+              Text(
+                AppLocalizations.of(context).planPremium,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: RaroFonts.plans,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: RaroAccents.yellow,
+                ),
+              ),
+              const SizedBox(height: 4),
               Text(
                 AppLocalizations.of(context).planUnlockPotential,
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: RaroFonts.display,
-                  fontSize: 12,
+                  fontFamily: RaroFonts.plans,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
                   color: colors.inkDim,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
                     plan.priceLabel,
                     style: const TextStyle(
-                      fontFamily: RaroFonts.display,
+                      fontFamily: RaroFonts.plans,
                       fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
                   ),
@@ -95,8 +121,9 @@ class PlanCard extends StatelessWidget {
                           ? AppLocalizations.of(context).planPerMonth
                           : AppLocalizations.of(context).planPerYear,
                       style: TextStyle(
-                        fontFamily: RaroFonts.mono,
-                        fontSize: 10,
+                        fontFamily: RaroFonts.plans,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
                         color: colors.inkDim,
                       ),
                     ),
@@ -110,18 +137,18 @@ class PlanCard extends StatelessWidget {
                   child: Text(
                     equivalentLabel!,
                     style: const TextStyle(
-                      fontFamily: RaroFonts.mono,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                      fontFamily: RaroFonts.plans,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
                 ),
               ],
               const SizedBox(height: 12),
-              const _PlanFeatures(),
-              const SizedBox(height: 12),
               _TrialBox(selected: selected),
+              const SizedBox(height: 12),
+              const _PlanFeatures(),
               if (selected) ...[
                 const SizedBox(height: 12),
                 const _SelectedPill(),
@@ -130,6 +157,15 @@ class PlanCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Padding(padding: const EdgeInsets.only(top: 12), child: card),
+        if (badge != null)
+          Positioned(top: 0, right: 8, child: _Badge(text: badge!)),
+      ],
     );
   }
 }
@@ -141,35 +177,31 @@ class _PlanFeatures extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
     final l10n = AppLocalizations.of(context);
-    final features = [
-      l10n.planFeature4k,
-      l10n.planFeatureBuffer,
-      l10n.planFeatureNoAds,
+    final features = <(String, String)>[
+      ('\u{1F4F9}', l10n.planFeature4k),
+      ('\u{23F1}\u{FE0F}', l10n.planFeatureBuffer),
+      ('\u{1F6AB}', l10n.planFeatureNoAds),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final f in features)
+        for (final (emoji, label) in features)
           Padding(
-            padding: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 14,
-                  height: 14,
-                  margin: const EdgeInsets.only(top: 1),
-                  decoration: const BoxDecoration(
-                    gradient: RaroGradients.redRadial,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, size: 9, color: Colors.white),
-                ),
-                const SizedBox(width: 6),
+                Text(emoji, style: const TextStyle(fontSize: 15)),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    f,
-                    style: TextStyle(fontSize: 11.5, color: colors.ink),
+                    label,
+                    style: TextStyle(
+                      fontFamily: RaroFonts.plans,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: colors.ink,
+                    ),
                   ),
                 ),
               ],
@@ -187,20 +219,33 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: RaroAccents.red,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: RaroAccents.red.withValues(alpha: 0.4),
+            blurRadius: 10,
+          ),
+        ],
       ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontFamily: RaroFonts.mono,
-          fontSize: 8,
-          letterSpacing: 0.8,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('🔥', style: TextStyle(fontSize: 10)),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: const TextStyle(
+              fontFamily: RaroFonts.plans,
+              fontSize: 9,
+              letterSpacing: 0.4,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -216,35 +261,42 @@ class _TrialBox extends StatelessWidget {
     const days = SubscriptionConfig.freeTrialDays;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
-        color: selected
-            ? RaroAccents.yellow.withValues(alpha: 0.08)
-            : Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(8),
+        color: RaroAccents.yellow.withValues(alpha: selected ? 0.1 : 0.05),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: selected
-              ? RaroAccents.yellow.withValues(alpha: 0.3)
-              : colors.border,
+          color: RaroAccents.yellow.withValues(alpha: selected ? 0.45 : 0.25),
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            AppLocalizations.of(context).planFreeDays(days),
-            style: TextStyle(
-              fontFamily: RaroFonts.mono,
-              fontSize: 9,
-              letterSpacing: 1,
-              fontWeight: FontWeight.bold,
-              color: selected ? RaroAccents.yellow : colors.ink,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.check, size: 12, color: RaroAccents.yellow),
+              const SizedBox(width: 4),
+              Text(
+                AppLocalizations.of(context).planFreeDays(days),
+                style: const TextStyle(
+                  fontFamily: RaroFonts.plans,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: RaroAccents.yellow,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 2),
           Text(
             AppLocalizations.of(context).planCancelAnytime,
-            style: TextStyle(fontSize: 9, color: colors.inkDim),
+            style: TextStyle(
+              fontFamily: RaroFonts.plans,
+              fontSize: 10,
+              fontWeight: FontWeight.w400,
+              color: colors.inkDim,
+            ),
           ),
         ],
       ),
@@ -272,9 +324,10 @@ class _SelectedPill extends StatelessWidget {
           Text(
             AppLocalizations.of(context).planSelected,
             style: const TextStyle(
-              fontFamily: RaroFonts.mono,
-              fontSize: 10,
-              letterSpacing: 1,
+              fontFamily: RaroFonts.plans,
+              fontSize: 11,
+              letterSpacing: 0.5,
+              fontWeight: FontWeight.w600,
               color: RaroAccents.yellow,
             ),
           ),
