@@ -15,6 +15,13 @@ void main() {
     });
   });
 
+  group('lensZoomLabel', () {
+    test('ultra-wide é 0.5× e wide é 1×', () {
+      expect(lensZoomLabel(LensType.ultraWide), '0.5×');
+      expect(lensZoomLabel(LensType.wide), '1×');
+    });
+  });
+
   group('fpsLabel', () {
     test('mapeia cada Fps do pigeon', () {
       expect(fpsLabel(Fps.fps30), '30FPS');

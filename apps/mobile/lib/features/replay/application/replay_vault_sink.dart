@@ -3,13 +3,19 @@ import 'dart:io';
 
 import 'package:logger/logger.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
+import 'package:raro_mobile/features/camera/application/camera_controller.dart';
+import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/data/vault_service.dart';
 import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
+import 'package:raro_mobile/features/camera/domain/camera_state.dart';
+import 'package:raro_mobile/features/camera/domain/capture_format_snapshot.dart';
 import 'package:raro_mobile/features/camera/domain/recording_metadata.dart';
 import 'package:raro_mobile/features/gallery/application/video_list_provider.dart';
 import 'package:raro_mobile/features/replay/application/replay_flutter_api_provider.dart';
+import 'package:raro_mobile/features/settings/application/settings_controller.dart';
+import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'replay_vault_sink.g.dart';
@@ -27,6 +33,16 @@ StreamSubscription<ReplayResult> replayVaultSink(Ref ref) {
     if (event is! ReplaySavedResult) {
       return;
     }
+    final settings =
+        ref.read(settingsControllerProvider).value ?? const RecordingSettings();
+    final ready = ref.exists(cameraControllerProvider)
+        ? ref.read(cameraControllerProvider).value
+        : null;
+    final snap = snapshotCaptureFormat(
+      active: ready is CameraStateReady ? ready.activeSettings : null,
+      shell: ref.read(cameraShellProvider),
+      settings: settings,
+    );
     final vault = await ref.read(vaultServiceProvider.future);
     final source = File(event.path);
     final id = _idFromPath(event.path);
@@ -38,6 +54,9 @@ StreamSubscription<ReplayResult> replayVaultSink(Ref ref) {
       recordedAt: recordedAt,
       isReplay: true,
       thumbnailHue: _hueFor(id),
+      resolutionLabel: snap.resolutionLabel,
+      fpsLabel: snap.fpsLabel,
+      lensLabel: snap.lensLabel,
     );
     final entity = await vault.save(source, metadata: metadata);
     await _generateThumbnail(repository, logger, vault, id, entity.filePath);

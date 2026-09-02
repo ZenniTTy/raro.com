@@ -5,19 +5,23 @@ import com.rarocamera.raro_mobile.camera.CameraManager
 import com.rarocamera.raro_mobile.camera.CameraPlatformViewFactory
 import com.rarocamera.raro_mobile.generated.camera.CameraFlutterApi
 import com.rarocamera.raro_mobile.generated.camera.CameraHostApi
+import com.rarocamera.raro_mobile.generated.replay_buffer.ReplayBufferHostApi
 import com.rarocamera.raro_mobile.generated.voice.VoiceFlutterApi
 import com.rarocamera.raro_mobile.generated.voice.VoiceHostApi
+import com.rarocamera.raro_mobile.replay.ReplayBufferHostApiImpl
 import com.rarocamera.raro_mobile.voice.VoiceHostApiImpl
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
 class MainActivity : FlutterActivity() {
   private var voiceHostApi: VoiceHostApiImpl? = null
+  private var cameraManager: CameraManager? = null
 
   override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
     super.configureFlutterEngine(flutterEngine)
     val messenger = flutterEngine.dartExecutor.binaryMessenger
     val manager = CameraManager(applicationContext, this)
+    cameraManager = manager
     val flutterApi = CameraFlutterApi(messenger)
     val hostApi = CameraHostApiImpl(manager, flutterApi)
     CameraHostApi.setUp(messenger, hostApi)
@@ -32,11 +36,24 @@ class MainActivity : FlutterActivity() {
     val voice = VoiceHostApiImpl(applicationContext, VoiceFlutterApi(messenger))
     voiceHostApi = voice
     VoiceHostApi.setUp(messenger, voice)
+
+    ReplayBufferHostApi.setUp(messenger, ReplayBufferHostApiImpl(manager, messenger))
+  }
+
+  override fun onPause() {
+    cameraManager?.pauseReplayBuffer()
+    super.onPause()
+  }
+
+  override fun onResume() {
+    super.onResume()
+    cameraManager?.resumeReplayBuffer()
   }
 
   override fun onDestroy() {
     voiceHostApi?.dispose()
     voiceHostApi = null
+    cameraManager = null
     super.onDestroy()
   }
 }

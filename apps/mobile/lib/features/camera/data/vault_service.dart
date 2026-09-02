@@ -44,6 +44,9 @@ class VaultService {
       isReplay: meta.isReplay,
       thumbnailHue: meta.thumbnailHue,
       thumbnailPath: thumbnailPath,
+      resolutionLabel: meta.resolutionLabel,
+      fpsLabel: meta.fpsLabel,
+      lensLabel: meta.lensLabel,
     );
     await _writeMetaAtomic(id, _encode(updated));
   }
@@ -87,6 +90,9 @@ class VaultService {
       thumbnailHue: m.thumbnailHue,
       filePath: path,
       thumbnailPath: thumb.existsSync() ? thumb.path : null,
+      resolutionLabel: m.resolutionLabel,
+      fpsLabel: m.fpsLabel,
+      lensLabel: m.lensLabel,
     );
   }
 
@@ -98,6 +104,9 @@ class VaultService {
     'isReplay': m.isReplay,
     'thumbnailHue': m.thumbnailHue,
     if (m.thumbnailPath != null) 'thumbnailPath': m.thumbnailPath,
+    if (m.resolutionLabel != null) 'resolutionLabel': m.resolutionLabel,
+    if (m.fpsLabel != null) 'fpsLabel': m.fpsLabel,
+    if (m.lensLabel != null) 'lensLabel': m.lensLabel,
   };
 
   RecordingMetadata _decode(Map<String, Object?> j) => RecordingMetadata(
@@ -108,5 +117,8 @@ class VaultService {
     isReplay: j['isReplay']! as bool,
     thumbnailHue: j['thumbnailHue']! as int,
     thumbnailPath: j['thumbnailPath'] as String?,
+    resolutionLabel: j['resolutionLabel'] as String?,
+    fpsLabel: j['fpsLabel'] as String?,
+    lensLabel: j['lensLabel'] as String?,
   );
 }

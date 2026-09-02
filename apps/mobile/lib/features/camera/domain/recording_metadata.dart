@@ -7,6 +7,9 @@ class RecordingMetadata {
     required this.isReplay,
     required this.thumbnailHue,
     this.thumbnailPath,
+    this.resolutionLabel,
+    this.fpsLabel,
+    this.lensLabel,
   });
 
   final String id;
@@ -16,4 +19,7 @@ class RecordingMetadata {
   final bool isReplay;
   final int thumbnailHue;
   final String? thumbnailPath;
+  final String? resolutionLabel;
+  final String? fpsLabel;
+  final String? lensLabel;
 }
