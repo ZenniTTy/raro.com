@@ -2,6 +2,26 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-09-02] — auditoria de entrega (sessão 0039, docs-only)
+
+> Reauditoria completa do que falta para v1.0, feita contra código/binário/git (2 agentes paralelos + verificação manual), não contra documentação. Nenhum código de produção alterado.
+
+### Corrigido (documentação)
+- **PLANO-MESTRE reescrito**: o Bloco 3 (Android) estava com tudo em aberto embora as Fatias 1–4 estivessem entregues; e o Bloco 2 estava descrito como "mock" quando na verdade **nunca foi iniciado**.
+- **09-DOD.md** reconciliado item a item com evidência (`arquivo:linha`, `apksigner`, `flutter test`).
+
+### Descoberto (drift real, com prova)
+- **Suíte vermelha**: 353 passam, **1 falha** — `forbidden_ui_literals_test.dart` pega 3 literais fora do `.arb` em `plan_card.dart`. Provado por `git stash` que o commit está verde e a falha vem da árvore de trabalho (tipografia Poppins em andamento).
+- **Replay buffer Android inexistente e anunciado**: `ReplayBufferHostApi` não é registrada no `MainActivity.kt`; `CameraManager.kt:176` descarta `includeReplayPreroll` com `Log.w`. A UI oferece o recurso normalmente.
+- **Monetização é fachada**: `purchases_flutter` no `pubspec.yaml` com zero imports; `subscription_controller.dart:19` só grava um bool. Nenhum recurso é bloqueado por assinatura; "Restore purchases" é snackbar (bloqueador de review Apple).
+- **Release Android assinado com chave de debug**: `apksigner` no `app-release.apk` retorna `CN=Android Debug` (`build.gradle.kts:40`). A Play rejeita.
+- **Modo "Volume" selecionável sem implementação** em nenhuma das plataformas (`settings_screen.dart:367-370`); não existe `VolumeHostApiImpl`.
+- **3 telas ausentes** (`p05aLockMode`, `p11Terms`, `p12Privacy`) e 2 modais (M02, M03) — Privacidade é obrigatória para submissão.
+- **`5a35be4` (fix R8/JNA) não pushado**; `develop` está 441 commits à frente da `main`.
+
+### Confirmado saudável
+- `flutter analyze` limpo; i18n com **117 chaves × pt/en/es** e teste-guarda ativo; APK release contém `libvosk.so` + modelo pt-BR; Firebase/Crashlytics provados no device (0035).
+
 ## [2026-07-18] — 0.9.0 (Pacote pré-APK Android: gravação + tap-to-focus + voz — Fatias 1–3, provadas no M54)
 
 > Decomposição do pré-APK em 4 fatias (Gravação → Foco → Voz → i18n). Fatias 1–3 fechadas e provadas no Galaxy M54; Fatia 4 (i18n) pendente. Sessões 0037–0038.

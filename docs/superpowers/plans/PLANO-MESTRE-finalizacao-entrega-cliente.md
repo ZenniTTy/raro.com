@@ -1,124 +1,170 @@
 # Plano-Mestre — Finalização e Entrega ao Cliente (RARO v1.0)
 
-> **Criado:** 2026-06-22 (sessão pós-0029) a partir de auditoria de CÓDIGO REAL (3 agentes paralelos), não de docs. Sequencia tudo que falta entre o estado atual e o gate de entrega ([09-DOD.md](../../09-DOD.md)).
+> **Criado:** 2026-06-22 a partir de auditoria de CÓDIGO REAL. **Reauditado em 2026-09-02** (sessão 0039) com 2 agentes paralelos + verificação manual — cada item abaixo foi provado contra o código, o binário ou o git, nunca contra a documentação.
 >
 > **Alvo de entrega (decisão do dono, 2026-06-22):** iOS + Android **paridade total**, depois publicação nas duas lojas.
 >
-> **Relação com os sprints existentes:** este plano-mestre é o índice sequenciado. [sprint-2-backend-logic-ios.md](sprint-2-backend-logic-ios.md) e [sprint-3-android-parity-testflight-client.md](sprint-3-android-parity-testflight-client.md) têm o detalhe atômico de cada task; este doc reconcilia o drift entre eles e a realidade + adiciona os blocos que escaparam (i18n, telas faltando, build Android quebrado, wake-word revertido).
+> **Método desta reauditoria (anti-falso-positivo):** nenhum `[x]` foi mantido por estar escrito; foi reconfirmado por evidência citável (`arquivo:linha`, saída de `apksigner`, `flutter test`, `git log`). Onde a evidência contradisse o doc, **a evidência venceu** e o item voltou para `[ ]`.
 
 ---
 
-## Estado real auditado (2026-06-22)
+## Estado real auditado (2026-09-02)
 
-### ✅ Pronto e validado no iPhone 12 (não mexer)
-- Gravação MP4 H.264/HEVC + áudio → vault (`RecordingPipeline.swift`, `AVAssetWriter`)
-- Replay buffer 15/30s + pré-roll no REC (`ReplayBuffer.swift`, `AVMutableComposition`)
-- Voz foreground "raro gravar"/"raro parar" (`VoiceManager.swift`, SFSpeech — revertido na 0029)
-- Galeria com vídeos REAIS do vault (`vault.listAll()`, não mock)
-- 9 telas roteadas (P01-P11) + modal M01 subscription popup
-- 320 testes Dart passando
+### ✅ Pronto e verificado nesta auditoria
+- **Gravação MP4 + áudio**: iOS (`RecordingPipeline.swift`) e Android (CameraX `Recorder`, `RecordingController.kt:36-60`). Provado no M54 via ffprobe (sessão 0037).
+- **Tap-to-focus**: paridade real (`CameraManager.kt:193-218` + `FocusRingView.kt`).
+- **Voz "raro gravar"/"raro parar"**: **Android funciona em FOREGROUND E BACKGROUND** (Vosk motor único + FGS `microphone`; `VoskWakeEngine.kt:139`, modelo `vosk-model-small-pt-0.3` confirmado dentro do APK) — **confirmado pelo dono em 2026-09-02 como funcionando no device. NÃO MEXER.** iOS segue foreground-only (SFSpeech), com background em standby Sensory.
+- **i18n pt/en/es**: `app_pt/en/es.arb` com **117 chaves traduzíveis em cada** (contagem verificada), locale persistido, e teste-guarda `forbidden_ui_literals_test.dart` que reprova literal fora do `.arb`.
+- **Firebase + Crashlytics + Analytics**: provado no device na 0035 (crash no painel + dSYM).
+- **R8/JNA**: `proguard-rules.pro` mantém JNA + Vosk; APK release contém `libvosk.so` + modelo pt (verificado com `unzip -l`).
+- **`flutter analyze`**: limpo, zero issues.
 
-### ❌ Drift descoberto (marcado como feito nos sprints, mas é mock/ausente)
-| Item | Sprint dizia | Realidade |
+### 🔴 Drift descoberto NESTA auditoria (doc dizia feito / silêncio, código diz outra coisa)
+
+| Item | O que o doc sugeria | Realidade provada |
 |---|---|---|
-| RevenueCat | escopo S2 | **mock total** — `subscribe()` só seta bool local; `purchases_flutter` 0 usos |
-| Firebase | escopo S2 | **nunca inicializado** — `main.dart` sem `initializeApp`; crasharia em release |
-| Share | — | botão "Em breve" (`_comingSoon`); `share_plus` 0 usos |
-| i18n | escopo S3 | **0 arquivos `.arb`**; tudo hardcoded PT-BR |
-| Wake-word "Raro" toggle background | meta DoD >90% | **inviável** (4 modelos falharam no device — sessão 0029); revertido p/ foreground |
-
-### 🔴 Bug que travava AGORA — ✅ RESOLVIDO (Bloco 0.1, 2026-06-22)
-- **Android não compilava:** `CameraHostApiImpl.kt` não implementava `startRecording`/`stopRecording` + `CameraManager.discoverCapabilities` usava campos removidos pela regen (`supportedResolutions`/`supportedFps` → `supportedFormats`). Ambos corrigidos. `flutter build appbundle` ✓.
+| **Suíte de testes** | "331/353 verdes" | **353 passam, 1 FALHA.** `forbidden_ui_literals_test.dart` reprova 3 literais (`👑`, `RARO CAM`, `🔥`) em `plan_card.dart`. Provado que o **commit está verde** e a falha vem da árvore de trabalho não commitada (Poppins). |
+| **Bloco 3 Android** | tudo `[ ]` em aberto | 3.1/3.3/3.4-parcial/3.5 **estão feitos** (fatias 1-4). O doc estava atrasado, subestimando o progresso. |
+| **Replay buffer Android** | "fatia futura" | Pior que ausente: **a UI oferece o card de Replay Buffer no Settings e o pré-roll no camera**, mas `ReplayBufferHostApi` **não é registrado** no `MainActivity.kt` (zero referências) e `CameraManager.kt:176-177` **descarta `includeReplayPreroll` com um `Log.w`**. O guard `3f33a77` só evita o crash — o usuário Android liga um recurso que não existe. |
+| **RevenueCat** | "mock" | `purchases_flutter` está no `pubspec.yaml:24` com **zero imports**. `subscription_controller.dart:19` grava `isSubscribed: true` no SharedPreferences. **Ninguém paga e nada é bloqueado.** |
+| **Gating premium** | item de DoD | **Inexistente.** `isSubscribed` só decide se aparece popup/banner. Gravar e salvar são livres. |
+| **Restore purchases** | — | `paywall_screen.dart:123` → `_comingSoon`. **A Apple reprova assinatura sem restore.** |
+| **Volume como gatilho** | Bloco 4.5 | Não é só ausente: `settings_screen.dart:367-370` deixa o usuário **selecionar e persistir** "Volume", sem handler nativo em **nenhuma** das plataformas. Não existe `VolumeHostApiImpl` nem no Android nem no iOS. |
+| **Preview (P08)** | "share em breve" | **4 das 5 ações são snackbar** (`preview_screen.dart:114,242,272,278`), incluindo Delete. |
+| **Delete** | "lógica existe, só conectar" | Confirmado: `vault_service.dart:68-75` existe e **não tem nenhum caller**. |
+| **Telas** | "faltam 3" | Confirmado: enum declara 13, router registra **10**. `p05aLockMode`, `p11Terms`, `p12Privacy` têm **zero referências** no código. Privacy é **obrigatória** para submissão. |
+| **Assinatura Android** | Bloco 5.2 | Provado com `apksigner`: o `app-release.apk` está assinado **`CN=Android Debug`**. A Play rejeita. |
+| **Branch** | — | `develop` está **441 commits à frente da `main`** e o fix do R8 (`5a35be4`) **não foi pushado**. |
 
 ---
 
-## Blocos sequenciados (ordem de execução recomendada)
+## Blocos sequenciados
 
 ### BLOCO 0 — Destravar e estabilizar (✅ FECHADO 2026-06-22)
-**Objetivo:** o projeto compila e roda nas 2 plataformas, sem dívida silenciosa.
-- [x] **0.1** Destravar build Android: `startRecording`/`stopRecording` em `CameraHostApiImpl.kt` como stub síncrono que lança `FlutterError(code="sessionFailed")` (a fronteira Pigeon converte em erro Dart limpo; impl real = Bloco 3.1). **Drift extra descoberto no build:** a regen Pigeon também trocou `CameraCapabilities.supportedResolutions/supportedFps` por `supportedFormats: List<FormatCapability>` — `CameraManager.discoverCapabilities` foi reescrito p/ montar a matriz (720/1080/4K × 30/60, `requiresPhysicalLens = 4K@60` igual iOS/ADR-0021). **Gate:** `flutter build appbundle` ✓ `app-release.aab` (58.6MB) + 320 testes Dart verdes.
-- [x] **0.2** Wake-word ONNX órfão **mantido dormente** (decisão do dono): nada em produção usa os 3 Swift (`WakeWordDetector`/`WakeWordPipeline`/`OnnxModelSession`) nem os 3 `.onnx` (~2,4MB). Remover exigiria cirurgia no `project.pbxproj` (risco de quebrar build iOS que funciona) e o scaffold pode ser reaproveitado se a licença Sensory entrar. Nota em `apps/mobile/ios/Runner/Native/Voice/README.md`. Histórico em `01a1f67`.
-- [x] **0.3** App ID Android alinhado ao iOS: `applicationId = "com.rarocamera"` (decisão do dono). `namespace` Kotlin segue `com.rarocamera.raro_mobile` (ok divergir — não afeta identidade nas lojas, evita renomear toda a árvore de fontes). Blueprint + CLAUDE + hook reconciliados. **Imutável pós-publicação.**
+- [x] **0.1** Build Android destravado (`flutter build appbundle` ✓).
+- [x] **0.2** Wake-word ONNX mantido dormente (README em `ios/Runner/Native/Voice/`, histórico em `01a1f67`).
+- [x] **0.3** `applicationId = "com.rarocamera"` alinhado ao iOS.
 - [x] **0.4** `android:label` → "Raro Camera".
 
-### BLOCO 1 — Infra que evita crash + mede (1-2 sessões)
-**Objetivo:** app não crasha em release, telemetria liga.
+### BLOCO 1 — Firebase/Crashlytics/Analytics (✅ FECHADO 2026-07-14, provado no device 0035)
+- [x] **1.1** `Firebase.initializeApp` + plugins gradle. Secrets gitignored (reconfirmado).
+- [x] **1.2** 3 handlers Crashlytics — crash real chegou no painel + dSYM (UUID bateu).
+- [x] **1.3** Analytics listener ligado.
+- [ ] **1.4** *(pendência herdada)* upload automático de dSYM no pipeline de release.
 
-> **✅ Pré-requisitos PRONTOS (2026-06-23, sessão 0032):** conta Firebase criada (projeto `raro-camera`); apps iOS+Android registrados no console com bundle `com.rarocamera`; `GoogleService-Info.plist` em `apps/mobile/ios/Runner/` e `google-services.json` em `apps/mobile/android/app/` (ambos **gitignored** — chaves reais, NÃO commitar; existem só no device do dono); `flutterfire_cli` 1.4.0 instalado em `~/.pub-cache/bin` (⚠️ NÃO está no PATH — rodar com `export PATH="$PATH:$HOME/.pub-cache/bin"` no comando, ou caminho absoluto). **Falta só o código abaixo.**
+### BLOCO 2 — Monetização real (NÃO INICIADO — maior risco de produto)
+> **Depende de:** conta RevenueCat + produtos criados nas lojas + In-App Purchase Key. **Sem isso o app não fatura.**
 
-- [x] **1.1** Firebase: `flutterfire configure` gerou `firebase_options.dart` (gitignored), `Firebase.initializeApp(options: currentPlatform)` no `main.dart`, plugins gradle DSL moderno `google-services 4.4.4` + `crashlytics 3.0.7` (`settings.gradle.kts` + `app/build.gradle.kts`). **CÓDIGO + BUILD provados** (sessão 0034, commit `2085811`): Android `✓ app-debug.aab`, iOS `✓ Runner.app` (Firebase via SPM). Plist/json gitignored, nenhum secret commitado.
-- [x] **1.2** Crashlytics: os 3 handlers (FlutterError + PlatformDispatcher + Isolate) em `main.dart`. **PROVADO NO DEVICE (iPhone 12, 2026-07-14, sessão 0035):** crash de teste disparado → painel Crashlytics recebeu ("App detectado" → "1 falha não processada") → 3 dSYMs subidos via `upload-symbols` do SPM (UUID `A3098D9F...` bateu com o "Ausente obrigatório"). Gate §10 fechado.
-- [x] **1.3** Analytics: `cameraAnalyticsListenerProvider` estava **morto** (nunca observado) — `RaroApp` virou ConsumerWidget + `ref.watch`, agora `camera_started` dispara. **PROVADO NO DEVICE:** app conectou ao projeto Firebase (mesmo `FirebaseAnalytics.instance` do listener); telemetria ativa.
+> **📌 Não há login/cadastro no RARO — e isso é intencional (registrado 2026-09-02).**
+> Auditado: **zero** autenticação no repo (`firebase_auth`, `google_sign_in`, `sign_in_with_apple` ausentes do `pubspec.yaml`; nenhum `signIn`/`currentUser` no código). Isso **não é uma pendência esquecida**, é a consequência de duas decisões já tomadas:
+> - **A cobrança é 100% das lojas.** `PaymentMethod` só tem `apple` (Apple Pay) e `google` (Google Play) — não há cartão, PIX, boleto ou gateway próprio. Quem cobra, guarda o cartão e autentica o comprador é a App Store / Play Store, usando a conta que o usuário **já tem no aparelho**. Pedir um login nosso seria uma segunda identidade sem função.
+> - **Arquitetura client-only** (ADR-0004): não existe backend nosso para hospedar contas.
+> **Como o app sabe que a pessoa é premium sem login:** o RevenueCat identifica o aparelho por um **App User ID anônimo** e valida o recibo com a loja. "Restore purchases" (Bloco 2.5) é o mecanismo oficial para recuperar a assinatura em outro aparelho — é **por isso** que a Apple exige esse botão, e é o que substitui o login.
+> **Quando login passaria a ser necessário (não é o caso da v1.0):** assinatura compartilhada entre iOS e Android pela mesma pessoa, backup dos vídeos na nuvem, ou área web. Qualquer um desses **exige ADR novo** (muda ADR-0004) e provavelmente backend.
+> ⚠️ **Consequência a assumir:** sem login, quem troca de celular **de plataforma** (iPhone → Android) não leva a assinatura junto. Comportamento normal de app client-only, mas o dono deve saber.
+- [ ] **2.1** Integrar `purchases_flutter` de fato: `Purchases.configure`, `getOfferings`, `purchasePackage` (memória `raro-pattern-revenuecat-error-handling`).
+- [ ] **2.2** `SubscriptionStore` → RevenueCat real, mantendo o port mockável (o port já existe e é bom — preservar).
+- [ ] **2.3a** **Exportar para a galeria do celular** (não existe hoje): `MediaStore` no Android / `PHPhotoLibrary` no iOS, com a permissão correspondente. Hoje o vídeo só chega ao vault privado (`vault_service.dart:12`) — a tela "Galeria" do app lista esse vault, não o rolo da câmera.
+- [ ] **2.3b** **Gating premium sobre a exportação**: "só salva na galeria se for premium" (regra do dono). Ponto de decisão em `camera_flutter_api_provider.dart:93`, que hoje salva incondicionalmente. **Definir o comportamento do free:** grava e fica só no vault do app? Grava com marca d'água? Não grava? — precisa de resposta antes de implementar.
+- [ ] **2.4** Free trial 30 dias (setting de loja — `raro-pattern-revenuecat-trial-app-store-connect`).
+- [ ] **2.5** **Restore purchases funcional** (`paywall_screen.dart:123`) — bloqueador de review da Apple.
+- [ ] **2.6** **Checkout (P10): remover o seletor de "método de pagamento".** Hoje `PaymentMethod` (`apple`/`google`) é um radio decorativo — o usuário escolhe algo que não tem efeito. Na compra in-app real **quem escolhe a forma de pagamento é a folha nativa da loja**, com os meios que a conta do usuário já tem cadastrados (cartão, PIX/carteira via Google Play, saldo, etc.). Manter o radio é duplicar — e confundir — uma escolha que não é nossa. P10 deve virar confirmação do plano + `purchasePackage`.
+- [ ] **2.7** **Assinaturas nas lojas (pré-requisito do dono, não é código):** criar os 2 produtos de assinatura (Mensal R$ 9,90 · Anual R$ 89,90) no App Store Connect e no Play Console, ligar ao entitlement `premium` no RevenueCat e configurar o trial de 30 dias em **cada** loja. Sem isso `getOfferings` volta vazio e o app não tem o que vender.
+- [ ] **2.8** **Textos obrigatórios de assinatura na tela de compra** (exigência de review das duas lojas): preço, periodicidade, renovação automática, como cancelar, e links de Termos e Privacidade funcionando (hoje os 2 links do paywall são `_comingSoon` — ver 4.3).
 
-> **✅ Bloco 1 FECHADO — código + build + device (2026-07-14, sessão 0035).** Firebase inicializa, Crashlytics recebe crashes (provado com crash real + dSYM), analytics liga. Pendência menor herdada p/ Bloco 5: o upload automático de dSYM em release/CI (o script do flutterfire cobre SPM, mas `flutter build` de linha de comando pode não disparar a build phase — validar no pipeline de publicação). Runbook: `docs/superpowers/notes/firebase-device-crash-runbook.md`.
+### BLOCO 3 — Android paridade (QUASE FECHADO)
+- [x] **3.1** Gravação CameraX → vault (fatia 1, PR #5, provado no M54 via ffprobe).
+- [ ] **3.2** **Replay buffer / pré-roll Android — IMPLEMENTAR** (decisão do dono 2026-09-02: é bug, não fatia futura).
+  > ⚠️ **JÁ EXISTE TRABALHO ADIANTADO — descoberto em 2026-09-02 na branch local `feat/fatia-5-replay-buffer-android` (4 commits, 2026-07-19, NÃO mergeada e NÃO pushada).** Não começar do zero: ela traz **ADR-0031** + design + um **spike-gate JÁ EXECUTADO E APROVADO no M54**.
+  - **A abordagem MUDOU (e o texto anterior deste item estava errado):** ADR-0031 substitui a reserva "replay = `MediaCodec`+`MediaMuxer`" do ADR-0030/Blueprint pela **Rota D — segmentos rotativos do CameraX `Recorder` + concat sem re-encode** (`MediaExtractor`+`MediaMuxer`). Motivo: preserva o pipeline nativo já provado nas Fatias 1-3, sem dependência nova. `MediaCodec` (Rota C) fica como plano B, exigindo ADR próprio.
+  - **Spike aprovado no M54 (ffprobe):** gap real `finalize→start` de 0-1ms; concat de 3 segmentos deu 5.588s vs 5.585s esperado (Δ=3ms); SPS/PPS idênticos; concat múltiplo sem erro de DTS. **Resíduo conhecido:** drift A/V de ~30ms por segmento, interno ao Recorder — alinhar por PTS no muxer para não acumular.
+  - **Antes de implementar:** remover o spike descartável (`ReplaySpikeGate.kt` + `CameraManager.runReplaySpike` + o gancho temporário em `enableReplayBuffer`, que hoje só loga e dispara o spike). **A branch NÃO é mergeável como está.**
+  - Falta então: (a) ring de segmentos + concat real; (b) **registrar `ReplayBufferHostApi` no `MainActivity.kt`**; (c) honrar `includeReplayPreroll` em `CameraManager.kt:176`; (d) concat tolerante a segmento faltante (cacheDir é efêmero) degradando a janela sem nunca falhar o clipe.
+  - **Inalterados:** contrato Pigeon e toda a camada Dart — só falta o nativo responder.
+  - Gate: ffprobe no `vault/<id>.mp4` provando duração ≈ janela+REC e A/V contínuos.
 
-### BLOCO 2 — Monetização real (2-3 sessões)
-**Objetivo:** app pago funciona. **Depende: conta RevenueCat + produtos na loja + In-App Purchase Key.**
-- [ ] **2.1** Integrar `purchases_flutter`: `Purchases.configure` com API key, `getOfferings`, `purchasePackage`, sync `CustomerInfo` (memória `raro-pattern-revenuecat-error-handling`).
-- [ ] **2.2** Trocar `SubscriptionStore` mock → RevenueCat real, mantendo o port mockável p/ testes.
-- [ ] **2.3** Gating: "salvar vídeo exige entitlement `premium`" (DoD).
-- [ ] **2.4** Free trial 30 dias (setting da loja — memória `raro-pattern-revenuecat-trial-app-store-connect`).
-- [ ] **2.5** Wire paywall (P10) + checkout (P11) ao fluxo real de compra.
+  > **📍 Onde está o contexto desta fatia (ler ANTES de codar):** branch **`feat/fatia-5-replay-buffer-android`** (pushada em 2026-09-02, **não mergeada de propósito**).
+  > - `docs/decisions/0031-replay-buffer-android-camerax-segments.md` — a decisão de rota, os 4 critérios do spike-gate e o **resultado medido no M54**.
+  > - `docs/superpowers/specs/2026-07-18-replay-buffer-android-design.md` — o **design completo já aprovado**: ring de segmentos, REC com pré-roll espelhando o iOS, fallback.
+  > - `ReplaySpikeGate.kt` + `CameraManager.runReplaySpike` + o gancho em `enableReplayBuffer` — **descartáveis, remover no 1º commit da implementação.**
+  >
+  > **Parâmetros de design já decididos (não re-derivar):** segmentos de **~5s** (não 1s como o iOS — cada troca no Android tem gap, 5s amortiza: janela de 15s = 3 emendas, 30s = 6); capacidade do ring = `ceil(janela/chunk) + 1` (mesma fórmula do `ReplayRing` do iOS); segmentos **na mesma configuração** do `Recorder` principal (pré-condição do concat, validada no spike); buffer desarma em `onPause`/background (térmica/bateria); **fallback obrigatório** — concat falhou, entrega só a gravação principal e NUNCA perde o clipe do usuário (paridade com `CameraManager.swift:396-442`).
+- [x] **3.3** Voz Android "raro gravar"/"raro parar" (fatia 3, PR #8, Vosk motor único, ADR-0029).
+- [~] **3.4** HostApis no `MainActivity`: câmera ✓ e voz ✓ registradas; **replay ✗**; volume não existe em lugar nenhum.
+- [x] **3.5** Ultra-wide discovery (`CameraLensDiscovery.kt:28-31`) — funciona, porém por **heurística de distância focal**; pode errar em aparelhos com macro/depth. Aceitável para v1.0, risco anotado.
+- [ ] **3.6** Xiaomi/MIUI: modal M02 + autostart (nada implementado além do nome do evento de analytics).
+- [ ] **3.7** Contract tests de paridade nas 2 plataformas.
 
-### BLOCO 3 — Android paridade (o maior bloco, 5-8 sessões)
-**Objetivo:** Android faz tudo que o iOS faz. **Depende: device Android real (preferir Xiaomi/MIUI).**
-- [ ] **3.1** Gravação CameraX `VideoCapture` → vault (paridade com `RecordingPipeline.swift`)
-- [ ] **3.2** Replay buffer MediaCodec ring (paridade com `ReplayBuffer.swift`; memória `raro-pattern-android-mediacodec-buffer-management`)
-- [ ] **3.3** Voz Android: `SpeechRecognizer` foreground "raro gravar"/"raro parar" (paridade com `VoiceManager.swift`)
-- [ ] **3.4** Registrar HostApis no `MainActivity` (hoje só câmera)
-- [ ] **3.5** Ultra-wide/lens 0.5x: validar discovery + esconder botão quando indisponível (memória `raro-pattern-android-camerax-ultra-wide-unreliable`)
-- [ ] **3.6** Xiaomi/MIUI: permissões + autostart (modais M02 guide)
-- [ ] **3.7** Contract tests de paridade passando em ambas plataformas
+### BLOCO 4 — Acabamentos de produto
+- [ ] **4.0** 🔴 **Fechar a árvore suja de Poppins** (ver "Onde você parou"): 3 literais fora do `.arb` deixam a suíte VERMELHA.
+- [ ] **4.1** Share real com `share_plus` (declarado, zero imports).
+- [ ] **4.2** Delete real: `vault_service.dart:68-75` existe sem caller. **Item mais barato do plano** (diálogo de confirmação + chamada).
+- [ ] **4.3** Telas faltando: P05a Lock mode, P11 Terms, **P12 Privacy (obrigatória p/ loja)**.
+- [ ] **4.4** Modais faltando: M02 Xiaomi, M03 Bluetooth.
+- [ ] **4.5** **Volume como gatilho — IMPLEMENTAR** nas 2 plataformas (decisão do dono 2026-09-02). Hoje o Settings deixa selecionar e persistir o modo sem nenhum handler nativo. Falta: `VolumeHostApiImpl` no Android (`onKeyDown` + `KEYCODE_VOLUME_*`) **e** no iOS (KVO de volume com `AVAudioSession` ambient + restore + `removeObserver` no deinit — memória `raro-pattern-ios-volume-button-kvo-app-store-review`), **e ampliar o contrato Pigeon** `volume_api.dart`, que hoje só tem `volumePing()`/`volumeReady()` e não carrega evento de tecla. Mudança de contrato Pigeon → o hook `warn-adr-drift` vai pedir ADR.
+- [x] **4.6** i18n pt/en/es completa (117 chaves × 3) com teste-guarda.
 
-### BLOCO 4 — Acabamentos de produto (2-3 sessões)
-**Objetivo:** telas/features que faltam pra passar na review e cumprir o Blueprint.
-- [ ] **4.1** Share real: `SharePlus.instance.share` com `filePath` do vault (4 botões do preview hoje em `_comingSoon`)
-- [ ] **4.2** Delete real (lógica `vault.delete` existe, só conectar)
-- [ ] **4.3** Telas faltando: P05a Lock mode, P11 Terms, P12 Privacy (+ rotas)
-- [ ] **4.4** Modais faltando: M02 Xiaomi guide, M03 Bluetooth detected
-- [ ] **4.5** Volume button trigger (iOS KVO + Android) — memória `raro-pattern-ios-volume-button-kvo`
-- [ ] **4.6** i18n: `l10n.yaml` + `app_pt/en/es.arb`, extrair literais hardcoded, `AppLocalizations` (memória `raro-pattern-flutter-i18n-synthetic-package-false`)
+### BLOCO 4.5 — Faxina de repositório (anotado a pedido do dono, 2026-09-02)
+> **Objetivo:** remover o que não é mais usado, para o cliente não receber (nem o agente tropeçar em) lixo. **Read-only primeiro: listar e propor, deletar só com aval.**
+- [ ] **F.1** **Docs desatualizados/órfãos**: rodar `/docs-lint`. Alvos já conhecidos: `docs/sessions/NEXT-SESSION-PROMPT-voice-openwakeword.md` (marcado 🛑 OBSOLETO no próprio corpo), `NEXT-SESSION-PROMPT-bloco-0-destravar.md` e `NEXT-SESSION-PROMPT-bloco-1-firebase.md` (blocos 0 e 1 fechados). Decidir: apagar ou mover para `docs/archive/`.
+- [ ] **F.2** **Sprints superados**: `sprint-2-backend-logic-ios.md` e `sprint-3-android-parity-testflight-client.md` foram reindexados pelo PLANO-MESTRE — marcar como históricos no topo ou arquivar, para não competirem como "roadmap".
+- [ ] **F.3** **Código morto**: `vault_service.delete` sem caller (vai ganhar caller no 4.2); scaffold ONNX dormente (`WakeWordDetector`/`WakeWordPipeline`/`OnnxModelSession` + 3 `.onnx` ≈2,4MB) — **manter dormente ou remover de vez?** Com a decisão 1 (background já resolvido no Android via Vosk) o argumento "guardar caso a Sensory entre" enfraquece. Remover exige cirurgia no `project.pbxproj`; decidir antes do build de release, onde os MB contam.
+- [ ] **F.4** **Testes**: procurar testes redundantes/desligados (`skip:`) e goldens órfãos sem widget correspondente.
+- [ ] **F.5** **Dependências declaradas e não usadas**: `share_plus` e `purchases_flutter` (zero imports hoje) — devem passar a ser usadas nos Blocos 4.1 e 2.1; se algum bloco for adiado, tirar do `pubspec.yaml` em vez de deixar dep fantasma.
+- [ ] **F.6** **Assets**: conferir se as 4 TTFs Poppins entrando agora são todas realmente usadas (4 pesos declarados) e se sobrou fonte/imagem sem referência.
 
-### BLOCO 5 — Infra de loja + publicação (depende 100% de contas do cliente)
-**Objetivo:** apps publicados. **Bloqueadores duros que SÓ o cliente resolve.**
-- [ ] **5.1** 🔴 Apple Developer Program ($99/ano) — bloqueador raiz iOS (sem ele, sem TestFlight)
-- [ ] **5.2** 🔴 Keystore Android release + `key.properties` + `signingConfigs.release` (hoje assina com debug = Play rejeita)
-- [ ] **5.3** Certificado de distribuição iOS + provisioning + `ExportOptions.plist`
-- [ ] **5.4** Google Play Console ($25 taxa única) + Internal Testing track
-- [ ] **5.5** Assets de loja: ícones Android brandizados, splash, screenshots (iPhone 6.7"/6.5" + Android), descrições pt/en/es, política de privacidade (URL obrigatória)
-- [ ] **5.6** Builds release `.ipa` + `.aab` assinados → TestFlight + Play Internal
-- [ ] **5.7** Submissão + aprovação nas 2 lojas
-- [ ] **5.8** Tag `v1.0.0` + transferência das contas pro cliente
+### BLOCO 5 — Loja + publicação (bloqueadores de conta, só o cliente resolve)
+- [ ] **5.1** 🔴 Apple Developer Program (US$99/ano).
+- [ ] **5.2** 🔴 **Keystore Android + `signingConfigs.release`** — provado hoje que o release sai com chave de debug (`build.gradle.kts:40`).
+- [ ] **5.3** Certificado iOS + provisioning + `ExportOptions.plist` (não existe no repo).
+- [ ] **5.4** Google Play Console (US$25) + Internal Testing.
+- [ ] **5.5** Assets de loja + **política de privacidade hospedada (URL obrigatória)**.
+- [ ] **5.6** Builds assinados `.ipa` + `.aab` → TestFlight + Play Internal.
+- [ ] **5.7** Submissão e aprovação.
+- [ ] **5.8** Tag `v1.0.0` + transferência das contas.
 
 ---
 
-## Gate de entrega (DoD) — o que falta marcar
+## Caminho crítico até "app pronto"
 
-Do [09-DOD.md](../../09-DOD.md), aberto hoje:
-- Funcional: 13 telas+3 modais (faltam 3 telas+2 modais), wake-word >90% (**REAVALIAR** — toggle background inviável; foreground funciona mas o DoD pede background?), replay Android, lock mode bateria, Xiaomi real, i18n, trial 30d, gating premium
-- Técnico: lint/typecheck/test verdes (✅ Dart), cobertura, builds release assinados
-- Processo: ADRs, docs sem TBD, publicação, tag, transferência
+```
+4.0 (destravar testes)  →  2.x (monetização)  →  3.2 (replay Android) ─┐
+                                                 4.1-4.5 (acabamentos) ┼→ 5.x (lojas)
+                        (5.1/5.2/5.4 podem correr em paralelo desde já)┘
+```
 
-**⚠️ Item de produto a decidir com o cliente:** o DoD pede *"wake word detectado >90% em ambiente silencioso"* — provado inviável em background com "Raro". Opções: (a) aceitar voz foreground-only (app aberto), (b) mudar a wake-word, (c) re-tentar background com outra abordagem. **Não é técnico, é de produto.**
+**O que impede faturar:** Bloco 2 inteiro — e note que a regra de premium do dono ("só salva na galeria se for premium") depende do **2.3a**, que é feature nova, não só um `if`.
+**O que impede publicar:** 5.1, 5.2, 5.4 (contas/keystore) + 4.3 (privacidade).
+**Bugs a corrigir (classificação do dono):** replay no Android (3.2) e modo Volume (4.5) — ambos aprovados para implementação, não para serem escondidos. Some-se os 4 botões do Preview (4.1/4.2).
 
 ---
 
-## Estimativa grosseira de esforço
+## Decisões de produto — RESPONDIDAS pelo dono (2026-09-02)
+
+1. **Wake word em background — ✅ RESOLVIDO NA PRÁTICA, MANTER COMO ESTÁ.** O dono confirmou que **"raro gravar"/"raro parar" já funcionam em background no Android** (Vosk motor único + FGS `microphone`). **Não mexer nesse caminho.** O DoD deve ser reescrito para refletir a realidade em vez de continuar pedindo o ONNX reprovado. Sensory deixa de ser bloqueador de v1.0.
+2. **O que é premium — ✅ DEFINIDO: "o app só salva vídeos na galeria se for premium."**
+   ⚠️ **Atenção (auditado 2026-09-02): hoje isso não acontece de duas formas.**
+   (a) **Não há gating nenhum** — `camera_flutter_api_provider.dart:93` chama `vault.save()` incondicionalmente, sem consultar assinatura.
+   (b) **Não existe "galeria" no sentido do sistema** — não há `MediaStore` (Android) nem `PHPhotoLibrary` (iOS) em lugar nenhum do repo. O vídeo só vai para o **vault privado do app** (`vault_service.dart:12`, `documentsDir/vault`), que é o que a tela "Galeria" lista.
+   → Ver Bloco 2.3, que virou **duas** tarefas: criar a exportação real para a galeria do celular **e** colocá-la atrás do entitlement.
+3. **Replay no Android — ✅ IMPLEMENTAR.** O dono classificou o comportamento atual como bug a corrigir, não como recurso futuro. Ver Bloco 3.2.
+4. **Modo Volume — ✅ IMPLEMENTAR** nas 2 plataformas. Ver Bloco 4.5.
+
+---
+
+## Estimativa (referência, não prazo)
 
 | Bloco | Sessões | Depende de |
 |---|---|---|
-| 0 — Destravar | 1 | — |
-| 1 — Firebase | 1-2 | conta Firebase ✅ pronta (prep 0032) |
-| 2 — Monetização | 2-3 | RevenueCat + lojas |
-| 3 — Android paridade | 5-8 | device Android |
-| 4 — Acabamentos | 2-3 | — |
-| 5 — Loja/publicação | 2-4 | **contas pagas do cliente** |
-| **Total** | **~13-21 sessões** | |
-
-> Nota Karpathy: estimativas são referência, não deadline. O caminho crítico real é o Bloco 3 (Android paridade) + os bloqueadores de conta do Bloco 5 (que não dependem de código).
+| 4.0 destravar | <1 | — |
+| 2 — Monetização | 2-3 | contas RevenueCat + lojas |
+| 3.2 — Replay Android | 2-4 | device Android |
+| 3.6 + 4.1-4.5 | 2-3 | decisões de produto |
+| 5 — Publicação | 2-4 | **contas pagas do cliente** |
+| **Total** | **~8-15** | |
 
 ---
 
 ## Próxima ação imediata
 
-**Bloco 0 fechado em 2026-06-22** (Android compila, App ID alinhado, label corrigido, ONNX dormente). **Pré-requisitos do Bloco 1 prontos em 2026-06-23** (sessão 0032: conta Firebase `raro-camera`, apps registrados, configs posicionados+gitignored, flutterfire CLI instalado). **Próximo: Bloco 1 — Firebase/Crashlytics**, que agora é só código (`flutterfire configure` + `initializeApp` + plugins gradle + 3 handlers Crashlytics). Nada está mais "objetivamente quebrado".
+**Fechar a Fatia Poppins (4.0)** — a suíte está vermelha e nada deve ser empilhado sobre árvore vermelha. Em seguida, **pushar `5a35be4`** (o fix do R8 só existe nesta máquina) e decidir as 4 questões de produto acima, porque elas destravam os Blocos 2, 3.2 e 4.5.
