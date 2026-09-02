@@ -80,6 +80,9 @@ void main() {
       expect(entity.isReplay, isTrue);
       expect(entity.thumbnailHue, 100);
       expect(entity.recordedAt, DateTime(2026, 5, 20));
+      expect(entity.resolutionLabel, isNull);
+      expect(entity.fpsLabel, isNull);
+      expect(entity.lensLabel, isNull);
     },
   );
 
@@ -111,6 +114,28 @@ void main() {
     final service = VaultService(documentsDir: tempRoot);
     await service.attachThumbnail('ghost', '/vault/ghost.jpg');
     expect(await service.listAll(), isEmpty);
+  });
+
+  test('save round-trips resolution and fps labels in the sidecar', () async {
+    final service = VaultService(documentsDir: tempRoot);
+    await service.save(
+      source,
+      metadata: RecordingMetadata(
+        id: 'fmt1',
+        name: 'Vídeo fmt1',
+        duration: const Duration(seconds: 5),
+        recordedAt: DateTime(2026, 6, 3),
+        isReplay: false,
+        thumbnailHue: 100,
+        resolutionLabel: '4K',
+        fpsLabel: '30FPS',
+        lensLabel: '0.5×',
+      ),
+    );
+    final entity = (await service.listAll()).single;
+    expect(entity.resolutionLabel, '4K');
+    expect(entity.fpsLabel, '30FPS');
+    expect(entity.lensLabel, '0.5×');
   });
 
   test('saved video without thumbnail has null thumbnailPath', () async {

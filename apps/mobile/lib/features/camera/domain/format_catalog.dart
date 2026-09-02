@@ -21,6 +21,9 @@ String fpsLabel(Fps fps) {
   }
 }
 
+String lensZoomLabel(LensType lens) =>
+    lens == LensType.ultraWide ? '0.5×' : '1×';
+
 bool _isPhysical4k60(FormatCapability format) =>
     format.resolution == Resolution.uhd4k &&
     format.fps == Fps.fps60 &&

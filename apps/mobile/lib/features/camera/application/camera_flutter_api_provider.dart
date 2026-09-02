@@ -5,12 +5,18 @@ import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
+import 'package:raro_mobile/features/camera/application/camera_controller.dart';
+import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/data/vault_service.dart';
 import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
+import 'package:raro_mobile/features/camera/domain/camera_state.dart';
+import 'package:raro_mobile/features/camera/domain/capture_format_snapshot.dart';
 import 'package:raro_mobile/features/camera/domain/recording_metadata.dart';
 import 'package:raro_mobile/features/gallery/application/video_list_provider.dart';
+import 'package:raro_mobile/features/settings/application/settings_controller.dart';
+import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'camera_flutter_api_provider.g.dart';
@@ -82,6 +88,14 @@ StreamSubscription<RecordingResult> recordingVaultSink(Ref ref) {
     final source = File(event.path);
     final id = _idFromPath(event.path);
     final recordedAt = DateTime.now();
+    final settings =
+        ref.read(settingsControllerProvider).value ?? const RecordingSettings();
+    final ready = ref.read(cameraControllerProvider).value;
+    final snap = snapshotCaptureFormat(
+      active: ready is CameraStateReady ? ready.activeSettings : null,
+      shell: ref.read(cameraShellProvider),
+      settings: settings,
+    );
     final metadata = RecordingMetadata(
       id: id,
       name: _nameFor(recordedAt),
@@ -89,6 +103,9 @@ StreamSubscription<RecordingResult> recordingVaultSink(Ref ref) {
       recordedAt: recordedAt,
       isReplay: false,
       thumbnailHue: _hueFor(id),
+      resolutionLabel: snap.resolutionLabel,
+      fpsLabel: snap.fpsLabel,
+      lensLabel: snap.lensLabel,
     );
     final entity = await vault.save(source, metadata: metadata);
     await _generateThumbnail(repository, logger, vault, id, entity.filePath);

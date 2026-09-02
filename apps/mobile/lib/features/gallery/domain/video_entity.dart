@@ -13,6 +13,9 @@ abstract class VideoEntity with _$VideoEntity {
     required int thumbnailHue,
     String? filePath,
     String? thumbnailPath,
+    String? resolutionLabel,
+    String? fpsLabel,
+    String? lensLabel,
   }) = _VideoEntity;
 
   const VideoEntity._();

@@ -5,6 +5,7 @@ import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/gallery/domain/video_entity.dart';
 import 'package:raro_mobile/features/preview/application/preview_controller_provider.dart';
+import 'package:raro_mobile/features/preview/domain/preview_info_badge.dart';
 import 'package:video_player/video_player.dart';
 
 class PreviewViewport extends ConsumerStatefulWidget {
@@ -32,6 +33,17 @@ class _PreviewViewportState extends ConsumerState<PreviewViewport> {
     final colors = Theme.of(context).extension<RaroColors>()!;
     final controllerAsync = ref.watch(previewControllerProvider(widget.video));
     final controller = controllerAsync.value;
+    final playback = controller?.value;
+    final size = playback != null && playback.isInitialized
+        ? playback.size
+        : null;
+    final badge = previewInfoBadge(
+      width: size?.width,
+      height: size?.height,
+      storedResolution: widget.video.resolutionLabel,
+      storedFps: widget.video.fpsLabel,
+      storedLens: widget.video.lensLabel,
+    );
     final base = HSLColor.fromAHSL(
       1,
       widget.video.thumbnailHue.toDouble(),
@@ -82,14 +94,7 @@ class _PreviewViewportState extends ConsumerState<PreviewViewport> {
                   ),
                 ),
               ),
-              Positioned(
-                top: 12,
-                left: 12,
-                child: _InfoBadge(
-                  label:
-                      '1080p · 60FPS · ${widget.video.isReplay ? '0.5×' : '1×'}',
-                ),
-              ),
+              Positioned(top: 12, left: 12, child: _InfoBadge(label: badge)),
               if (!_playing)
                 Center(
                   child: Container(
