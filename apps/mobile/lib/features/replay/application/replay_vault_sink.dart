@@ -33,18 +33,20 @@ StreamSubscription<ReplayResult> replayVaultSink(Ref ref) {
     if (event is! ReplaySavedResult) {
       return;
     }
-    final vault = await ref.read(vaultServiceProvider.future);
-    final source = File(event.path);
-    final id = _idFromPath(event.path);
-    final recordedAt = DateTime.now();
     final settings =
         ref.read(settingsControllerProvider).value ?? const RecordingSettings();
-    final ready = ref.read(cameraControllerProvider).value;
+    final ready = ref.exists(cameraControllerProvider)
+        ? ref.read(cameraControllerProvider).value
+        : null;
     final snap = snapshotCaptureFormat(
       active: ready is CameraStateReady ? ready.activeSettings : null,
       shell: ref.read(cameraShellProvider),
       settings: settings,
     );
+    final vault = await ref.read(vaultServiceProvider.future);
+    final source = File(event.path);
+    final id = _idFromPath(event.path);
+    final recordedAt = DateTime.now();
     final metadata = RecordingMetadata(
       id: id,
       name: _nameFor(recordedAt),

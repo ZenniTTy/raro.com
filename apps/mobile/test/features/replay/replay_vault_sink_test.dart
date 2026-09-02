@@ -65,5 +65,6 @@ void main() {
     }
     expect(videos.single.isReplay, isTrue);
     expect(File(videos.single.filePath!).existsSync(), isTrue);
+    verifyNever(() => repository.stopSession());
   });
 }

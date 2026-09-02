@@ -74,6 +74,7 @@ void main() {
 
     expect(videos.single.id, 'sess1');
     expect(File(videos.single.filePath!).existsSync(), isTrue);
+    verifyNever(() => repository.stopSession());
   });
 
   test('attaches thumbnail path when generation succeeds', () async {
