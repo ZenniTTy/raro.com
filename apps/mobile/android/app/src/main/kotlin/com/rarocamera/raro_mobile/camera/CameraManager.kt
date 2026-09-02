@@ -168,38 +168,6 @@ class CameraManager(
     currentConfig = cfg.copy(resolution = resolution, fps = fps)
   }
 
-  private var spikeRan = false
-
-  fun runReplaySpike(segments: Int, chunkSeconds: Int) {
-    if (spikeRan) {
-      Log.i("RaroReplaySpike", "spike already ran this session — ignoring re-trigger")
-      return
-    }
-    awaitVideoCaptureThenSpike(segments, chunkSeconds, attempt = 0)
-  }
-
-  private fun awaitVideoCaptureThenSpike(segments: Int, chunkSeconds: Int, attempt: Int) {
-    val executor = ContextCompat.getMainExecutor(context)
-    val vc = videoCapture
-    if (vc != null) {
-      spikeRan = true
-      Log.i("RaroReplaySpike", "videoCapture ready after $attempt retries — running spike")
-      com.rarocamera.raro_mobile.replay.ReplaySpikeGate(context, executor)
-        .run(vc, segments, chunkSeconds)
-      return
-    }
-    if (attempt >= 50) {
-      Log.w("RaroReplaySpike", "videoCapture still null after $attempt retries — aborting spike")
-      return
-    }
-    executor.execute {
-      android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
-        { awaitVideoCaptureThenSpike(segments, chunkSeconds, attempt + 1) },
-        200,
-      )
-    }
-  }
-
   fun startRecording(
     options: RecordingOptions,
     callbacks: RecordingController.RecordingCallbacks,
