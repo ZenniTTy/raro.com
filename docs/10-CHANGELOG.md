@@ -2,7 +2,19 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
-## [2026-09-02] — auditoria de entrega (sessão 0039, docs-only)
+## [2026-09-02] — 0.9.1 (Poppins no paywall + R8 em origin, sessão 0041)
+
+### Adicionado
+- **Poppins nos cards de plano** (400/600/700). Medium (500) não era usado e não entrou no bundle.
+
+### Corrigido
+- Guard de i18n: 👑/🔥 como glifo UTF-8 (o escape `\u{...}` era falso positivo). `'RARO CAM'` allowlisted como marca, igual a `'RARO'`.
+- **`5a35be4` pushado** para `origin/develop` — sem o `-keep` JNA/Vosk o APK release fecha sozinho no boot.
+
+### Verificado
+- `flutter analyze` limpo; suíte **355/355**.
+
+## [2026-09-02] — auditoria de entrega (sessão 0040, docs-only)
 
 > Reauditoria completa do que falta para v1.0, feita contra código/binário/git (2 agentes paralelos + verificação manual), não contra documentação. Nenhum código de produção alterado.
 

@@ -96,7 +96,7 @@
 - [ ] **3.7** Contract tests de paridade nas 2 plataformas.
 
 ### BLOCO 4 — Acabamentos de produto
-- [ ] **4.0** 🔴 **Fechar a árvore suja de Poppins** (ver "Onde você parou"): 3 literais fora do `.arb` deixam a suíte VERMELHA.
+- [x] **4.0** Fechar a árvore suja de Poppins (sessão 0041): emojis como glifo; `'RARO CAM'` no allowlist; Medium 500 removido; suíte 355/355; `5a35be4` pushado.
 - [ ] **4.1** Share real com `share_plus` (declarado, zero imports).
 - [ ] **4.2** Delete real: `vault_service.dart:68-75` existe sem caller. **Item mais barato do plano** (diálogo de confirmação + chamada).
 - [ ] **4.3** Telas faltando: P05a Lock mode, P11 Terms, **P12 Privacy (obrigatória p/ loja)**.
@@ -111,7 +111,7 @@
 - [ ] **F.3** **Código morto**: `vault_service.delete` sem caller (vai ganhar caller no 4.2); scaffold ONNX dormente (`WakeWordDetector`/`WakeWordPipeline`/`OnnxModelSession` + 3 `.onnx` ≈2,4MB) — **manter dormente ou remover de vez?** Com a decisão 1 (background já resolvido no Android via Vosk) o argumento "guardar caso a Sensory entre" enfraquece. Remover exige cirurgia no `project.pbxproj`; decidir antes do build de release, onde os MB contam.
 - [ ] **F.4** **Testes**: procurar testes redundantes/desligados (`skip:`) e goldens órfãos sem widget correspondente.
 - [ ] **F.5** **Dependências declaradas e não usadas**: `share_plus` e `purchases_flutter` (zero imports hoje) — devem passar a ser usadas nos Blocos 4.1 e 2.1; se algum bloco for adiado, tirar do `pubspec.yaml` em vez de deixar dep fantasma.
-- [ ] **F.6** **Assets**: conferir se as 4 TTFs Poppins entrando agora são todas realmente usadas (4 pesos declarados) e se sobrou fonte/imagem sem referência.
+- [~] **F.6** **Assets**: recorte Poppins feito na 0041 (Medium 500 removido; 400/600/700 usados). Resto (fonte/imagem órfã fora do paywall) ainda aberto.
 
 ### BLOCO 5 — Loja + publicação (bloqueadores de conta, só o cliente resolve)
 - [ ] **5.1** 🔴 Apple Developer Program (US$99/ano).
@@ -167,4 +167,4 @@
 
 ## Próxima ação imediata
 
-**Fechar a Fatia Poppins (4.0)** — a suíte está vermelha e nada deve ser empilhado sobre árvore vermelha. Em seguida, **pushar `5a35be4`** (o fix do R8 só existe nesta máquina) e decidir as 4 questões de produto acima, porque elas destravam os Blocos 2, 3.2 e 4.5.
+**4.0 fechado e `5a35be4` em origin.** Próxima fase: dono escolhe **Bloco 2 (monetização, bloqueia faturar)** ou **Bloco 3.2 (replay Android, bug aprovado)** a partir de `feat/fatia-5-replay-buffer-android` (já em origin; não mergear o spike). Em paralelo: validar APK **release** no M54 com o R8.
