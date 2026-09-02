@@ -74,23 +74,9 @@
 
 ### BLOCO 3 — Android paridade (QUASE FECHADO)
 - [x] **3.1** Gravação CameraX → vault (fatia 1, PR #5, provado no M54 via ffprobe).
-- [ ] **3.2** **Replay buffer / pré-roll Android — IMPLEMENTAR** (decisão do dono 2026-09-02: é bug, não fatia futura).
-  > ⚠️ **JÁ EXISTE TRABALHO ADIANTADO — descoberto em 2026-09-02 na branch local `feat/fatia-5-replay-buffer-android` (4 commits, 2026-07-19, NÃO mergeada e NÃO pushada).** Não começar do zero: ela traz **ADR-0031** + design + um **spike-gate JÁ EXECUTADO E APROVADO no M54**.
-  - **A abordagem MUDOU (e o texto anterior deste item estava errado):** ADR-0031 substitui a reserva "replay = `MediaCodec`+`MediaMuxer`" do ADR-0030/Blueprint pela **Rota D — segmentos rotativos do CameraX `Recorder` + concat sem re-encode** (`MediaExtractor`+`MediaMuxer`). Motivo: preserva o pipeline nativo já provado nas Fatias 1-3, sem dependência nova. `MediaCodec` (Rota C) fica como plano B, exigindo ADR próprio.
-  - **Spike aprovado no M54 (ffprobe):** gap real `finalize→start` de 0-1ms; concat de 3 segmentos deu 5.588s vs 5.585s esperado (Δ=3ms); SPS/PPS idênticos; concat múltiplo sem erro de DTS. **Resíduo conhecido:** drift A/V de ~30ms por segmento, interno ao Recorder — alinhar por PTS no muxer para não acumular.
-  - **Antes de implementar:** remover o spike descartável (`ReplaySpikeGate.kt` + `CameraManager.runReplaySpike` + o gancho temporário em `enableReplayBuffer`, que hoje só loga e dispara o spike). **A branch NÃO é mergeável como está.**
-  - Falta então: (a) ring de segmentos + concat real; (b) **registrar `ReplayBufferHostApi` no `MainActivity.kt`**; (c) honrar `includeReplayPreroll` em `CameraManager.kt:176`; (d) concat tolerante a segmento faltante (cacheDir é efêmero) degradando a janela sem nunca falhar o clipe.
-  - **Inalterados:** contrato Pigeon e toda a camada Dart — só falta o nativo responder.
-  - Gate: ffprobe no `vault/<id>.mp4` provando duração ≈ janela+REC e A/V contínuos.
-
-  > **📍 Onde está o contexto desta fatia (ler ANTES de codar):** branch **`feat/fatia-5-replay-buffer-android`** (pushada em 2026-09-02, **não mergeada de propósito**).
-  > - `docs/decisions/0031-replay-buffer-android-camerax-segments.md` — a decisão de rota, os 4 critérios do spike-gate e o **resultado medido no M54**.
-  > - `docs/superpowers/specs/2026-07-18-replay-buffer-android-design.md` — o **design completo já aprovado**: ring de segmentos, REC com pré-roll espelhando o iOS, fallback.
-  > - `ReplaySpikeGate.kt` + `CameraManager.runReplaySpike` + o gancho em `enableReplayBuffer` — **descartáveis, remover no 1º commit da implementação.**
-  >
-  > **Parâmetros de design já decididos (não re-derivar):** segmentos de **~5s** (não 1s como o iOS — cada troca no Android tem gap, 5s amortiza: janela de 15s = 3 emendas, 30s = 6); capacidade do ring = `ceil(janela/chunk) + 1` (mesma fórmula do `ReplayRing` do iOS); segmentos **na mesma configuração** do `Recorder` principal (pré-condição do concat, validada no spike); buffer desarma em `onPause`/background (térmica/bateria); **fallback obrigatório** — concat falhou, entrega só a gravação principal e NUNCA perde o clipe do usuário (paridade com `CameraManager.swift:396-442`).
+- [x] **3.2** **Replay buffer / pré-roll Android — FECHADO no device (sessão 0043, 2026-09-02).** Rota D (ADR-0031): segmentos ~5s do CameraX `Recorder` + concat sem re-encode. Spike removido. `ReplayBufferHostApi` registrada; `includeReplayPreroll` honrado; anel recarrega ao trocar 15s↔30s. **Dono confirmou no M54:** buffer funciona e o selo da galeria mostra formato/lente da sessão (incl. 0.5×). Branch `feat/fatia-5-replay-buffer-android` — **ainda não mergeada em `develop`**. Fora desta fatia: `saveReplay()` standalone sem UI; 16 KB (5.6b).
 - [x] **3.3** Voz Android "raro gravar"/"raro parar" (fatia 3, PR #8, Vosk motor único, ADR-0029).
-- [~] **3.4** HostApis no `MainActivity`: câmera ✓ e voz ✓ registradas; **replay ✗**; volume não existe em lugar nenhum.
+- [~] **3.4** HostApis no `MainActivity`: câmera ✓, voz ✓, **replay ✓** (0043); volume não existe em lugar nenhum.
 - [x] **3.5** Ultra-wide discovery (`CameraLensDiscovery.kt:28-31`) — funciona, porém por **heurística de distância focal**; pode errar em aparelhos com macro/depth. Aceitável para v1.0, risco anotado.
 - [ ] **3.6** Xiaomi/MIUI: modal M02 + autostart (nada implementado além do nome do evento de analytics).
 - [ ] **3.7** Contract tests de paridade nas 2 plataformas.
@@ -120,6 +106,7 @@
 - [ ] **5.4** Google Play Console (US$25) + Internal Testing.
 - [ ] **5.5** Assets de loja + **política de privacidade hospedada (URL obrigatória)**.
 - [ ] **5.6** Builds assinados `.ipa` + `.aab` → TestFlight + Play Internal.
+- [ ] **5.6b** 🔴 **Android 16 KB page size (Play + Android 15+)** — anotado 2026-09-02 a pedido do dono. No Galaxy M54 (Android 16) o APK **debug** abre o diálogo do sistema *"Este app não é compatível com 16 KB. Falha na verificação de alinhamento ELF"* ([developer.android.com/16kb-page-size](https://developer.android.com/guide/practices/page-sizes)). Libs citadas: `libflutter.so`, `libvosk.so` (segmento LOAD sem alinhamento — AAR `vosk-android:0.3.47`, ADR-0029), `libjnidispatch.so` / `libdartjni.so`, CameraX (`libsurface_util_jni.so`, `libimage_processing_util_jni.so`), DataStore, e no debug `libVkLayer_khronos_validation.so`. **Não é crash do replay; o app sobe.** Corrigir **antes** do `.aab` de loja (Play exige 16 KB desde 2025-11-01 para target API 35+). Escopo: AGP ≥8.5.1 + NDK r28 (ou linker `-Wl,-z,max-page-size=16384`) + Flutter engine alinhado + **Vosk/JNA recompilados ou AAR novo** (muda ADR-0029). **Não mexer na voz agora** (3.3 congelado / NÃO MEXER). Gate: `check_elf_alignment.sh` / `zipalign -c -P 16` no AAB + diálogo some no M54. Workaround de teste: *"Não mostrar de novo"*.
 - [ ] **5.7** Submissão e aprovação.
 - [ ] **5.8** Tag `v1.0.0` + transferência das contas.
 
@@ -134,7 +121,7 @@
 ```
 
 **O que impede faturar:** Bloco 2 inteiro — e note que a regra de premium do dono ("só salva na galeria se for premium") depende do **2.3a**, que é feature nova, não só um `if`.
-**O que impede publicar:** 5.1, 5.2, 5.4 (contas/keystore) + 4.3 (privacidade).
+**O que impede publicar:** 5.1, 5.2, 5.4 (contas/keystore) + 4.3 (privacidade) + **5.6b (16 KB / Play)**.
 **Bugs a corrigir (classificação do dono):** replay no Android (3.2) e modo Volume (4.5) — ambos aprovados para implementação, não para serem escondidos. Some-se os 4 botões do Preview (4.1/4.2).
 
 ---
@@ -167,4 +154,4 @@
 
 ## Próxima ação imediata
 
-**4.0 fechado. R8 pushado e provado no M54 em release (0042).** Próxima fase: dono escolhe **Bloco 2 (monetização, bloqueia faturar)** ou **Bloco 3.2 (replay Android, bug aprovado)** a partir de `feat/fatia-5-replay-buffer-android` (já em origin; não mergear o spike).
+**4.0 e 3.2 fechados no device.** Replay Android está em `feat/fatia-5-replay-buffer-android` (ainda sem merge em `develop`). Próxima fase: dono escolhe **Bloco 2 (monetização)**, **4.5 (volume)** ou **5.6b (16 KB / Play)**.

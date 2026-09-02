@@ -2,6 +2,22 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-09-02] — Fatia 5 replay buffer Android (sessão 0043)
+
+### Adicionado
+- **Pré-roll Android (Rota D, ADR-0031):** segmentos ~5s do CameraX `Recorder` + concat `MediaExtractor`+`MediaMuxer` sem re-encode. `ReplayBufferHostApi` real; `includeReplayPreroll` honrado; fallback para só a gravação principal se o concat falhar.
+
+### Corrigido
+- Selo da preview/galeria deixou de ser `1080p · 60FPS · 1×` fixo (e de tratar replay como 0.5×). Grava resolução/fps/lente da **sessão** no sidecar.
+- Overlay/sessão de 4K 30: `VideoCapture` + Preview pedem `setTargetFrameRate` 30–30.
+- Troca 15s↔30s zera o anel e reinicia os segmentos nativos.
+
+### Verificado
+- Dono no Galaxy M54: buffer funciona; galeria mostra formato e lente corretos (incl. 0.5×). `flutter analyze` limpo; suíte Dart 366+ nos testes desta fatia.
+
+### Pendente (loja)
+- **5.6b** alinhamento ELF 16 KB (`libvosk.so`, `libflutter.so`, etc.) — diálogo no Android 16; não bloqueia o teste.
+
 ## [2026-09-02] — APK release R8 provado no M54 (sessão 0042)
 
 ### Verificado
