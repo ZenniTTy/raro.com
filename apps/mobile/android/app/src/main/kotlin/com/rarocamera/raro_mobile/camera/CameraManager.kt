@@ -32,8 +32,12 @@ import com.rarocamera.raro_mobile.generated.camera.FocusPoint
 import com.rarocamera.raro_mobile.generated.camera.FormatCapability
 import com.rarocamera.raro_mobile.generated.camera.Fps
 import com.rarocamera.raro_mobile.generated.camera.LensType
+import com.rarocamera.raro_mobile.generated.camera.CameraErrorCode
 import com.rarocamera.raro_mobile.generated.camera.RecordingOptions
 import com.rarocamera.raro_mobile.generated.camera.Resolution
+import com.rarocamera.raro_mobile.replay.ReplayBuffer
+import com.rarocamera.raro_mobile.replay.ReplaySegment
+import java.io.File
 import java.util.UUID
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -51,10 +55,27 @@ class CameraManager(
   private var currentConfig: CameraConfig? = null
   private var pendingConfig: CameraConfig? = null
   private var videoCapture: VideoCapture<Recorder>? = null
-  private val recordingController = RecordingController(context, ContextCompat.getMainExecutor(context))
+  private val mainExecutor = ContextCompat.getMainExecutor(context)
+  private val recordingController = RecordingController(context, mainExecutor)
+  private val replayBuffer = ReplayBuffer(context, mainExecutor)
+  private var pendingPreroll: List<ReplaySegment>? = null
+  private var pendingStart = false
+  private var queuedStop = false
 
   var onLensSwitched: ((LensType) -> Unit)? = null
   var onFocusResult: ((FocusPoint, Boolean) -> Unit)? = null
+  var onReplaySaved: ((String, Long) -> Unit)? = null
+  var onReplayFailed: ((String, String?) -> Unit)? = null
+
+  init {
+    replayBuffer.onSaved = { file, durationMs ->
+      onReplaySaved?.invoke(file.absolutePath, durationMs)
+    }
+    replayBuffer.onFailed = { code, message ->
+      onReplayFailed?.invoke(code, message)
+    }
+  }
+
   var surfaceProvider: Preview.SurfaceProvider? = null
     set(value) {
       field = value
@@ -113,6 +134,7 @@ class CameraManager(
     val sp = surfaceProvider ?: return
     val p = providerNow()
     try {
+      replayBuffer.releaseCapture()
       p.unbindAll()
       val selector = CameraLensDiscovery.selectorFor(p, config.lens)
       val pv = buildPreview(config.resolution, config.fps)
@@ -122,6 +144,7 @@ class CameraManager(
       preview = pv
       videoCapture = vc
       currentConfig = config
+      replayBuffer.attach(vc)
     } catch (e: CameraNativeException) {
       throw e
     } catch (e: Throwable) {
@@ -131,17 +154,22 @@ class CameraManager(
   }
 
   fun stopSession() {
+    replayBuffer.disable()
     provider?.unbindAll()
     preview = null
     camera = null
     videoCapture = null
     currentConfig = null
     pendingConfig = null
+    pendingPreroll = null
+    pendingStart = false
+    queuedStop = false
   }
 
   fun switchLens(lens: LensType) {
     val p = providerNow()
     val cfg = currentConfig ?: throw CameraNativeException.NotRunning
+    replayBuffer.releaseCapture()
     p.unbindAll()
     val selector = CameraLensDiscovery.selectorFor(p, lens)
     val pv = buildPreview(cfg.resolution, cfg.fps)
@@ -151,12 +179,14 @@ class CameraManager(
     preview = pv
     videoCapture = vc
     currentConfig = cfg.copy(lens = lens)
+    replayBuffer.attach(vc)
     onLensSwitched?.invoke(lens)
   }
 
   fun setFormat(resolution: Resolution, fps: Fps) {
     val cfg = currentConfig ?: throw CameraNativeException.NotRunning
     val p = providerNow()
+    replayBuffer.releaseCapture()
     p.unbindAll()
     val selector = CameraLensDiscovery.selectorFor(p, cfg.lens)
     val pv = buildPreview(resolution, fps)
@@ -166,6 +196,30 @@ class CameraManager(
     preview = pv
     videoCapture = vc
     currentConfig = cfg.copy(resolution = resolution, fps = fps)
+    replayBuffer.attach(vc)
+  }
+
+  fun enableReplayBuffer(seconds: Int) {
+    replayBuffer.enable(seconds)
+    videoCapture?.let { replayBuffer.attach(it) }
+  }
+
+  fun disableReplayBuffer() {
+    replayBuffer.disable()
+  }
+
+  fun pauseReplayBuffer() {
+    replayBuffer.pauseEncoder()
+  }
+
+  fun resumeReplayBuffer() {
+    videoCapture?.let { replayBuffer.attach(it) }
+    replayBuffer.resumeEncoder()
+  }
+
+  fun saveReplay() {
+    if (videoCapture == null) throw CameraNativeException.NotRunning
+    replayBuffer.saveStandalone()
   }
 
   fun startRecording(
@@ -173,19 +227,43 @@ class CameraManager(
     callbacks: RecordingController.RecordingCallbacks,
   ): String {
     val vc = videoCapture ?: throw CameraNativeException.NotRunning
-    if (options.includeReplayPreroll) {
-      Log.w(TAG, "includeReplayPreroll ignored on Android (replay buffer is a future slice)")
-    }
     val sessionId = UUID.randomUUID().toString()
-    try {
-      recordingController.start(vc, sessionId, callbacks)
-    } catch (e: SecurityException) {
-      throw CameraNativeException.PermissionDenied
+    val includePreroll = options.includeReplayPreroll
+    pendingStart = true
+    queuedStop = false
+    replayBuffer.freeze { snapshot ->
+      if (!pendingStart) {
+        replayBuffer.resume()
+        return@freeze
+      }
+      pendingPreroll = if (includePreroll && snapshot.isNotEmpty()) snapshot else null
+      try {
+        recordingController.start(vc, sessionId, wrapRecordingCallbacks(sessionId, callbacks))
+        pendingStart = false
+        if (queuedStop) {
+          queuedStop = false
+          recordingController.stop()
+        }
+      } catch (e: SecurityException) {
+        pendingStart = false
+        pendingPreroll = null
+        replayBuffer.resume()
+        callbacks.onFailed(CameraErrorCode.PERMISSION_DENIED, e.message)
+      } catch (e: Throwable) {
+        pendingStart = false
+        pendingPreroll = null
+        replayBuffer.resume()
+        callbacks.onFailed(CameraErrorCode.SESSION_FAILED, e.message)
+      }
     }
     return sessionId
   }
 
   fun stopRecording() {
+    if (pendingStart) {
+      queuedStop = true
+      return
+    }
     if (!recordingController.isRecording()) throw CameraNativeException.NotRunning
     recordingController.stop()
   }
@@ -215,6 +293,72 @@ class CameraManager(
       }
       onResult(ok)
     }, ContextCompat.getMainExecutor(context))
+  }
+
+  private fun wrapRecordingCallbacks(
+    sessionId: String,
+    callbacks: RecordingController.RecordingCallbacks,
+  ): RecordingController.RecordingCallbacks {
+    return object : RecordingController.RecordingCallbacks {
+      override fun onStarted(sessionId: String) {
+        callbacks.onStarted(sessionId)
+      }
+
+      override fun onFinished(path: String, durationMs: Long) {
+        val preroll = pendingPreroll
+        pendingPreroll = null
+        if (preroll == null || preroll.isEmpty()) {
+          replayBuffer.resume()
+          callbacks.onFinished(path, durationMs)
+          return
+        }
+        finishWithPreroll(sessionId, File(path), durationMs, preroll, callbacks)
+      }
+
+      override fun onFailed(code: CameraErrorCode, message: String?) {
+        pendingPreroll = null
+        replayBuffer.resume()
+        callbacks.onFailed(code, message)
+      }
+    }
+  }
+
+  private fun finishWithPreroll(
+    sessionId: String,
+    g1: File,
+    g1DurationMs: Long,
+    preroll: List<ReplaySegment>,
+    callbacks: RecordingController.RecordingCallbacks,
+  ) {
+    val parent = g1.parentFile ?: context.cacheDir
+    val staged = File(parent, "raro_${sessionId}_g1.mp4")
+    if (g1.exists() && !g1.renameTo(staged)) {
+      Log.w(TAG, "preroll export failed — could not stage recording; delivering recording-only clip")
+      replayBuffer.resume()
+      callbacks.onFinished(g1.absolutePath, g1DurationMs)
+      return
+    }
+    val combined = File(parent, raroTempName(sessionId))
+    replayBuffer.concatPreroll(preroll, staged, combined) { result ->
+      result.fold(
+        onSuccess = { durationMs ->
+          if (staged.exists()) staged.delete()
+          replayBuffer.resume()
+          Log.i(TAG, "preroll concat ok durationMs=$durationMs")
+          callbacks.onFinished(combined.absolutePath, durationMs)
+        },
+        onFailure = { error ->
+          Log.w(TAG, "preroll export failed — falling back to recording-only clip", error)
+          if (combined.exists()) combined.delete()
+          if (staged.exists() && !g1.exists()) {
+            staged.renameTo(g1)
+          }
+          replayBuffer.resume()
+          val fallback = if (g1.exists()) g1 else staged
+          callbacks.onFinished(fallback.absolutePath, g1DurationMs)
+        },
+      )
+    }
   }
 
   private fun providerNow(): ProcessCameraProvider {
