@@ -8,6 +8,7 @@ const _excludedFiles = ['camera_test_harness_screen.dart'];
 
 const _allowedLiterals = <String>{
   'RARO',
+  'RARO CAM',
   'RARO · CAPTURE UNSCRIPTED',
   'CAPTURE · UNSCRIPTED',
   'Raro Replay',
