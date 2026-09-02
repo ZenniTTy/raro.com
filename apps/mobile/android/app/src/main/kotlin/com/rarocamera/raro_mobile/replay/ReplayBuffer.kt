@@ -25,6 +25,7 @@ class ReplayBuffer(
   private val handler = Handler(Looper.getMainLooper())
   private val concatExecutor = Executors.newSingleThreadExecutor()
   private var ring = ReplaySegmentRing(windowSeconds = 15, chunkSeconds = chunkSeconds)
+  private var windowSeconds: Int = -1
   private var videoCapture: VideoCapture<Recorder>? = null
   private var recording: Recording? = null
   private var buffering = false
@@ -38,10 +39,24 @@ class ReplayBuffer(
   var onFailed: ((String, String?) -> Unit)? = null
 
   fun enable(seconds: Int) {
-    deleteFiles(ring.setWindow(seconds))
+    val restart = !buffering || seconds != windowSeconds
+    windowSeconds = seconds
+    if (!restart) {
+      if (!paused && recording == null) {
+        startSegment()
+      }
+      return
+    }
+    cycle += 1
+    cancelScheduledStop()
+    stopQuietly()
+    recording = null
+    pendingFrozen = null
+    deleteFiles(ring.reset())
+    ring = ReplaySegmentRing(windowSeconds = seconds, chunkSeconds = chunkSeconds)
     buffering = true
     Log.i(TAG, "replay buffering started window=${seconds}s chunk=${chunkSeconds}s")
-    if (!paused && recording == null) {
+    if (!paused) {
       startSegment()
     }
   }

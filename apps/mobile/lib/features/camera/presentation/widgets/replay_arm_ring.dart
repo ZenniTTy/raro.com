@@ -38,10 +38,11 @@ class _ReplayArmRingState extends State<ReplayArmRing>
   @override
   void didUpdateWidget(ReplayArmRing oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.windowSeconds != oldWidget.windowSeconds) {
+    final windowChanged = widget.windowSeconds != oldWidget.windowSeconds;
+    if (windowChanged) {
       _fill.duration = Duration(seconds: widget.windowSeconds);
     }
-    if (_showRing && !oldWidget.armed) {
+    if (_showRing && (windowChanged || !_showRingFor(oldWidget))) {
       _fill
         ..value = 0
         ..forward();

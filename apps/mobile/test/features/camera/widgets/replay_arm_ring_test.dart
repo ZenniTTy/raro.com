@@ -93,6 +93,35 @@ void main() {
     expect(armPainter(tester), isNull);
   });
 
+  testWidgets('changing window restarts fill from zero', (tester) async {
+    await tester.pumpWidget(
+      host(
+        const ReplayArmRing(
+          armed: true,
+          windowSeconds: 15,
+          recording: false,
+          child: SizedBox(width: 72, height: 72),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 5));
+    expect(armPainter(tester)!.progress, greaterThan(0.2));
+
+    await tester.pumpWidget(
+      host(
+        const ReplayArmRing(
+          armed: true,
+          windowSeconds: 30,
+          recording: false,
+          child: SizedBox(width: 72, height: 72),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(armPainter(tester)!.progress, lessThan(0.1));
+  });
+
   testWidgets(
     'while recording hides the ring (recording state owns the button)',
     (tester) async {

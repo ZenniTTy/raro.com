@@ -139,7 +139,7 @@ class CameraManager(
       val selector = CameraLensDiscovery.selectorFor(p, config.lens)
       val pv = buildPreview(config.resolution, config.fps)
       pv.setSurfaceProvider(sp)
-      val vc = buildVideoCapture(config.resolution)
+      val vc = buildVideoCapture(config.resolution, config.fps)
       camera = p.bindToLifecycle(lifecycleOwner, selector, pv, vc)
       preview = pv
       videoCapture = vc
@@ -174,7 +174,7 @@ class CameraManager(
     val selector = CameraLensDiscovery.selectorFor(p, lens)
     val pv = buildPreview(cfg.resolution, cfg.fps)
     surfaceProvider?.let(pv::setSurfaceProvider)
-    val vc = buildVideoCapture(cfg.resolution)
+    val vc = buildVideoCapture(cfg.resolution, cfg.fps)
     camera = p.bindToLifecycle(lifecycleOwner, selector, pv, vc)
     preview = pv
     videoCapture = vc
@@ -191,7 +191,7 @@ class CameraManager(
     val selector = CameraLensDiscovery.selectorFor(p, cfg.lens)
     val pv = buildPreview(resolution, fps)
     surfaceProvider?.let(pv::setSurfaceProvider)
-    val vc = buildVideoCapture(resolution)
+    val vc = buildVideoCapture(resolution, fps)
     camera = p.bindToLifecycle(lifecycleOwner, selector, pv, vc)
     preview = pv
     videoCapture = vc
@@ -369,7 +369,8 @@ class CameraManager(
     return fresh
   }
 
-  private fun buildVideoCapture(resolution: Resolution): VideoCapture<Recorder> {
+  @OptIn(ExperimentalCamera2Interop::class)
+  private fun buildVideoCapture(resolution: Resolution, fps: Fps): VideoCapture<Recorder> {
     val quality = when (resolution) {
       Resolution.UHD4K -> Quality.UHD
       Resolution.FHD1080 -> Quality.FHD
@@ -383,7 +384,14 @@ class CameraManager(
         ),
       )
       .build()
-    return VideoCapture.withOutput(recorder)
+    val fpsHz = requestedFps(fps)
+    val builder = VideoCapture.Builder(recorder)
+      .setTargetFrameRate(Range(fpsHz, fpsHz))
+    Camera2Interop.Extender(builder).setCaptureRequestOption(
+      CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+      Range(fpsHz, fpsHz),
+    )
+    return builder.build()
   }
 
   @OptIn(ExperimentalCamera2Interop::class)
@@ -393,17 +401,21 @@ class CameraManager(
       Resolution.FHD1080 -> Size(1920, 1080)
       Resolution.UHD4K -> Size(3840, 2160)
     }
-    val targetFps = if (fps == Fps.FPS60) 60 else 30
+    val fpsHz = requestedFps(fps)
     val selector = ResolutionSelector.Builder()
       .setResolutionStrategy(
         ResolutionStrategy(size, ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
       )
       .build()
-    val builder = Preview.Builder().setResolutionSelector(selector)
+    val builder = Preview.Builder()
+      .setResolutionSelector(selector)
+      .setTargetFrameRate(Range(fpsHz, fpsHz))
     Camera2Interop.Extender(builder).setCaptureRequestOption(
       CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
-      Range(targetFps, targetFps)
+      Range(fpsHz, fpsHz)
     )
     return builder.build()
   }
+
+  private fun requestedFps(fps: Fps): Int = if (fps == Fps.FPS60) 60 else 30
 }
