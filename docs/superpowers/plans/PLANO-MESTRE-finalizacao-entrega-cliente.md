@@ -167,4 +167,4 @@
 
 ## Próxima ação imediata
 
-**4.0 fechado e `5a35be4` em origin.** Próxima fase: dono escolhe **Bloco 2 (monetização, bloqueia faturar)** ou **Bloco 3.2 (replay Android, bug aprovado)** a partir de `feat/fatia-5-replay-buffer-android` (já em origin; não mergear o spike). Em paralelo: validar APK **release** no M54 com o R8.
+**4.0 fechado. R8 pushado e provado no M54 em release (0042).** Próxima fase: dono escolhe **Bloco 2 (monetização, bloqueia faturar)** ou **Bloco 3.2 (replay Android, bug aprovado)** a partir de `feat/fatia-5-replay-buffer-android` (já em origin; não mergear o spike).

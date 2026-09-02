@@ -2,6 +2,11 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-09-02] — APK release R8 provado no M54 (sessão 0042)
+
+### Verificado
+- **APK release no Galaxy M54 não fecha no boot.** `VoiceBackgroundService` inicia (`RaroVoice: voice background service started`, FGS `isForeground=true`); crash buffer vazio; zero `UnsatisfiedLinkError` / `jna.Pointer`. Build com Homebrew OpenJDK 21 (JBR do Android Studio ausente nesta máquina).
+
 ## [2026-09-02] — 0.9.1 (Poppins no paywall + R8 em origin, sessão 0041)
 
 ### Adicionado
