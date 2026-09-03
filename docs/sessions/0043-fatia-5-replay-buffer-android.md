@@ -32,7 +32,7 @@ ADR-0031 + spec + spike-gate **já aprovados no M54** (2026-07-19) na mesma bran
 ## O que NÃO foi feito (e por quê)
 
 - `saveReplay()` standalone sem botão de UI — produto não tem o gatilho; host existe.
-- Merge em `develop` / PR — branch ainda isolada; rebase reescreveu os 4 commits antigos do origin.
+- Merge em `develop` — **feito depois do close:** [PR #11](https://github.com/ZenniTTy/raro.com/pull/11) mergeado (`3a2a386`); branch de fatia apagada.
 - Auditoria 3-lentes formal e update do Blueprint L55 / ADR-0030 consequências.
 - Alinhamento ELF 16 KB (5.6b) — muda ADR-0029 se tocar Vosk.
 - Overlay de FPS das opções de desenvolvedor (~60) — mede refresh da tela, não o fps da câmera.
@@ -47,8 +47,8 @@ ADR-0031 + spec + spike-gate **já aprovados no M54** (2026-07-19) na mesma bran
 
 ## Próximos passos
 
-- Push desta branch (force-with-lease pós-rebase) e, se o dono quiser, PR → `develop`.
-- Dono escolhe: **Bloco 2 (monetização)**, **4.5 (volume)** ou **5.6b (16 KB)**.
+- Push + PR #11 + delete da branch da fatia — **feitos**.
+- Dono escolhe a próxima sessão: **Bloco 2 (monetização)**, **4.5 (volume)** ou **5.6b (16 KB)**.
 
 ## Referências
 

@@ -74,7 +74,7 @@
 
 ### BLOCO 3 — Android paridade (QUASE FECHADO)
 - [x] **3.1** Gravação CameraX → vault (fatia 1, PR #5, provado no M54 via ffprobe).
-- [x] **3.2** **Replay buffer / pré-roll Android — FECHADO no device (sessão 0043, 2026-09-02).** Rota D (ADR-0031): segmentos ~5s do CameraX `Recorder` + concat sem re-encode. Spike removido. `ReplayBufferHostApi` registrada; `includeReplayPreroll` honrado; anel recarrega ao trocar 15s↔30s. **Dono confirmou no M54:** buffer funciona e o selo da galeria mostra formato/lente da sessão (incl. 0.5×). Branch `feat/fatia-5-replay-buffer-android` — **ainda não mergeada em `develop`**. Fora desta fatia: `saveReplay()` standalone sem UI; 16 KB (5.6b).
+- [x] **3.2** **Replay buffer / pré-roll Android — FECHADO no device (sessão 0043) e MERGEADO em `develop` (PR #11, `3a2a386`, 2026-09-02).** Rota D (ADR-0031): segmentos ~5s do CameraX `Recorder` + concat sem re-encode. Spike removido. `ReplayBufferHostApi` registrada; `includeReplayPreroll` honrado; anel recarrega ao trocar 15s↔30s. **Dono confirmou no M54:** buffer funciona e o selo da galeria mostra formato/lente da sessão (incl. 0.5×). Fora desta fatia: `saveReplay()` standalone sem UI; 16 KB (5.6b).
 - [x] **3.3** Voz Android "raro gravar"/"raro parar" (fatia 3, PR #8, Vosk motor único, ADR-0029).
 - [~] **3.4** HostApis no `MainActivity`: câmera ✓, voz ✓, **replay ✓** (0043); volume não existe em lugar nenhum.
 - [x] **3.5** Ultra-wide discovery (`CameraLensDiscovery.kt:28-31`) — funciona, porém por **heurística de distância focal**; pode errar em aparelhos com macro/depth. Aceitável para v1.0, risco anotado.
@@ -154,4 +154,4 @@
 
 ## Próxima ação imediata
 
-**4.0 e 3.2 fechados no device.** Replay Android está em `feat/fatia-5-replay-buffer-android` (ainda sem merge em `develop`). Próxima fase: dono escolhe **Bloco 2 (monetização)**, **4.5 (volume)** ou **5.6b (16 KB / Play)**.
+**4.0 e 3.2 fechados no device e em `develop` (PR #11).** Origin só tem `main` + `develop`. Próxima fase: dono escolhe **Bloco 2 (monetização)**, **4.5 (volume)** ou **5.6b (16 KB / Play)**.
