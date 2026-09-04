@@ -1,44 +1,180 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:raro_mobile/core/logging/app_logger.dart';
+import 'package:raro_mobile/core/subscription/billing_gateway.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/features/camera/application/pending_recording_controller.dart';
+import 'package:raro_mobile/features/camera/application/persist_outcome.dart';
+import 'package:raro_mobile/features/camera/application/persist_recording_scope.dart';
 import 'package:raro_mobile/features/gallery/application/video_list_provider.dart';
 import 'package:raro_mobile/features/gallery/domain/video_entity.dart';
+import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
+import 'package:raro_mobile/features/paywall/domain/paywall_intent.dart';
+import 'package:raro_mobile/features/preview/data/share_gateway_provider.dart';
 import 'package:raro_mobile/features/preview/domain/preview_metadata.dart';
 import 'package:raro_mobile/features/preview/presentation/widgets/preview_viewport.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 
-class PreviewScreen extends ConsumerWidget {
-  const PreviewScreen({super.key, required this.videoId, required this.onBack});
+class PreviewScreen extends ConsumerStatefulWidget {
+  const PreviewScreen({
+    super.key,
+    required this.videoId,
+    required this.onBack,
+    this.onNeedPremium,
+  });
 
   final String videoId;
   final VoidCallback onBack;
+  final ValueChanged<PaywallIntent>? onNeedPremium;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PreviewScreen> createState() => _PreviewScreenState();
+}
+
+class _PreviewScreenState extends ConsumerState<PreviewScreen> {
+  VideoEntity? _pinned;
+  bool _busy = false;
+
+  Future<void> _handleBack() async {
+    final pending = ref.read(pendingRecordingProvider);
+    if (pending != null && pending.id == widget.videoId) {
+      await ref.read(pendingRecordingProvider.notifier).discard();
+    }
+    widget.onBack();
+  }
+
+  Future<bool> _hasPremium() async {
+    final billing = ref.read(billingGatewayProvider);
+    try {
+      await billing.ensureConfigured();
+      return (await billing.getCustomer()).hasPremium;
+    } on BillingException {
+      return false;
+    }
+  }
+
+  Future<void> _onSave() async {
+    if (_busy) return;
+    final pending = ref.read(pendingRecordingProvider);
+    if (pending == null || pending.id != widget.videoId) return;
+    setState(() => _busy = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      if (!await _hasPremium()) {
+        widget.onNeedPremium?.call(PaywallIntent.save);
+        return;
+      }
+      final outcome = await (await persistRecordingFor(ref))(pending);
+      if (!mounted) return;
+      switch (outcome) {
+        case PersistNeedsPremium():
+          widget.onNeedPremium?.call(PaywallIntent.save);
+        case PersistSucceeded(:final entity):
+          ref.read(pendingRecordingProvider.notifier).clearKept();
+          ref.invalidate(videoListProvider);
+          setState(() => _pinned = entity);
+        case PersistFailed():
+          _showSnack(l10n.previewSaveFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _onShare(BuildContext buttonContext) async {
+    if (_busy) return;
+    final l10n = AppLocalizations.of(context);
+    final box = buttonContext.findRenderObject() as RenderBox?;
+    final origin = box == null
+        ? null
+        : box.localToGlobal(Offset.zero) & box.size;
+    if (!await _hasPremium()) {
+      widget.onNeedPremium?.call(PaywallIntent.share);
+      return;
+    }
+    if (!mounted) return;
+    final video = _resolveVideo();
+    final path = video?.filePath;
+    if (path == null || !File(path).existsSync()) {
+      _showSnack(l10n.previewShareFailed);
+      return;
+    }
+    try {
+      await ref.read(shareGatewayProvider).shareFile(path, origin: origin);
+    } on Object catch (error) {
+      ref.read(appLoggerProvider).w('share failed error=$error');
+      if (mounted) {
+        _showSnack(l10n.previewShareFailed);
+      }
+    }
+  }
+
+  VideoEntity? _resolveVideo() {
+    final pending = ref.read(pendingRecordingProvider);
+    if (pending != null && pending.id == widget.videoId) {
+      return pending.asEntity;
+    }
+    if (_pinned?.id == widget.videoId) return _pinned;
+    final videos = ref.read(videoListProvider).value ?? const <VideoEntity>[];
+    return videos.where((VideoEntity v) => v.id == widget.videoId).firstOrNull;
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
+    final pending = ref.watch(pendingRecordingProvider);
     final videosAsync = ref.watch(videoListProvider);
+    final isPending = pending != null && pending.id == widget.videoId;
+    final video = isPending
+        ? pending.asEntity
+        : (_pinned?.id == widget.videoId
+              ? _pinned
+              : (videosAsync.value ?? const <VideoEntity>[])
+                    .where((VideoEntity v) => v.id == widget.videoId)
+                    .firstOrNull);
 
     return Scaffold(
       backgroundColor: colors.bgDeep,
-      body: videosAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => _NotFound(onBack: onBack),
-        data: (videos) {
-          final video = videos.where((v) => v.id == videoId).firstOrNull;
-          if (video == null) return _NotFound(onBack: onBack);
-          return _PreviewBody(video: video, onBack: onBack);
-        },
-      ),
+      body: video != null
+          ? _PreviewBody(
+              video: video,
+              isPending: isPending,
+              onBack: _handleBack,
+              onSave: _onSave,
+              onShare: _onShare,
+            )
+          : videosAsync.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _NotFound(onBack: widget.onBack),
     );
   }
 }
 
 class _PreviewBody extends StatelessWidget {
-  const _PreviewBody({required this.video, required this.onBack});
+  const _PreviewBody({
+    required this.video,
+    required this.isPending,
+    required this.onBack,
+    required this.onSave,
+    required this.onShare,
+  });
 
   final VideoEntity video;
+  final bool isPending;
   final VoidCallback onBack;
+  final VoidCallback onSave;
+  final ValueChanged<BuildContext> onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +188,7 @@ class _PreviewBody extends StatelessWidget {
                 '${AppLocalizations.of(context).previewVideoTitle} · '
                 '${meta.titleLabel}',
             onBack: onBack,
+            onShare: onShare,
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -68,7 +205,11 @@ class _PreviewBody extends StatelessWidget {
               ),
             ),
           ),
-          _BottomActions(onBack: onBack),
+          _BottomActions(
+            isPending: isPending,
+            onSave: onSave,
+            onShare: onShare,
+          ),
         ],
       ),
     );
@@ -76,10 +217,11 @@ class _PreviewBody extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.title, required this.onBack});
+  const _Header({required this.title, required this.onBack, this.onShare});
 
   final String title;
   final VoidCallback onBack;
+  final ValueChanged<BuildContext>? onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -108,10 +250,21 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
-          _CircleButton(
-            key: const Key('preview_share_button'),
-            icon: Icons.ios_share,
-            onTap: () => _comingSoon(context),
+          Builder(
+            builder: (buttonContext) {
+              return _CircleButton(
+                key: const Key('preview_share_button'),
+                icon: Icons.ios_share,
+                onTap: () {
+                  final share = onShare;
+                  if (share == null) {
+                    _comingSoon(context);
+                    return;
+                  }
+                  share(buttonContext);
+                },
+              );
+            },
           ),
         ],
       ),
@@ -225,9 +378,15 @@ class _InfoColumn extends StatelessWidget {
 }
 
 class _BottomActions extends StatelessWidget {
-  const _BottomActions({required this.onBack});
+  const _BottomActions({
+    required this.isPending,
+    required this.onSave,
+    required this.onShare,
+  });
 
-  final VoidCallback onBack;
+  final bool isPending;
+  final VoidCallback onSave;
+  final ValueChanged<BuildContext> onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -238,32 +397,71 @@ class _BottomActions extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: GestureDetector(
-              onTap: () => _comingSoon(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: colors.bgElev,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colors.borderBright),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.ios_share, size: 18, color: colors.ink),
-                    const SizedBox(width: 8),
-                    Text(
-                      AppLocalizations.of(context).previewShare,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+            child: isPending
+                ? GestureDetector(
+                    key: const Key('preview_save_button'),
+                    onTap: onSave,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: colors.raroRed,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.save_alt,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            AppLocalizations.of(context).previewSave,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
+                  )
+                : Builder(
+                    builder: (buttonContext) {
+                      return GestureDetector(
+                        onTap: () => onShare(buttonContext),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: colors.bgElev,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: colors.borderBright),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.ios_share,
+                                size: 18,
+                                color: colors.ink,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                AppLocalizations.of(context).previewShare,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
           const SizedBox(width: 8),
           _SquareAction(

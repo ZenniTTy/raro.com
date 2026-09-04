@@ -6,6 +6,7 @@ import UIKit
   private var cameraHostApi: CameraHostApiImpl?
   private var replayBufferHostApi: ReplayBufferHostApiImpl?
   private var voiceHostApi: VoiceHostApiImpl?
+  private var galleryHostApi: GalleryHostApiImpl?
 
   override func application(
     _ application: UIApplication,
@@ -45,5 +46,9 @@ import UIKit
     let voiceApi = VoiceHostApiImpl(manager: voiceManager, flutterApi: voiceFlutterApi)
     self.voiceHostApi = voiceApi
     VoiceHostApiSetup.setUp(binaryMessenger: messenger, api: voiceApi)
+
+    let galleryApi = GalleryHostApiImpl()
+    self.galleryHostApi = galleryApi
+    GalleryHostApiSetup.setUp(binaryMessenger: messenger, api: galleryApi)
   }
 }

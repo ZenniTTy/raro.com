@@ -353,6 +353,18 @@
   "@previewShare": {
     "description": "Botão de compartilhar no preview"
   },
+  "previewSave": "Salvar",
+  "@previewSave": {
+    "description": "CTA de guardar o clipe pendente no preview"
+  },
+  "previewSaveFailed": "Não foi possível guardar o vídeo. Tente de novo.",
+  "@previewSaveFailed": {
+    "description": "Erro ao persistir o clipe no vault ou na galeria"
+  },
+  "previewShareFailed": "Não foi possível compartilhar o vídeo.",
+  "@previewShareFailed": {
+    "description": "Erro ao abrir a folha nativa de compartilhar"
+  },
   "previewVideoTitle": "Vídeo",
   "@previewVideoTitle": {
     "description": "Título fallback do header do preview"
@@ -368,6 +380,30 @@
   "paywallSubtitle": "Desbloqueie o potencial total do {brand}. {days} dias grátis, cancele quando quiser.",
   "@paywallSubtitle": {
     "description": "Subtítulo do paywall; brand não é traduzido; days vem de raro_shared",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallSubtitleSave": "Assine para guardar este vídeo na galeria. {days} dias grátis no {brand}, cancele quando quiser.",
+  "@paywallSubtitleSave": {
+    "description": "Subtítulo do paywall quando a origem é Salvar",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallSubtitleShare": "Assine para compartilhar este vídeo. {days} dias grátis no {brand}, cancele quando quiser.",
+  "@paywallSubtitleShare": {
+    "description": "Subtítulo do paywall quando a origem é Compartilhar",
     "placeholders": {
       "brand": {
         "type": "String"

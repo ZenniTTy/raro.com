@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/data/subscription_store.dart';
+import 'package:raro_mobile/features/paywall/domain/paywall_intent.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
 import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
 import 'package:raro_mobile/features/paywall/presentation/paywall_screen.dart';
@@ -121,5 +122,33 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(closed, isTrue);
+  });
+
+  testWidgets('intent save usa copy de guardar e menciona 30 dias', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          billingGatewayProvider.overrideWithValue(FakeBillingGateway()),
+          subscriptionStoreProvider.overrideWithValue(
+            _MemorySubscriptionStore(),
+          ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildRaroDarkTheme(),
+          home: PaywallScreen(
+            intent: PaywallIntent.save,
+            onClose: () {},
+            onCheckout: (_) {},
+          ),
+        ),
+      ),
+    );
+    expect(find.textContaining('guardar este vídeo'), findsOneWidget);
+    expect(find.textContaining('30 dias'), findsWidgets);
   });
 }

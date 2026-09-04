@@ -4,8 +4,10 @@ import 'package:raro_mobile/core/subscription/billing_gateway.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/features/camera/application/persist_recording_scope.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_cta.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
+import 'package:raro_mobile/features/paywall/domain/paywall_intent.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
 import 'package:raro_mobile/features/paywall/presentation/widgets/plan_card.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
@@ -16,10 +18,14 @@ class PaywallScreen extends ConsumerStatefulWidget {
     super.key,
     required this.onClose,
     required this.onCheckout,
+    this.intent = PaywallIntent.browse,
+    this.onUnlocked,
   });
 
   final VoidCallback onClose;
   final ValueChanged<PlanType> onCheckout;
+  final PaywallIntent intent;
+  final VoidCallback? onUnlocked;
 
   @override
   ConsumerState<PaywallScreen> createState() => _PaywallScreenState();
@@ -40,7 +46,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       if (!mounted) return;
       switch (result) {
         case RestoreFlowResult.restored:
-          widget.onClose();
+          if (widget.intent == PaywallIntent.save) {
+            await persistPendingFor(ref);
+            if (!mounted) return;
+          }
+          (widget.onUnlocked ?? widget.onClose)();
         case RestoreFlowResult.empty:
           _showSnack(l10n.paywallRestoreEmpty);
         case RestoreFlowResult.failed:
@@ -100,7 +110,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          l10n.paywallSubtitle('Raro Camera', trialDays),
+                          _subtitle(l10n, trialDays),
                           style: TextStyle(
                             fontFamily: RaroFonts.body,
                             fontSize: 12.5,
@@ -188,6 +198,18 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         ],
       ),
     );
+  }
+
+  String _subtitle(AppLocalizations l10n, int trialDays) {
+    const brand = 'Raro Camera';
+    switch (widget.intent) {
+      case PaywallIntent.save:
+        return l10n.paywallSubtitleSave(brand, trialDays);
+      case PaywallIntent.share:
+        return l10n.paywallSubtitleShare(brand, trialDays);
+      case PaywallIntent.browse:
+        return l10n.paywallSubtitle(brand, trialDays);
+    }
   }
 }
 

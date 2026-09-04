@@ -178,6 +178,7 @@ void main() {
         BridgeChannels.replayBuffer,
         BridgeChannels.voice,
         BridgeChannels.volume,
+        BridgeChannels.gallery,
       ];
       for (final c in channels) {
         expect(c, startsWith('com.rarocamera/'));
@@ -201,6 +202,12 @@ void main() {
         ),
         isTrue,
       );
+      expect(
+        PermissionsContract.ios.containsKey(
+          'NSPhotoLibraryAddUsageDescription',
+        ),
+        isTrue,
+      );
     });
 
     test('Android permissions present', () {
@@ -211,6 +218,10 @@ void main() {
       expect(
         PermissionsContract.android,
         contains('android.permission.RECORD_AUDIO'),
+      );
+      expect(
+        PermissionsContract.android,
+        contains('android.permission.WRITE_EXTERNAL_STORAGE'),
       );
     });
   });

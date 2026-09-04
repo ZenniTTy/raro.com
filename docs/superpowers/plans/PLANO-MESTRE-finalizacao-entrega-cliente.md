@@ -52,7 +52,7 @@
 - [x] **1.3** Analytics listener ligado.
 - [ ] **1.4** *(pendência herdada)* upload automático de dSYM no pipeline de release.
 
-### BLOCO 2 — Monetização real (NÃO INICIADO — maior risco de produto)
+### BLOCO 2 — Monetização real (PARCIAL — SDK ligado e provado contra Test Store; falta loja real + gating)
 > **Depende de:** conta RevenueCat + produtos criados nas lojas + In-App Purchase Key. **Sem isso o app não fatura.**
 
 > **📌 Não há login/cadastro no RARO — e isso é intencional (registrado 2026-09-02).**
@@ -62,13 +62,18 @@
 > **Como o app sabe que a pessoa é premium sem login:** o RevenueCat identifica o aparelho por um **App User ID anônimo** e valida o recibo com a loja. "Restore purchases" (Bloco 2.5) é o mecanismo oficial para recuperar a assinatura em outro aparelho — é **por isso** que a Apple exige esse botão, e é o que substitui o login.
 > **Quando login passaria a ser necessário (não é o caso da v1.0):** assinatura compartilhada entre iOS e Android pela mesma pessoa, backup dos vídeos na nuvem, ou área web. Qualquer um desses **exige ADR novo** (muda ADR-0004) e provavelmente backend.
 > ⚠️ **Consequência a assumir:** sem login, quem troca de celular **de plataforma** (iPhone → Android) não leva a assinatura junto. Comportamento normal de app client-only, mas o dono deve saber.
-- [ ] **2.1** Integrar `purchases_flutter` de fato: `Purchases.configure`, `getOfferings`, `purchasePackage` (memória `raro-pattern-revenuecat-error-handling`).
-- [ ] **2.2** `SubscriptionStore` → RevenueCat real, mantendo o port mockável (o port já existe e é bom — preservar).
+- [x] **2.1** *(PR #12, provado no M54 contra Test Store)* Integrar `purchases_flutter` de fato: `Purchases.configure`, `getOfferings`, `purchasePackage` (memória `raro-pattern-revenuecat-error-handling`).
+- [x] **2.2** *(PR #12)* `BillingGateway` port + `RevenueCatBillingGateway` + `FakeBillingGateway`; fonte de verdade = `CustomerInfo.entitlements.active['premium']`, prefs viram cache; sem fallback "grátis" se a key faltar (→ `unavailable`). `SubscriptionStore` → RevenueCat real, mantendo o port mockável (o port já existe e é bom — preservar).
 - [ ] **2.3a** **Exportar para a galeria do celular** (não existe hoje): `MediaStore` no Android / `PHPhotoLibrary` no iOS, com a permissão correspondente. Hoje o vídeo só chega ao vault privado (`vault_service.dart:12`) — a tela "Galeria" do app lista esse vault, não o rolo da câmera.
-- [ ] **2.3b** **Gating premium sobre a exportação**: "só salva na galeria se for premium" (regra do dono). Ponto de decisão em `camera_flutter_api_provider.dart:93`, que hoje salva incondicionalmente. **Definir o comportamento do free:** grava e fica só no vault do app? Grava com marca d'água? Não grava? — precisa de resposta antes de implementar.
+- [ ] **2.3b** **Gating premium sobre GUARDAR o clipe** — ⚠️ **REGRA DO FREE DEFINIDA PELO DONO EM 2026-09-04 (pergunta que bloqueava está RESPONDIDA):**
+  - **O free GRAVA e VÊ o resultado no Preview**, mas **para GUARDAR precisa assinar** — e "guardar" inclui o **vault do próprio app**, não só o rolo do sistema. Recusou o paywall → **o arquivo temporário é descartado**.
+  - **Compartilhar também é travado** (premium). Isso alinha o 4.1 (Share): o botão passa a existir de verdade, mas atrás do entitlement.
+  - Padrão de mercado adotado (CapCut/Lightroom): experimenta o valor, não leva o arquivo de graça.
+  - **Não regride acervo:** vídeos que já estão no vault continuam acessíveis.
+  - **Consequência a respeitar na implementação:** hoje `camera_flutter_api_provider.dart` faz `vault.save()` direto no `RecordingFinished`. O fluxo passa a ser **gravar → temporário → Preview → (assinou? vault [+ galeria do sistema] : descarta)**. O trial de 30 dias é o caminho normal de quem quer testar guardando.
 - [ ] **2.4** Free trial 30 dias (setting de loja — `raro-pattern-revenuecat-trial-app-store-connect`).
-- [ ] **2.5** **Restore purchases funcional** (`paywall_screen.dart:123`) — bloqueador de review da Apple.
-- [ ] **2.6** **Checkout (P10): remover o seletor de "método de pagamento".** Hoje `PaymentMethod` (`apple`/`google`) é um radio decorativo — o usuário escolhe algo que não tem efeito. Na compra in-app real **quem escolhe a forma de pagamento é a folha nativa da loja**, com os meios que a conta do usuário já tem cadastrados (cartão, PIX/carteira via Google Play, saldo, etc.). Manter o radio é duplicar — e confundir — uma escolha que não é nossa. P10 deve virar confirmação do plano + `purchasePackage`.
+- [x] **2.5** *(PR #12 — código pronto; restore de recibo Play REAL ainda não provado, Test Store não conta)* **Restore purchases funcional** (`paywall_screen.dart:123`) — bloqueador de review da Apple.
+- [x] **2.6** *(PR #12 — `payment_method.dart` APAGADO, checkout chama `subscribe(plan:)`)* **Checkout (P10): remover o seletor de "método de pagamento".** Hoje `PaymentMethod` (`apple`/`google`) é um radio decorativo — o usuário escolhe algo que não tem efeito. Na compra in-app real **quem escolhe a forma de pagamento é a folha nativa da loja**, com os meios que a conta do usuário já tem cadastrados (cartão, PIX/carteira via Google Play, saldo, etc.). Manter o radio é duplicar — e confundir — uma escolha que não é nossa. P10 deve virar confirmação do plano + `purchasePackage`.
 - [ ] **2.7** **Assinaturas nas lojas (pré-requisito do dono, não é código):** criar os 2 produtos de assinatura (Mensal R$ 9,90 · Anual R$ 89,90) no App Store Connect e no Play Console, ligar ao entitlement `premium` no RevenueCat e configurar o trial de 30 dias em **cada** loja. Sem isso `getOfferings` volta vazio e o app não tem o que vender.
 - [ ] **2.8** **Textos obrigatórios de assinatura na tela de compra** (exigência de review das duas lojas): preço, periodicidade, renovação automática, como cancelar, e links de Termos e Privacidade funcionando (hoje os 2 links do paywall são `_comingSoon` — ver 4.3).
 

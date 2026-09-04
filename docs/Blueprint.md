@@ -62,8 +62,9 @@ A Seção 3.2 do briefing define o protótipo como fonte de verdade inegociável
 | `com.rarocamera/replay_buffer` | Buffer circular em RAM (15s/30s), salvamento (concatenação buffer + stream) |
 | `com.rarocamera/voice` | Inicialização do reconhecimento, detecção wake word `"Raro"`, callbacks |
 | `com.rarocamera/volume` | Captura de eventos de botões físicos de volume `+`/`−` (modo "Volume OFF") |
+| `com.rarocamera/gallery` | Exportação do MP4 para a galeria do sistema (MediaStore / `PHPhotoLibrary` add-only) — ADR-0032 |
 
-> **Atualização 2026-05-26 (ADR-0013):** Os 4 channels acima são gerados via **Pigeon ^26.3.2** a partir de schemas Dart únicos em `apps/mobile/pigeons/{camera,replay_buffer,voice,volume}_api.dart`. Strings de namespace nunca são digitadas em Swift ou Kotlin; codegen sincroniza Dart + iOS + Android. Cada bridge usa **sub-package Kotlin distinto** (`com.rarocamera.raro_mobile.generated.{camera,replay_buffer,voice,volume}`) para evitar redeclaration de `FlutterError` (Pigeon gera essa classe em cada `.g.kt`; pacote comum causa colisão). Ver ADR-0013 e spec `api-contract-shared`.
+> **Atualização 2026-05-26 (ADR-0013) + 2026-09-04 (ADR-0032):** Os channels acima são gerados via **Pigeon ^26.3.2** a partir de schemas Dart únicos em `apps/mobile/pigeons/{camera,replay_buffer,voice,volume,gallery}_api.dart`. Strings de namespace nunca são digitadas em Swift ou Kotlin; codegen sincroniza Dart + iOS + Android. Cada bridge usa **sub-package Kotlin distinto** (`com.rarocamera.raro_mobile.generated.{camera,replay_buffer,voice,volume,gallery}`) para evitar redeclaration de `FlutterError` (Pigeon gera essa classe em cada `.g.kt`; pacote comum causa colisão). Ver ADR-0013, ADR-0032 e spec `api-contract-shared`.
 
 ### 2.3 Reconhecimento de voz (wake word `"Raro"`)
 

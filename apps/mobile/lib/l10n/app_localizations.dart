@@ -562,6 +562,24 @@ abstract class AppLocalizations {
   /// **'Compartilhar'**
   String get previewShare;
 
+  /// CTA de guardar o clipe pendente no preview
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar'**
+  String get previewSave;
+
+  /// Erro ao persistir o clipe no vault ou na galeria
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível guardar o vídeo. Tente de novo.'**
+  String get previewSaveFailed;
+
+  /// Erro ao abrir a folha nativa de compartilhar
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível compartilhar o vídeo.'**
+  String get previewShareFailed;
+
   /// Título fallback do header do preview
   ///
   /// In pt, this message translates to:
@@ -585,6 +603,18 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Desbloqueie o potencial total do {brand}. {days} dias grátis, cancele quando quiser.'**
   String paywallSubtitle(String brand, int days);
+
+  /// Subtítulo do paywall quando a origem é Salvar
+  ///
+  /// In pt, this message translates to:
+  /// **'Assine para guardar este vídeo na galeria. {days} dias grátis no {brand}, cancele quando quiser.'**
+  String paywallSubtitleSave(String brand, int days);
+
+  /// Subtítulo do paywall quando a origem é Compartilhar
+  ///
+  /// In pt, this message translates to:
+  /// **'Assine para compartilhar este vídeo. {days} dias grátis no {brand}, cancele quando quiser.'**
+  String paywallSubtitleShare(String brand, int days);
 
   /// Equivalente mensal do plano anual; moeda fixa em BRL nesta fase
   ///

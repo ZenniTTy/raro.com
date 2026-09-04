@@ -4,6 +4,7 @@ import 'package:raro_mobile/core/subscription/billing_gateway.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
+import 'package:raro_mobile/features/camera/application/persist_recording_scope.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_cta.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
@@ -16,11 +17,13 @@ class CheckoutScreen extends ConsumerStatefulWidget {
     required this.plan,
     required this.onBack,
     required this.onConfirmed,
+    this.onPendingSaved,
   });
 
   final PlanType plan;
   final VoidCallback onBack;
   final VoidCallback onConfirmed;
+  final ValueChanged<String>? onPendingSaved;
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -40,6 +43,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       if (!mounted) return;
       switch (result) {
         case PurchaseFlowResult.success:
+          if (widget.onPendingSaved != null) {
+            final savedId = await persistPendingFor(ref);
+            if (!mounted) return;
+            if (savedId != null) {
+              widget.onPendingSaved!(savedId);
+              return;
+            }
+          }
           widget.onConfirmed();
         case PurchaseFlowResult.cancelled:
           break;
