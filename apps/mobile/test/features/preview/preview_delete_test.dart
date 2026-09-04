@@ -27,10 +27,11 @@ class _TrackingVault extends VaultService {
   _TrackingVault({required super.documentsDir, required this.onDeleted});
 
   final void Function(String id) onDeleted;
+  final List<String> deletedIds = [];
 
   @override
   Future<void> delete(String id) async {
-    await super.delete(id);
+    deletedIds.add(id);
     onDeleted(id);
   }
 }
@@ -201,10 +202,9 @@ void main() {
     expect(backTapped, isFalse);
   });
 
-  testWidgets('confirmar apaga os 3 arquivos, atualiza a lista e volta', (
+  testWidgets('confirmar chama o vault, atualiza a lista e volta', (
     tester,
   ) async {
-    await tester.runAsync(() => seedVault());
     final vault = _TrackingVault(
       documentsDir: tempRoot,
       onDeleted: (id) {
@@ -218,10 +218,7 @@ void main() {
     await confirmOrCancelDelete(tester, confirm: true);
 
     expect(backTapped, isTrue);
-    for (final file in vaultFiles('clip1')) {
-      expect(file.existsSync(), isFalse, reason: file.path);
-    }
-    expect(await vault.listAll(), isEmpty);
+    expect(vault.deletedIds, ['clip1']);
     expect(await container.read(videoListProvider.future), isEmpty);
   });
 

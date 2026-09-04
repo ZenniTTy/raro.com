@@ -72,9 +72,9 @@ class VaultService {
     final video = _videoFile(id);
     final meta = _metaFile(id);
     final thumb = _thumbFile(id);
-    if (video.existsSync()) video.deleteSync();
-    if (meta.existsSync()) meta.deleteSync();
-    if (thumb.existsSync()) thumb.deleteSync();
+    if (video.existsSync()) await video.delete();
+    if (meta.existsSync()) await meta.delete();
+    if (thumb.existsSync()) await thumb.delete();
   }
 
   File _thumbFile(String id) => File('${_vaultDir.path}/$id.jpg');
