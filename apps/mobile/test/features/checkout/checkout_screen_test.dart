@@ -9,6 +9,8 @@ import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
 import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 
+import '../../helpers/fake_billing_gateway.dart';
+
 class _FakeSubscriptionStore implements SubscriptionStore {
   SubscriptionState stored = const SubscriptionState.initial();
   int saveCount = 0;
@@ -25,13 +27,18 @@ class _FakeSubscriptionStore implements SubscriptionStore {
 
 void main() {
   late _FakeSubscriptionStore store;
+  late FakeBillingGateway billing;
   bool confirmed = false;
 
   Widget app(PlanType plan) {
     store = _FakeSubscriptionStore();
+    billing = FakeBillingGateway();
     confirmed = false;
     return ProviderScope(
-      overrides: [subscriptionStoreProvider.overrideWithValue(store)],
+      overrides: [
+        subscriptionStoreProvider.overrideWithValue(store),
+        billingGatewayProvider.overrideWithValue(billing),
+      ],
       child: MaterialApp(
         locale: const Locale('pt', 'BR'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -64,41 +71,20 @@ void main() {
     expect(find.textContaining('R\$ 9,90'), findsWidgets);
   });
 
-  testWidgets('mostra os 2 métodos de pagamento Apple Pay e Google Play', (
-    tester,
-  ) async {
+  testWidgets('não mostra seletor Apple Pay / Google Play', (tester) async {
     await pumpReady(tester, PlanType.monthly);
-    expect(find.text('Apple Pay'), findsOneWidget);
-    expect(find.text('Google Play'), findsOneWidget);
+    expect(find.text('Apple Pay'), findsNothing);
+    expect(find.text('Google Play'), findsNothing);
   });
 
-  testWidgets('hint inicial pede para selecionar método', (tester) async {
+  testWidgets('confirmar dispara compra e onConfirmed', (tester) async {
     await pumpReady(tester, PlanType.monthly);
-    expect(find.text('SELECIONE UM MÉTODO ACIMA'), findsOneWidget);
-  });
-
-  testWidgets('confirmar sem método selecionado não dispara onConfirmed', (
-    tester,
-  ) async {
-    await pumpReady(tester, PlanType.monthly);
-    await tester.tap(find.text('Confirmar assinatura'), warnIfMissed: false);
-    await tester.pump();
-    expect(confirmed, isFalse);
-    expect(store.saveCount, 0);
-  });
-
-  testWidgets('selecionar Apple Pay + confirmar marca assinado e dispara cb', (
-    tester,
-  ) async {
-    await pumpReady(tester, PlanType.monthly);
-    await tester.tap(find.text('Apple Pay'));
-    await tester.pump();
     await tester.tap(find.text('Confirmar assinatura'));
     await tester.pump();
     await tester.pump();
     expect(confirmed, isTrue);
     expect(store.saveCount, 1);
     expect(store.stored.isSubscribed, isTrue);
-    expect(store.stored.trialStartedAt, isNotNull);
+    expect(billing.premium, isTrue);
   });
 }

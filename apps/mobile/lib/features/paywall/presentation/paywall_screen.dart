@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:raro_mobile/core/subscription/billing_gateway.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_cta.dart';
+import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
 import 'package:raro_mobile/features/paywall/presentation/widgets/plan_card.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart';
 
-class PaywallScreen extends StatefulWidget {
+class PaywallScreen extends ConsumerStatefulWidget {
   const PaywallScreen({
     super.key,
     required this.onClose,
@@ -19,11 +22,43 @@ class PaywallScreen extends StatefulWidget {
   final ValueChanged<PlanType> onCheckout;
 
   @override
-  State<PaywallScreen> createState() => _PaywallScreenState();
+  ConsumerState<PaywallScreen> createState() => _PaywallScreenState();
 }
 
-class _PaywallScreenState extends State<PaywallScreen> {
+class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   PlanType _selected = PlanType.monthly;
+  bool _restoring = false;
+
+  Future<void> _restore() async {
+    if (_restoring) return;
+    setState(() => _restoring = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final result = await ref
+          .read(subscriptionControllerProvider.notifier)
+          .restorePurchases();
+      if (!mounted) return;
+      switch (result) {
+        case RestoreFlowResult.restored:
+          widget.onClose();
+        case RestoreFlowResult.empty:
+          _showSnack(l10n.paywallRestoreEmpty);
+        case RestoreFlowResult.failed:
+        case RestoreFlowResult.unavailable:
+          _showSnack(l10n.paywallRestoreFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _restoring = false);
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+      );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +155,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       const SizedBox(height: 8),
                       OnboardingCta(
                         label: l10n.paywallRestorePurchases,
-                        onPressed: () => _comingSoon(context),
+                        onPressed: _restoring ? () {} : _restore,
                       ),
                       const SizedBox(height: 4),
                       TextButton(

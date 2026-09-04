@@ -115,6 +115,10 @@
   "checkoutProcessedBy": "Pago procesado por la App Store o Google Play. {brand} no almacena los datos de tu tarjeta.",
   "checkoutSelectMethod": "SELECCIONA UN MÉTODO ARRIBA",
   "checkoutConfirm": "Confirmar suscripción",
+  "checkoutStoreHint": "LA TIENDA ABRE LA HOJA DE PAGO",
+  "paywallPurchaseFailed": "No se pudo completar la compra. Inténtalo de nuevo.",
+  "paywallRestoreEmpty": "No hay compras para restaurar en este dispositivo.",
+  "paywallRestoreFailed": "No se pudieron restaurar las compras. Inténtalo de nuevo.",
   "comingSoon": "Muy pronto",
   "galleryVideoCount": "{count, plural, =0{ningún video} =1{1 video} other{{count} videos}}"
 }

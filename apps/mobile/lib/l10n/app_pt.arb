@@ -553,6 +553,22 @@
   "@checkoutConfirm": {
     "description": "CTA final do checkout"
   },
+  "checkoutStoreHint": "A LOJA ABRE A FOLHA DE PAGAMENTO",
+  "@checkoutStoreHint": {
+    "description": "Hint do checkout: a folha nativa da loja (ou Test Store) cobra"
+  },
+  "paywallPurchaseFailed": "Não foi possível concluir a compra. Tente de novo.",
+  "@paywallPurchaseFailed": {
+    "description": "SnackBar de falha de compra (não inclui cancelamento)"
+  },
+  "paywallRestoreEmpty": "Nenhuma compra para restaurar neste aparelho.",
+  "@paywallRestoreEmpty": {
+    "description": "SnackBar de restore sem entitlement premium"
+  },
+  "paywallRestoreFailed": "Não foi possível restaurar as compras. Tente de novo.",
+  "@paywallRestoreFailed": {
+    "description": "SnackBar de falha de restore"
+  },
   "comingSoon": "Em breve",
   "@comingSoon": {
     "description": "SnackBar de recurso ainda não disponível"

@@ -2,23 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
+import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
+import 'package:raro_mobile/features/paywall/data/subscription_store.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
+import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
 import 'package:raro_mobile/features/paywall/presentation/paywall_screen.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 
+import '../../helpers/fake_billing_gateway.dart';
+
+class _MemorySubscriptionStore implements SubscriptionStore {
+  SubscriptionState stored = const SubscriptionState.initial();
+
+  @override
+  Future<SubscriptionState> load() async => stored;
+
+  @override
+  Future<void> save(SubscriptionState state) async {
+    stored = state;
+  }
+}
+
 void main() {
   PlanType? checkoutPlan;
+  var closed = false;
 
-  Widget app() {
+  Widget app({FakeBillingGateway? gateway}) {
     checkoutPlan = null;
+    closed = false;
     return ProviderScope(
+      overrides: [
+        billingGatewayProvider.overrideWithValue(
+          gateway ?? FakeBillingGateway(),
+        ),
+        subscriptionStoreProvider.overrideWithValue(_MemorySubscriptionStore()),
+      ],
       child: MaterialApp(
         locale: const Locale('pt', 'BR'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
         home: PaywallScreen(
-          onClose: () {},
+          onClose: () => closed = true,
           onCheckout: (plan) => checkoutPlan = plan,
         ),
       ),
@@ -75,5 +100,26 @@ void main() {
     await tester.pumpWidget(app());
     expect(find.text('Restaurar compras'), findsOneWidget);
     expect(find.text('Voltar'), findsOneWidget);
+  });
+
+  testWidgets('restore vazio mostra snackbar, não "Em breve"', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.tap(find.text('Restaurar compras'));
+    await tester.pump();
+    await tester.pump();
+    expect(
+      find.text('Nenhuma compra para restaurar neste aparelho.'),
+      findsOneWidget,
+    );
+    expect(find.text('Em breve'), findsNothing);
+    expect(closed, isFalse);
+  });
+
+  testWidgets('restore com premium fecha o paywall', (tester) async {
+    await tester.pumpWidget(app(gateway: FakeBillingGateway(premium: true)));
+    await tester.tap(find.text('Restaurar compras'));
+    await tester.pump();
+    await tester.pump();
+    expect(closed, isTrue);
   });
 }
