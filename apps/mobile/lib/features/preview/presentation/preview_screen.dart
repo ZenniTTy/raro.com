@@ -107,36 +107,41 @@ class _PreviewScreenState extends ConsumerState<PreviewScreen> {
 
   Future<void> _onShare(BuildContext buttonContext) async {
     if (_busy) return;
+    setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
-    final box = buttonContext.findRenderObject() as RenderBox?;
-    final origin = box == null
-        ? null
-        : box.localToGlobal(Offset.zero) & box.size;
-    final entitlement = await _lookupEntitlement();
-    if (!mounted) return;
-    switch (entitlement) {
-      case _EntitlementLookup.unavailable:
-        _showSnack(l10n.previewEntitlementUnavailable);
-        return;
-      case _EntitlementLookup.free:
-        widget.onNeedPremium?.call(PaywallIntent.share);
-        return;
-      case _EntitlementLookup.premium:
-        break;
-    }
-    final video = _resolveVideo();
-    final path = video?.filePath;
-    if (path == null || !File(path).existsSync()) {
-      _showSnack(l10n.previewShareFailed);
-      return;
-    }
     try {
-      await ref.read(shareGatewayProvider).shareFile(path, origin: origin);
-    } on Object catch (error) {
-      ref.read(appLoggerProvider).w('share failed error=$error');
-      if (mounted) {
-        _showSnack(l10n.previewShareFailed);
+      final box = buttonContext.findRenderObject() as RenderBox?;
+      final origin = box == null
+          ? null
+          : box.localToGlobal(Offset.zero) & box.size;
+      final entitlement = await _lookupEntitlement();
+      if (!mounted) return;
+      switch (entitlement) {
+        case _EntitlementLookup.unavailable:
+          _showSnack(l10n.previewEntitlementUnavailable);
+          return;
+        case _EntitlementLookup.free:
+          widget.onNeedPremium?.call(PaywallIntent.share);
+          return;
+        case _EntitlementLookup.premium:
+          break;
       }
+      final video = _resolveVideo();
+      final path = video?.filePath;
+      if (path == null || !File(path).existsSync()) {
+        _showSnack(l10n.previewShareFailed);
+        return;
+      }
+      try {
+        await ref.read(shareGatewayProvider).shareFile(path, origin: origin);
+      } on Object catch (error) {
+        ref.read(appLoggerProvider).w('share failed error=$error');
+        if (mounted) {
+          _showSnack(l10n.previewShareFailed);
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
