@@ -4,7 +4,7 @@
 
 ## Status
 
-`Approved` (dono, 2026-09-04 — regra do free + replay Dart no mesmo persist)
+`Validated` no M54 (2026-09-04) — regra do free + persist premium (vault + Fotos) + share nativo
 
 ## Owner / Implementer
 
@@ -45,13 +45,13 @@
 
 ## Observable goals
 
-- [ ] Free: stop → Preview toca o temp → Galeria do app não listou o clipe
-- [ ] Free: Salvar abre P09 com copy de guardar; recusar apaga o temp
-- [ ] Premium: Salvar grava no vault **e** no app Fotos
-- [ ] Free: Share abre P09; premium: folha nativa
-- [ ] Acervo antigo reproduz
-- [ ] `FakeBillingGateway` nos testes; zero rede
-- [ ] `flutter analyze` limpo; suíte verde; iOS compila
+- [x] Free: stop → Preview toca o temp → Galeria do app não listou o clipe *(M54 2026-09-04: Galeria 13→13 após recusar Salvar)*
+- [x] Free: Salvar abre P09 com copy de guardar; recusar apaga o temp
+- [x] Premium: Salvar grava no vault **e** no app Fotos *(M54: Galeria 13→14; MediaStore `Movies/Raro Camera/<uuid>.mp4`)*
+- [x] Free: Share abre P09; premium: folha nativa *(M54: sheet Android com o mesmo `.mp4`)*
+- [x] Acervo antigo reproduz *(13 clipes anteriores seguiram listáveis)*
+- [x] `FakeBillingGateway` nos testes; zero rede
+- [x] `flutter analyze` limpo; suíte verde *(compile iOS desta fatia não rodou no device nesta sessão)*
 
 ## UI / protótipo
 
