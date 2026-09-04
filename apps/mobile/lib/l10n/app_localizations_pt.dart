@@ -284,6 +284,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get previewShareFailed => 'Não foi possível compartilhar o vídeo.';
 
   @override
+  String get previewEntitlementUnavailable =>
+      'Não foi possível verificar sua assinatura. Tente de novo.';
+
+  @override
   String get previewVideoTitle => 'Vídeo';
 
   @override

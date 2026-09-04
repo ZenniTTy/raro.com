@@ -3,7 +3,9 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logger/logger.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/data/vault_service.dart';
@@ -92,5 +94,40 @@ void main() {
     expect(savedReplay.existsSync(), isFalse);
     expect(await VaultService(documentsDir: tempRoot).listAll(), isEmpty);
     verifyNever(() => repository.generateThumbnail(any()));
+  });
+
+  test('free discard of replay logs needsPremium', () async {
+    final memory = MemoryOutput();
+    final container = ProviderContainer(
+      overrides: [
+        replayEventsProvider.overrideWithValue(events.stream),
+        vaultServiceProvider.overrideWith(
+          (ref) async => VaultService(documentsDir: tempRoot),
+        ),
+        cameraRepositoryProvider.overrideWithValue(repository),
+        billingGatewayProvider.overrideWithValue(FakeBillingGateway()),
+        systemGalleryExporterProvider.overrideWithValue(
+          FakeSystemGalleryExporter(),
+        ),
+        appLoggerProvider.overrideWithValue(
+          Logger(printer: SimplePrinter(), output: memory, level: Level.info),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(replayVaultSinkProvider);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    events.add(ReplayResult.saved(path: savedReplay.path, durationMs: 15000));
+
+    for (var i = 0; i < 150; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      if (!savedReplay.existsSync()) break;
+    }
+    expect(savedReplay.existsSync(), isFalse);
+    final logged = memory.buffer
+        .expand((event) => event.lines)
+        .join('\n')
+        .toLowerCase();
+    expect(logged, contains('needspremium'));
   });
 }

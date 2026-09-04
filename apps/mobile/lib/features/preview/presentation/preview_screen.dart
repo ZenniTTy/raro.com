@@ -46,13 +46,21 @@ class _PreviewScreenState extends ConsumerState<PreviewScreen> {
     widget.onBack();
   }
 
-  Future<bool> _hasPremium() async {
+  Future<_EntitlementLookup> _lookupEntitlement() async {
     final billing = ref.read(billingGatewayProvider);
     try {
       await billing.ensureConfigured();
-      return (await billing.getCustomer()).hasPremium;
-    } on BillingException {
-      return false;
+      final premium = (await billing.getCustomer()).hasPremium;
+      return premium ? _EntitlementLookup.premium : _EntitlementLookup.free;
+    } on BillingException catch (error, stack) {
+      ref
+          .read(appLoggerProvider)
+          .e(
+            'billing unavailable while checking entitlement',
+            error: error,
+            stackTrace: stack,
+          );
+      return _EntitlementLookup.unavailable;
     }
   }
 
@@ -63,9 +71,17 @@ class _PreviewScreenState extends ConsumerState<PreviewScreen> {
     setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
     try {
-      if (!await _hasPremium()) {
-        widget.onNeedPremium?.call(PaywallIntent.save);
-        return;
+      final entitlement = await _lookupEntitlement();
+      if (!mounted) return;
+      switch (entitlement) {
+        case _EntitlementLookup.unavailable:
+          _showSnack(l10n.previewEntitlementUnavailable);
+          return;
+        case _EntitlementLookup.free:
+          widget.onNeedPremium?.call(PaywallIntent.save);
+          return;
+        case _EntitlementLookup.premium:
+          break;
       }
       final outcome = await (await persistRecordingFor(ref))(pending);
       if (!mounted) return;
@@ -91,11 +107,18 @@ class _PreviewScreenState extends ConsumerState<PreviewScreen> {
     final origin = box == null
         ? null
         : box.localToGlobal(Offset.zero) & box.size;
-    if (!await _hasPremium()) {
-      widget.onNeedPremium?.call(PaywallIntent.share);
-      return;
-    }
+    final entitlement = await _lookupEntitlement();
     if (!mounted) return;
+    switch (entitlement) {
+      case _EntitlementLookup.unavailable:
+        _showSnack(l10n.previewEntitlementUnavailable);
+        return;
+      case _EntitlementLookup.free:
+        widget.onNeedPremium?.call(PaywallIntent.share);
+        return;
+      case _EntitlementLookup.premium:
+        break;
+    }
     final video = _resolveVideo();
     final path = video?.filePath;
     if (path == null || !File(path).existsSync()) {
@@ -539,6 +562,8 @@ class _NotFound extends StatelessWidget {
     );
   }
 }
+
+enum _EntitlementLookup { premium, free, unavailable }
 
 void _comingSoon(BuildContext context) {
   ScaffoldMessenger.of(context)

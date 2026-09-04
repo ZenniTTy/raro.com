@@ -44,11 +44,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       switch (result) {
         case PurchaseFlowResult.success:
           if (widget.onPendingSaved != null) {
-            final savedId = await persistPendingFor(ref);
+            final result = await persistPendingFor(ref);
             if (!mounted) return;
-            if (savedId != null) {
-              widget.onPendingSaved!(savedId);
-              return;
+            switch (result) {
+              case PersistPendingSaved(:final id):
+                widget.onPendingSaved!(id);
+                return;
+              case PersistPendingFailed():
+              case PersistPendingNeedsPremium():
+                _showSnack(l10n.previewSaveFailed);
+                return;
+              case PersistPendingAbsent():
+                break;
             }
           }
           widget.onConfirmed();

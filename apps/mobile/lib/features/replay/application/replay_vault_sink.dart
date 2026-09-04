@@ -61,6 +61,7 @@ StreamSubscription<ReplayResult> replayVaultSink(Ref ref) {
     final outcome = await persist(clip);
     switch (outcome) {
       case PersistNeedsPremium():
+        logger.i('replay discarded needsPremium id=$id path=${event.path}');
         await _deleteTemp(File(event.path), logger);
       case PersistSucceeded():
         if (ref.mounted) ref.invalidate(videoListProvider);

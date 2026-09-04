@@ -80,6 +80,7 @@
   "previewSave": "Guardar",
   "previewSaveFailed": "No se pudo guardar el video. Inténtalo de nuevo.",
   "previewShareFailed": "No se pudo compartir el video.",
+  "previewEntitlementUnavailable": "No se pudo verificar tu suscripción. Inténtalo de nuevo.",
   "previewVideoTitle": "Video",
   "previewVideoNotFound": "Video no encontrado",
   "paywallTitle": "Elige tu plan",

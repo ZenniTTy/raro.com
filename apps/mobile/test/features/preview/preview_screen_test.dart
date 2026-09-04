@@ -161,4 +161,79 @@ void main() {
     await tester.pump();
     expect(intent, PaywallIntent.save);
   });
+
+  testWidgets('Salvar com billing indisponível não abre paywall', (
+    tester,
+  ) async {
+    PaywallIntent? intent;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          videoListProvider.overrideWith((ref) async => const <VideoEntity>[]),
+          pendingRecordingProvider.overrideWithValue(_pendingClip()),
+          billingGatewayProvider.overrideWithValue(
+            UnconfiguredBillingGateway(),
+          ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildRaroDarkTheme(),
+          home: PreviewScreen(
+            videoId: 'pend1',
+            onBack: () {},
+            onNeedPremium: (value) => intent = value,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('preview_save_button')));
+    await tester.pump();
+    await tester.pump();
+    expect(intent, isNull);
+    expect(
+      find.text('Não foi possível verificar sua assinatura. Tente de novo.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Share com billing indisponível não abre paywall', (
+    tester,
+  ) async {
+    PaywallIntent? intent;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          videoListProvider.overrideWith((ref) async => _fakeVideos()),
+          billingGatewayProvider.overrideWithValue(
+            UnconfiguredBillingGateway(),
+          ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildRaroDarkTheme(),
+          home: PreviewScreen(
+            videoId: 'abc',
+            onBack: () {},
+            onNeedPremium: (value) => intent = value,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('preview_share_button')));
+    await tester.pump();
+    await tester.pump();
+    expect(intent, isNull);
+    expect(
+      find.text('Não foi possível verificar sua assinatura. Tente de novo.'),
+      findsOneWidget,
+    );
+  });
 }

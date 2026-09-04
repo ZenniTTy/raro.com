@@ -365,6 +365,10 @@
   "@previewShareFailed": {
     "description": "Erro ao abrir a folha nativa de compartilhar"
   },
+  "previewEntitlementUnavailable": "Não foi possível verificar sua assinatura. Tente de novo.",
+  "@previewEntitlementUnavailable": {
+    "description": "Billing falhou ao checar premium no Salvar/Compartilhar; não abrir paywall"
+  },
   "previewVideoTitle": "Vídeo",
   "@previewVideoTitle": {
     "description": "Título fallback do header do preview"

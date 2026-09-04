@@ -47,8 +47,17 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       switch (result) {
         case RestoreFlowResult.restored:
           if (widget.intent == PaywallIntent.save) {
-            await persistPendingFor(ref);
+            final result = await persistPendingFor(ref);
             if (!mounted) return;
+            switch (result) {
+              case PersistPendingSaved():
+              case PersistPendingAbsent():
+                break;
+              case PersistPendingFailed():
+              case PersistPendingNeedsPremium():
+                _showSnack(l10n.previewSaveFailed);
+                return;
+            }
           }
           (widget.onUnlocked ?? widget.onClose)();
         case RestoreFlowResult.empty:

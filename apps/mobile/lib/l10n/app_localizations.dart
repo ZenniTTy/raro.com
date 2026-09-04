@@ -580,6 +580,12 @@ abstract class AppLocalizations {
   /// **'Não foi possível compartilhar o vídeo.'**
   String get previewShareFailed;
 
+  /// Billing falhou ao checar premium no Salvar/Compartilhar; não abrir paywall
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível verificar sua assinatura. Tente de novo.'**
+  String get previewEntitlementUnavailable;
+
   /// Título fallback do header do preview
   ///
   /// In pt, this message translates to:

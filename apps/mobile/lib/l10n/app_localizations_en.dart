@@ -282,6 +282,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get previewShareFailed => 'Couldn\'t share the video.';
 
   @override
+  String get previewEntitlementUnavailable =>
+      'Couldn\'t verify your subscription. Try again.';
+
+  @override
   String get previewVideoTitle => 'Video';
 
   @override
