@@ -1,20 +1,15 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:logger/logger.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/features/camera/application/camera_controller.dart';
 import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
-import 'package:raro_mobile/features/camera/data/camera_repository.dart';
-import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
-import 'package:raro_mobile/features/camera/data/vault_service.dart';
-import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
+import 'package:raro_mobile/features/camera/application/pending_recording_controller.dart';
 import 'package:raro_mobile/features/camera/domain/camera_state.dart';
 import 'package:raro_mobile/features/camera/domain/capture_format_snapshot.dart';
+import 'package:raro_mobile/features/camera/domain/pending_clip.dart';
 import 'package:raro_mobile/features/camera/domain/recording_metadata.dart';
-import 'package:raro_mobile/features/gallery/application/video_list_provider.dart';
 import 'package:raro_mobile/features/settings/application/settings_controller.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -72,9 +67,8 @@ Raw<Stream<RecordingResult>> recordingEvents(Ref ref) {
 @Riverpod(keepAlive: true)
 StreamSubscription<RecordingResult> recordingVaultSink(Ref ref) {
   final events = ref.watch(recordingEventsProvider);
-  final repository = ref.watch(cameraRepositoryProvider);
   final logger = ref.watch(appLoggerProvider);
-  final subscription = events.listen((event) async {
+  final subscription = events.listen((event) {
     if (event is RecordingFailed) {
       logger.e(
         'recording failed code=${event.code.name} message=${event.message}',
@@ -94,43 +88,29 @@ StreamSubscription<RecordingResult> recordingVaultSink(Ref ref) {
       shell: ref.read(cameraShellProvider),
       settings: settings,
     );
-    final vault = await ref.read(vaultServiceProvider.future);
-    final source = File(event.path);
     final id = _idFromPath(event.path);
     final recordedAt = DateTime.now();
-    final metadata = RecordingMetadata(
-      id: id,
-      name: _nameFor(recordedAt),
-      duration: Duration(milliseconds: event.durationMs),
-      recordedAt: recordedAt,
-      isReplay: false,
-      thumbnailHue: _hueFor(id),
-      resolutionLabel: snap.resolutionLabel,
-      fpsLabel: snap.fpsLabel,
-      lensLabel: snap.lensLabel,
-    );
-    final entity = await vault.save(source, metadata: metadata);
-    await _generateThumbnail(repository, logger, vault, id, entity.filePath);
-    if (ref.mounted) ref.invalidate(videoListProvider);
+    ref
+        .read(pendingRecordingProvider.notifier)
+        .replace(
+          PendingClip(
+            path: event.path,
+            metadata: RecordingMetadata(
+              id: id,
+              name: _nameFor(recordedAt),
+              duration: Duration(milliseconds: event.durationMs),
+              recordedAt: recordedAt,
+              isReplay: false,
+              thumbnailHue: _hueFor(id),
+              resolutionLabel: snap.resolutionLabel,
+              fpsLabel: snap.fpsLabel,
+              lensLabel: snap.lensLabel,
+            ),
+          ),
+        );
   });
   ref.onDispose(subscription.cancel);
   return subscription;
-}
-
-Future<void> _generateThumbnail(
-  CameraRepository repository,
-  Logger logger,
-  VaultService vault,
-  String id,
-  String? videoPath,
-) async {
-  if (videoPath == null) return;
-  try {
-    final thumbnailPath = await repository.generateThumbnail(videoPath);
-    await vault.attachThumbnail(id, thumbnailPath);
-  } on Object catch (error) {
-    logger.w('thumbnail generation failed id=$id error=$error');
-  }
 }
 
 String _idFromPath(String path) {

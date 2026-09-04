@@ -8,6 +8,7 @@ const _expectedFiles = {
   'pigeons/replay_buffer_api.dart': BridgeChannels.replayBuffer,
   'pigeons/voice_api.dart': BridgeChannels.voice,
   'pigeons/volume_api.dart': BridgeChannels.volume,
+  'pigeons/gallery_api.dart': BridgeChannels.gallery,
 };
 
 void main() {
@@ -49,6 +50,7 @@ void main() {
         BridgeChannels.replayBuffer,
         BridgeChannels.voice,
         BridgeChannels.volume,
+        BridgeChannels.gallery,
       ];
       for (final c in all) {
         expect(c, startsWith(prefix));

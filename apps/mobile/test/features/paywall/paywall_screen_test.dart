@@ -1,15 +1,28 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:raro_mobile/core/theme/raro_theme_data.dart';
+import 'package:raro_mobile/features/camera/application/pending_recording_controller.dart';
+import 'package:raro_mobile/features/camera/data/camera_repository.dart';
+import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
+import 'package:raro_mobile/features/camera/data/vault_service.dart';
+import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
+import 'package:raro_mobile/features/camera/domain/pending_clip.dart';
+import 'package:raro_mobile/features/camera/domain/recording_metadata.dart';
+import 'package:raro_mobile/features/gallery/data/system_gallery_exporter_provider.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/data/subscription_store.dart';
+import 'package:raro_mobile/features/paywall/domain/paywall_intent.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
 import 'package:raro_mobile/features/paywall/domain/subscription_state.dart';
 import 'package:raro_mobile/features/paywall/presentation/paywall_screen.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 
 import '../../helpers/fake_billing_gateway.dart';
+import '../../helpers/fake_system_gallery_exporter.dart';
 
 class _MemorySubscriptionStore implements SubscriptionStore {
   SubscriptionState stored = const SubscriptionState.initial();
@@ -122,4 +135,92 @@ void main() {
     await tester.pump();
     expect(closed, isTrue);
   });
+
+  testWidgets('intent save usa copy de guardar e menciona 30 dias', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          billingGatewayProvider.overrideWithValue(FakeBillingGateway()),
+          subscriptionStoreProvider.overrideWithValue(
+            _MemorySubscriptionStore(),
+          ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildRaroDarkTheme(),
+          home: PaywallScreen(
+            intent: PaywallIntent.save,
+            onClose: () {},
+            onCheckout: (_) {},
+          ),
+        ),
+      ),
+    );
+    expect(find.textContaining('guardar este vídeo'), findsOneWidget);
+    expect(find.textContaining('30 dias'), findsWidgets);
+  });
+
+  testWidgets('restore save com persist falho não trata como desbloqueio', (
+    tester,
+  ) async {
+    var unlocked = false;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          billingGatewayProvider.overrideWithValue(
+            EntitledThenUnavailableBillingGateway(),
+          ),
+          subscriptionStoreProvider.overrideWithValue(
+            _MemorySubscriptionStore(),
+          ),
+          pendingRecordingProvider.overrideWithValue(
+            PendingClip(
+              path: '/tmp/raro_missing_restore.mp4',
+              metadata: RecordingMetadata(
+                id: 'pend-restore',
+                name: 'Vídeo 09:41',
+                duration: const Duration(seconds: 5),
+                recordedAt: DateTime(2026, 9, 4, 9, 41),
+                isReplay: false,
+                thumbnailHue: 20,
+              ),
+            ),
+          ),
+          vaultServiceProvider.overrideWith(
+            (ref) => VaultService(documentsDir: Directory.systemTemp),
+          ),
+          systemGalleryExporterProvider.overrideWithValue(
+            FakeSystemGalleryExporter(),
+          ),
+          cameraRepositoryProvider.overrideWithValue(_MockCameraRepository()),
+        ],
+        child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildRaroDarkTheme(),
+          home: PaywallScreen(
+            intent: PaywallIntent.save,
+            onClose: () {},
+            onCheckout: (_) {},
+            onUnlocked: () => unlocked = true,
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Restaurar compras'));
+    await tester.pump();
+    await tester.pump();
+    expect(unlocked, isFalse);
+    expect(
+      find.text('Não foi possível guardar o vídeo. Tente de novo.'),
+      findsOneWidget,
+    );
+  });
 }
+
+class _MockCameraRepository extends Mock implements CameraRepository {}

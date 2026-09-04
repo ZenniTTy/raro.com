@@ -276,6 +276,20 @@ class AppLocalizationsEs extends AppLocalizations {
   String get previewShare => 'Compartir';
 
   @override
+  String get previewSave => 'Guardar';
+
+  @override
+  String get previewSaveFailed =>
+      'No se pudo guardar el video. Inténtalo de nuevo.';
+
+  @override
+  String get previewShareFailed => 'No se pudo compartir el video.';
+
+  @override
+  String get previewEntitlementUnavailable =>
+      'No se pudo verificar tu suscripción. Inténtalo de nuevo.';
+
+  @override
   String get previewVideoTitle => 'Video';
 
   @override
@@ -287,6 +301,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String paywallSubtitle(String brand, int days) {
     return 'Desbloquea todo el potencial de $brand. $days días gratis, cancela cuando quieras.';
+  }
+
+  @override
+  String paywallSubtitleSave(String brand, int days) {
+    return 'Suscríbete para guardar este video en la galería. $days días gratis en $brand, cancela cuando quieras.';
+  }
+
+  @override
+  String paywallSubtitleShare(String brand, int days) {
+    return 'Suscríbete para compartir este video. $days días gratis en $brand, cancela cuando quieras.';
   }
 
   @override

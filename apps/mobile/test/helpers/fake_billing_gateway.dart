@@ -41,6 +41,35 @@ class FakeBillingGateway implements BillingGateway {
   }
 }
 
+class EntitledThenUnavailableBillingGateway implements BillingGateway {
+  @override
+  bool get isConfigured => true;
+
+  @override
+  Future<void> ensureConfigured() async {}
+
+  @override
+  Future<BillingCustomer> getCustomer() async {
+    throw const BillingFailed('unavailable');
+  }
+
+  @override
+  Future<BillingCustomer> purchasePlan(String sku) async {
+    return const BillingCustomer(hasPremium: true);
+  }
+
+  @override
+  Future<BillingCustomer> restorePurchases() async {
+    return const BillingCustomer(hasPremium: true);
+  }
+
+  @override
+  void addCustomerUpdateListener(BillingCustomerListener listener) {}
+
+  @override
+  void removeCustomerUpdateListener(BillingCustomerListener listener) {}
+}
+
 class UnconfiguredBillingGateway implements BillingGateway {
   @override
   bool get isConfigured => false;

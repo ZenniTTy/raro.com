@@ -8,8 +8,13 @@ import 'package:raro_mobile/features/camera/data/camera_repository.dart';
 import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
 import 'package:raro_mobile/features/camera/data/vault_service.dart';
 import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
+import 'package:raro_mobile/features/gallery/data/system_gallery_exporter_provider.dart';
+import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/replay/application/replay_flutter_api_provider.dart';
 import 'package:raro_mobile/features/replay/application/replay_vault_sink.dart';
+
+import '../../helpers/fake_billing_gateway.dart';
+import '../../helpers/fake_system_gallery_exporter.dart';
 
 class _MockCameraRepository extends Mock implements CameraRepository {}
 
@@ -43,6 +48,12 @@ void main() {
               (ref) async => VaultService(documentsDir: tempRoot),
             ),
             cameraRepositoryProvider.overrideWithValue(repository),
+            billingGatewayProvider.overrideWithValue(
+              FakeBillingGateway(premium: true),
+            ),
+            systemGalleryExporterProvider.overrideWithValue(
+              FakeSystemGalleryExporter(),
+            ),
           ],
         );
         container.read(replayVaultSinkProvider);

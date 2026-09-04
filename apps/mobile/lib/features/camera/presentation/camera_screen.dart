@@ -13,6 +13,7 @@ import 'package:raro_mobile/core/theme/raro_theme.dart';
 import 'package:raro_mobile/features/camera/application/camera_controller.dart';
 import 'package:raro_mobile/features/camera/application/camera_flutter_api_provider.dart';
 import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
+import 'package:raro_mobile/features/camera/application/pending_recording_controller.dart';
 import 'package:raro_mobile/features/camera/application/recording_controller.dart';
 import 'package:raro_mobile/features/camera/domain/camera_settings.dart';
 import 'package:raro_mobile/features/camera/domain/camera_state.dart';
@@ -47,11 +48,13 @@ class CameraScreen extends ConsumerStatefulWidget {
     required this.onGallery,
     required this.onSettings,
     required this.onSeePlans,
+    this.onPreview,
   });
 
   final VoidCallback onGallery;
   final VoidCallback onSettings;
   final VoidCallback onSeePlans;
+  final ValueChanged<String>? onPreview;
 
   @override
   ConsumerState<CameraScreen> createState() => _CameraScreenState();
@@ -273,10 +276,17 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       if (next is RecordingIdle) {
         _stopElapsedTimer();
         if (prev is RecordingActive && _recordingHadPreroll) {
-          _showPrerollConfirmation();
+          if (widget.onPreview == null) {
+            _showPrerollConfirmation();
+          }
           _recordingHadPreroll = false;
         }
       }
+    });
+
+    ref.listen(pendingRecordingProvider, (prev, next) {
+      if (next == null || prev?.id == next.id) return;
+      widget.onPreview?.call(next.id);
     });
 
     ref.listen(settingsControllerProvider, (prev, next) {

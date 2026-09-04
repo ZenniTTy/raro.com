@@ -14,9 +14,9 @@
 - [ ] App testado em ≥ 1 device Xiaomi/MIUI real — testado no **Galaxy M54** (não-Xiaomi); modal M02 ausente
 - [x] i18n completa em pt-BR / en / es — **117 chaves traduzíveis em cada um dos 3 `.arb`**, com teste-guarda `forbidden_ui_literals_test.dart`
 - [ ] Free trial 30 dias funcional via RevenueCat — **RevenueCat não integrado**: `purchases_flutter` no pubspec com zero imports
-- [ ] Salvar vídeo na galeria exige entitlement `premium` (**regra confirmada pelo dono, 2026-09-02**) — **falta tudo**: (a) `camera_flutter_api_provider.dart:93` salva incondicionalmente, sem checar assinatura; (b) **não existe exportação para a galeria do sistema** — sem `MediaStore`/`PHPhotoLibrary` no repo, o vídeo só vai para o vault privado (`vault_service.dart:12`), que é o que a tela "Galeria" do app lista
+- [x] Salvar vídeo na galeria exige entitlement `premium` (**regra confirmada pelo dono, 2026-09-04**) — PR #13: free grava e vê no Preview; Salvar (vault + Fotos) e Share exigem `premium`. Provado no M54: recusar Salvar mantém o acervo; premium persiste no vault e em `Movies/Raro Camera/` + folha nativa de share. Export iOS (`PHPhotoLibrary` add-only) no código; compile iOS desta fatia não rodou no device nesta sessão.
 - [ ] Restore purchases funcional — `paywall_screen.dart:123` é `_comingSoon`. **Bloqueador de review da Apple**
-- [ ] Share e Delete reais — 4 das 5 ações do Preview são snackbar; `vault_service.delete` existe sem caller
+- [ ] Share e Delete reais — Share (4.1) existe e está gated no premium (PR #13, M54). Delete (4.2) segue `_comingSoon`; `vault_service.delete` existe sem caller
 
 ## Técnico
 

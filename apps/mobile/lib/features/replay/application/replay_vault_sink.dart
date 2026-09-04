@@ -5,12 +5,11 @@ import 'package:logger/logger.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/features/camera/application/camera_controller.dart';
 import 'package:raro_mobile/features/camera/application/camera_shell_provider.dart';
-import 'package:raro_mobile/features/camera/data/camera_repository.dart';
-import 'package:raro_mobile/features/camera/data/camera_repository_provider.dart';
-import 'package:raro_mobile/features/camera/data/vault_service.dart';
-import 'package:raro_mobile/features/camera/data/vault_service_provider.dart';
+import 'package:raro_mobile/features/camera/application/persist_outcome.dart';
+import 'package:raro_mobile/features/camera/application/persist_recording_scope.dart';
 import 'package:raro_mobile/features/camera/domain/camera_state.dart';
 import 'package:raro_mobile/features/camera/domain/capture_format_snapshot.dart';
+import 'package:raro_mobile/features/camera/domain/pending_clip.dart';
 import 'package:raro_mobile/features/camera/domain/recording_metadata.dart';
 import 'package:raro_mobile/features/gallery/application/video_list_provider.dart';
 import 'package:raro_mobile/features/replay/application/replay_flutter_api_provider.dart';
@@ -23,7 +22,6 @@ part 'replay_vault_sink.g.dart';
 @Riverpod(keepAlive: true)
 StreamSubscription<ReplayResult> replayVaultSink(Ref ref) {
   final events = ref.watch(replayEventsProvider);
-  final repository = ref.watch(cameraRepositoryProvider);
   final logger = ref.watch(appLoggerProvider);
   final subscription = events.listen((event) async {
     if (event is ReplayFailedResult) {
@@ -43,42 +41,45 @@ StreamSubscription<ReplayResult> replayVaultSink(Ref ref) {
       shell: ref.read(cameraShellProvider),
       settings: settings,
     );
-    final vault = await ref.read(vaultServiceProvider.future);
-    final source = File(event.path);
     final id = _idFromPath(event.path);
     final recordedAt = DateTime.now();
-    final metadata = RecordingMetadata(
-      id: id,
-      name: _nameFor(recordedAt),
-      duration: Duration(milliseconds: event.durationMs),
-      recordedAt: recordedAt,
-      isReplay: true,
-      thumbnailHue: _hueFor(id),
-      resolutionLabel: snap.resolutionLabel,
-      fpsLabel: snap.fpsLabel,
-      lensLabel: snap.lensLabel,
+    final clip = PendingClip(
+      path: event.path,
+      metadata: RecordingMetadata(
+        id: id,
+        name: _nameFor(recordedAt),
+        duration: Duration(milliseconds: event.durationMs),
+        recordedAt: recordedAt,
+        isReplay: true,
+        thumbnailHue: _hueFor(id),
+        resolutionLabel: snap.resolutionLabel,
+        fpsLabel: snap.fpsLabel,
+        lensLabel: snap.lensLabel,
+      ),
     );
-    final entity = await vault.save(source, metadata: metadata);
-    await _generateThumbnail(repository, logger, vault, id, entity.filePath);
-    if (ref.mounted) ref.invalidate(videoListProvider);
+    final persist = await persistRecordingForRef(ref);
+    final outcome = await persist(clip);
+    switch (outcome) {
+      case PersistNeedsPremium():
+        logger.i('replay discarded needsPremium id=$id path=${event.path}');
+        await _deleteTemp(File(event.path), logger);
+      case PersistSucceeded():
+        if (ref.mounted) ref.invalidate(videoListProvider);
+      case PersistFailed():
+        break;
+    }
   });
   ref.onDispose(subscription.cancel);
   return subscription;
 }
 
-Future<void> _generateThumbnail(
-  CameraRepository repository,
-  Logger logger,
-  VaultService vault,
-  String id,
-  String? videoPath,
-) async {
-  if (videoPath == null) return;
+Future<void> _deleteTemp(File source, Logger logger) async {
   try {
-    final thumbnailPath = await repository.generateThumbnail(videoPath);
-    await vault.attachThumbnail(id, thumbnailPath);
+    if (await source.exists()) {
+      await source.delete();
+    }
   } on Object catch (error) {
-    logger.w('replay thumbnail generation failed id=$id error=$error');
+    logger.w('replay temp discard failed path=${source.path} error=$error');
   }
 }
 

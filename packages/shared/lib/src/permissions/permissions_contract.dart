@@ -28,10 +28,17 @@ abstract final class PermissionsContract {
       en: 'Raro Camera uses on-device speech recognition to detect "Raro".',
       es: 'Raro Camera usa reconocimiento de voz en el dispositivo para detectar "Raro".',
     ),
+    'NSPhotoLibraryAddUsageDescription': PermissionMessage(
+      ptBr:
+          'A Raro Camera salva os vídeos na galeria do celular quando você escolhe guardar.',
+      en: 'Raro Camera saves videos to your photo library when you choose to keep them.',
+      es: 'Raro Camera guarda los videos en la galería cuando eliges conservarlos.',
+    ),
   };
 
   static const List<String> android = [
     'android.permission.CAMERA',
     'android.permission.RECORD_AUDIO',
+    'android.permission.WRITE_EXTERNAL_STORAGE',
   ];
 }
