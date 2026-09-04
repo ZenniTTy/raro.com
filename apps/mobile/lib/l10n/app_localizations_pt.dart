@@ -406,6 +406,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get checkoutConfirm => 'Confirmar assinatura';
 
   @override
+  String get checkoutStoreHint => 'A LOJA ABRE A FOLHA DE PAGAMENTO';
+
+  @override
+  String get paywallPurchaseFailed =>
+      'Não foi possível concluir a compra. Tente de novo.';
+
+  @override
+  String get paywallRestoreEmpty =>
+      'Nenhuma compra para restaurar neste aparelho.';
+
+  @override
+  String get paywallRestoreFailed =>
+      'Não foi possível restaurar as compras. Tente de novo.';
+
+  @override
   String get comingSoon => 'Em breve';
 
   @override

@@ -405,6 +405,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutConfirm => 'Confirm subscription';
 
   @override
+  String get checkoutStoreHint => 'THE STORE OPENS THE PAYMENT SHEET';
+
+  @override
+  String get paywallPurchaseFailed =>
+      'Couldn\'t complete the purchase. Try again.';
+
+  @override
+  String get paywallRestoreEmpty => 'No purchases to restore on this device.';
+
+  @override
+  String get paywallRestoreFailed => 'Couldn\'t restore purchases. Try again.';
+
+  @override
   String get comingSoon => 'Coming soon';
 
   @override

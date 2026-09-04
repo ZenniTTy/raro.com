@@ -790,6 +790,30 @@ abstract class AppLocalizations {
   /// **'Confirmar assinatura'**
   String get checkoutConfirm;
 
+  /// Hint do checkout: a folha nativa da loja (ou Test Store) cobra
+  ///
+  /// In pt, this message translates to:
+  /// **'A LOJA ABRE A FOLHA DE PAGAMENTO'**
+  String get checkoutStoreHint;
+
+  /// SnackBar de falha de compra (não inclui cancelamento)
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível concluir a compra. Tente de novo.'**
+  String get paywallPurchaseFailed;
+
+  /// SnackBar de restore sem entitlement premium
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma compra para restaurar neste aparelho.'**
+  String get paywallRestoreEmpty;
+
+  /// SnackBar de falha de restore
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível restaurar as compras. Tente de novo.'**
+  String get paywallRestoreFailed;
+
   /// SnackBar de recurso ainda não disponível
   ///
   /// In pt, this message translates to:

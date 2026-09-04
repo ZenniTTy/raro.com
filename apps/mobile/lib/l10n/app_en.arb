@@ -115,6 +115,10 @@
   "checkoutProcessedBy": "Payment processed by the App Store or Google Play. {brand} never stores your card details.",
   "checkoutSelectMethod": "SELECT A METHOD ABOVE",
   "checkoutConfirm": "Confirm subscription",
+  "checkoutStoreHint": "THE STORE OPENS THE PAYMENT SHEET",
+  "paywallPurchaseFailed": "Couldn't complete the purchase. Try again.",
+  "paywallRestoreEmpty": "No purchases to restore on this device.",
+  "paywallRestoreFailed": "Couldn't restore purchases. Try again.",
   "comingSoon": "Coming soon",
   "galleryVideoCount": "{count, plural, =0{no videos} =1{1 video} other{{count} videos}}"
 }

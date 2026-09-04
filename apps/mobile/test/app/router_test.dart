@@ -31,6 +31,8 @@ import 'package:raro_mobile/features/voice/data/voice_repository.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository_provider.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 
+import '../helpers/fake_billing_gateway.dart';
+
 class _MockPermissionGateway extends Mock implements PermissionGateway {}
 
 class _MockCameraRepository extends Mock implements CameraRepository {}
@@ -140,6 +142,7 @@ void main() {
         permissionGatewayProvider.overrideWithValue(gateway),
         settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
         subscriptionStoreProvider.overrideWithValue(subscriptionStore),
+        billingGatewayProvider.overrideWithValue(FakeBillingGateway()),
         onboardingStoreProvider.overrideWithValue(onboardingStore),
         cameraRepositoryProvider.overrideWithValue(cameraRepository),
         voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
@@ -311,8 +314,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Finalizar assinatura'), findsOneWidget);
 
-      await tester.tap(find.text('Apple Pay'));
-      await tester.pump();
       await tester.tap(find.text('Confirmar assinatura'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));

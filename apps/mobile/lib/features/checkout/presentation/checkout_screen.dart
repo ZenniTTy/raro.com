@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:raro_mobile/core/subscription/billing_gateway.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
 import 'package:raro_mobile/core/theme/raro_gradients.dart';
 import 'package:raro_mobile/core/theme/raro_theme.dart';
-import 'package:raro_mobile/features/checkout/domain/payment_method.dart';
 import 'package:raro_mobile/features/onboarding/presentation/widgets/onboarding_cta.dart';
 import 'package:raro_mobile/features/paywall/application/subscription_controller.dart';
 import 'package:raro_mobile/features/paywall/domain/plan_type.dart';
@@ -27,15 +27,37 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 }
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
-  PaymentMethod? _method;
+  bool _busy = false;
 
   Future<void> _confirm() async {
-    if (_method == null) return;
-    await ref
-        .read(subscriptionControllerProvider.notifier)
-        .subscribe(now: DateTime.now());
-    if (!mounted) return;
-    widget.onConfirmed();
+    if (_busy) return;
+    setState(() => _busy = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final result = await ref
+          .read(subscriptionControllerProvider.notifier)
+          .subscribe(plan: widget.plan, now: DateTime.now());
+      if (!mounted) return;
+      switch (result) {
+        case PurchaseFlowResult.success:
+          widget.onConfirmed();
+        case PurchaseFlowResult.cancelled:
+          break;
+        case PurchaseFlowResult.failed:
+        case PurchaseFlowResult.unavailable:
+          _showSnack(l10n.paywallPurchaseFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+      );
   }
 
   @override
@@ -61,23 +83,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   children: [
                     _OrderSummary(plan: widget.plan, period: period),
                     const SizedBox(height: 24),
-                    _SectionLabel(text: l10n.checkoutPaymentMethod),
-                    const SizedBox(height: 10),
-                    for (final m in PaymentMethod.values) ...[
-                      _PayTile(
-                        method: m,
-                        selected: _method == m,
-                        onTap: () => setState(() => _method = m),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                    const SizedBox(height: 8),
                     const _SecurityNote(),
                   ],
                 ),
               ),
             ),
-            _BottomBar(method: _method, onConfirm: _confirm),
+            _BottomBar(busy: _busy, onConfirm: _confirm),
           ],
         ),
       ),
@@ -238,107 +249,6 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-class _PayTile extends StatelessWidget {
-  const _PayTile({
-    required this.method,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final PaymentMethod method;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<RaroColors>()!;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: selected ? RaroAccents.selectedSurface : colors.bgElev,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? Colors.white : colors.borderBright,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: colors.bgDeep,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: colors.border),
-              ),
-              child: method == PaymentMethod.apple
-                  ? Icon(Icons.apple, size: 22, color: colors.ink)
-                  : const SizedBox(
-                      width: 18,
-                      height: 20,
-                      child: CustomPaint(painter: _GooglePlayPainter()),
-                    ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    method.label,
-                    style: const TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(switch (method) {
-                    PaymentMethod.apple => AppLocalizations.of(
-                      context,
-                    ).checkoutAppleSubtitle,
-                    PaymentMethod.google => AppLocalizations.of(
-                      context,
-                    ).checkoutGoogleSubtitle,
-                  }, style: TextStyle(fontSize: 11, color: colors.inkDim)),
-                ],
-              ),
-            ),
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: selected ? RaroGradients.redRadial : null,
-                border: Border.all(
-                  color: selected ? Colors.white : colors.borderBright,
-                ),
-              ),
-              child: selected
-                  ? const Center(
-                      child: SizedBox(
-                        width: 8,
-                        height: 8,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    )
-                  : null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _SecurityNote extends StatelessWidget {
   const _SecurityNote();
 
@@ -366,32 +276,22 @@ class _SecurityNote extends StatelessWidget {
 }
 
 class _BottomBar extends StatelessWidget {
-  const _BottomBar({required this.method, required this.onConfirm});
+  const _BottomBar({required this.busy, required this.onConfirm});
 
-  final PaymentMethod? method;
+  final bool busy;
   final VoidCallback onConfirm;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<RaroColors>()!;
-    final enabled = method != null;
-    final hint = switch (method) {
-      PaymentMethod.apple => AppLocalizations.of(
-        context,
-      ).checkoutAppleConfirmHint,
-      PaymentMethod.google => AppLocalizations.of(
-        context,
-      ).checkoutGoogleConfirmHint,
-      null => AppLocalizations.of(context).checkoutSelectMethod,
-    };
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Column(
         children: [
           Opacity(
-            opacity: enabled ? 1 : 0.5,
+            opacity: busy ? 0.5 : 1,
             child: IgnorePointer(
-              ignoring: !enabled,
+              ignoring: busy,
               child: OnboardingCta(
                 label: AppLocalizations.of(context).checkoutConfirm,
                 primary: true,
@@ -401,7 +301,7 @@ class _BottomBar extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            hint,
+            AppLocalizations.of(context).checkoutStoreHint,
             style: TextStyle(
               fontFamily: RaroFonts.mono,
               fontSize: 10,
@@ -448,46 +348,4 @@ class _GradLine extends StatelessWidget {
       decoration: const BoxDecoration(gradient: RaroGradients.rainbow),
     );
   }
-}
-
-class _GooglePlayPainter extends CustomPainter {
-  const _GooglePlayPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final mid = Offset(w * 0.62, h / 2);
-    const topLeft = Offset.zero;
-    final bottomLeft = Offset(0, h);
-    final tip = Offset(w, h / 2);
-
-    void tri(List<Offset> pts, List<Color> colors) {
-      final path = Path()..addPolygon(pts, true);
-      final rect = path.getBounds();
-      final paint = Paint()
-        ..shader = LinearGradient(colors: colors).createShader(rect);
-      canvas.drawPath(path, paint);
-    }
-
-    tri(
-      [topLeft, mid, Offset(w * 0.5, 0)],
-      const [RaroAccents.green, RaroAccents.teal],
-    );
-    tri(
-      [bottomLeft, mid, Offset(w * 0.5, h)],
-      const [RaroAccents.blue, RaroAccents.purple],
-    );
-    tri(
-      [Offset(w * 0.5, 0), mid, tip],
-      const [RaroAccents.yellow, RaroAccents.orange],
-    );
-    tri(
-      [Offset(w * 0.5, h), mid, tip],
-      const [RaroAccents.red, RaroAccents.red],
-    );
-  }
-
-  @override
-  bool shouldRepaint(_GooglePlayPainter oldDelegate) => false;
 }
