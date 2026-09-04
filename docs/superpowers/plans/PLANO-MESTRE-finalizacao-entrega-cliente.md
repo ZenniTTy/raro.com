@@ -89,7 +89,7 @@
 ### BLOCO 4 — Acabamentos de produto
 - [x] **4.0** Fechar a árvore suja de Poppins (sessão 0041): emojis como glifo; `'RARO CAM'` no allowlist; Medium 500 removido; suíte 355/355; `5a35be4` pushado.
 - [x] **4.1** *(PR #13, provado no M54 2026-09-04)* Share real com `share_plus` (`SharePlus.instance.share(ShareParams)`); free abre P09, premium abre a folha nativa.
-- [ ] **4.2** Delete real: `vault_service.dart:68-75` existe sem caller. **Item mais barato do plano** (diálogo de confirmação + chamada).
+- [x] **4.2** *(provado no M54 2026-09-04)* Delete real no Preview: diálogo de confirmação (copy deixa claro que é só do vault, não do rolo do sistema) → `vault.delete(id)` (`.mp4`+`.json`+`.jpg`) → invalida `videoListProvider` → volta à Galeria. Info abre painel com sidecar (nome, duração, data, resolução, fps, lente, tamanho via `File.lengthSync()`, replay). Delete na Galeria (P07) ficou de fora de propósito.
 - [ ] **4.3** Telas faltando: P05a Lock mode, P11 Terms, **P12 Privacy (obrigatória p/ loja)**.
 - [ ] **4.4** Modais faltando: M02 Xiaomi, M03 Bluetooth.
 - [ ] **4.5** **Volume como gatilho — IMPLEMENTAR** nas 2 plataformas (decisão do dono 2026-09-02). Hoje o Settings deixa selecionar e persistir o modo sem nenhum handler nativo. Falta: `VolumeHostApiImpl` no Android (`onKeyDown` + `KEYCODE_VOLUME_*`) **e** no iOS (KVO de volume com `AVAudioSession` ambient + restore + `removeObserver` no deinit — memória `raro-pattern-ios-volume-button-kvo-app-store-review`), **e ampliar o contrato Pigeon** `volume_api.dart`, que hoje só tem `volumePing()`/`volumeReady()` e não carrega evento de tecla. Mudança de contrato Pigeon → o hook `warn-adr-drift` vai pedir ADR.
@@ -99,7 +99,7 @@
 > **Objetivo:** remover o que não é mais usado, para o cliente não receber (nem o agente tropeçar em) lixo. **Read-only primeiro: listar e propor, deletar só com aval.**
 - [ ] **F.1** **Docs desatualizados/órfãos**: rodar `/docs-lint`. Alvos já conhecidos: `docs/sessions/NEXT-SESSION-PROMPT-voice-openwakeword.md` (marcado 🛑 OBSOLETO no próprio corpo), `NEXT-SESSION-PROMPT-bloco-0-destravar.md` e `NEXT-SESSION-PROMPT-bloco-1-firebase.md` (blocos 0 e 1 fechados). Decidir: apagar ou mover para `docs/archive/`.
 - [ ] **F.2** **Sprints superados**: `sprint-2-backend-logic-ios.md` e `sprint-3-android-parity-testflight-client.md` foram reindexados pelo PLANO-MESTRE — marcar como históricos no topo ou arquivar, para não competirem como "roadmap".
-- [ ] **F.3** **Código morto**: `vault_service.delete` sem caller (vai ganhar caller no 4.2); scaffold ONNX dormente (`WakeWordDetector`/`WakeWordPipeline`/`OnnxModelSession` + 3 `.onnx` ≈2,4MB) — **manter dormente ou remover de vez?** Com a decisão 1 (background já resolvido no Android via Vosk) o argumento "guardar caso a Sensory entre" enfraquece. Remover exige cirurgia no `project.pbxproj`; decidir antes do build de release, onde os MB contam.
+- [ ] **F.3** **Código morto**: `vault_service.delete` **ganhou caller no 4.2**. Resta: scaffold ONNX dormente (`WakeWordDetector`/`WakeWordPipeline`/`OnnxModelSession` + 3 `.onnx` ≈2,4MB) — **manter dormente ou remover de vez?** Com a decisão 1 (background já resolvido no Android via Vosk) o argumento "guardar caso a Sensory entre" enfraquece. Remover exige cirurgia no `project.pbxproj`; decidir antes do build de release, onde os MB contam.
 - [ ] **F.4** **Testes**: procurar testes redundantes/desligados (`skip:`) e goldens órfãos sem widget correspondente.
 - [x] **F.5** **Dependências declaradas e não usadas**: `purchases_flutter` (PR #12) e `share_plus` (PR #13) passaram a ser usadas.
 - [~] **F.6** **Assets**: recorte Poppins feito na 0041 (Medium 500 removido; 400/600/700 usados). Resto (fonte/imagem órfã fora do paywall) ainda aberto.
@@ -127,7 +127,7 @@
 
 **O que impede faturar:** Bloco 2 inteiro — e note que a regra de premium do dono ("só salva na galeria se for premium") depende do **2.3a**, que é feature nova, não só um `if`.
 **O que impede publicar:** 5.1, 5.2, 5.4 (contas/keystore) + 4.3 (privacidade) + **5.6b (16 KB / Play)**.
-**Bugs a corrigir (classificação do dono):** replay no Android (3.2) e modo Volume (4.5) — ambos aprovados para implementação, não para serem escondidos. Some-se os 4 botões do Preview (4.1/4.2).
+**Bugs a corrigir (classificação do dono):** modo Volume (4.5) — aprovado para implementação, não para ser escondido. Os 4 botões do Preview (Salvar/Share 4.1, Delete/Info 4.2) estão reais.
 
 ---
 

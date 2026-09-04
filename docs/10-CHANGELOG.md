@@ -2,6 +2,19 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-09-04] — Preview: delete real + detalhes do clipe (sessão 0044)
+
+### Adicionado
+- **Delete no Preview (P08):** diálogo de confirmação; `vault.delete` remove `.mp4`+`.json`+`.jpg`; a lista da Galeria atualiza; volta à P07. Copy deixa explícito que uma cópia já exportada para Fotos **permanece**.
+- **Painel Info:** bottom sheet com sidecar (nome, duração, data/hora, resolução, fps, lente, tamanho do arquivo, replay). Sem campo inventado.
+
+### Corrigido
+- **iOS compile (latente da PR #13):** `GalleryHostApiImpl` agora chama `self.finish` nas closures de `PHPhotoLibrary`.
+- **`VaultService.delete` permanece async** (`await File.delete`). Widget tests fingem o vault; o unitário prova os 3 arquivos.
+
+### Verificado
+- Dono no Galaxy M54: “deletou certinho.” `flutter analyze` limpo; suíte **417/417**; `flutter build ios --debug --no-codesign` → `Runner.app`.
+
 ## [2026-09-02] — Fatia 5 replay buffer Android (sessão 0043)
 
 ### Adicionado

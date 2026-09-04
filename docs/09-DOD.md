@@ -16,7 +16,7 @@
 - [ ] Free trial 30 dias funcional via RevenueCat — **RevenueCat não integrado**: `purchases_flutter` no pubspec com zero imports
 - [x] Salvar vídeo na galeria exige entitlement `premium` (**regra confirmada pelo dono, 2026-09-04**) — PR #13: free grava e vê no Preview; Salvar (vault + Fotos) e Share exigem `premium`. Provado no M54: recusar Salvar mantém o acervo; premium persiste no vault e em `Movies/Raro Camera/` + folha nativa de share. Export iOS (`PHPhotoLibrary` add-only) no código; compile iOS desta fatia não rodou no device nesta sessão.
 - [ ] Restore purchases funcional — `paywall_screen.dart:123` é `_comingSoon`. **Bloqueador de review da Apple**
-- [ ] Share e Delete reais — Share (4.1) existe e está gated no premium (PR #13, M54). Delete (4.2) segue `_comingSoon`; `vault_service.delete` existe sem caller
+- [x] Share e Delete reais — Share (4.1, PR #13) gated no premium, provado no M54. Delete (4.2) no Preview: confirmação → `vault.delete` (só o sandbox; cópia no Fotos permanece); Info com sidecar. Dono confirmou delete no M54 (2026-09-04). Delete na Galeria P07 fora de escopo.
 
 ## Técnico
 
