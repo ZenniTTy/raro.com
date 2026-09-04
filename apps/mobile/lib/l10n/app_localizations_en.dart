@@ -292,6 +292,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get previewVideoNotFound => 'Video not found';
 
   @override
+  String get previewDeleteTitle => 'Delete this video?';
+
+  @override
+  String get previewDeleteBody =>
+      'This removes the video from RARO only. A copy already saved to your phone\'s Photos app stays.';
+
+  @override
+  String get previewDeleteConfirm => 'Delete';
+
+  @override
+  String get previewDeleteCancel => 'Cancel';
+
+  @override
+  String get previewDeleteFailed => 'Couldn\'t delete the video. Try again.';
+
+  @override
+  String get previewDetailsTitle => 'Details';
+
+  @override
+  String get previewDetailsName => 'Name';
+
+  @override
+  String get previewDetailsDuration => 'Duration';
+
+  @override
+  String get previewDetailsRecordedAt => 'Date';
+
+  @override
+  String get previewDetailsResolution => 'Resolution';
+
+  @override
+  String get previewDetailsFps => 'FPS';
+
+  @override
+  String get previewDetailsLens => 'Lens';
+
+  @override
+  String get previewDetailsSize => 'Size';
+
+  @override
+  String get previewDetailsReplay => 'Replay';
+
+  @override
+  String get previewDetailsReplayYes => 'Yes';
+
+  @override
+  String get previewDetailsReplayNo => 'No';
+
+  @override
+  String get previewDetailsUnavailable => '—';
+
+  @override
   String get paywallTitle => 'Choose your plan';
 
   @override

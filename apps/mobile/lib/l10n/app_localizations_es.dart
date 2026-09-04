@@ -296,6 +296,59 @@ class AppLocalizationsEs extends AppLocalizations {
   String get previewVideoNotFound => 'Video no encontrado';
 
   @override
+  String get previewDeleteTitle => '¿Borrar este video?';
+
+  @override
+  String get previewDeleteBody =>
+      'El video se quita solo de RARO. Una copia ya guardada en la app de Fotos del celular permanece.';
+
+  @override
+  String get previewDeleteConfirm => 'Borrar';
+
+  @override
+  String get previewDeleteCancel => 'Cancelar';
+
+  @override
+  String get previewDeleteFailed =>
+      'No se pudo borrar el video. Inténtalo de nuevo.';
+
+  @override
+  String get previewDetailsTitle => 'Detalles';
+
+  @override
+  String get previewDetailsName => 'Nombre';
+
+  @override
+  String get previewDetailsDuration => 'Duración';
+
+  @override
+  String get previewDetailsRecordedAt => 'Fecha';
+
+  @override
+  String get previewDetailsResolution => 'Resolución';
+
+  @override
+  String get previewDetailsFps => 'FPS';
+
+  @override
+  String get previewDetailsLens => 'Lente';
+
+  @override
+  String get previewDetailsSize => 'Tamaño';
+
+  @override
+  String get previewDetailsReplay => 'Replay';
+
+  @override
+  String get previewDetailsReplayYes => 'Sí';
+
+  @override
+  String get previewDetailsReplayNo => 'No';
+
+  @override
+  String get previewDetailsUnavailable => '—';
+
+  @override
   String get paywallTitle => 'Elige tu plan';
 
   @override
