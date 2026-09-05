@@ -28,6 +28,8 @@ import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:raro_mobile/features/voice/application/voice_flutter_api_provider.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository_provider.dart';
+import 'package:raro_mobile/features/volume/data/volume_repository.dart';
+import 'package:raro_mobile/features/volume/data/volume_repository_provider.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart' show BufferDuration;
 
@@ -64,6 +66,17 @@ class _MockCameraRepository extends Mock implements CameraRepository {}
 class _MockReplayRepository extends Mock implements ReplayBufferRepository {}
 
 class _StubVoiceRepository implements VoiceRepository {
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<void> startListening() async {}
+
+  @override
+  Future<void> stopListening() async {}
+}
+
+class _StubVolumeRepository implements VolumeRepository {
   @override
   Future<bool> isAvailable() async => true;
 
@@ -143,6 +156,7 @@ void main() {
           settingsStore ?? _FakeSettingsStore(),
         ),
         voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+        volumeRepositoryProvider.overrideWithValue(_StubVolumeRepository()),
         voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
         voiceStateEventsProvider.overrideWithValue(
           voiceStateEvents ?? const Stream.empty(),
@@ -315,6 +329,9 @@ void main() {
               settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
               replayBufferRepositoryProvider.overrideWithValue(replayRepo),
               voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+              volumeRepositoryProvider.overrideWithValue(
+                _StubVolumeRepository(),
+              ),
               voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
               voiceStateEventsProvider.overrideWithValue(const Stream.empty()),
             ],
@@ -399,6 +416,7 @@ void main() {
             cameraRepositoryProvider.overrideWithValue(buildRepo()),
             settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
             voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+            volumeRepositoryProvider.overrideWithValue(_StubVolumeRepository()),
             voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
             voiceStateEventsProvider.overrideWithValue(const Stream.empty()),
           ],

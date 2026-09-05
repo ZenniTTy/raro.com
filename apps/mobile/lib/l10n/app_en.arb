@@ -15,6 +15,7 @@
   "settingsControlModeIntro": "Choose the mode you want to record with. In ",
   "settingsControlModeVoicePart": " mode, recording is controlled by voice. In ",
   "settingsControlModeVolumePart": " mode, recording is controlled by the side volume buttons of your device.",
+  "settingsControlModeVoiceOnlyPart": " mode, recording is controlled by voice.",
   "settingsControlVolumeTitle": "Volume",
   "settingsControlVolumeSubtitle": "+ or −",
   "settingsControlVoiceTitle": "Voice on",

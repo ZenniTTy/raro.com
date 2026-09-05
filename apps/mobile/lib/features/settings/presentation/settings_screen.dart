@@ -16,6 +16,7 @@ import 'package:raro_mobile/features/settings/presentation/widgets/language_grid
 import 'package:raro_mobile/features/settings/presentation/widgets/replay_buffer_card.dart';
 import 'package:raro_mobile/features/settings/presentation/widgets/settings_chip.dart';
 import 'package:raro_mobile/features/settings/presentation/widgets/settings_section.dart';
+import 'package:raro_mobile/features/volume/data/volume_repository_provider.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart';
 
@@ -135,6 +136,7 @@ class _SettingsBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(settingsControllerProvider.notifier);
     final supportedFormats = ref.watch(capabilitiesProvider);
+    final volumeAvailable = ref.watch(volumeAvailableProvider).value ?? false;
     final l10n = AppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -159,6 +161,7 @@ class _SettingsBody extends ConsumerWidget {
           child: _ControlMode(
             selected: settings.controlMode,
             onSelected: controller.setControlMode,
+            volumeAvailable: volumeAvailable,
           ),
         ),
         const SizedBox(height: 14),
@@ -343,10 +346,15 @@ class _StabilizationRow extends StatelessWidget {
 }
 
 class _ControlMode extends StatelessWidget {
-  const _ControlMode({required this.selected, required this.onSelected});
+  const _ControlMode({
+    required this.selected,
+    required this.onSelected,
+    required this.volumeAvailable,
+  });
 
   final ControlMode selected;
   final ValueChanged<ControlMode> onSelected;
+  final bool volumeAvailable;
 
   @override
   Widget build(BuildContext context) {
@@ -364,29 +372,36 @@ class _ControlMode extends StatelessWidget {
                 text: 'ON',
                 style: TextStyle(color: colors.ink),
               ),
-              TextSpan(text: l10n.settingsControlModeVoicePart),
               TextSpan(
-                text: 'OFF',
-                style: TextStyle(color: colors.ink),
+                text: volumeAvailable
+                    ? l10n.settingsControlModeVoicePart
+                    : l10n.settingsControlModeVoiceOnlyPart,
               ),
-              TextSpan(text: l10n.settingsControlModeVolumePart),
+              if (volumeAvailable) ...[
+                TextSpan(
+                  text: 'OFF',
+                  style: TextStyle(color: colors.ink),
+                ),
+                TextSpan(text: l10n.settingsControlModeVolumePart),
+              ],
             ],
           ),
         ),
         const SizedBox(height: 14),
         Row(
           children: [
-            Expanded(
-              child: ControlModeCard(
-                badge: 'OFF',
-                title: l10n.settingsControlVolumeTitle,
-                subtitle: l10n.settingsControlVolumeSubtitle,
-                active: selected == ControlMode.volume,
-                onTap: () => onSelected(ControlMode.volume),
-                enabled: false,
+            if (volumeAvailable) ...[
+              Expanded(
+                child: ControlModeCard(
+                  badge: 'OFF',
+                  title: l10n.settingsControlVolumeTitle,
+                  subtitle: l10n.settingsControlVolumeSubtitle,
+                  active: selected == ControlMode.volume,
+                  onTap: () => onSelected(ControlMode.volume),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
+              const SizedBox(width: 8),
+            ],
             Expanded(
               child: ControlModeCard(
                 badge: 'ON',

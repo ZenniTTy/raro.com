@@ -9,8 +9,25 @@ import 'package:raro_mobile/features/settings/application/settings_controller.da
 import 'package:raro_mobile/features/settings/data/settings_store.dart';
 import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:raro_mobile/features/settings/presentation/settings_screen.dart';
+import 'package:raro_mobile/features/volume/data/volume_repository.dart';
+import 'package:raro_mobile/features/volume/data/volume_repository_provider.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart';
+
+class _StubVolumeRepository implements VolumeRepository {
+  _StubVolumeRepository({this.available = true});
+
+  final bool available;
+
+  @override
+  Future<bool> isAvailable() async => available;
+
+  @override
+  Future<void> startListening() async {}
+
+  @override
+  Future<void> stopListening() async {}
+}
 
 class _FakeSettingsStore implements SettingsStore {
   RecordingSettings stored = const RecordingSettings();
@@ -42,10 +59,13 @@ void main() {
     store = _FakeSettingsStore();
   });
 
-  Widget app({SubscriptionState? subscription}) {
+  Widget app({SubscriptionState? subscription, bool volumeAvailable = true}) {
     return ProviderScope(
       overrides: [
         settingsStoreProvider.overrideWithValue(store),
+        volumeRepositoryProvider.overrideWithValue(
+          _StubVolumeRepository(available: volumeAvailable),
+        ),
         if (subscription != null)
           subscriptionStoreProvider.overrideWithValue(
             _FakeSubscriptionStore(subscription),
@@ -69,8 +89,11 @@ void main() {
   Future<void> pumpReady(
     WidgetTester tester, {
     SubscriptionState? subscription,
+    bool volumeAvailable = true,
   }) async {
-    await tester.pumpWidget(app(subscription: subscription));
+    await tester.pumpWidget(
+      app(subscription: subscription, volumeAvailable: volumeAvailable),
+    );
     await tester.pump();
     await tester.pump();
   }
@@ -123,15 +146,24 @@ void main() {
     expect(store.stored.resolution, Resolution.hd720);
   });
 
-  testWidgets('card Volume desabilitado não altera o modo de controle', (
-    tester,
-  ) async {
+  testWidgets('tap no card Volume persiste o modo de controle', (tester) async {
     await pumpReady(tester);
 
     await scrollTo(tester, find.text('Volume'));
     await tester.tap(find.text('Volume'));
     await tester.pump();
+    await tester.pump();
 
+    expect(store.stored.controlMode, ControlMode.volume);
+  });
+
+  testWidgets('card Volume some quando o modo não está disponível', (
+    tester,
+  ) async {
+    await pumpReady(tester, volumeAvailable: false);
+
+    await scrollTo(tester, find.text('Controle de Gravação'));
+    expect(find.text('Volume'), findsNothing);
     expect(store.stored.controlMode, isNot(ControlMode.volume));
   });
 
@@ -139,7 +171,10 @@ void main() {
     var tapped = false;
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [settingsStoreProvider.overrideWithValue(store)],
+        overrides: [
+          settingsStoreProvider.overrideWithValue(store),
+          volumeRepositoryProvider.overrideWithValue(_StubVolumeRepository()),
+        ],
         child: MaterialApp(
           locale: const Locale('pt', 'BR'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -174,7 +209,10 @@ void main() {
     var privacy = 0;
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [settingsStoreProvider.overrideWithValue(store)],
+        overrides: [
+          settingsStoreProvider.overrideWithValue(store),
+          volumeRepositoryProvider.overrideWithValue(_StubVolumeRepository()),
+        ],
         child: MaterialApp(
           locale: const Locale('pt', 'BR'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,

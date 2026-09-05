@@ -14,12 +14,17 @@ import 'package:pigeon/pigeon.dart';
     dartPackageName: 'raro_mobile',
   ),
 )
+enum VolumeDirection { up, down }
+
 @HostApi()
 abstract class VolumeHostApi {
-  void volumePing();
+  @async
+  bool isAvailable();
+  void startListening();
+  void stopListening();
 }
 
 @FlutterApi()
 abstract class VolumeFlutterApi {
-  void volumeReady();
+  void onVolumePressed(VolumeDirection direction);
 }

@@ -1,5 +1,6 @@
 package com.rarocamera.raro_mobile
 
+import android.view.KeyEvent
 import com.rarocamera.raro_mobile.camera.CameraHostApiImpl
 import com.rarocamera.raro_mobile.camera.CameraManager
 import com.rarocamera.raro_mobile.camera.CameraPlatformViewFactory
@@ -10,13 +11,17 @@ import com.rarocamera.raro_mobile.generated.gallery.GalleryHostApi
 import com.rarocamera.raro_mobile.generated.replay_buffer.ReplayBufferHostApi
 import com.rarocamera.raro_mobile.generated.voice.VoiceFlutterApi
 import com.rarocamera.raro_mobile.generated.voice.VoiceHostApi
+import com.rarocamera.raro_mobile.generated.volume.VolumeFlutterApi
+import com.rarocamera.raro_mobile.generated.volume.VolumeHostApi
 import com.rarocamera.raro_mobile.replay.ReplayBufferHostApiImpl
 import com.rarocamera.raro_mobile.voice.VoiceHostApiImpl
+import com.rarocamera.raro_mobile.volume.VolumeHostApiImpl
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
 class MainActivity : FlutterActivity() {
   private var voiceHostApi: VoiceHostApiImpl? = null
+  private var volumeHostApi: VolumeHostApiImpl? = null
   private var cameraManager: CameraManager? = null
 
   override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -41,6 +46,15 @@ class MainActivity : FlutterActivity() {
 
     ReplayBufferHostApi.setUp(messenger, ReplayBufferHostApiImpl(manager, messenger))
     GalleryHostApi.setUp(messenger, GalleryHostApiImpl(applicationContext))
+
+    val volume = VolumeHostApiImpl(VolumeFlutterApi(messenger))
+    volumeHostApi = volume
+    VolumeHostApi.setUp(messenger, volume)
+  }
+
+  override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+    if (volumeHostApi?.onKeyEvent(event) == true) return true
+    return super.dispatchKeyEvent(event)
   }
 
   override fun onPause() {

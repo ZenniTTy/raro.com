@@ -15,6 +15,7 @@
   "settingsControlModeIntro": "Elige el modo con el que quieres grabar. En el modo ",
   "settingsControlModeVoicePart": " la grabación se controla por voz. En el modo ",
   "settingsControlModeVolumePart": ", la grabación se controla con los botones laterales de volumen del dispositivo.",
+  "settingsControlModeVoiceOnlyPart": " la grabación se controla por voz.",
   "settingsControlVolumeTitle": "Volumen",
   "settingsControlVolumeSubtitle": "+ o −",
   "settingsControlVoiceTitle": "Voz activa",

@@ -57,6 +57,10 @@ class AppLocalizationsPt extends AppLocalizations {
       ', a gravação é controlada pelos botões laterais de volume do aparelho.';
 
   @override
+  String get settingsControlModeVoiceOnlyPart =>
+      ' a gravação é controlada pela voz.';
+
+  @override
   String get settingsControlVolumeTitle => 'Volume';
 
   @override

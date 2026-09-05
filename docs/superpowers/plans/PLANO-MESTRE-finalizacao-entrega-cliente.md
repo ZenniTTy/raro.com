@@ -92,7 +92,7 @@
 - [x] **4.2** *(provado no M54 2026-09-04)* Delete real no Preview: diálogo de confirmação (copy deixa claro que é só do vault, não do rolo do sistema) → `vault.delete(id)` (`.mp4`+`.json`+`.jpg`) → invalida `videoListProvider` → volta à Galeria. Info abre painel com sidecar (nome, duração, data, resolução, fps, lente, tamanho via `File.lengthSync()`, replay). Delete na Galeria (P07) ficou de fora de propósito.
 - [ ] **4.3** Telas faltando: P05a Lock mode. **P11 Terms + P12 Privacy implementadas (PR #15, pendente merge).**
 - [ ] **4.4** Modais faltando: M02 Xiaomi, M03 Bluetooth.
-- [ ] **4.5** **Volume como gatilho — IMPLEMENTAR** nas 2 plataformas (decisão do dono 2026-09-02). Hoje o Settings deixa selecionar e persistir o modo sem nenhum handler nativo. Falta: `VolumeHostApiImpl` no Android (`onKeyDown` + `KEYCODE_VOLUME_*`) **e** no iOS (KVO de volume com `AVAudioSession` ambient + restore + `removeObserver` no deinit — memória `raro-pattern-ios-volume-button-kvo-app-store-review`), **e ampliar o contrato Pigeon** `volume_api.dart`, que hoje só tem `volumePing()`/`volumeReady()` e não carrega evento de tecla. Mudança de contrato Pigeon → o hook `warn-adr-drift` vai pedir ADR.
+- [ ] **4.5** **Volume como gatilho — código na branch `feat/volume-trigger` (ADR-0033).** Android: `dispatchKeyEvent` + consume. iOS 17.2+: `AVCaptureEventInteraction` (API oficial; KVO/`setOutputVolume` rejeitado). iOS 15–17.1: card some da UI. `+` inicia / `−` para no mesmo `_onRecTap` da voz. Analyze limpo; **433/433**; iOS `Runner.app` debug. **Prova M54 pendente** (gate de pronto). M03 Bluetooth continua fora (4.4).
 - [x] **4.6** i18n pt/en/es completa (117 chaves × 3) com teste-guarda.
 
 ### BLOCO 4.5 — Faxina de repositório (anotado a pedido do dono, 2026-09-02)
