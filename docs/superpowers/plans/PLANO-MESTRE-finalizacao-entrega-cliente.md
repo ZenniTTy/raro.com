@@ -75,7 +75,7 @@
 - [x] **2.5** *(PR #12 — código pronto; restore de recibo Play REAL ainda não provado, Test Store não conta)* **Restore purchases funcional** (`paywall_screen.dart:123`) — bloqueador de review da Apple.
 - [x] **2.6** *(PR #12 — `payment_method.dart` APAGADO, checkout chama `subscribe(plan:)`)* **Checkout (P10): remover o seletor de "método de pagamento".** Hoje `PaymentMethod` (`apple`/`google`) é um radio decorativo — o usuário escolhe algo que não tem efeito. Na compra in-app real **quem escolhe a forma de pagamento é a folha nativa da loja**, com os meios que a conta do usuário já tem cadastrados (cartão, PIX/carteira via Google Play, saldo, etc.). Manter o radio é duplicar — e confundir — uma escolha que não é nossa. P10 deve virar confirmação do plano + `purchasePackage`.
 - [ ] **2.7** **Assinaturas nas lojas (pré-requisito do dono, não é código):** criar os 2 produtos de assinatura (Mensal R$ 9,90 · Anual R$ 89,90) no App Store Connect e no Play Console, ligar ao entitlement `premium` no RevenueCat e configurar o trial de 30 dias em **cada** loja. Sem isso `getOfferings` volta vazio e o app não tem o que vender.
-- [ ] **2.8** **Textos obrigatórios de assinatura na tela de compra** (exigência de review das duas lojas): preço, periodicidade, renovação automática, como cancelar, e links de Termos e Privacidade funcionando (hoje os 2 links do paywall são `_comingSoon` — ver 4.3).
+- [ ] **2.8** **Textos obrigatórios de assinatura na tela de compra** — **implementado na PR #15** (pende merge): preço, periodicidade, renovação automática, cancelamento nas lojas, links Termos/Privacidade funcionando.
 
 ### BLOCO 3 — Android paridade (QUASE FECHADO)
 - [x] **3.1** Gravação CameraX → vault (fatia 1, PR #5, provado no M54 via ffprobe).
@@ -90,7 +90,7 @@
 - [x] **4.0** Fechar a árvore suja de Poppins (sessão 0041): emojis como glifo; `'RARO CAM'` no allowlist; Medium 500 removido; suíte 355/355; `5a35be4` pushado.
 - [x] **4.1** *(PR #13, provado no M54 2026-09-04)* Share real com `share_plus` (`SharePlus.instance.share(ShareParams)`); free abre P09, premium abre a folha nativa.
 - [x] **4.2** *(provado no M54 2026-09-04)* Delete real no Preview: diálogo de confirmação (copy deixa claro que é só do vault, não do rolo do sistema) → `vault.delete(id)` (`.mp4`+`.json`+`.jpg`) → invalida `videoListProvider` → volta à Galeria. Info abre painel com sidecar (nome, duração, data, resolução, fps, lente, tamanho via `File.lengthSync()`, replay). Delete na Galeria (P07) ficou de fora de propósito.
-- [ ] **4.3** Telas faltando: P05a Lock mode, P11 Terms, **P12 Privacy (obrigatória p/ loja)**.
+- [ ] **4.3** Telas faltando: P05a Lock mode. **P11 Terms + P12 Privacy implementadas (PR #15, pendente merge).**
 - [ ] **4.4** Modais faltando: M02 Xiaomi, M03 Bluetooth.
 - [ ] **4.5** **Volume como gatilho — IMPLEMENTAR** nas 2 plataformas (decisão do dono 2026-09-02). Hoje o Settings deixa selecionar e persistir o modo sem nenhum handler nativo. Falta: `VolumeHostApiImpl` no Android (`onKeyDown` + `KEYCODE_VOLUME_*`) **e** no iOS (KVO de volume com `AVAudioSession` ambient + restore + `removeObserver` no deinit — memória `raro-pattern-ios-volume-button-kvo-app-store-review`), **e ampliar o contrato Pigeon** `volume_api.dart`, que hoje só tem `volumePing()`/`volumeReady()` e não carrega evento de tecla. Mudança de contrato Pigeon → o hook `warn-adr-drift` vai pedir ADR.
 - [x] **4.6** i18n pt/en/es completa (117 chaves × 3) com teste-guarda.
