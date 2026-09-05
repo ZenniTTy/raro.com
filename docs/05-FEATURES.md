@@ -43,7 +43,7 @@
 - Listagem cronológica, filtros: Todos / Hoje / Esta semana / Raro Replay **[ESTADO: REAL, lê vault]**
 - Preview com player nativo + scrubber **[ESTADO: REAL]**
 - Share via OS Share Sheet (`share_plus`) **[ESTADO: NÃO implementado — botão mostra "Em breve" (`_comingSoon`); share_plus 0 usos — PLANO-MESTRE Bloco 4.1]**
-- Delete com confirmação **[ESTADO: lógica `vault.delete` existe mas não conectada à UI — PLANO-MESTRE 4.2]**
+- Delete com confirmação **[ESTADO: Preview (P08) real — 4.2, M54 2026-09-04; só o vault, não o rolo do sistema. Galeria P07 sem delete.]**
 - **Gate:** salvar requer assinatura ativa → popup M01 ao tentar parar gravação sem premium **[ESTADO: gating não aplicado — depende de RevenueCat real, Bloco 2]**
 
 ## M06 — Assinatura e paywall

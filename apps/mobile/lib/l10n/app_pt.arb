@@ -377,6 +377,74 @@
   "@previewVideoNotFound": {
     "description": "Estado vazio quando o vídeo não existe mais"
   },
+  "previewDeleteTitle": "Apagar este vídeo?",
+  "@previewDeleteTitle": {
+    "description": "Título do diálogo de confirmação da lixeira no preview"
+  },
+  "previewDeleteBody": "O vídeo sai só do RARO. Uma cópia já salva no app de Fotos do celular permanece.",
+  "@previewDeleteBody": {
+    "description": "Explica que o delete é só do vault, não do rolo do sistema"
+  },
+  "previewDeleteConfirm": "Apagar",
+  "@previewDeleteConfirm": {
+    "description": "Confirma a exclusão irreversível do vault"
+  },
+  "previewDeleteCancel": "Cancelar",
+  "@previewDeleteCancel": {
+    "description": "Cancela a exclusão e mantém o clipe"
+  },
+  "previewDeleteFailed": "Não foi possível apagar o vídeo. Tente de novo.",
+  "@previewDeleteFailed": {
+    "description": "Snack quando o vault.delete falha; a tela de preview permanece"
+  },
+  "previewDetailsTitle": "Detalhes",
+  "@previewDetailsTitle": {
+    "description": "Título do painel de detalhes do clipe"
+  },
+  "previewDetailsName": "Nome",
+  "@previewDetailsName": {
+    "description": "Campo nome no painel de detalhes"
+  },
+  "previewDetailsDuration": "Duração",
+  "@previewDetailsDuration": {
+    "description": "Campo duração no painel de detalhes"
+  },
+  "previewDetailsRecordedAt": "Data",
+  "@previewDetailsRecordedAt": {
+    "description": "Campo data/hora no painel de detalhes"
+  },
+  "previewDetailsResolution": "Resolução",
+  "@previewDetailsResolution": {
+    "description": "Campo resolução no painel de detalhes"
+  },
+  "previewDetailsFps": "FPS",
+  "@previewDetailsFps": {
+    "description": "Campo fps no painel de detalhes"
+  },
+  "previewDetailsLens": "Lente",
+  "@previewDetailsLens": {
+    "description": "Campo lente no painel de detalhes"
+  },
+  "previewDetailsSize": "Tamanho",
+  "@previewDetailsSize": {
+    "description": "Campo tamanho do arquivo no painel de detalhes"
+  },
+  "previewDetailsReplay": "Replay",
+  "@previewDetailsReplay": {
+    "description": "Campo se o clipe é replay no painel de detalhes"
+  },
+  "previewDetailsReplayYes": "Sim",
+  "@previewDetailsReplayYes": {
+    "description": "Valor positivo do campo replay"
+  },
+  "previewDetailsReplayNo": "Não",
+  "@previewDetailsReplayNo": {
+    "description": "Valor negativo do campo replay"
+  },
+  "previewDetailsUnavailable": "—",
+  "@previewDetailsUnavailable": {
+    "description": "Placeholder quando o sidecar não tem o campo"
+  },
   "paywallTitle": "Escolha seu plano",
   "@paywallTitle": {
     "description": "Título do paywall"

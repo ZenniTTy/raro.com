@@ -12,7 +12,7 @@ final class GalleryHostApiImpl: GalleryHostApi {
     let url = URL(fileURLWithPath: videoPath)
     guard FileManager.default.fileExists(atPath: videoPath) else {
       os_log("gallery missing file", log: galleryLog, type: .error)
-      finish(
+      self.finish(
         completion,
         .failure(GalleryPigeonError(code: "saveFailed", message: "missing video file", details: nil))
       )
@@ -22,7 +22,7 @@ final class GalleryHostApiImpl: GalleryHostApi {
     PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
       guard status == .authorized else {
         os_log("gallery add-only denied status=%d", log: galleryLog, type: .error, status.rawValue)
-        finish(
+        self.finish(
           completion,
           .failure(
             GalleryPigeonError(
@@ -45,7 +45,7 @@ final class GalleryHostApiImpl: GalleryHostApi {
             type: .error,
             error.localizedDescription
           )
-          finish(
+          self.finish(
             completion,
             .failure(
               GalleryPigeonError(
@@ -58,11 +58,11 @@ final class GalleryHostApiImpl: GalleryHostApi {
           return
         }
         if success {
-          finish(completion, .success(()))
+          self.finish(completion, .success(()))
           return
         }
         os_log("gallery performChanges returned false", log: galleryLog, type: .error)
-        finish(
+        self.finish(
           completion,
           .failure(GalleryPigeonError(code: "saveFailed", message: "not saved", details: nil))
         )

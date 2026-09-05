@@ -598,6 +598,108 @@ abstract class AppLocalizations {
   /// **'Vídeo não encontrado'**
   String get previewVideoNotFound;
 
+  /// Título do diálogo de confirmação da lixeira no preview
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar este vídeo?'**
+  String get previewDeleteTitle;
+
+  /// Explica que o delete é só do vault, não do rolo do sistema
+  ///
+  /// In pt, this message translates to:
+  /// **'O vídeo sai só do RARO. Uma cópia já salva no app de Fotos do celular permanece.'**
+  String get previewDeleteBody;
+
+  /// Confirma a exclusão irreversível do vault
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar'**
+  String get previewDeleteConfirm;
+
+  /// Cancela a exclusão e mantém o clipe
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get previewDeleteCancel;
+
+  /// Snack quando o vault.delete falha; a tela de preview permanece
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível apagar o vídeo. Tente de novo.'**
+  String get previewDeleteFailed;
+
+  /// Título do painel de detalhes do clipe
+  ///
+  /// In pt, this message translates to:
+  /// **'Detalhes'**
+  String get previewDetailsTitle;
+
+  /// Campo nome no painel de detalhes
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome'**
+  String get previewDetailsName;
+
+  /// Campo duração no painel de detalhes
+  ///
+  /// In pt, this message translates to:
+  /// **'Duração'**
+  String get previewDetailsDuration;
+
+  /// Campo data/hora no painel de detalhes
+  ///
+  /// In pt, this message translates to:
+  /// **'Data'**
+  String get previewDetailsRecordedAt;
+
+  /// Campo resolução no painel de detalhes
+  ///
+  /// In pt, this message translates to:
+  /// **'Resolução'**
+  String get previewDetailsResolution;
+
+  /// Campo fps no painel de detalhes
+  ///
+  /// In pt, this message translates to:
+  /// **'FPS'**
+  String get previewDetailsFps;
+
+  /// Campo lente no painel de detalhes
+  ///
+  /// In pt, this message translates to:
+  /// **'Lente'**
+  String get previewDetailsLens;
+
+  /// Campo tamanho do arquivo no painel de detalhes
+  ///
+  /// In pt, this message translates to:
+  /// **'Tamanho'**
+  String get previewDetailsSize;
+
+  /// Campo se o clipe é replay no painel de detalhes
+  ///
+  /// In pt, this message translates to:
+  /// **'Replay'**
+  String get previewDetailsReplay;
+
+  /// Valor positivo do campo replay
+  ///
+  /// In pt, this message translates to:
+  /// **'Sim'**
+  String get previewDetailsReplayYes;
+
+  /// Valor negativo do campo replay
+  ///
+  /// In pt, this message translates to:
+  /// **'Não'**
+  String get previewDetailsReplayNo;
+
+  /// Placeholder quando o sidecar não tem o campo
+  ///
+  /// In pt, this message translates to:
+  /// **'—'**
+  String get previewDetailsUnavailable;
+
   /// Título do paywall
   ///
   /// In pt, this message translates to:
