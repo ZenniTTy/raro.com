@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy — Raro Camera</title>
+  <meta name="description" content="Privacy Policy — Raro Camera">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="/en/">RARO CAMERA</a>
+      <nav>
+        <a href="/privacidade">PT</a> <a href="/en/privacy" aria-current="page">EN</a> <a href="/es/privacidad">ES</a>
+        <a href="/en/terms">Terms</a>
+        <a href="/en/privacy" aria-current="page">Privacy</a>
+      </nav>
+    </header>
+    <main>
+<h1>Privacy Policy — Raro Camera</h1>
+<p>Last updated: 4 September 2026.</p>
+<p>This text describes what the <strong>Raro Camera</strong> app (iOS and Android, identifier <code>com.rarocamera</code>) does with data. It is not legal advice.</p>
+<h2>1. Who is responsible</h2>
+<p>The controller of personal data is:</p>
+<p><strong>Vitor Autorino Lopes (Raro Camera)</strong></p>
+<p>To exercise your rights or ask a question: <strong>rarocan1@gmail.com</strong>.</p>
+<p>Public version of this text: <a href="https://rarocamera.com.br/en/privacy">https://rarocamera.com.br/en/privacy</a>.</p>
+<p>We do not ask for a sign-up, login, name, or email inside the app. We do not run our own server (there is no API or video cloud of ours).</p>
+<p>These website pages are static files. <strong>We do not use cookies or analytics on this site.</strong></p>
+<h2>2. Summary</h2>
+<p>Raro Camera records video on the device, with an optional on-device voice command (“Raro gravar” / “Raro parar”) and a local replay buffer. Files stay on the device. What leaves the device without your export or share action is only usage telemetry, crash reports, and — if you subscribe — the store receipt handled by RevenueCat and the App Store or Google Play.</p>
+<h2>3. What we do not ask for and do not send</h2>
+<p>The app does <strong>not</strong>:</p>
+<ul>
+<li>create an account, profile, or password;</li>
+<li>ask for email, phone, tax ID, or address;</li>
+<li>read your contacts, calendar, or location;</li>
+<li>read your camera roll (on iOS it only <strong>adds</strong> a video when you choose to save);</li>
+<li>send the video file or the recording audio to us;</li>
+<li>send a transcript of your speech to us or to a server of ours;</li>
+<li>show third-party ads.</li>
+</ul>
+<h2>4. What stays only on the device</h2>
+<h3>4.1 Video, audio, and thumbnail</h3>
+<p>Clips (MP4), embedded audio, the thumbnail, and a sidecar file (duration, date, resolution, fps, lens, whether it came from replay) stay in the app’s private space.</p>
+<p>There is no automatic cloud copy. There is no sync between an iPhone and an Android. If you delete the app, that sandbox library goes with it.</p>
+<p>Permanently saving the clip (app vault + system gallery) and sharing it require an active subscription. Without a subscription you can still record and watch the result on the preview screen; declining the subscription discards that recording’s temporary file. Videos already in the vault stay on the device.</p>
+<p>Deleting a clip in the app removes it from the vault. It does <strong>not</strong> remove a copy you already exported to Photos / the Android gallery.</p>
+<h3>4.2 Preferences</h3>
+<p>In local system storage the app keeps only what it needs to run: onboarding done, language, resolution, fps, buffer length, control mode, whether the Xiaomi notice was shown, first-launch date, and a local cache of subscription state. That is not an account.</p>
+<h3>4.3 Voice</h3>
+<p>Speech recognition runs <strong>on the device</strong>:</p>
+<ul>
+<li><strong>Android:</strong> Vosk, on the phone, including in the background via a microphone foreground service.</li>
+<li><strong>iOS:</strong> speech recognition with processing <strong>required to stay on-device</strong>.</li>
+</ul>
+<p>Voice audio is <strong>not sent</strong> to a server of ours. Technical logs record only whether the recognized command was start or stop — <strong>not</strong> the spoken text.</p>
+<p>You can refuse the microphone. Without it there is no voice command and no sound on the clip; the video camera can still be used if camera permission is granted.</p>
+<h2>5. What leaves the device</h2>
+<h3>5.1 Firebase Analytics (Google)</h3>
+<p>We use Firebase Analytics to know whether the app opens, whether the camera starts, and whether a camera error occurred.</p>
+<p>In this version, the custom events our code fires are:</p>
+<ul>
+<li><code>camera_started</code> — active lens, resolution, and fps;</li>
+<li><code>camera_error</code> — error code and, if present, the technical message.</li>
+</ul>
+<p>The product has a longer list of planned event names (for example open, paywall, plan selected, lens switch). Those names exist in code; most are not sent yet. The Firebase SDK also records automatic events (first open, session, app update).</p>
+<p>We do not attach these events to an email or a name. We do not send video or speech.</p>
+<p>The Firebase SDK, unless turned off separately, may collect device identifiers and, on Android, the advertising identifier. Raro Camera does <strong>not</strong> use that identifier for ads. We do not request Apple’s tracking permission (ATT). There is <strong>no</strong> in-app Analytics toggle today.</p>
+<p>Google’s policy: <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a></p>
+<h3>5.2 Firebase Crashlytics (Google)</h3>
+<p>If the app quits or throws an uncaught error, Crashlytics receives the stack, app version, and the device/OS data the SDK includes by default. That is for fixing the app. We do not attach your name or email.</p>
+<h3>5.3 Subscription — RevenueCat, Apple, and Google</h3>
+<p>We do not process cards. The purchase goes through the <strong>App Store</strong> (iOS) or <strong>Google Play</strong> (Android).</p>
+<p>RevenueCat receives an anonymous SDK user identifier (we do not log in) and the store receipt, so it can tell whether the premium benefit is active and until when. That unlocks save and share, and the “Restore purchases” button.</p>
+<p>Apple or Google charges you, stores the payment method, and authenticates you with the account already on the phone. There is no automatic subscription share between iPhone and Android: they are different stores.</p>
+<ul>
+<li>RevenueCat: <a href="https://www.revenuecat.com/privacy">https://www.revenuecat.com/privacy</a></li>
+<li>Apple: <a href="https://www.apple.com/legal/privacy/">https://www.apple.com/legal/privacy/</a></li>
+<li>Google Play: <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a></li>
+</ul>
+<h3>5.4 Export and share (you choose)</h3>
+<p>If you have a subscription and tap save, the app writes the MP4 to the system gallery (on iOS, add-only; on Android, <code>Movies/Raro Camera/</code>). From then on the file also follows the gallery’s rules.</p>
+<p>If you tap share, the system opens the native sheet. The destination (WhatsApp, Files, AirDrop, etc.) is your choice. That destination is no longer our processing.</p>
+<h3>5.5 Internet</h3>
+<p>The app asks for network access for Analytics, Crashlytics, and subscription. Recording and watching clips already in the vault does <strong>not</strong> require internet.</p>
+<h2>6. System permissions</h2>
+<table>
+<tr><th>Permission</th><th>Why</th><th>Can you refuse?</th></tr>
+<tr><td>Camera</td><td>Preview and recording</td><td>Yes. Without camera the app does not record video</td></tr>
+<tr><td>Microphone</td><td>Clip audio and voice command</td><td>Yes. Without microphone there is no voice and no sound on the video</td></tr>
+<tr><td>Speech recognition (iOS)</td><td>Understand “Raro gravar” / “Raro parar” on-device</td><td>Yes. Without it iOS voice command does not work</td></tr>
+<tr><td>Add to gallery (iOS) / legacy storage (Android 9 and below)</td><td>Only when you ask to save the clip</td><td>Yes. The clip can stay only in the app vault (if the subscription allows persist)</td></tr>
+<tr><td>Notifications (Android)</td><td>Notice for the background microphone service</td><td>Yes. The system may limit the background service</td></tr>
+<tr><td>Foreground service / microphone (Android)</td><td>Keep voice listening while the app is in the background</td><td>Without it Android background voice does not start</td></tr>
+<tr><td>Internet</td><td>Analytics, crashes, subscription</td><td>Without network those parts stay silent; local camera still works</td></tr>
+</table>
+<p>None of these permissions is used to read your camera roll or to track ads.</p>
+<h2>7. Purposes</h2>
+<p>We process the minimum the app needs to:</p>
+<ul>
+<li>do what you asked (record, save, share, subscribe, restore a purchase);</li>
+<li>improve stability and usage (Analytics and Crashlytics, without camera content);</li>
+<li>meet store and legal rules (subscription receipt, answering your request).</li>
+</ul>
+<p>We do not sell data. We do not make an automated decision with legal effect beyond “premium is on or off”, and that comes from the store receipt.</p>
+<h2>8. Your rights</h2>
+<p>You may email <strong>rarocan1@gmail.com</strong> to ask for confirmation of processing, access, correction, anonymization, portability where it applies, information about sharing, and withdrawal of system permissions (those are also withdrawn in iOS Settings / Android Settings).</p>
+<p>Practical paths without waiting for email:</p>
+<ul>
+<li><strong>Vault videos:</strong> delete them in the app or uninstall the app.</li>
+<li><strong>System gallery copy:</strong> delete it in Photos / Gallery — Raro Camera does not touch it on delete.</li>
+<li><strong>Permissions:</strong> the device settings.</li>
+<li><strong>Subscription:</strong> cancel in the App Store or Google Play; RevenueCat will stop seeing an active receipt.</li>
+<li><strong>Anonymous RevenueCat identifier / crash and analytics data:</strong> ask via the email above. We do not have an account for you; the request will be sent to the processor where we can identify a record.</li>
+</ul>
+<p>If you are in Brazil, the ANPD is the supervisory authority.</p>
+<h2>9. How long it stays</h2>
+<table>
+<tr><th>Data</th><th>Retention</th></tr>
+<tr><td>Clip and sidecar in the vault</td><td>Until you delete it or uninstall the app</td></tr>
+<tr><td>System gallery copy</td><td>Until you delete it in the gallery; it does not follow in-app delete</td></tr>
+<tr><td>Local preferences</td><td>Until you clear app data or uninstall</td></tr>
+<tr><td>Analytics / crash events</td><td>Firebase project default retention</td></tr>
+<tr><td>Receipt / entitlement in RevenueCat</td><td>While the store and RevenueCat keep that anonymous identifier</td></tr>
+</table>
+<h2>10. Transfer outside Brazil</h2>
+<p>Google (Firebase) and RevenueCat process data outside Brazil, generally in the United States, under their contracts with the app publisher. We do not host our video in another country because <strong>we do not host video</strong>.</p>
+<h2>11. Children</h2>
+<p>The app does not ask for age and has no children’s area. It is not made for children. If you are responsible for a minor and want us to delete what we can identify at the processors, write to <strong>rarocan1@gmail.com</strong>.</p>
+<p>Store age ratings are set in App Store Connect and Play Console at publish time.</p>
+<h2>12. Changes</h2>
+<p>If the app starts collecting something new (login, cloud, another SDK), this policy must be rewritten <strong>before</strong> that change. The date at the top changes. The canonical URL keeps pointing at the current text.</p>
+<h2>13. Contact</h2>
+<p>Vitor Autorino Lopes (Raro Camera)   Email: rarocan1@gmail.com   Document: <a href="https://rarocamera.com.br/en/privacy">https://rarocamera.com.br/en/privacy</a></p>
+    </main>
+    <footer>
+      Vitor Autorino Lopes (Raro Camera) ·
+      <a href="mailto:rarocan1@gmail.com">rarocan1@gmail.com</a>
+      · site estático, sem cookies
+    </footer>
+  </div>
+</body>
+</html>

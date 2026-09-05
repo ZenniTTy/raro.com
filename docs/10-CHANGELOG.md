@@ -2,6 +2,17 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-09-05] — Termos, Privacidade e copy legal (sessão 0045)
+
+### Adicionado
+- **Site legal:** `docs/legal/` → `apps/legal/build.py` → deploy Vercel `raro-com`; URLs `https://www.rarocamera.com.br/privacidade` e `/termos` (+ EN/ES).
+- **App P11/P12:** rotas `/terms` e `/privacy`; markdown offline em `assets/legal/`; links no paywall e Settings.
+- **Copy 2.8:** `paywallLegal` cita renovação automática, 30 dias grátis, App Store e Google Play, desinstalar não cancela.
+- **Guard:** `legal_documents_parity_test` — `docs/legal/` e `assets/legal/` byte a byte.
+
+### Verificado
+- Review PR #15 aprovada; `flutter analyze` limpo; **424/424** testes; i18n **145** chaves × 3 idiomas.
+
 ## [2026-09-04] — Preview: delete real + detalhes do clipe (sessão 0044)
 
 ### Adicionado

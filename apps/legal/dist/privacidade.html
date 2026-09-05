@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de Privacidade — Raro Camera</title>
+  <meta name="description" content="Política de Privacidade — Raro Camera">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="/">RARO CAMERA</a>
+      <nav>
+        <a href="/" aria-current="page">PT</a> <a href="/en/privacy">EN</a> <a href="/es/privacidad">ES</a>
+        <a href="/termos">Termos</a>
+        <a href="/privacidade" aria-current="page">Privacidade</a>
+      </nav>
+    </header>
+    <main>
+<h1>Política de Privacidade — Raro Camera</h1>
+<p>Última atualização: 4 de setembro de 2026.</p>
+<p>Este texto descreve o que o aplicativo <strong>Raro Camera</strong> (iOS e Android, identificador <code>com.rarocamera</code>) faz com dados. Não é aconselhamento jurídico.</p>
+<h2>1. Quem trata os dados</h2>
+<p>O controlador dos dados pessoais, no sentido da Lei nº 13.709/2018 (LGPD), é:</p>
+<p><strong>Vitor Autorino Lopes (Raro Camera)</strong></p>
+<p>Para exercer direitos ou tirar dúvida: <strong>rarocan1@gmail.com</strong>.</p>
+<p>Versão pública deste texto: <a href="https://rarocamera.com.br/privacidade">https://rarocamera.com.br/privacidade</a>.</p>
+<p>Não pedimos cadastro, login, nome nem e-mail dentro do app. Não operamos um servidor próprio (não há API nem nuvem de vídeo nossa).</p>
+<p>Estas páginas do site são arquivos estáticos. <strong>Não usamos cookies nem analytics neste site.</strong></p>
+<h2>2. Resumo</h2>
+<p>O Raro Camera grava vídeo no aparelho, com comando de voz opcional (“Raro gravar” / “Raro parar”) e um buffer de replay local. Os arquivos ficam no aparelho. O que sai do aparelho, sem uma ação sua de exportar ou compartilhar, é só telemetria de uso, relatório de falha e — se você assinar — o recibo da loja tratado pelo RevenueCat e pela App Store ou Google Play.</p>
+<h2>3. O que não pedimos e não enviamos</h2>
+<p>O app <strong>não</strong>:</p>
+<ul>
+<li>cria conta, perfil ou senha;</li>
+<li>pede e-mail, telefone, CPF ou endereço;</li>
+<li>lê seus contatos, calendário ou localização;</li>
+<li>lê o rolo de fotos (no iOS só <strong>adiciona</strong> um vídeo quando você escolhe guardar);</li>
+<li>envia o arquivo de vídeo ou o áudio da gravação para a gente;</li>
+<li>envia a transcrição da sua fala para a gente ou para um servidor nosso;</li>
+<li>mostra anúncios de terceiros.</li>
+</ul>
+<h2>4. O que fica só no aparelho</h2>
+<h3>4.1 Vídeo, áudio e miniatura</h3>
+<p>Os clipes (MP4), o áudio embutido, a miniatura e um arquivo ao lado (duração, data, resolução, fps, lente, se veio do replay) ficam no espaço privado do app.</p>
+<p>Não há cópia automática na nuvem. Não há sincronização entre um iPhone e um Android. Se você apagar o app, esse acervo no sandbox some com ele.</p>
+<p>Guardar o clipe de forma permanente (vault do app + pasta da galeria do sistema) e compartilhá-lo exigem assinatura ativa. Sem assinatura você ainda pode gravar e ver o resultado na tela de preview; recusar a assinatura descarta o arquivo temporário daquela gravação. Vídeos que já estavam no vault continuam no aparelho.</p>
+<p>Apagar um clipe no app remove o arquivo do vault. <strong>Não</strong> remove uma cópia que você já tenha exportado para Fotos / galeria do Android.</p>
+<h3>4.2 Preferências</h3>
+<p>No armazenamento local do sistema o app guarda só o que precisa para funcionar: se o onboarding já passou, idioma, resolução, fps, duração do buffer, modo de controle, se o aviso Xiaomi já apareceu, data da primeira abertura e um cache local do estado da assinatura. Nada disso é um cadastro.</p>
+<h3>4.3 Voz</h3>
+<p>O reconhecimento de voz roda <strong>no aparelho</strong>:</p>
+<ul>
+<li><strong>Android:</strong> motor Vosk, no próprio telefone, inclusive em segundo plano via serviço em primeiro plano do tipo microfone.</li>
+<li><strong>iOS:</strong> reconhecimento de fala com processamento <strong>obrigatoriamente no aparelho</strong>.</li>
+</ul>
+<p>O áudio da voz <strong>não é enviado</strong> a um servidor nosso. Os registros técnicos do app anotam só se o comando reconhecido foi iniciar ou parar a gravação — <strong>não</strong> gravam o texto falado.</p>
+<p>Você pode recusar o microfone. Sem microfone não há comando de voz nem áudio no clipe; a câmera de vídeo ainda pode ser usada se a permissão de câmera estiver concedida.</p>
+<h2>5. O que sai do aparelho</h2>
+<h3>5.1 Firebase Analytics (Google)</h3>
+<p>Usamos o Firebase Analytics para saber se o app abre, se a câmera sobe e se houve erro de câmera.</p>
+<p>Nesta versão, os eventos personalizados que o nosso código dispara são:</p>
+<ul>
+<li><code>camera_started</code> — lente, resolução e fps então ativos;</li>
+<li><code>camera_error</code> — código do erro e, se houver, a mensagem técnica.</li>
+</ul>
+<p>O produto tem uma lista maior de nomes de evento previstos (por exemplo abertura, paywall, plano escolhido, troca de lente). Esses nomes existem no código; a maioria ainda não é enviada. O próprio SDK do Firebase também registra eventos automáticos (primeira abertura, sessão, atualização do app).</p>
+<p>Não associamos esses eventos a um e-mail ou a um nome. Não enviamos vídeo nem fala.</p>
+<p>O SDK do Firebase, se não for desligado à parte, pode coletar identificadores de dispositivo e, no Android, o identificador de publicidade do aparelho. O Raro Camera <strong>não</strong> usa esse identificador para anúncio. Não pedimos a permissão de tracking da Apple (ATT). Hoje <strong>não há</strong> interruptor de Analytics dentro do app.</p>
+<p>Política do Google: <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a></p>
+<h3>5.2 Firebase Crashlytics (Google)</h3>
+<p>Se o app fecha ou lança um erro não tratado, o Crashlytics recebe o rastreamento da falha, versão do app e dados de aparelho/sistema que o SDK inclui por padrão. Servem para consertar o app. Não anexamos o seu nome nem o seu e-mail.</p>
+<h3>5.3 Assinatura — RevenueCat, Apple e Google</h3>
+<p>Não processamos cartão. A compra passa pela <strong>App Store</strong> (iOS) ou pela <strong>Google Play</strong> (Android).</p>
+<p>O RevenueCat recebe um identificador anônimo de usuário do SDK (não fazemos login) e o recibo que a loja emite, para saber se o benefício premium está ativo e até quando. Serve para liberar guardar e compartilhar, e para o botão “Restaurar compras”.</p>
+<p>Quem cobra, guarda o meio de pagamento e autentica você é a Apple ou o Google, com a conta que você já tem no telefone. Sem assinatura compartilhada automática entre iPhone e Android: são lojas diferentes.</p>
+<ul>
+<li>RevenueCat: <a href="https://www.revenuecat.com/privacy">https://www.revenuecat.com/privacy</a></li>
+<li>Apple: <a href="https://www.apple.com/legal/privacy/">https://www.apple.com/legal/privacy/</a></li>
+<li>Google Play: <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a></li>
+</ul>
+<h3>5.4 Exportar e compartilhar (você escolhe)</h3>
+<p>Se você tem assinatura e toca em guardar, o app escreve o MP4 na galeria do sistema (no iOS, só adiciona; no Android, pasta <code>Movies/Raro Camera/</code>). A partir daí o arquivo também vive nas regras da galeria do aparelho.</p>
+<p>Se você toca em compartilhar, o sistema abre a folha nativa. O destino (WhatsApp, Files, AirDrop, etc.) é escolha sua. Esse destino deixa de ser tratamento nosso.</p>
+<h3>5.5 Internet</h3>
+<p>O app pede rede para Analytics, Crashlytics e assinatura. Gravar e ver clipes já salvos no vault <strong>não</strong> exige internet.</p>
+<h2>6. Permissões do sistema</h2>
+<table>
+<tr><th>Permissão</th><th>Por quê</th><th>Dá para recusar?</th></tr>
+<tr><td>Câmera</td><td>Preview e gravação</td><td>Sim. Sem câmera o app não grava vídeo</td></tr>
+<tr><td>Microfone</td><td>Áudio do clipe e comando de voz</td><td>Sim. Sem microfone não há voz nem som no vídeo</td></tr>
+<tr><td>Reconhecimento de fala (iOS)</td><td>Entender “Raro gravar” / “Raro parar” no aparelho</td><td>Sim. Sem isso o comando de voz no iOS não funciona</td></tr>
+<tr><td>Adicionar à galeria (iOS) / armazenamento legado (Android 9 e abaixo)</td><td>Só quando você pede para guardar o clipe</td><td>Sim. O clipe pode continuar só no vault do app (se a assinatura permitir persistir)</td></tr>
+<tr><td>Notificações (Android)</td><td>Aviso do serviço de microfone em segundo plano</td><td>Sim. O sistema pode limitar o serviço em segundo plano</td></tr>
+<tr><td>Serviço em primeiro plano / microfone (Android)</td><td>Manter a escuta de voz com o app em segundo plano</td><td>Sem isso a voz em background no Android não sobe</td></tr>
+<tr><td>Internet</td><td>Analytics, crashes, assinatura</td><td>Sem rede, essas partes ficam mudas; a câmera local segue</td></tr>
+</table>
+<p>Nenhuma dessas permissões é usada para ler o seu rolo de fotos nem para rastrear anúncio.</p>
+<h2>7. Bases e finalidades (LGPD)</h2>
+<p>Tratamos o mínimo que o app precisa para:</p>
+<ul>
+<li>executar o que você pediu (gravar, guardar, compartilhar, assinar, restaurar compra) — art. 7º, V, LGPD;</li>
+<li>melhorar estabilidade e uso (Analytics e Crashlytics, sem conteúdo da câmera) — art. 7º, IX, LGPD;</li>
+<li>cumprir regra das lojas e da lei (recibo de assinatura, atendimento a pedido seu) — art. 7º, II e V.</li>
+</ul>
+<p>Não vendemos dados. Não fazemos decisão automatizada que gere efeito jurídico sobre você além de “tem ou não tem o benefício premium”, e isso vem do recibo da loja.</p>
+<h2>8. Seus direitos</h2>
+<p>Você pode pedir, pelo <strong>rarocan1@gmail.com</strong>, confirmação de tratamento, acesso, correção, anonimização, portabilidade quando couber, informação sobre compartilhamentos e revogação das permissões do sistema (essas se revogam também em Ajustes do iOS / Configurações do Android).</p>
+<p>Caminhos práticos, sem esperar e-mail:</p>
+<ul>
+<li><strong>Vídeos no vault:</strong> apague no próprio app ou desinstale o app.</li>
+<li><strong>Cópia na galeria do sistema:</strong> apague pelo app de Fotos / Galeria — o Raro Camera não mexe nela no delete.</li>
+<li><strong>Permissões:</strong> Ajustes / Configurações do aparelho.</li>
+<li><strong>Assinatura:</strong> cancele na App Store ou na Google Play; o RevenueCat deixa de ver um recibo ativo.</li>
+<li><strong>Identificador anônimo do RevenueCat / dados de crash e analytics:</strong> peça pelo e-mail acima. Nós não temos um cadastro seu; o pedido será encaminhado ao operador no que for possível identificar.</li>
+</ul>
+<p>A Autoridade Nacional de Proteção de Dados (ANPD) é o órgão fiscalizador no Brasil.</p>
+<h2>9. Quanto tempo fica</h2>
+<table>
+<tr><th>Dado</th><th>Retenção</th></tr>
+<tr><td>Clipe e sidecar no vault</td><td>Até você apagar ou desinstalar o app</td></tr>
+<tr><td>Cópia na galeria do sistema</td><td>Até você apagar na galeria; não segue o delete do app</td></tr>
+<tr><td>Preferências locais</td><td>Até limpar dados do app ou desinstalar</td></tr>
+<tr><td>Eventos Analytics / crashes</td><td>Pelo prazo padrão dos painéis Firebase do projeto</td></tr>
+<tr><td>Recibo / entitlement no RevenueCat</td><td>Enquanto a loja e o RevenueCat mantiverem o histórico daquele identificador anônimo</td></tr>
+</table>
+<h2>10. Transferência para fora do Brasil</h2>
+<p>Google (Firebase) e RevenueCat processam dado fora do Brasil, em geral nos Estados Unidos, sob os contratos deles com quem publica o app. Não hospedamos vídeo nosso em outro país porque <strong>não hospedamos vídeo</strong>.</p>
+<h2>11. Crianças</h2>
+<p>O app não pede idade e não tem área infantil. Não é feito para criança. Se você é responsável por um menor e quer que apaguemos o que for possível identificar nos operadores, escreva para <strong>rarocan1@gmail.com</strong>.</p>
+<p>A classificação etária das lojas é definida no App Store Connect e no Play Console na hora de publicar.</p>
+<h2>12. Mudanças</h2>
+<p>Se o app passar a coletar coisa nova (login, nuvem, outro SDK), esta política precisa ser reescrita <strong>antes</strong> dessa mudança. A data no topo muda. A URL canônica continua apontando para o texto vigente.</p>
+<h2>13. Contato</h2>
+<p>Vitor Autorino Lopes (Raro Camera)   E-mail: rarocan1@gmail.com   Documento: <a href="https://rarocamera.com.br/privacidade">https://rarocamera.com.br/privacidade</a></p>
+    </main>
+    <footer>
+      Vitor Autorino Lopes (Raro Camera) ·
+      <a href="mailto:rarocan1@gmail.com">rarocan1@gmail.com</a>
+      · site estático, sem cookies
+    </footer>
+  </div>
+</body>
+</html>

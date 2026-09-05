@@ -70,7 +70,12 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: buildRaroDarkTheme(),
-          home: SettingsScreen(onBack: () {}, onSeePlans: () {}),
+          home: SettingsScreen(
+            onBack: () {},
+            onSeePlans: () {},
+            onTerms: () {},
+            onPrivacy: () {},
+          ),
         ),
       ),
     );

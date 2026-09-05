@@ -7,6 +7,8 @@ import 'package:raro_mobile/features/camera/application/pending_recording_contro
 import 'package:raro_mobile/features/camera/presentation/camera_screen.dart';
 import 'package:raro_mobile/features/checkout/presentation/checkout_screen.dart';
 import 'package:raro_mobile/features/gallery/presentation/gallery_screen.dart';
+import 'package:raro_mobile/features/legal/domain/legal_document.dart';
+import 'package:raro_mobile/features/legal/presentation/legal_document_screen.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_1.dart';
 import 'package:raro_mobile/features/onboarding/presentation/onboarding_page_2.dart';
 import 'package:raro_mobile/features/paywall/domain/paywall_args.dart';
@@ -67,6 +69,8 @@ GoRouter buildAppRouter() {
         builder: (context, state) => SettingsScreen(
           onBack: () => context.go(AppScreen.p05Camera.path),
           onSeePlans: () => context.go(AppScreen.p09Paywall.path),
+          onTerms: () => context.push(AppScreen.p11Terms.path),
+          onPrivacy: () => context.push(AppScreen.p12Privacy.path),
         ),
       ),
       GoRoute(
@@ -85,6 +89,8 @@ GoRouter buildAppRouter() {
             intent: args.intent,
             onClose: () => _onPaywallClosed(context, args),
             onUnlocked: () => _onPaywallUnlocked(context, args),
+            onTerms: () => context.push(AppScreen.p11Terms.path),
+            onPrivacy: () => context.push(AppScreen.p12Privacy.path),
             onCheckout: (plan) => context.go(
               AppScreen.p10Checkout.path,
               extra: CheckoutArgs(plan: plan, paywall: args),
@@ -106,6 +112,20 @@ GoRouter buildAppRouter() {
                 : null,
           );
         },
+      ),
+      GoRoute(
+        path: AppScreen.p11Terms.path,
+        builder: (context, state) => LegalDocumentScreen(
+          document: LegalDocument.terms,
+          onBack: () => _onLegalBack(context),
+        ),
+      ),
+      GoRoute(
+        path: AppScreen.p12Privacy.path,
+        builder: (context, state) => LegalDocumentScreen(
+          document: LegalDocument.privacy,
+          onBack: () => _onLegalBack(context),
+        ),
       ),
       GoRoute(
         path: '${AppScreen.p08Preview.path}/:id',
@@ -146,6 +166,14 @@ CheckoutArgs _checkoutArgs(Object? extra) {
   if (extra is CheckoutArgs) return extra;
   if (extra is PlanType) return CheckoutArgs(plan: extra);
   return const CheckoutArgs(plan: PlanType.monthly);
+}
+
+void _onLegalBack(BuildContext context) {
+  if (context.canPop()) {
+    context.pop();
+    return;
+  }
+  context.go(AppScreen.p06Settings.path);
 }
 
 void _onPaywallClosed(BuildContext context, PaywallArgs args) {

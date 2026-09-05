@@ -110,6 +110,15 @@
   "@privacyPolicy": {
     "description": "Link para política de privacidade (Sobre e paywall)"
   },
+  "legalCanonicalHint": "Também em {url}",
+  "@legalCanonicalHint": {
+    "description": "URL pública do texto legal aberto no app",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
   "replayBufferBadge": "Buffer rotativo",
   "@replayBufferBadge": {
     "description": "Sufixo do badge do card Raro Replay; a marca fica fora da tradução"
@@ -518,12 +527,15 @@
   "@paywallPeriodYearly": {
     "description": "Palavra do período anual usada em frases compostas"
   },
-  "paywallLegal": "Assinatura {period} com renovação automática. Cancele a qualquer momento nas configurações da App Store.",
+  "paywallLegal": "Assinatura {period} com renovação automática. Inclui {days} dias grátis. Cancele a qualquer momento nas configurações da App Store ou do Google Play. Desinstalar o app não cancela a assinatura.",
   "@paywallLegal": {
-    "description": "Texto legal do paywall; period é paywallPeriodMonthly/Yearly",
+    "description": "Texto legal do paywall (2.8); period é paywallPeriodMonthly/Yearly; days vem de raro_shared",
     "placeholders": {
       "period": {
         "type": "String"
+      },
+      "days": {
+        "type": "int"
       }
     }
   },

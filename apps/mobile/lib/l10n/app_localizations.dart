@@ -250,6 +250,12 @@ abstract class AppLocalizations {
   /// **'Política de Privacidade'**
   String get privacyPolicy;
 
+  /// URL pública do texto legal aberto no app
+  ///
+  /// In pt, this message translates to:
+  /// **'Também em {url}'**
+  String legalCanonicalHint(String url);
+
   /// Sufixo do badge do card Raro Replay; a marca fica fora da tradução
   ///
   /// In pt, this message translates to:
@@ -766,11 +772,11 @@ abstract class AppLocalizations {
   /// **'anual'**
   String get paywallPeriodYearly;
 
-  /// Texto legal do paywall; period é paywallPeriodMonthly/Yearly
+  /// Texto legal do paywall (2.8); period é paywallPeriodMonthly/Yearly; days vem de raro_shared
   ///
   /// In pt, this message translates to:
-  /// **'Assinatura {period} com renovação automática. Cancele a qualquer momento nas configurações da App Store.'**
-  String paywallLegal(String period);
+  /// **'Assinatura {period} com renovação automática. Inclui {days} dias grátis. Cancele a qualquer momento nas configurações da App Store ou do Google Play. Desinstalar o app não cancela a assinatura.'**
+  String paywallLegal(String period, int days);
 
   /// Nome do plano no card e no checkout
   ///

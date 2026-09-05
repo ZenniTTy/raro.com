@@ -6,13 +6,13 @@
 
 ## Funcional
 
-- [ ] 100% das 13 telas + 3 modais implementadas e navegáveis — **10/13 telas** (faltam `p05aLockMode`, `p11Terms`, `p12Privacy` — zero referências no código) e **1/3 modais** (M01 ok; M02 Xiaomi e M03 Bluetooth ausentes)
+- [ ] 100% das 13 telas + 3 modais implementadas e navegáveis — **12/13 telas** (falta só `p05aLockMode`; **P11 Terms e P12 Privacy implementadas** na PR #15) e **1/3 modais** (M01 ok; M02 Xiaomi e M03 Bluetooth ausentes)
 - [x] Nenhuma feature não prevista no Blueprint adicionada
 - [x] Wake word `"Raro"` detectado em ambiente silencioso — **Android funciona em foreground E BACKGROUND** (Vosk motor único + FGS `microphone`), confirmado pelo dono no device em 2026-09-02. **Caminho congelado: não mexer.** iOS segue foreground-only (SFSpeech); background iOS sai do escopo de v1.0 (o ONNX foi reprovado na 0029 e a Sensory deixa de ser bloqueador). Métrica formal de ">90%" nunca foi medida em bancada — critério aceito por validação de uso real
 - [x] Replay Buffer estável em iOS + Android — **iOS ok; Android Rota D (ADR-0031) provada no M54 (sessão 0043)**: pré-roll no REC, janela 15s/30s recarrega, selo da galeria com formato/lente da sessão. Branch `feat/fatia-5-replay-buffer-android` ainda não mergeada em `develop`. `saveReplay()` standalone sem UI (fora do DoD de produto).
 - [ ] Lock mode reduz bateria ≥ 50% — **tela P05a não implementada**
 - [ ] App testado em ≥ 1 device Xiaomi/MIUI real — testado no **Galaxy M54** (não-Xiaomi); modal M02 ausente
-- [x] i18n completa em pt-BR / en / es — **117 chaves traduzíveis em cada um dos 3 `.arb`**, com teste-guarda `forbidden_ui_literals_test.dart`
+- [x] i18n completa em pt-BR / en / es — **145 chaves traduzíveis em cada um dos 3 `.arb`**, com teste-guarda `forbidden_ui_literals_test.dart`
 - [ ] Free trial 30 dias funcional via RevenueCat — **RevenueCat não integrado**: `purchases_flutter` no pubspec com zero imports
 - [x] Salvar vídeo na galeria exige entitlement `premium` (**regra confirmada pelo dono, 2026-09-04**) — PR #13: free grava e vê no Preview; Salvar (vault + Fotos) e Share exigem `premium`. Provado no M54: recusar Salvar mantém o acervo; premium persiste no vault e em `Movies/Raro Camera/` + folha nativa de share. Export iOS (`PHPhotoLibrary` add-only) no código; compile iOS desta fatia não rodou no device nesta sessão.
 - [ ] Restore purchases funcional — `paywall_screen.dart:123` é `_comingSoon`. **Bloqueador de review da Apple**
