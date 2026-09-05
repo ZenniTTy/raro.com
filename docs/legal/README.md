@@ -15,6 +15,8 @@ Site estático: `apps/legal/build.py` lê estes markdown e gera `apps/legal/dist
 
 No app: P11/P12 embutem o markdown (`assets/legal/`) + hint com a URL canônica. Sem WebView e sem dep nova.
 
+**Anti-drift:** `apps/mobile/test/contract/legal_documents_parity_test.dart` exige que cada par `docs/legal/*` ↔ `assets/legal/*` seja idêntico byte a byte. Ao editar textos, atualize os dois lados no mesmo commit.
+
 ## Fontes
 
 | Arquivo | Uso |
