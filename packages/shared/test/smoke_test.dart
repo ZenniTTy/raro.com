@@ -25,6 +25,20 @@ void main() {
       expect(SubscriptionConfig.freeTrialDays, 30);
     });
 
+    test('canonical legal URLs live on rarocamera.com.br', () {
+      expect(LegalUrls.privacy, 'https://rarocamera.com.br/privacidade');
+      expect(LegalUrls.terms, 'https://rarocamera.com.br/termos');
+      expect(LegalUrls.contactEmail, 'rarocan1@gmail.com');
+      expect(
+        LegalUrls.privacyForLanguage('en'),
+        'https://rarocamera.com.br/en/privacy',
+      );
+      expect(
+        LegalUrls.termsForLanguage('es'),
+        'https://rarocamera.com.br/es/terminos',
+      );
+    });
+
     test('monthly SKU matches Blueprint 2.4', () {
       expect(SubscriptionSkus.monthly, 'raro_premium_monthly_BRL_9_90');
     });

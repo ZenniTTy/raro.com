@@ -58,6 +58,8 @@ void main() {
         home: PaywallScreen(
           onClose: () => closed = true,
           onCheckout: (plan) => checkoutPlan = plan,
+          onTerms: () {},
+          onPrivacy: () {},
         ),
       ),
     );
@@ -109,6 +111,60 @@ void main() {
     expect(checkoutPlan, PlanType.yearly);
   });
 
+  testWidgets('copy 2.8 cita Play, 30 dias e renovação automática', (
+    tester,
+  ) async {
+    await tester.pumpWidget(app());
+    expect(find.textContaining('renovação automática'), findsOneWidget);
+    expect(find.textContaining('30 dias grátis'), findsWidgets);
+    expect(find.textContaining('Google Play'), findsOneWidget);
+    expect(find.textContaining('App Store'), findsOneWidget);
+    expect(
+      find.textContaining('Desinstalar o app não cancela a assinatura'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('links legais disparam onTerms e onPrivacy', (tester) async {
+    var terms = 0;
+    var privacy = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          billingGatewayProvider.overrideWithValue(FakeBillingGateway()),
+          subscriptionStoreProvider.overrideWithValue(
+            _MemorySubscriptionStore(),
+          ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildRaroDarkTheme(),
+          home: PaywallScreen(
+            onClose: () {},
+            onCheckout: (_) {},
+            onTerms: () => terms++,
+            onPrivacy: () => privacy++,
+          ),
+        ),
+      ),
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('paywall_terms_link')),
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('paywall_terms_link')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('paywall_privacy_link')));
+    await tester.pump();
+    expect(terms, 1);
+    expect(privacy, 1);
+    expect(find.text('Em breve'), findsNothing);
+  });
+
   testWidgets('mostra "Restaurar compras" e "Voltar"', (tester) async {
     await tester.pumpWidget(app());
     expect(find.text('Restaurar compras'), findsOneWidget);
@@ -156,6 +212,8 @@ void main() {
             intent: PaywallIntent.save,
             onClose: () {},
             onCheckout: (_) {},
+            onTerms: () {},
+            onPrivacy: () {},
           ),
         ),
       ),
@@ -207,6 +265,8 @@ void main() {
             intent: PaywallIntent.save,
             onClose: () {},
             onCheckout: (_) {},
+            onTerms: () {},
+            onPrivacy: () {},
             onUnlocked: () => unlocked = true,
           ),
         ),

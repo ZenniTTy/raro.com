@@ -21,8 +21,15 @@ void main() {
   }
 
   group('paywall renderiza traduzido por locale', () {
-    Widget paywall(Locale locale) =>
-        host(locale, PaywallScreen(onClose: () {}, onCheckout: (_) {}));
+    Widget paywall(Locale locale) => host(
+      locale,
+      PaywallScreen(
+        onClose: () {},
+        onCheckout: (_) {},
+        onTerms: () {},
+        onPrivacy: () {},
+      ),
+    );
 
     testWidgets('pt: título, badge e trial interpolado', (tester) async {
       await tester.pumpWidget(paywall(const Locale('pt', 'BR')));

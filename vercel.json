@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "true",
+  "buildCommand": "python3 apps/legal/build.py",
+  "outputDirectory": "apps/legal/dist",
+  "cleanUrls": true,
+  "trailingSlash": false
+}

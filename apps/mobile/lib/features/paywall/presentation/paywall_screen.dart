@@ -18,12 +18,16 @@ class PaywallScreen extends ConsumerStatefulWidget {
     super.key,
     required this.onClose,
     required this.onCheckout,
+    required this.onTerms,
+    required this.onPrivacy,
     this.intent = PaywallIntent.browse,
     this.onUnlocked,
   });
 
   final VoidCallback onClose;
   final ValueChanged<PlanType> onCheckout;
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
   final PaywallIntent intent;
   final VoidCallback? onUnlocked;
 
@@ -157,7 +161,10 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                           ],
                         ),
                         const SizedBox(height: 24),
-                        const _LegalLinks(),
+                        _LegalLinks(
+                          onTerms: widget.onTerms,
+                          onPrivacy: widget.onPrivacy,
+                        ),
                       ],
                     ),
                   ),
@@ -190,6 +197,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                           _selected == PlanType.yearly
                               ? l10n.paywallPeriodYearly
                               : l10n.paywallPeriodMonthly,
+                          trialDays,
                         ),
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -302,7 +310,10 @@ class _Header extends StatelessWidget {
 }
 
 class _LegalLinks extends StatelessWidget {
-  const _LegalLinks();
+  const _LegalLinks({required this.onTerms, required this.onPrivacy});
+
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
 
   @override
   Widget build(BuildContext context) {
@@ -312,26 +323,17 @@ class _LegalLinks extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: () => _comingSoon(context),
+          key: const Key('paywall_terms_link'),
+          onTap: onTerms,
           child: Text(AppLocalizations.of(context).termsOfUse, style: style),
         ),
         Text('  ·  ', style: style),
         GestureDetector(
-          onTap: () => _comingSoon(context),
+          key: const Key('paywall_privacy_link'),
+          onTap: onPrivacy,
           child: Text(AppLocalizations.of(context).privacyPolicy, style: style),
         ),
       ],
     );
   }
-}
-
-void _comingSoon(BuildContext context) {
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).comingSoon),
-        duration: const Duration(seconds: 1),
-      ),
-    );
 }

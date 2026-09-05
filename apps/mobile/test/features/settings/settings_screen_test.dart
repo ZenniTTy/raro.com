@@ -56,7 +56,12 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildRaroDarkTheme(),
-        home: SettingsScreen(onBack: () {}, onSeePlans: () {}),
+        home: SettingsScreen(
+          onBack: () {},
+          onSeePlans: () {},
+          onTerms: () {},
+          onPrivacy: () {},
+        ),
       ),
     );
   }
@@ -140,7 +145,12 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           theme: buildRaroDarkTheme(),
-          home: SettingsScreen(onBack: () {}, onSeePlans: () => tapped = true),
+          home: SettingsScreen(
+            onBack: () {},
+            onSeePlans: () => tapped = true,
+            onTerms: () {},
+            onPrivacy: () {},
+          ),
         ),
       ),
     );
@@ -157,6 +167,39 @@ void main() {
     await tester.pump();
 
     expect(tapped, isTrue);
+  });
+
+  testWidgets('Termos e Privacidade disparam os callbacks', (tester) async {
+    var terms = 0;
+    var privacy = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [settingsStoreProvider.overrideWithValue(store)],
+        child: MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildRaroDarkTheme(),
+          home: SettingsScreen(
+            onBack: () {},
+            onSeePlans: () {},
+            onTerms: () => terms++,
+            onPrivacy: () => privacy++,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await scrollTo(tester, find.byKey(const Key('settings_terms_link')));
+    await tester.tap(find.byKey(const Key('settings_terms_link')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('settings_privacy_link')));
+    await tester.pump();
+
+    expect(terms, 1);
+    expect(privacy, 1);
   });
 
   testWidgets('mostra trial countdown quando há trial ativo', (tester) async {

@@ -24,10 +24,14 @@ class SettingsScreen extends ConsumerWidget {
     super.key,
     required this.onBack,
     required this.onSeePlans,
+    required this.onTerms,
+    required this.onPrivacy,
   });
 
   final VoidCallback onBack;
   final VoidCallback onSeePlans;
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,8 +49,12 @@ class SettingsScreen extends ConsumerWidget {
               child: settings.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (_, _) => const SizedBox.shrink(),
-                data: (data) =>
-                    _SettingsBody(settings: data, onSeePlans: onSeePlans),
+                data: (data) => _SettingsBody(
+                  settings: data,
+                  onSeePlans: onSeePlans,
+                  onTerms: onTerms,
+                  onPrivacy: onPrivacy,
+                ),
               ),
             ),
           ],
@@ -111,10 +119,17 @@ class _GradLineThin extends StatelessWidget {
 }
 
 class _SettingsBody extends ConsumerWidget {
-  const _SettingsBody({required this.settings, required this.onSeePlans});
+  const _SettingsBody({
+    required this.settings,
+    required this.onSeePlans,
+    required this.onTerms,
+    required this.onPrivacy,
+  });
 
   final RecordingSettings settings;
   final VoidCallback onSeePlans;
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -162,7 +177,7 @@ class _SettingsBody extends ConsumerWidget {
         const SizedBox(height: 14),
         SettingsSection(
           title: l10n.settingsAboutSection,
-          child: const _About(),
+          child: _About(onTerms: onTerms, onPrivacy: onPrivacy),
         ),
         const SizedBox(height: 24),
         const _Wordmark(),
@@ -479,7 +494,10 @@ class _SeePlansButton extends StatelessWidget {
 }
 
 class _About extends StatelessWidget {
-  const _About();
+  const _About({required this.onTerms, required this.onPrivacy});
+
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
 
   @override
   Widget build(BuildContext context) {
@@ -507,32 +525,52 @@ class _About extends StatelessWidget {
             ],
           ),
         ),
-        _AboutLink(label: l10n.termsOfUse, colors: colors),
-        _AboutLink(label: l10n.privacyPolicy, colors: colors),
+        _AboutLink(
+          key: const Key('settings_terms_link'),
+          label: l10n.termsOfUse,
+          colors: colors,
+          onTap: onTerms,
+        ),
+        _AboutLink(
+          key: const Key('settings_privacy_link'),
+          label: l10n.privacyPolicy,
+          colors: colors,
+          onTap: onPrivacy,
+        ),
       ],
     );
   }
 }
 
 class _AboutLink extends StatelessWidget {
-  const _AboutLink({required this.label, required this.colors});
+  const _AboutLink({
+    super.key,
+    required this.label,
+    required this.colors,
+    required this.onTap,
+  });
 
   final String label;
   final RaroColors colors;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: colors.border)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 13, color: colors.ink)),
-          Icon(Icons.chevron_right, size: 16, color: colors.inkFaint),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: colors.border)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: TextStyle(fontSize: 13, color: colors.ink)),
+            Icon(Icons.chevron_right, size: 16, color: colors.inkFaint),
+          ],
+        ),
       ),
     );
   }

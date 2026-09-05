@@ -87,6 +87,7 @@ flutter:
   assets:
     - assets/logo/
     - assets/sample_videos/
+    - assets/legal/
 
   fonts:
     - family: Space Grotesk

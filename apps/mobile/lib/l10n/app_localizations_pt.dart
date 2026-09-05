@@ -97,6 +97,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get privacyPolicy => 'Política de Privacidade';
 
   @override
+  String legalCanonicalHint(String url) {
+    return 'Também em $url';
+  }
+
+  @override
   String get replayBufferBadge => 'Buffer rotativo';
 
   @override
@@ -388,8 +393,8 @@ class AppLocalizationsPt extends AppLocalizations {
   String get paywallPeriodYearly => 'anual';
 
   @override
-  String paywallLegal(String period) {
-    return 'Assinatura $period com renovação automática. Cancele a qualquer momento nas configurações da App Store.';
+  String paywallLegal(String period, int days) {
+    return 'Assinatura $period com renovação automática. Inclui $days dias grátis. Cancele a qualquer momento nas configurações da App Store ou do Google Play. Desinstalar o app não cancela a assinatura.';
   }
 
   @override

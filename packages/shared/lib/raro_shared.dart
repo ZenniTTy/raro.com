@@ -11,6 +11,7 @@ export 'src/enums/fps.dart';
 export 'src/enums/lens.dart';
 export 'src/enums/resolution.dart';
 export 'src/identity/app_identity.dart';
+export 'src/legal/legal_urls.dart';
 export 'src/permissions/permissions_contract.dart';
 export 'src/screens/app_screen.dart';
 export 'src/storage/storage_keys.dart';
