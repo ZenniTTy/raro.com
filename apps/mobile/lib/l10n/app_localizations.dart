@@ -190,6 +190,12 @@ abstract class AppLocalizations {
   /// **', a gravação é controlada pelos botões laterais de volume do aparelho.'**
   String get settingsControlModeVolumePart;
 
+  /// Descrição do modo de controle quando Volume não está disponível na plataforma
+  ///
+  /// In pt, this message translates to:
+  /// **' a gravação é controlada pela voz.'**
+  String get settingsControlModeVoiceOnlyPart;
+
   /// Título do card de controle por volume
   ///
   /// In pt, this message translates to:

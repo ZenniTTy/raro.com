@@ -6,6 +6,7 @@ import UIKit
   private var cameraHostApi: CameraHostApiImpl?
   private var replayBufferHostApi: ReplayBufferHostApiImpl?
   private var voiceHostApi: VoiceHostApiImpl?
+  private var volumeHostApi: VolumeHostApiImpl?
   private var galleryHostApi: GalleryHostApiImpl?
 
   override func application(
@@ -50,5 +51,9 @@ import UIKit
     let galleryApi = GalleryHostApiImpl()
     self.galleryHostApi = galleryApi
     GalleryHostApiSetup.setUp(binaryMessenger: messenger, api: galleryApi)
+
+    let volumeApi = VolumeHostApiImpl(flutterApi: VolumeFlutterApi(binaryMessenger: messenger))
+    self.volumeHostApi = volumeApi
+    VolumeHostApiSetup.setUp(binaryMessenger: messenger, api: volumeApi)
   }
 }

@@ -2,6 +2,16 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
+## [2026-09-05] — Modo Volume como gatilho (sessão 0046, código)
+
+### Adicionado
+- **ADR-0033:** contrato Pigeon `isAvailable` / `startListening` / `stopListening` / `onVolumePressed`. Android consome `KEYCODE_VOLUME_*`. iOS 17.2+ usa `AVCaptureEventInteraction` (API oficial de captura). iOS 15–17.1 esconde o card. KVO + `setOutputVolume` rejeitado (API inexistente + guideline 2.5.9).
+- **3º gatilho** no mesmo `_onRecTap` da voz/REC: `+` inicia, `−` para. Escuta só com `ControlMode.volume` e câmera em foreground.
+
+### Verificado
+- `flutter analyze` limpo; suíte **433/433**; `flutter build ios --debug --no-codesign` → `Runner.app`.
+- **Prova M54 ainda não rodou** (gate de produto).
+
 ## [2026-09-05] — Termos, Privacidade e copy legal (sessão 0045)
 
 ### Adicionado

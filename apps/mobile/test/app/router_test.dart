@@ -29,6 +29,8 @@ import 'package:raro_mobile/core/native_bridges/generated/voice_api.g.dart';
 import 'package:raro_mobile/features/voice/application/voice_flutter_api_provider.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository_provider.dart';
+import 'package:raro_mobile/features/volume/data/volume_repository.dart';
+import 'package:raro_mobile/features/volume/data/volume_repository_provider.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 
 import '../helpers/fake_billing_gateway.dart';
@@ -38,6 +40,17 @@ class _MockPermissionGateway extends Mock implements PermissionGateway {}
 class _MockCameraRepository extends Mock implements CameraRepository {}
 
 class _StubVoiceRepository implements VoiceRepository {
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<void> startListening() async {}
+
+  @override
+  Future<void> stopListening() async {}
+}
+
+class _StubVolumeRepository implements VolumeRepository {
   @override
   Future<bool> isAvailable() async => true;
 
@@ -146,6 +159,7 @@ void main() {
         onboardingStoreProvider.overrideWithValue(onboardingStore),
         cameraRepositoryProvider.overrideWithValue(cameraRepository),
         voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+        volumeRepositoryProvider.overrideWithValue(_StubVolumeRepository()),
         voiceWakeEventsProvider.overrideWithValue(
           const Stream<WakeCommand>.empty(),
         ),

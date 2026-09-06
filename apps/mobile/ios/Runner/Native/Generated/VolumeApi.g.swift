@@ -69,10 +69,35 @@ private func nilOrValue<T>(_ value: Any?) -> T? {
 }
 
 
+enum VolumeDirection: Int {
+  case up = 0
+  case down = 1
+}
+
 private class VolumeApiPigeonCodecReader: FlutterStandardReader {
+  override func readValue(ofType type: UInt8) -> Any? {
+    switch type {
+    case 129:
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return VolumeDirection(rawValue: enumResultAsInt)
+      }
+      return nil
+    default:
+      return super.readValue(ofType: type)
+    }
+  }
 }
 
 private class VolumeApiPigeonCodecWriter: FlutterStandardWriter {
+  override func writeValue(_ value: Any) {
+    if let value = value as? VolumeDirection {
+      super.writeByte(129)
+      super.writeValue(value.rawValue)
+    } else {
+      super.writeValue(value)
+    }
+  }
 }
 
 private class VolumeApiPigeonCodecReaderWriter: FlutterStandardReaderWriter {
@@ -89,9 +114,12 @@ class VolumeApiPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
   static let shared = VolumeApiPigeonCodec(readerWriter: VolumeApiPigeonCodecReaderWriter())
 }
 
+
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol VolumeHostApi {
-  func volumePing() throws
+  func isAvailable(completion: @escaping (Result<Bool, Error>) -> Void)
+  func startListening() throws
+  func stopListening() throws
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -100,24 +128,52 @@ class VolumeHostApiSetup {
   /// Sets up an instance of `VolumeHostApi` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: VolumeHostApi?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    let volumePingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.VolumeHostApi.volumePing\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let isAvailableChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.VolumeHostApi.isAvailable\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      volumePingChannel.setMessageHandler { _, reply in
+      isAvailableChannel.setMessageHandler { _, reply in
+        api.isAvailable { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      isAvailableChannel.setMessageHandler(nil)
+    }
+    let startListeningChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.VolumeHostApi.startListening\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      startListeningChannel.setMessageHandler { _, reply in
         do {
-          try api.volumePing()
+          try api.startListening()
           reply(wrapResult(nil))
         } catch {
           reply(wrapError(error))
         }
       }
     } else {
-      volumePingChannel.setMessageHandler(nil)
+      startListeningChannel.setMessageHandler(nil)
+    }
+    let stopListeningChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.raro_mobile.VolumeHostApi.stopListening\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      stopListeningChannel.setMessageHandler { _, reply in
+        do {
+          try api.stopListening()
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      stopListeningChannel.setMessageHandler(nil)
     }
   }
 }
 /// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
 protocol VolumeFlutterApiProtocol {
-  func volumeReady(completion: @escaping (Result<Void, VolumePigeonError>) -> Void)
+  func onVolumePressed(direction directionArg: VolumeDirection, completion: @escaping (Result<Void, VolumePigeonError>) -> Void)
 }
 class VolumeFlutterApi: VolumeFlutterApiProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -129,10 +185,10 @@ class VolumeFlutterApi: VolumeFlutterApiProtocol {
   var codec: VolumeApiPigeonCodec {
     return VolumeApiPigeonCodec.shared
   }
-  func volumeReady(completion: @escaping (Result<Void, VolumePigeonError>) -> Void) {
-    let channelName: String = "dev.flutter.pigeon.raro_mobile.VolumeFlutterApi.volumeReady\(messageChannelSuffix)"
+  func onVolumePressed(direction directionArg: VolumeDirection, completion: @escaping (Result<Void, VolumePigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.raro_mobile.VolumeFlutterApi.onVolumePressed\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
-    channel.sendMessage(nil) { response in
+    channel.sendMessage([directionArg] as [Any?]) { response in
       guard let listResponse = response as? [Any?] else {
         completion(.failure(createConnectionError(withChannelName: channelName)))
         return

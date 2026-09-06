@@ -57,6 +57,10 @@ class AppLocalizationsEn extends AppLocalizations {
       ' mode, recording is controlled by the side volume buttons of your device.';
 
   @override
+  String get settingsControlModeVoiceOnlyPart =>
+      ' mode, recording is controlled by voice.';
+
+  @override
   String get settingsControlVolumeTitle => 'Volume';
 
   @override

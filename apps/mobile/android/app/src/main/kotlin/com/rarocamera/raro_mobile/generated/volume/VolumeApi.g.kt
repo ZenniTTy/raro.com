@@ -50,18 +50,45 @@ class FlutterError (
   override val message: String? = null,
   val details: Any? = null
 ) : Throwable()
+
+enum class VolumeDirection(val raw: Int) {
+  UP(0),
+  DOWN(1);
+
+  companion object {
+    fun ofRaw(raw: Int): VolumeDirection? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
 private open class VolumeApiPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
-    return     super.readValueOfType(type, buffer)
+    return when (type) {
+      129.toByte() -> {
+        return (readValue(buffer) as Long?)?.let {
+          VolumeDirection.ofRaw(it.toInt())
+        }
+      }
+      else -> super.readValueOfType(type, buffer)
+    }
   }
   override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
-    super.writeValue(stream, value)
+    when (value) {
+      is VolumeDirection -> {
+        stream.write(129)
+        writeValue(stream, value.raw.toLong())
+      }
+      else -> super.writeValue(stream, value)
+    }
   }
 }
 
+
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface VolumeHostApi {
-  fun volumePing()
+  fun isAvailable(callback: (Result<Boolean>) -> Unit)
+  fun startListening()
+  fun stopListening()
 
   companion object {
     /** The codec used by VolumeHostApi. */
@@ -73,11 +100,45 @@ interface VolumeHostApi {
     fun setUp(binaryMessenger: BinaryMessenger, api: VolumeHostApi?, messageChannelSuffix: String = "") {
       val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.VolumeHostApi.volumePing$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.VolumeHostApi.isAvailable$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            api.isAvailable{ result: Result<Boolean> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(VolumeApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(VolumeApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.VolumeHostApi.startListening$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
-              api.volumePing()
+              api.startListening()
+              listOf(null)
+            } catch (exception: Throwable) {
+              VolumeApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.raro_mobile.VolumeHostApi.stopListening$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              api.stopListening()
               listOf(null)
             } catch (exception: Throwable) {
               VolumeApiPigeonUtils.wrapError(exception)
@@ -99,12 +160,12 @@ class VolumeFlutterApi(private val binaryMessenger: BinaryMessenger, private val
       VolumeApiPigeonCodec()
     }
   }
-  fun volumeReady(callback: (Result<Unit>) -> Unit)
+  fun onVolumePressed(directionArg: VolumeDirection, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-    val channelName = "dev.flutter.pigeon.raro_mobile.VolumeFlutterApi.volumeReady$separatedMessageChannelSuffix"
+    val channelName = "dev.flutter.pigeon.raro_mobile.VolumeFlutterApi.onVolumePressed$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
-    channel.send(null) {
+    channel.send(listOf(directionArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))

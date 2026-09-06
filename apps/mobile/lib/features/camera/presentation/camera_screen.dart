@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:raro_mobile/core/logging/app_logger.dart';
 import 'package:raro_mobile/core/native_bridges/generated/camera_api.g.dart';
 import 'package:raro_mobile/core/native_bridges/generated/voice_api.g.dart';
+import 'package:raro_mobile/core/native_bridges/generated/volume_api.g.dart';
 import 'package:raro_mobile/features/camera/presentation/camera_error_l10n.dart';
 import 'package:raro_mobile/features/camera/domain/format_catalog.dart';
 import 'package:raro_mobile/core/theme/raro_fonts.dart';
@@ -38,6 +39,7 @@ import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:raro_mobile/features/voice/application/voice_controller.dart';
 import 'package:raro_mobile/features/voice/domain/voice_state.dart';
 import 'package:raro_mobile/features/voice/presentation/voice_listening_indicator.dart';
+import 'package:raro_mobile/features/volume/application/volume_controller.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 import 'package:raro_shared/raro_shared.dart'
     show BufferDuration, Codec, ControlMode;
@@ -60,7 +62,9 @@ class CameraScreen extends ConsumerStatefulWidget {
   ConsumerState<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends ConsumerState<CameraScreen> {
+class _CameraScreenState extends ConsumerState<CameraScreen>
+    with WidgetsBindingObserver {
+  late final VolumeController _volume;
   Timer? _timer;
   Timer? _popupTimer;
   Duration _elapsed = Duration.zero;
@@ -80,13 +84,38 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _volume = ref.read(volumeControllerProvider.notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _startSession();
       ref
           .read(voiceRecordingTriggerProvider.notifier)
           .register(_onVoiceCommand);
+      ref
+          .read(volumeRecordingTriggerProvider.notifier)
+          .register(_onVolumePressed);
+      unawaited(_volume.attach());
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        unawaited(_volume.attach());
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        unawaited(_volume.detach());
+    }
+  }
+
+  void _onVolumePressed(VolumeDirection direction) {
+    _onVoiceCommand(
+      direction == VolumeDirection.up ? WakeCommand.start : WakeCommand.stop,
+    );
   }
 
   void _onVoiceCommand(WakeCommand command) {
@@ -241,6 +270,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_volume.detach());
     _timer?.cancel();
     _popupTimer?.cancel();
     _confirmationTimer?.cancel();

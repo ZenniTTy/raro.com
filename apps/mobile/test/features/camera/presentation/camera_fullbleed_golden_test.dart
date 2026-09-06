@@ -18,6 +18,8 @@ import 'package:raro_mobile/features/settings/domain/recording_settings.dart';
 import 'package:raro_mobile/features/voice/application/voice_flutter_api_provider.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository.dart';
 import 'package:raro_mobile/features/voice/data/voice_repository_provider.dart';
+import 'package:raro_mobile/features/volume/data/volume_repository.dart';
+import 'package:raro_mobile/features/volume/data/volume_repository_provider.dart';
 import 'package:raro_mobile/l10n/app_localizations.dart';
 
 class _FakeSettingsStore implements SettingsStore {
@@ -37,6 +39,17 @@ class _FakeSubscriptionStore implements SubscriptionStore {
 }
 
 class _StubVoiceRepository implements VoiceRepository {
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<void> startListening() async {}
+
+  @override
+  Future<void> stopListening() async {}
+}
+
+class _StubVolumeRepository implements VolumeRepository {
   @override
   Future<bool> isAvailable() async => true;
 
@@ -94,6 +107,7 @@ Widget _cameraUnderInsets({bool fakeSubscription = false}) {
           cameraRepositoryProvider.overrideWithValue(_buildRepo()),
           settingsStoreProvider.overrideWithValue(_FakeSettingsStore()),
           voiceRepositoryProvider.overrideWithValue(_StubVoiceRepository()),
+          volumeRepositoryProvider.overrideWithValue(_StubVolumeRepository()),
           voiceWakeEventsProvider.overrideWithValue(const Stream.empty()),
           voiceStateEventsProvider.overrideWithValue(const Stream.empty()),
           replayBufferRepositoryProvider.overrideWithValue(_buildReplayRepo()),

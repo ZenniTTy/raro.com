@@ -60,6 +60,10 @@
   "@settingsControlModeVolumePart": {
     "description": "Fragmento 3 da descrição, após o token OFF"
   },
+  "settingsControlModeVoiceOnlyPart": " a gravação é controlada pela voz.",
+  "@settingsControlModeVoiceOnlyPart": {
+    "description": "Descrição do modo de controle quando Volume não está disponível na plataforma"
+  },
   "settingsControlVolumeTitle": "Volume",
   "@settingsControlVolumeTitle": {
     "description": "Título do card de controle por volume"

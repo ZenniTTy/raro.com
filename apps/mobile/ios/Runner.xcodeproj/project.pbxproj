@@ -51,6 +51,8 @@
 		CA00000000000000000000E3 /* VoiceHostApiImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E2 /* VoiceHostApiImpl.swift */; };
 		CA0000000000000000000130 /* GalleryHostApiImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000131 /* GalleryHostApiImpl.swift */; };
 		CA0000000000000000000132 /* GalleryApi.g.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000133 /* GalleryApi.g.swift */; };
+		CA0000000000000000000140 /* VolumeHostApiImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000141 /* VolumeHostApiImpl.swift */; };
+		CA0000000000000000000142 /* VolumeApi.g.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000143 /* VolumeApi.g.swift */; };
 		CA00000000000000000000E5 /* VoiceApi.g.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E4 /* VoiceApi.g.swift */; };
 		CA00000000000000000000E7 /* VoiceManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E6 /* VoiceManagerTests.swift */; };
 		CA00000000000000000000E9 /* ObjCExceptionCatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = CA00000000000000000000E8 /* ObjCExceptionCatcher.m */; };
@@ -155,6 +157,8 @@
 		CA00000000000000000000E2 /* VoiceHostApiImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Voice/VoiceHostApiImpl.swift; sourceTree = "<group>"; };
 		CA0000000000000000000131 /* GalleryHostApiImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Gallery/GalleryHostApiImpl.swift; sourceTree = "<group>"; };
 		CA0000000000000000000133 /* GalleryApi.g.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Generated/GalleryApi.g.swift; sourceTree = "<group>"; };
+		CA0000000000000000000141 /* VolumeHostApiImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Volume/VolumeHostApiImpl.swift; sourceTree = "<group>"; };
+		CA0000000000000000000143 /* VolumeApi.g.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Generated/VolumeApi.g.swift; sourceTree = "<group>"; };
 		CA00000000000000000000E4 /* VoiceApi.g.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Native/Generated/VoiceApi.g.swift; sourceTree = "<group>"; };
 		CA00000000000000000000E6 /* VoiceManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceManagerTests.swift; sourceTree = "<group>"; };
 		CA00000000000000000000E8 /* ObjCExceptionCatcher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Native/Voice/ObjCExceptionCatcher.m; sourceTree = "<group>"; };
@@ -331,6 +335,8 @@
 				CA00000000000000000000E4 /* VoiceApi.g.swift */,
 				CA0000000000000000000131 /* GalleryHostApiImpl.swift */,
 				CA0000000000000000000133 /* GalleryApi.g.swift */,
+				CA0000000000000000000141 /* VolumeHostApiImpl.swift */,
+				CA0000000000000000000143 /* VolumeApi.g.swift */,
 				CA00000000000000000000E8 /* ObjCExceptionCatcher.m */,
 				CA00000000000000000000EA /* ObjCExceptionCatcher.h */,
 			);
@@ -632,6 +638,8 @@
 				CA00000000000000000000E5 /* VoiceApi.g.swift in Sources */,
 				CA0000000000000000000130 /* GalleryHostApiImpl.swift in Sources */,
 				CA0000000000000000000132 /* GalleryApi.g.swift in Sources */,
+				CA0000000000000000000140 /* VolumeHostApiImpl.swift in Sources */,
+				CA0000000000000000000142 /* VolumeApi.g.swift in Sources */,
 				CA00000000000000000000E9 /* ObjCExceptionCatcher.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

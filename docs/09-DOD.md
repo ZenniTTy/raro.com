@@ -12,7 +12,7 @@
 - [x] Replay Buffer estável em iOS + Android — **iOS ok; Android Rota D (ADR-0031) provada no M54 (sessão 0043)**: pré-roll no REC, janela 15s/30s recarrega, selo da galeria com formato/lente da sessão. Branch `feat/fatia-5-replay-buffer-android` ainda não mergeada em `develop`. `saveReplay()` standalone sem UI (fora do DoD de produto).
 - [ ] Lock mode reduz bateria ≥ 50% — **tela P05a não implementada**
 - [ ] App testado em ≥ 1 device Xiaomi/MIUI real — testado no **Galaxy M54** (não-Xiaomi); modal M02 ausente
-- [x] i18n completa em pt-BR / en / es — **145 chaves traduzíveis em cada um dos 3 `.arb`**, com teste-guarda `forbidden_ui_literals_test.dart`
+- [x] i18n completa em pt-BR / en / es — **146 chaves traduzíveis em cada um dos 3 `.arb`**, com teste-guarda `forbidden_ui_literals_test.dart`
 - [ ] Free trial 30 dias funcional via RevenueCat — **RevenueCat não integrado**: `purchases_flutter` no pubspec com zero imports
 - [x] Salvar vídeo na galeria exige entitlement `premium` (**regra confirmada pelo dono, 2026-09-04**) — PR #13: free grava e vê no Preview; Salvar (vault + Fotos) e Share exigem `premium`. Provado no M54: recusar Salvar mantém o acervo; premium persiste no vault e em `Movies/Raro Camera/` + folha nativa de share. Export iOS (`PHPhotoLibrary` add-only) no código; compile iOS desta fatia não rodou no device nesta sessão.
 - [ ] Restore purchases funcional — `paywall_screen.dart:123` é `_comingSoon`. **Bloqueador de review da Apple**
@@ -45,4 +45,4 @@
 
 **Falta para publicar:** contas Apple/Google, keystore de release, e a tela de Privacidade.
 
-**Bugs aprovados para correção (dono, 2026-09-02):** replay buffer no Android e modo Volume — implementar, não esconder.
+**Bugs aprovados para correção (dono, 2026-09-02):** replay buffer no Android **feito** (0043). Modo Volume: código na `feat/volume-trigger` (ADR-0033); **prova M54 pendente**.
