@@ -99,6 +99,28 @@ void main() {
     },
   );
 
+  test('toggle durante starting é no-op (não chama stopRecording)', () async {
+    final repo = _MockRepo();
+    when(() => repo.startRecording(any())).thenAnswer((_) async => 't-2b');
+    when(repo.stopRecording).thenAnswer((_) async {});
+    final container = makeContainer(repo);
+    final notifier = container.read(recordingControllerProvider.notifier);
+
+    await notifier.toggle(options: opts());
+    expect(
+      container.read(recordingControllerProvider),
+      isA<RecordingStarting>(),
+    );
+
+    await notifier.toggle(options: opts());
+    verify(() => repo.startRecording(any())).called(1);
+    verifyNever(repo.stopRecording);
+    expect(
+      container.read(recordingControllerProvider),
+      isA<RecordingStarting>(),
+    );
+  });
+
   test(
     'toggle passa as options recebidas para startRecording (pré-roll flag preservado)',
     () async {

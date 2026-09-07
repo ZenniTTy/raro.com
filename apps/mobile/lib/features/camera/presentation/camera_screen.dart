@@ -120,9 +120,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
 
   void _onVoiceCommand(WakeCommand command) {
     final phase = ref.read(recordingControllerProvider);
-    final isActive = phase is RecordingActive || phase is RecordingStarting;
-    if (command == WakeCommand.start && isActive) return;
-    if (command == WakeCommand.stop && !isActive) return;
+    if (command == WakeCommand.start && !phase.acceptsStart) return;
+    if (command == WakeCommand.stop && !phase.acceptsStop) return;
     unawaited(_onRecTap());
   }
 
@@ -209,7 +208,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   Future<void> _onRecTap() async {
     final notifier = ref.read(recordingControllerProvider.notifier);
     final phase = ref.read(recordingControllerProvider);
-    final wasActive = phase is RecordingActive || phase is RecordingStarting;
+    if (phase is RecordingStarting) return;
+    final wasActive = phase is RecordingActive;
     try {
       if (!wasActive) {
         final replayState = ref.read(replayBufferControllerProvider);

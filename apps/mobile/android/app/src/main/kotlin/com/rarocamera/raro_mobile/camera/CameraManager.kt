@@ -232,18 +232,29 @@ class CameraManager(
     pendingStart = true
     queuedStop = false
     replayBuffer.freeze { snapshot ->
-      if (!pendingStart) {
-        replayBuffer.resume()
-        return@freeze
+      when (decideRecordingAfterFreeze(pendingStart, queuedStop)) {
+        RecordingFreezeDecision.RESUME_ONLY -> {
+          replayBuffer.resume()
+          return@freeze
+        }
+        RecordingFreezeDecision.ABORT_QUEUED_STOP -> {
+          queuedStop = false
+          pendingStart = false
+          pendingPreroll = null
+          replayBuffer.resume()
+          callbacks.onFailed(
+            CameraErrorCode.SESSION_FAILED,
+            "recording cancelled before start",
+          )
+          return@freeze
+        }
+        RecordingFreezeDecision.START -> Unit
       }
       pendingPreroll = if (includePreroll && snapshot.isNotEmpty()) snapshot else null
       try {
         recordingController.start(vc, sessionId, wrapRecordingCallbacks(sessionId, callbacks))
         pendingStart = false
-        if (queuedStop) {
-          queuedStop = false
-          recordingController.stop()
-        }
+        queuedStop = false
       } catch (e: SecurityException) {
         pendingStart = false
         pendingPreroll = null
