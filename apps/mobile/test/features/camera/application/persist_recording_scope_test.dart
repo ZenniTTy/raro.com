@@ -87,6 +87,8 @@ void main() {
     final result = await container.read(persistPendingProbeProvider.future);
     expect(result, isA<PersistPendingFailed>());
     expect(container.read(pendingRecordingProvider)?.id, 'clip1');
+    expect(source.existsSync(), isTrue);
+    expect(await VaultService(documentsDir: tempRoot).listAll(), isEmpty);
   });
 
   test('free devolve NeedsPremium', () async {
