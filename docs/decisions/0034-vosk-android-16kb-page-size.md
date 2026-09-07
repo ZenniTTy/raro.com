@@ -1,7 +1,7 @@
 # 0034 — Vosk AAR 0.3.75 (ELF 16 KB) + rollback isolado
 
 - **Data:** 2026-09-07
-- **Status:** Proposed (Accepted só após gate M54 abaixo)
+- **Status:** Accepted
 - **Decisores:** Eduardo Rodrigues
 - **Tags:** deps, voice, android, store
 - **Parcialmente supersede:** pin Maven `vosk-android:0.3.47` do [0029](0029-voz-android-speechrecognizer-vosk-fgs.md)
@@ -57,22 +57,26 @@ Java `org.vosk.Recognizer` (gramática JSON, `reset`) permanece a mesma API usad
 
 **Não** usar `useLegacyPackaging` como “fix 16 KB”. **Não** excluir ABI por relato alheio (x86_64) sem medir o **nosso** AAB.
 
-**Rollback (se o gate falhar com modo Voz confirmado):** pin de volta a `0.3.47`; reverter o adendo do 0029 e a linha da Blueprint; **não** empilhar fix no `VoskWakeEngine`. Aí sim a opção 2 (rebuild 0.3.47) vira o próximo ADR.
+**Rollback (só se a voz regressir no pin 0.3.75 com modo Voz confirmado):** pin de volta a `0.3.47`; reverter o adendo do 0029 e a linha da Blueprint; **não** empilhar fix no `VoskWakeEngine`.
 
-## Gate M54 (esta ADR só vira Accepted com isto)
+## Gate M54 — FECHADO 2026-09-07
 
-Build: `flutter build apk --release` com OpenJDK 21. Instalar no M54.
+Build: `flutter build apk --release` com OpenJDK 21 (`app-release.apk` 122.5 MB). Instalar no M54 (`SM-M546B`).
 
-1. Settings → modo **Voz** (não Volume). HUD: ponto teal (`VoiceListeningIndicator`), não só “DIGA RARO”.
-2. App aberto: “raro gravar” → “raro parar”. Logcat `RaroVoice`: `vosk wake matched` START e STOP. Sem transcript.
-3. Home: os dois de novo (FGS).
-4. Diálogo 16 KB **ausente**. Zero crash R8 / `UnsatisfiedLinkError`.
-5. `objdump -p` em `lib/arm64-v8a/libvosk.so` = `2**14`.
+| Critério | Prova |
+|---|---|
+| ELF 64-bit | `objdump -p`: `lib/arm64-v8a/libvosk.so` e demais `.so` 64-bit = `2**14` (ou `2**16`). `unaligned_64bit=0`. `armeabi-v7a/libvosk.so` permanece `2**12` (isento). |
+| Diálogo 16 KB | Ausente no boot (screencap 00:27). |
+| R8 | pid vivo; `voice background service started`; zero `UnsatisfiedLinkError`. |
+| Modo | Prefs `raro.control.mode` = `voice`. HUD: ponto teal. |
+| Voz | Dono: “raro gravar” / “raro parar” funcionam. Logcat pid **20104** (mesmo release): múltiplos `vosk wake matched -> START` / `STOP` (ex. 07:18–07:20 e 09:18–09:22). Sem transcript. |
+
+A “falha” de 2026-09-06 era `ControlMode.volume` (`stopListening`). O AAR 0.3.75 **não** quebrou o `Recognizer`.
 
 ## Consequências
 
-- Positivas: desbloqueia AAB na Play (64-bit); JNA alinhada; pin Maven reproduzível.
-- Negativas: voz congelada só é **reprovada** se o gate acima falhar; até lá o risco Kaldi existe.
+- Positivas: desbloqueia AAB na Play (64-bit); JNA alinhada; pin Maven reproduzível; voz do 0038 preservada sem patch no motor.
+- Negativas: salto Kaldi 2023→2025 aceite com prova de device; HUD “DIGA RARO” em modo Volume continua enganosa (backlog, não desta fatia).
 - Reverter: uma linha em `apps/mobile/android/app/build.gradle.kts`.
 
 ## Referências

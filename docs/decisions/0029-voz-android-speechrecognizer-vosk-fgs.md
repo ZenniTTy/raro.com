@@ -4,7 +4,7 @@
 - Data: 2026-07-18
 - Decisor: dono do produto (Eduardo)
 
-> **Addendum 2026-09-07 — pin do AAR:** a coordenada Maven `vosk-android:0.3.47` fica **substituída por `0.3.75`** no [ADR-0034](0034-vosk-android-16kb-page-size.md) (Play / ELF 16 KB), **condicionado ao gate M54** desse ADR. A arquitetura deste ADR **não muda**: motor único, FGS `microphone` while-in-use, gramática restrita, modelo `vosk-model-small-pt-0.3`. Se o gate falhar com modo Voz confirmado, o pin volta a `0.3.47` e este addendum é revertido — **sem** patch em `VoskWakeEngine`.
+> **Addendum 2026-09-07 — pin do AAR:** a coordenada Maven `vosk-android:0.3.47` foi **substituída por `0.3.75`** no [ADR-0034](0034-vosk-android-16kb-page-size.md) (Play / ELF 16 KB). Gate M54 **fechado** (dono: “raro gravar”/“raro parar”; logcat `vosk wake matched` START/STOP). A arquitetura deste ADR **não muda**: motor único, FGS `microphone` while-in-use, gramática restrita, modelo `vosk-model-small-pt-0.3`.
 
 ## Contexto
 
