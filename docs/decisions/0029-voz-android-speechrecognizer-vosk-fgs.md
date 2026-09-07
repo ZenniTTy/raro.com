@@ -4,6 +4,8 @@
 - Data: 2026-07-18
 - Decisor: dono do produto (Eduardo)
 
+> **Addendum 2026-09-07 — pin do AAR:** a coordenada Maven `vosk-android:0.3.47` fica **substituída por `0.3.75`** no [ADR-0034](0034-vosk-android-16kb-page-size.md) (Play / ELF 16 KB), **condicionado ao gate M54** desse ADR. A arquitetura deste ADR **não muda**: motor único, FGS `microphone` while-in-use, gramática restrita, modelo `vosk-model-small-pt-0.3`. Se o gate falhar com modo Voz confirmado, o pin volta a `0.3.47` e este addendum é revertido — **sem** patch em `VoskWakeEngine`.
+
 ## Contexto
 
 No Android o reconhecimento de voz "raro gravar" / "raro parar" não existe — há apenas o stub Pigeon gerado (`VoiceApi.g.kt`), não registrado no `MainActivity`. O consumidor Dart (`features/voice/`) está completo e espera a implementação nativa. O iOS já funciona (SFSpeech foreground, restart-loop, ADR-0022).
