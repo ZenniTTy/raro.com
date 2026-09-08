@@ -111,7 +111,7 @@
 - [~] **5.4** Google Play Console: **taxa US$25 paga** (dono, 2026-09-02). Ainda falta: app `com.rarocamera` na Console, Internal Testing, AAB assinado (bloqueado por 5.2 — hoje o release sai `CN=Android Debug`), license testers.
 - [ ] **5.5** Assets de loja + **política de privacidade hospedada (URL obrigatória)**.
 - [ ] **5.6** Builds assinados `.ipa` + `.aab` → TestFlight + Play Internal.
-- [x] **5.6b** **Android 16 KB page size — FECHADO no M54 (2026-09-07, ADR-0034).** Pin `vosk-android:0.3.75` (ELF 64-bit `2**14`; JNA 5.18.1). Motor Vosk **intacto**. APK release 122.5 MB: diálogo 16 KB ausente; dono confirmou “raro gravar”/“raro parar”; logcat `vosk wake matched` START/STOP. A “voz morta” da 1ª tentativa era `ControlMode.volume`, não o AAR. `useLegacyPackaging` **não** relinka prebuilt (doc oficial). 32-bit `armeabi-v7a/libvosk.so` continua `2**12` (isento na Play).
+- [x] **5.6b** **Android 16 KB page size — FECHADO no M54 (2026-09-07, ADR-0034).** Pin `vosk-android:0.3.75` (ELF 64-bit `2**14`; JNA 5.18.1). Motor Vosk **intacto**. APK release 122.5 MB: diálogo 16 KB ausente; dono confirmou “raro gravar”/“raro parar”; logcat `vosk wake matched` START/STOP. A “voz morta” da 1ª tentativa era `ControlMode.volume`, não o AAR. `useLegacyPackaging` **não** relinka prebuilt (doc oficial). 32-bit `armeabi-v7a/libvosk.so` continua `2**12` (isento na Play). **Ressalva:** o gate mediu o APK; a Play valida o AAB (`bundletool` reempacota os `.so`). Medir o AAB antes do upload de loja (5.6).
 - [ ] **5.7** Submissão e aprovação.
 - [ ] **5.8** Tag `v1.0.0` + transferência das contas.
 

@@ -10,6 +10,7 @@
 ### Verificado
 - APK release 122.5 MB no Galaxy M54: diálogo 16 KB ausente; 64-bit `unaligned=0`.
 - Dono: “raro gravar” / “raro parar” funcionam. Logcat `vosk wake matched -> START/STOP`. A 1ª tentativa falhou porque o modo era Volume, não o AAR.
+- Review PR #18: R8 `-keep com.sun.jna.**` (subpacotes do JNA 5.18.1). Gate ELF foi no APK; Play valida o AAB.
 
 ## [2026-09-05] — Modo Volume como gatilho (sessão 0046, código)
 

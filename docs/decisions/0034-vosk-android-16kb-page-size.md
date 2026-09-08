@@ -75,8 +75,12 @@ A “falha” de 2026-09-06 era `ControlMode.volume` (`stopListening`). O AAR 0.
 
 ## Consequências
 
-- Positivas: desbloqueia AAB na Play (64-bit); JNA alinhada; pin Maven reproduzível; voz do 0038 preservada sem patch no motor.
+- Positivas: desbloqueia AAB na Play (64-bit); JNA 5.18.1 no POM do AAR; pin Maven reproduzível; voz do 0038 preservada sem patch no motor.
 - Negativas: salto Kaldi 2023→2025 aceite com prova de device; HUD “DIGA RARO” em modo Volume continua enganosa (backlog, não desta fatia).
+- `libvosk.so` arm64 cresceu ~13% (8,86 MB → 10,04 MB); AAB com splits por ABI mitiga o APK universal.
+- JNA entra **transitiva** (POM 0.3.75 = `5.18.1`); Gradle não pina. CI limpo pode resolver outra versão — pin explícito fica fora desta fatia.
+- Gate ELF/voz foi no **APK** release. A Play valida o **AAB** (`bundletool` reempacota `.so` nos splits). APK é indício forte, não prova do artefato de loja.
+- R8: `-keep com.sun.jna.**` (review PR #18) — `*` não cobre `internal`/`ptr` (Cleaner 5.18.1).
 - Reverter: uma linha em `apps/mobile/android/app/build.gradle.kts`.
 
 ## Referências
