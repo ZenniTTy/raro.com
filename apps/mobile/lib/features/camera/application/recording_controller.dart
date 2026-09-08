@@ -40,7 +40,7 @@ class RecordingController extends _$RecordingController {
   }
 
   Future<void> stop() async {
-    if (state is! RecordingActive && state is! RecordingStarting) return;
+    if (state is! RecordingActive) return;
     final repo = ref.read(cameraRepositoryProvider);
     try {
       await repo.stopRecording();
@@ -51,7 +51,8 @@ class RecordingController extends _$RecordingController {
 
   Future<void> toggle({required RecordingOptions options}) async {
     final current = state;
-    if (current is RecordingActive || current is RecordingStarting) {
+    if (current is RecordingStarting) return;
+    if (current is RecordingActive) {
       await stop();
     } else {
       await start(options);

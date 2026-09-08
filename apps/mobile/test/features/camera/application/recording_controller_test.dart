@@ -117,11 +117,39 @@ void main() {
         codec: 'h264',
       ),
     );
+    events.add(const RecordingResult.started(sessionId: 's-2'));
+    await Future<void>.delayed(Duration.zero);
     await notifier.stop();
 
     verify(repo.stopRecording).called(1);
     expect(container.read(recordingControllerProvider), isA<RecordingIdle>());
   });
+
+  test(
+    'stop: starting is a no-op (avoids CameraX ERROR_NO_VALID_DATA)',
+    () async {
+      final repo = _MockRepo();
+      when(() => repo.startRecording(any())).thenAnswer((_) async => 's-2b');
+      when(repo.stopRecording).thenAnswer((_) async {});
+      final container = makeContainer(repo);
+      final notifier = container.read(recordingControllerProvider.notifier);
+
+      await notifier.start(
+        RecordingOptions(
+          resolution: Resolution.fhd1080,
+          fps: Fps.fps30,
+          codec: 'h265',
+        ),
+      );
+      await notifier.stop();
+
+      verifyNever(repo.stopRecording);
+      expect(
+        container.read(recordingControllerProvider),
+        isA<RecordingStarting>(),
+      );
+    },
+  );
 
   test(
     'stop: when repo.stopRecording throws, state still resets to idle',
@@ -139,6 +167,8 @@ void main() {
           codec: 'h265',
         ),
       );
+      events.add(const RecordingResult.started(sessionId: 's-3'));
+      await Future<void>.delayed(Duration.zero);
 
       await expectLater(notifier.stop(), throwsA(isA<StateError>()));
       expect(container.read(recordingControllerProvider), isA<RecordingIdle>());
