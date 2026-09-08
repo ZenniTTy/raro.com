@@ -111,7 +111,7 @@
 - [~] **5.4** Google Play Console: **taxa US$25 paga** (dono, 2026-09-02). Ainda falta: app `com.rarocamera` na Console, Internal Testing, AAB assinado (bloqueado por 5.2 — hoje o release sai `CN=Android Debug`), license testers.
 - [ ] **5.5** Assets de loja + **política de privacidade hospedada (URL obrigatória)**.
 - [ ] **5.6** Builds assinados `.ipa` + `.aab` → TestFlight + Play Internal.
-- [ ] **5.6b** 🔴 **Android 16 KB page size (Play + Android 15+)** — anotado 2026-09-02 a pedido do dono. No Galaxy M54 (Android 16) o APK **debug** abre o diálogo do sistema *"Este app não é compatível com 16 KB. Falha na verificação de alinhamento ELF"* ([developer.android.com/16kb-page-size](https://developer.android.com/guide/practices/page-sizes)). Libs citadas: `libflutter.so`, `libvosk.so` (segmento LOAD sem alinhamento — AAR `vosk-android:0.3.47`, ADR-0029), `libjnidispatch.so` / `libdartjni.so`, CameraX (`libsurface_util_jni.so`, `libimage_processing_util_jni.so`), DataStore, e no debug `libVkLayer_khronos_validation.so`. **Não é crash do replay; o app sobe.** Corrigir **antes** do `.aab` de loja (Play exige 16 KB desde 2025-11-01 para target API 35+). Escopo: AGP ≥8.5.1 + NDK r28 (ou linker `-Wl,-z,max-page-size=16384`) + Flutter engine alinhado + **Vosk/JNA recompilados ou AAR novo** (muda ADR-0029). **Não mexer na voz agora** (3.3 congelado / NÃO MEXER). Gate: `check_elf_alignment.sh` / `zipalign -c -P 16` no AAB + diálogo some no M54. Workaround de teste: *"Não mostrar de novo"*.
+- [x] **5.6b** **Android 16 KB page size — FECHADO no M54 (2026-09-07, ADR-0034).** Pin `vosk-android:0.3.75` (ELF 64-bit `2**14`; JNA 5.18.1). Motor Vosk **intacto**. APK release 122.5 MB: diálogo 16 KB ausente; dono confirmou “raro gravar”/“raro parar”; logcat `vosk wake matched` START/STOP. A “voz morta” da 1ª tentativa era `ControlMode.volume`, não o AAR. `useLegacyPackaging` **não** relinka prebuilt (doc oficial). 32-bit `armeabi-v7a/libvosk.so` continua `2**12` (isento na Play). **Ressalva:** o gate mediu o APK; a Play valida o AAB (`bundletool` reempacota os `.so`). Medir o AAB antes do upload de loja (5.6).
 - [ ] **5.7** Submissão e aprovação.
 - [ ] **5.8** Tag `v1.0.0` + transferência das contas.
 
@@ -126,7 +126,7 @@
 ```
 
 **O que impede faturar:** Bloco 2 inteiro — e note que a regra de premium do dono ("só salva na galeria se for premium") depende do **2.3a**, que é feature nova, não só um `if`.
-**O que impede publicar:** 5.1, 5.2, 5.4 (contas/keystore) + 4.3 (privacidade) + **5.6b (16 KB / Play)**.
+**O que impede publicar:** 5.1, 5.2, 5.4 (contas/keystore) + 4.3 (privacidade). **5.6b (16 KB) fechado.**
 **Bugs a corrigir (classificação do dono):** modo Volume (4.5) — aprovado para implementação, não para ser escondido. Os 4 botões do Preview (Salvar/Share 4.1, Delete/Info 4.2) estão reais.
 
 ---
