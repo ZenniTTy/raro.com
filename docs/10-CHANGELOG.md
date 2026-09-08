@@ -2,7 +2,16 @@
 
 > Append-only. Header `## [YYYY-MM-DD] — version` para cada entry. Versões seguem semver.
 
-## [2026-09-07] — Android 16 KB (fatia 5.6b, ADR-0034)
+## [2026-09-07] — Handshake STOP / freeze (sessão 0047, PR #17)
+
+### Corrigido
+- STOP só é aceito em `RecordingActive`. No Android, `queuedStop` **antes** do CameraX Recorder **aborta** o start (não start-then-stop → `ERROR_NO_VALID_DATA`).
+- Teste de pipeline: PendingClip permanece fora do vault até persist premium (P07 lista só o vault).
+
+### Verificado
+- [PR #17](https://github.com/ZenniTTy/raro.com/pull/17) mergeada em `develop` (`11bb9b0`).
+
+## [2026-09-07] — Android 16 KB (fatia 5.6b, sessão 0048, ADR-0034)
 
 ### Alterado
 - **Pin** `vosk-android:0.3.47` → `0.3.75` (Maven). `libvosk.so` arm64/x86_64 LOAD `2**14`. JNA 5.18.1. **`VoskWakeEngine` não foi editado.**

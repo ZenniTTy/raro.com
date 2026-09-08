@@ -6,10 +6,10 @@
 
 ## Funcional
 
-- [ ] 100% das 13 telas + 3 modais implementadas e navegáveis — **12/13 telas** (falta só `p05aLockMode`; **P11 Terms e P12 Privacy implementadas** na PR #15) e **1/3 modais** (M01 ok; M02 Xiaomi e M03 Bluetooth ausentes)
+- [ ] 100% das 13 telas + 3 modais implementadas e navegáveis — **12/13 telas** (falta só `p05aLockMode`; **P11 Terms e P12 Privacy MERGEADAS**, PR #15) e **1/3 modais** (M01 ok; M02 Xiaomi e M03 Bluetooth ausentes)
 - [x] Nenhuma feature não prevista no Blueprint adicionada
 - [x] Wake word `"Raro"` detectado em ambiente silencioso — **Android funciona em foreground E BACKGROUND** (Vosk motor único + FGS `microphone`), confirmado pelo dono no device em 2026-09-02. **Caminho congelado: não mexer.** iOS segue foreground-only (SFSpeech); background iOS sai do escopo de v1.0 (o ONNX foi reprovado na 0029 e a Sensory deixa de ser bloqueador). Métrica formal de ">90%" nunca foi medida em bancada — critério aceito por validação de uso real
-- [x] Replay Buffer estável em iOS + Android — **iOS ok; Android Rota D (ADR-0031) provada no M54 (sessão 0043)**: pré-roll no REC, janela 15s/30s recarrega, selo da galeria com formato/lente da sessão. Branch `feat/fatia-5-replay-buffer-android` ainda não mergeada em `develop`. `saveReplay()` standalone sem UI (fora do DoD de produto).
+- [x] Replay Buffer estável em iOS + Android — **iOS ok; Android Rota D (ADR-0031) provada no M54 (sessão 0043) e MERGEADA (PR #11)**: pré-roll no REC, janela 15s/30s recarrega, selo da galeria com formato/lente da sessão. `saveReplay()` standalone sem UI (fora do DoD de produto).
 - [ ] Lock mode reduz bateria ≥ 50% — **tela P05a não implementada**
 - [ ] App testado em ≥ 1 device Xiaomi/MIUI real — testado no **Galaxy M54** (não-Xiaomi); modal M02 ausente
 - [x] i18n completa em pt-BR / en / es — **146 chaves traduzíveis em cada um dos 3 `.arb`**, com teste-guarda `forbidden_ui_literals_test.dart`
@@ -45,4 +45,4 @@
 
 **Falta para publicar:** contas Apple/Google, keystore de release, e a tela de Privacidade.
 
-**Bugs aprovados para correção (dono, 2026-09-02):** replay buffer no Android **feito** (0043). Modo Volume: código na `feat/volume-trigger` (ADR-0033); **prova M54 pendente**.
+**Bugs aprovados para correção (dono, 2026-09-02):** replay buffer no Android **feito** (0043, PR #11). Modo Volume: **MERGEADO** (PR #16, ADR-0033) + handshake STOP (PR #17); botões provados no M54. HUD “DIGA RARO” em Volume = backlog. 16 KB **feito** no APK (PR #18, ADR-0034).

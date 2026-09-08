@@ -75,13 +75,13 @@
 - [x] **2.5** *(PR #12 — código pronto; restore de recibo Play REAL ainda não provado, Test Store não conta)* **Restore purchases funcional** (`paywall_screen.dart:123`) — bloqueador de review da Apple.
 - [x] **2.6** *(PR #12 — `payment_method.dart` APAGADO, checkout chama `subscribe(plan:)`)* **Checkout (P10): remover o seletor de "método de pagamento".** Hoje `PaymentMethod` (`apple`/`google`) é um radio decorativo — o usuário escolhe algo que não tem efeito. Na compra in-app real **quem escolhe a forma de pagamento é a folha nativa da loja**, com os meios que a conta do usuário já tem cadastrados (cartão, PIX/carteira via Google Play, saldo, etc.). Manter o radio é duplicar — e confundir — uma escolha que não é nossa. P10 deve virar confirmação do plano + `purchasePackage`.
 - [ ] **2.7** **Assinaturas nas lojas (pré-requisito do dono, não é código):** criar os 2 produtos de assinatura (Mensal R$ 9,90 · Anual R$ 89,90) no App Store Connect e no Play Console, ligar ao entitlement `premium` no RevenueCat e configurar o trial de 30 dias em **cada** loja. Sem isso `getOfferings` volta vazio e o app não tem o que vender.
-- [ ] **2.8** **Textos obrigatórios de assinatura na tela de compra** — **implementado na PR #15** (pende merge): preço, periodicidade, renovação automática, cancelamento nas lojas, links Termos/Privacidade funcionando.
+- [x] **2.8** **Textos obrigatórios de assinatura na tela de compra** — **PR #15 MERGEADA** (`acabae3`): preço, periodicidade, renovação automática, cancelamento nas lojas, links Termos/Privacidade.
 
 ### BLOCO 3 — Android paridade (QUASE FECHADO)
 - [x] **3.1** Gravação CameraX → vault (fatia 1, PR #5, provado no M54 via ffprobe).
-- [x] **3.2** **Replay buffer / pré-roll Android — FECHADO no device (sessão 0043) e MERGEADO em `develop` (PR #11, `3a2a386`, 2026-09-02).** Rota D (ADR-0031): segmentos ~5s do CameraX `Recorder` + concat sem re-encode. Spike removido. `ReplayBufferHostApi` registrada; `includeReplayPreroll` honrado; anel recarrega ao trocar 15s↔30s. **Dono confirmou no M54:** buffer funciona e o selo da galeria mostra formato/lente da sessão (incl. 0.5×). Fora desta fatia: `saveReplay()` standalone sem UI; 16 KB (5.6b).
+- [x] **3.2** **Replay buffer / pré-roll Android — FECHADO no device (sessão 0043) e MERGEADO em `develop` (PR #11, `3a2a386`, 2026-09-02).** Rota D (ADR-0031): segmentos ~5s do CameraX `Recorder` + concat sem re-encode. Spike removido. `ReplayBufferHostApi` registrada; `includeReplayPreroll` honrado; anel recarrega ao trocar 15s↔30s. **Dono confirmou no M54:** buffer funciona e o selo da galeria mostra formato/lente da sessão (incl. 0.5×). Fora desta fatia: `saveReplay()` standalone sem UI. **5.6b (16 KB) fechado na 0048.**
 - [x] **3.3** Voz Android "raro gravar"/"raro parar" (fatia 3, PR #8, Vosk motor único, ADR-0029).
-- [~] **3.4** HostApis no `MainActivity`: câmera ✓, voz ✓, **replay ✓** (0043); volume não existe em lugar nenhum.
+- [x] **3.4** HostApis no `MainActivity`: câmera ✓, voz ✓, replay ✓ (0043), **volume ✓** (PR #16 / ADR-0033).
 - [x] **3.5** Ultra-wide discovery (`CameraLensDiscovery.kt:28-31`) — funciona, porém por **heurística de distância focal**; pode errar em aparelhos com macro/depth. Aceitável para v1.0, risco anotado.
 - [ ] **3.6** Xiaomi/MIUI: modal M02 + autostart (nada implementado além do nome do evento de analytics).
 - [ ] **3.7** Contract tests de paridade nas 2 plataformas.
@@ -90,9 +90,9 @@
 - [x] **4.0** Fechar a árvore suja de Poppins (sessão 0041): emojis como glifo; `'RARO CAM'` no allowlist; Medium 500 removido; suíte 355/355; `5a35be4` pushado.
 - [x] **4.1** *(PR #13, provado no M54 2026-09-04)* Share real com `share_plus` (`SharePlus.instance.share(ShareParams)`); free abre P09, premium abre a folha nativa.
 - [x] **4.2** *(provado no M54 2026-09-04)* Delete real no Preview: diálogo de confirmação (copy deixa claro que é só do vault, não do rolo do sistema) → `vault.delete(id)` (`.mp4`+`.json`+`.jpg`) → invalida `videoListProvider` → volta à Galeria. Info abre painel com sidecar (nome, duração, data, resolução, fps, lente, tamanho via `File.lengthSync()`, replay). Delete na Galeria (P07) ficou de fora de propósito.
-- [ ] **4.3** Telas faltando: P05a Lock mode. **P11 Terms + P12 Privacy implementadas (PR #15, pendente merge).**
+- [ ] **4.3** Telas faltando: P05a Lock mode. **P11 Terms + P12 Privacy MERGEADAS (PR #15).**
 - [ ] **4.4** Modais faltando: M02 Xiaomi, M03 Bluetooth.
-- [ ] **4.5** **Volume como gatilho — código na branch `feat/volume-trigger` (ADR-0033).** Android: `dispatchKeyEvent` + consume. iOS 17.2+: `AVCaptureEventInteraction` (API oficial; KVO/`setOutputVolume` rejeitado). iOS 15–17.1: card some da UI. `+` inicia / `−` para no mesmo `_onRecTap` da voz. Analyze limpo; **433/433**; iOS `Runner.app` debug. **Prova M54 pendente** (gate de pronto). M03 Bluetooth continua fora (4.4).
+- [x] **4.5** **Volume como gatilho — MERGEADO (PR #16, ADR-0033) + handshake STOP (PR #17).** Android: `dispatchKeyEvent` + consume. iOS 17.2+: `AVCaptureEventInteraction`. iOS 15–17.1: card some da UI. `+` inicia / `−` para no mesmo `_onRecTap`. **M54:** botões disparam gravação (uso real na 5.6b). Backlog: HUD “DIGA RARO” em modo Volume. M03 Bluetooth continua fora (4.4).
 - [x] **4.6** i18n pt/en/es completa (117 chaves × 3) com teste-guarda.
 
 ### BLOCO 4.5 — Faxina de repositório (anotado a pedido do dono, 2026-09-02)
@@ -126,8 +126,8 @@
 ```
 
 **O que impede faturar:** Bloco 2 inteiro — e note que a regra de premium do dono ("só salva na galeria se for premium") depende do **2.3a**, que é feature nova, não só um `if`.
-**O que impede publicar:** 5.1, 5.2, 5.4 (contas/keystore) + 4.3 (privacidade). **5.6b (16 KB) fechado.**
-**Bugs a corrigir (classificação do dono):** modo Volume (4.5) — aprovado para implementação, não para ser escondido. Os 4 botões do Preview (Salvar/Share 4.1, Delete/Info 4.2) estão reais.
+**O que impede publicar:** 5.1, 5.2, 5.4 (contas/keystore). Privacidade/termos no ar (PR #15). **5.6b (16 KB) fechado no APK M54** — medir AAB antes do upload (5.6).
+**Bugs a corrigir (classificação do dono):** modo Volume (4.5) **feito** (PRs #16+#17). Os 4 botões do Preview (Salvar/Share 4.1, Delete/Info 4.2) estão reais. HUD de voz no modo Volume = backlog.
 
 ---
 
@@ -159,4 +159,4 @@
 
 ## Próxima ação imediata
 
-**4.0 e 3.2 fechados no device e em `develop` (PR #11).** Origin só tem `main` + `develop`. Próxima fase: dono escolhe **Bloco 2 (monetização)**, **4.5 (volume)** ou **5.6b (16 KB / Play)**.
+**4.0, 3.2, 4.5 e 5.6b fechados em `develop` (PRs #11, #16, #17, #18).** Origin deve ficar só `main` + `develop` após prune das feature branches. Próxima fase: **Bloco 5 (loja / keystore / AAB)** ou **2.4+2.7 (trial e SKUs reais)**.
